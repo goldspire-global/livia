@@ -35,5 +35,14 @@ externalPort = 3001
 localPort = 20645
 externalPort = 3000
 
+[[ports]]
+localPort = 24839
+externalPort = 3002
+
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_ZW5vdWdoLW1ha28tNzYuY2xlcmsuYWNjb3VudHMuZGV2JA"
