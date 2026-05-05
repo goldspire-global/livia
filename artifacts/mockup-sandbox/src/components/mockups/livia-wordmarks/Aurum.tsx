@@ -143,25 +143,30 @@ export default function Aurum() {
         </div>
       </div>
 
-      {/* Liv chip — minimal, mono */}
+      {/* Liv presence — quiet serif italic */}
       <div
         style={{
           position: "relative",
-          fontFamily: "JetBrains Mono, monospace",
-          fontSize: 11,
-          color: "rgba(246,243,236,0.65)",
-          padding: "8px 16px",
-          border: "1px solid rgba(217,195,154,0.25)",
-          background: "rgba(10,10,16,0.5)",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
+          fontFamily: "'Cormorant Garamond', serif",
+          fontStyle: "italic",
+          fontSize: 17,
+          fontWeight: 300,
+          color: "rgba(246,243,236,0.55)",
+          letterSpacing: "0.02em",
         }}
       >
-        powered by{" "}
-        <span style={{ background: chromeGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 500 }}>
+        with{" "}
+        <span
+          style={{
+            background: chromeGrad,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            fontWeight: 400,
+          }}
+        >
           Liv
         </span>{" "}
-        · ai
+        at your side
       </div>
 
       <div
