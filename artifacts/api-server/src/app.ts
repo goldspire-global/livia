@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type ErrorRequestHandler, type RequestHandler } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
@@ -49,5 +49,17 @@ app.use(
 );
 
 app.use("/api", router);
+
+const notFoundHandler: RequestHandler = (req, res) => {
+  res.status(404).json({ error: "Not found", path: req.path });
+};
+app.use("/api", notFoundHandler);
+
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  logger.error({ err, path: req.path, method: req.method }, "Unhandled API error");
+  if (res.headersSent) return;
+  res.status(500).json({ error: "Internal server error" });
+};
+app.use(errorHandler);
 
 export default app;

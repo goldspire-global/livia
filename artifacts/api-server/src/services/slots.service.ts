@@ -1,5 +1,7 @@
 import { db, availabilityRulesTable, timeOffTable, bookingsTable, servicesTable } from "@workspace/db";
 import { eq, and, gte, lte, or } from "drizzle-orm";
+import { dayOfWeekInTz, dayBoundsInTz, zonedDateTimeToUtc } from "../lib/tz";
+
 type Slot = {
   startAt: string;
   endAt: string;
@@ -8,18 +10,15 @@ type Slot = {
   available: boolean;
 };
 
-const DAY_MS = 86_400_000;
-
 export async function getAvailableSlots(opts: {
   businessId: string;
   serviceId: string;
-  date: string; // "YYYY-MM-DD"
+  date: string;
   staffId?: string;
   timezone: string;
 }): Promise<Slot[]> {
   const { businessId, serviceId, date, staffId, timezone } = opts;
 
-  // Load service for duration
   const [service] = await db
     .select()
     .from(servicesTable)
@@ -30,12 +29,10 @@ export async function getAvailableSlots(opts: {
   const durationMs = (service.durationMinutes + service.bufferAfterMinutes) * 60_000;
   const bufferBeforeMs = service.bufferBeforeMinutes * 60_000;
 
-  // Parse the date into start/end of day in the given timezone
-  const dayStart = new Date(`${date}T00:00:00`);
-  const dayEnd = new Date(`${date}T23:59:59`);
+  const { start: dayStart, end: dayEnd } = dayBoundsInTz(date, timezone);
+  const dayOfWeek = dayOfWeekInTz(date, timezone);
 
-  // Load availability rules for business or staff
-  const rulesQuery = db
+  const rules = await db
     .select()
     .from(availabilityRulesTable)
     .where(
@@ -46,15 +43,10 @@ export async function getAvailableSlots(opts: {
         eq(availabilityRulesTable.isActive, true),
       ),
     );
-  const rules = await rulesQuery;
 
-  // Day of week in local time (simplified — using UTC here as proxy)
-  const dayOfWeek = dayStart.getDay();
   const dayRules = rules.filter((r) => r.dayOfWeek === dayOfWeek);
-
   if (dayRules.length === 0) return [];
 
-  // Load time-off blocking this day
   const timeOffs = await db
     .select()
     .from(timeOffTable)
@@ -68,7 +60,6 @@ export async function getAvailableSlots(opts: {
       ),
     );
 
-  // Load existing bookings for this day
   const existingBookings = await db
     .select()
     .from(bookingsTable)
@@ -86,37 +77,35 @@ export async function getAvailableSlots(opts: {
     );
 
   const slots: Slot[] = [];
+  const [Y, M, D] = date.split("-").map(Number);
+  const now = new Date();
 
   for (const rule of dayRules) {
     const [startH, startM] = rule.startTime.split(":").map(Number);
     const [endH, endM] = rule.endTime.split(":").map(Number);
 
-    let cursor = new Date(dayStart);
-    cursor.setHours(startH, startM, 0, 0);
-    const ruleEnd = new Date(dayStart);
-    ruleEnd.setHours(endH, endM, 0, 0);
+    const ruleStartUtc = zonedDateTimeToUtc(Y, M, D, startH, startM, timezone);
+    const ruleEndUtc = zonedDateTimeToUtc(Y, M, D, endH, endM, timezone);
 
-    while (cursor.getTime() + durationMs <= ruleEnd.getTime()) {
-      const slotStart = new Date(cursor);
-      const slotEnd = new Date(cursor.getTime() + durationMs);
-      const slotStartWithBuffer = new Date(cursor.getTime() - bufferBeforeMs);
+    let cursorMs = ruleStartUtc.getTime();
+    const ruleEndMs = ruleEndUtc.getTime();
 
-      // Check time off conflict
+    while (cursorMs + durationMs <= ruleEndMs) {
+      const slotStart = new Date(cursorMs);
+      const slotEnd = new Date(cursorMs + durationMs);
+      const slotStartWithBuffer = new Date(cursorMs - bufferBeforeMs);
+
       const blockedByTimeOff = timeOffs.some(
         (to) => slotEnd > to.startsAt && slotStartWithBuffer < to.endsAt,
       );
 
-      // Check booking conflict
       const blockedByBooking = existingBookings.some((b) => {
-        const bEnd = b.endAt;
-        const bStart = b.startAt;
-        return slotEnd > bStart && slotStartWithBuffer < bEnd;
+        return slotEnd > b.startAt && slotStartWithBuffer < b.endAt;
       });
 
       const available = !blockedByTimeOff && !blockedByBooking;
 
-      // Only add future slots
-      if (slotStart > new Date()) {
+      if (slotStart > now) {
         slots.push({
           startAt: slotStart.toISOString(),
           endAt: slotEnd.toISOString(),
@@ -126,8 +115,7 @@ export async function getAvailableSlots(opts: {
         });
       }
 
-      // Advance by 30-minute increments
-      cursor = new Date(cursor.getTime() + 30 * 60_000);
+      cursorMs += 30 * 60_000;
     }
   }
 

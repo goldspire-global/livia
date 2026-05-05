@@ -104,39 +104,44 @@ export async function createBooking(
       (service.durationMinutes + service.bufferAfterMinutes) * 60_000,
   );
 
-  // Conflict check
-  const conflicts = await db
-    .select({ id: bookingsTable.id })
-    .from(bookingsTable)
-    .where(
-      and(
-        eq(bookingsTable.businessId, businessId),
-        data.staffId ? eq(bookingsTable.staffId, data.staffId) : undefined,
-        or(eq(bookingsTable.status, "CONFIRMED"), eq(bookingsTable.status, "PENDING")),
-        lte(bookingsTable.startAt, endAt),
-        gte(bookingsTable.endAt, startAt),
-      ),
-    );
+  const inserted = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${businessId}, 0))`);
 
-  if (conflicts.length > 0) throw new Error("SLOT_CONFLICT");
+    const conflicts = await tx
+      .select({ id: bookingsTable.id })
+      .from(bookingsTable)
+      .where(
+        and(
+          eq(bookingsTable.businessId, businessId),
+          data.staffId ? eq(bookingsTable.staffId, data.staffId) : undefined,
+          or(eq(bookingsTable.status, "CONFIRMED"), eq(bookingsTable.status, "PENDING")),
+          lte(bookingsTable.startAt, endAt),
+          gte(bookingsTable.endAt, startAt),
+        ),
+      );
 
-  const [b] = await db
-    .insert(bookingsTable)
-    .values({
-      id: generateId(),
-      businessId,
-      serviceId: data.serviceId,
-      customerId: data.customerId,
-      staffId: data.staffId ?? null,
-      startAt,
-      endAt,
-      channelType: (data.channelType ?? "WEB") as any,
-      status: "PENDING",
-      notes: data.notes,
-    })
-    .returning();
+    if (conflicts.length > 0) throw new Error("SLOT_CONFLICT");
 
-  return enrichBooking(b);
+    const [b] = await tx
+      .insert(bookingsTable)
+      .values({
+        id: generateId(),
+        businessId,
+        serviceId: data.serviceId,
+        customerId: data.customerId,
+        staffId: data.staffId ?? null,
+        startAt,
+        endAt,
+        channelType: (data.channelType ?? "WEB") as any,
+        status: "PENDING",
+        notes: data.notes,
+      })
+      .returning();
+
+    return b;
+  });
+
+  return enrichBooking(inserted);
 }
 
 export async function updateBookingStatus(
