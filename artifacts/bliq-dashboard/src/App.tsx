@@ -108,7 +108,7 @@ function ClerkProviderWithTheme({ children }: { children: React.ReactNode }) {
       routerPush={(to) => window.history.pushState(null, "", to)}
       routerReplace={(to) => window.history.replaceState(null, "", to)}
       {...(import.meta.env.PROD ? { proxyUrl: window.location.origin + "/api/__clerk" } : {})}
-      fallbackRedirectUrl="/dashboard"
+      signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/onboarding"
       appearance={{
         baseTheme: currentTheme === "dark" ? dark : undefined,

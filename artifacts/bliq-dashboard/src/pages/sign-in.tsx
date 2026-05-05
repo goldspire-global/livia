@@ -42,6 +42,18 @@ export default function SignInPage() {
           routing="path"
           path="/sign-in"
         />
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          New here? Use{" "}
+          <span className="font-medium text-foreground">Continue with Google</span>{" "}
+          for the fastest sign-up — or{" "}
+          <a href="/sign-up" className="font-medium text-primary hover:underline">
+            create a password account
+          </a>
+          .
+        </p>
+        <p className="mt-1 text-center text-xs text-muted-foreground/70">
+          Tip: if you signed up with Google, sign in with Google — that account has no password.
+        </p>
       </div>
     </div>
   );
