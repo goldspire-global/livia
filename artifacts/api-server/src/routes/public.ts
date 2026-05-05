@@ -31,6 +31,8 @@ router.get("/public/b/:slug", async (req, res): Promise<void> => {
     coverImageUrl: biz.coverImageUrl,
     instagramHandle: biz.instagramHandle,
     timezone: biz.timezone,
+    aiEnabled: biz.aiEnabled ?? "true",
+    aiGreeting: biz.aiGreeting ?? null,
     services,
     staff,
   });

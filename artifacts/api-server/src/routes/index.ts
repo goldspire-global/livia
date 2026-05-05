@@ -12,6 +12,8 @@ import dashboardRouter from "./dashboard";
 import featureFlagsRouter from "./feature-flags";
 import publicRouter from "./public";
 import devRouter from "./dev";
+import chatRouter from "./chat";
+import conversationsRouter from "./conversations";
 
 const router: IRouter = Router();
 
@@ -27,6 +29,8 @@ router.use(slotsRouter);
 router.use(dashboardRouter);
 router.use(featureFlagsRouter);
 router.use(publicRouter);
+router.use(chatRouter);
+router.use(conversationsRouter);
 router.use(devRouter);
 
 export default router;

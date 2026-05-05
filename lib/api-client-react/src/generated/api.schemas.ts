@@ -65,6 +65,13 @@ export interface Business {
   coverImageUrl?: string | null;
   /** @nullable */
   instagramHandle?: string | null;
+  aiEnabled?: string;
+  aiTone?: string;
+  /** @nullable */
+  aiGreeting?: string | null;
+  /** @nullable */
+  aiKnowledge?: string | null;
+  aiCanBookDirectly?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,8 +90,18 @@ export interface CreateBusinessBody {
   instagramHandle?: string;
 }
 
+export type UpdateBusinessBodyAiTone =
+  (typeof UpdateBusinessBodyAiTone)[keyof typeof UpdateBusinessBodyAiTone];
+
+export const UpdateBusinessBodyAiTone = {
+  PROFESSIONAL: "PROFESSIONAL",
+  FRIENDLY: "FRIENDLY",
+  PLAYFUL: "PLAYFUL",
+} as const;
+
 export interface UpdateBusinessBody {
   name?: string;
+  slug?: string;
   description?: string;
   category?: string;
   email?: string;
@@ -96,6 +113,11 @@ export interface UpdateBusinessBody {
   logoUrl?: string;
   coverImageUrl?: string;
   instagramHandle?: string;
+  aiEnabled?: string;
+  aiTone?: UpdateBusinessBodyAiTone;
+  aiGreeting?: string;
+  aiKnowledge?: string;
+  aiCanBookDirectly?: string;
 }
 
 export interface Staff {
@@ -511,6 +533,116 @@ export interface CreatePublicBookingBody {
   channelType?: CreatePublicBookingBodyChannelType;
 }
 
+export interface PublicChatBody {
+  conversationId?: string;
+  message: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+}
+
+export type PublicChatResponseStatus =
+  (typeof PublicChatResponseStatus)[keyof typeof PublicChatResponseStatus];
+
+export const PublicChatResponseStatus = {
+  OPEN: "OPEN",
+  HANDED_OFF: "HANDED_OFF",
+  CLOSED: "CLOSED",
+} as const;
+
+export interface PublicChatResponse {
+  conversationId: string;
+  reply: string;
+  /** @nullable */
+  bookingId?: string | null;
+  status: PublicChatResponseStatus;
+}
+
+export type ConversationListItemChannel =
+  (typeof ConversationListItemChannel)[keyof typeof ConversationListItemChannel];
+
+export const ConversationListItemChannel = {
+  WEB: "WEB",
+  SMS: "SMS",
+  INSTAGRAM: "INSTAGRAM",
+  WHATSAPP: "WHATSAPP",
+  EMAIL: "EMAIL",
+} as const;
+
+export type ConversationListItemStatus =
+  (typeof ConversationListItemStatus)[keyof typeof ConversationListItemStatus];
+
+export const ConversationListItemStatus = {
+  OPEN: "OPEN",
+  HANDED_OFF: "HANDED_OFF",
+  CLOSED: "CLOSED",
+} as const;
+
+export interface ConversationListItem {
+  id: string;
+  businessId: string;
+  /** @nullable */
+  customerId?: string | null;
+  channel: ConversationListItemChannel;
+  status: ConversationListItemStatus;
+  /** @nullable */
+  customerName?: string | null;
+  /** @nullable */
+  customerEmail?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
+  aiHandled: boolean;
+  /** @nullable */
+  summary?: string | null;
+  /** @nullable */
+  lastMessage?: string | null;
+  lastMessageAt: string;
+  createdAt: string;
+  messageCount: number;
+  bookingCount: number;
+}
+
+export type ConversationMessageRole =
+  (typeof ConversationMessageRole)[keyof typeof ConversationMessageRole];
+
+export const ConversationMessageRole = {
+  USER: "USER",
+  ASSISTANT: "ASSISTANT",
+  SYSTEM: "SYSTEM",
+  TOOL: "TOOL",
+} as const;
+
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  role: ConversationMessageRole;
+  content: string;
+  /** @nullable */
+  toolName?: string | null;
+  /** @nullable */
+  bookingId?: string | null;
+  createdAt: string;
+}
+
+export interface ConversationDetail {
+  conversation: ConversationListItem;
+  messages: ConversationMessage[];
+}
+
+export type UpdateConversationBodyStatus =
+  (typeof UpdateConversationBodyStatus)[keyof typeof UpdateConversationBodyStatus];
+
+export const UpdateConversationBodyStatus = {
+  OPEN: "OPEN",
+  HANDED_OFF: "HANDED_OFF",
+  CLOSED: "CLOSED",
+} as const;
+
+export interface UpdateConversationBody {
+  status?: UpdateConversationBodyStatus;
+  aiHandled?: boolean;
+}
+
 export interface PublicBookingConfirmation {
   bookingId: string;
   status: string;
@@ -603,3 +735,16 @@ export type GetPublicSlotsParams = {
   date: string;
   staffId?: string;
 };
+
+export type ListConversationsParams = {
+  status?: ListConversationsStatus;
+};
+
+export type ListConversationsStatus =
+  (typeof ListConversationsStatus)[keyof typeof ListConversationsStatus];
+
+export const ListConversationsStatus = {
+  OPEN: "OPEN",
+  HANDED_OFF: "HANDED_OFF",
+  CLOSED: "CLOSED",
+} as const;

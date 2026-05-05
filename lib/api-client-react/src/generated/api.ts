@@ -25,6 +25,8 @@ import type {
   BookingListResponse,
   Business,
   ConflictResponse,
+  ConversationDetail,
+  ConversationListItem,
   CreateBookingBody,
   CreateBusinessBody,
   CreateCustomerBody,
@@ -43,6 +45,7 @@ import type {
   HealthStatus,
   ListAvailabilityRulesParams,
   ListBookingsParams,
+  ListConversationsParams,
   ListCustomersParams,
   ListServicesParams,
   ListStaffParams,
@@ -50,6 +53,8 @@ import type {
   NotFoundResponse,
   PublicBookingConfirmation,
   PublicBusiness,
+  PublicChatBody,
+  PublicChatResponse,
   Service,
   SetAvailabilityRulesBody,
   SetStaffServicesBody,
@@ -59,6 +64,7 @@ import type {
   UnauthorizedResponse,
   UpdateBookingBody,
   UpdateBusinessBody,
+  UpdateConversationBody,
   UpdateCustomerBody,
   UpdateMeBody,
   UpdateServiceBody,
@@ -3761,6 +3767,441 @@ export function useGetPublicSlots<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Send a message to the public AI booking assistant
+ */
+export const getSendPublicChatMessageUrl = (slug: string) => {
+  return `/api/public/b/${slug}/chat`;
+};
+
+export const sendPublicChatMessage = async (
+  slug: string,
+  publicChatBody: PublicChatBody,
+  options?: RequestInit,
+): Promise<PublicChatResponse> => {
+  return customFetch<PublicChatResponse>(getSendPublicChatMessageUrl(slug), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(publicChatBody),
+  });
+};
+
+export const getSendPublicChatMessageMutationOptions = <
+  TError = ErrorType<BadRequestResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    TError,
+    { slug: string; data: BodyType<PublicChatBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>,
+  TError,
+  { slug: string; data: BodyType<PublicChatBody> },
+  TContext
+> => {
+  const mutationKey = ["sendPublicChatMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    { slug: string; data: BodyType<PublicChatBody> }
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return sendPublicChatMessage(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendPublicChatMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>
+>;
+export type SendPublicChatMessageMutationBody = BodyType<PublicChatBody>;
+export type SendPublicChatMessageMutationError = ErrorType<
+  BadRequestResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Send a message to the public AI booking assistant
+ */
+export const useSendPublicChatMessage = <
+  TError = ErrorType<BadRequestResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPublicChatMessage>>,
+    TError,
+    { slug: string; data: BodyType<PublicChatBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendPublicChatMessage>>,
+  TError,
+  { slug: string; data: BodyType<PublicChatBody> },
+  TContext
+> => {
+  return useMutation(getSendPublicChatMessageMutationOptions(options));
+};
+
+/**
+ * @summary List conversations for a business
+ */
+export const getListConversationsUrl = (
+  businessId: string,
+  params?: ListConversationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/businesses/${businessId}/conversations?${stringifiedParams}`
+    : `/api/businesses/${businessId}/conversations`;
+};
+
+export const listConversations = async (
+  businessId: string,
+  params?: ListConversationsParams,
+  options?: RequestInit,
+): Promise<ConversationListItem[]> => {
+  return customFetch<ConversationListItem[]>(
+    getListConversationsUrl(businessId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListConversationsQueryKey = (
+  businessId: string,
+  params?: ListConversationsParams,
+) => {
+  return [
+    `/api/businesses/${businessId}/conversations`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  params?: ListConversationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listConversations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListConversationsQueryKey(businessId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listConversations>>
+  > = ({ signal }) =>
+    listConversations(businessId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listConversations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listConversations>>
+>;
+export type ListConversationsQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary List conversations for a business
+ */
+
+export function useListConversations<
+  TData = Awaited<ReturnType<typeof listConversations>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  params?: ListConversationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listConversations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListConversationsQueryOptions(
+    businessId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get one conversation with messages
+ */
+export const getGetConversationUrl = (
+  businessId: string,
+  conversationId: string,
+) => {
+  return `/api/businesses/${businessId}/conversations/${conversationId}`;
+};
+
+export const getConversation = async (
+  businessId: string,
+  conversationId: string,
+  options?: RequestInit,
+): Promise<ConversationDetail> => {
+  return customFetch<ConversationDetail>(
+    getGetConversationUrl(businessId, conversationId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetConversationQueryKey = (
+  businessId: string,
+  conversationId: string,
+) => {
+  return [
+    `/api/businesses/${businessId}/conversations/${conversationId}`,
+  ] as const;
+};
+
+export const getGetConversationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  conversationId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetConversationQueryKey(businessId, conversationId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getConversation>>> = ({
+    signal,
+  }) =>
+    getConversation(businessId, conversationId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(businessId && conversationId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getConversation>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetConversationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getConversation>>
+>;
+export type GetConversationQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Get one conversation with messages
+ */
+
+export function useGetConversation<
+  TData = Awaited<ReturnType<typeof getConversation>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  conversationId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetConversationQueryOptions(
+    businessId,
+    conversationId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update conversation status (take over, close)
+ */
+export const getUpdateConversationUrl = (
+  businessId: string,
+  conversationId: string,
+) => {
+  return `/api/businesses/${businessId}/conversations/${conversationId}`;
+};
+
+export const updateConversation = async (
+  businessId: string,
+  conversationId: string,
+  updateConversationBody: UpdateConversationBody,
+  options?: RequestInit,
+): Promise<ConversationListItem> => {
+  return customFetch<ConversationListItem>(
+    getUpdateConversationUrl(businessId, conversationId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateConversationBody),
+    },
+  );
+};
+
+export const getUpdateConversationMutationOptions = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateConversation>>,
+    TError,
+    {
+      businessId: string;
+      conversationId: string;
+      data: BodyType<UpdateConversationBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateConversation>>,
+  TError,
+  {
+    businessId: string;
+    conversationId: string;
+    data: BodyType<UpdateConversationBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["updateConversation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateConversation>>,
+    {
+      businessId: string;
+      conversationId: string;
+      data: BodyType<UpdateConversationBody>;
+    }
+  > = (props) => {
+    const { businessId, conversationId, data } = props ?? {};
+
+    return updateConversation(businessId, conversationId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateConversationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateConversation>>
+>;
+export type UpdateConversationMutationBody = BodyType<UpdateConversationBody>;
+export type UpdateConversationMutationError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Update conversation status (take over, close)
+ */
+export const useUpdateConversation = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateConversation>>,
+    TError,
+    {
+      businessId: string;
+      conversationId: string;
+      data: BodyType<UpdateConversationBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateConversation>>,
+  TError,
+  {
+    businessId: string;
+    conversationId: string;
+    data: BodyType<UpdateConversationBody>;
+  },
+  TContext
+> => {
+  return useMutation(getUpdateConversationMutationOptions(options));
+};
 
 /**
  * @summary Create a booking from the public booking page

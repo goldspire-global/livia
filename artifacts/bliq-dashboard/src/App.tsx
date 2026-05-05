@@ -24,6 +24,7 @@ import StaffPage from "@/pages/staff";
 import StaffDetailPage from "@/pages/staff-detail";
 import ServicesPage from "@/pages/services";
 import SettingsPage from "@/pages/settings";
+import InboxPage from "@/pages/inbox";
 import PublicBookingPage from "@/pages/public-booking";
 
 const queryClient = new QueryClient({
@@ -61,6 +62,7 @@ function AuthenticatedRoutes() {
           <Route path="/staff/:staffId" component={StaffDetailPage} />
           <Route path="/staff" component={StaffPage} />
           <Route path="/services" component={ServicesPage} />
+          <Route path="/inbox" component={InboxPage} />
           <Route path="/settings" component={SettingsPage} />
           <Route component={NotFound} />
         </Switch>

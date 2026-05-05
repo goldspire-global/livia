@@ -10,7 +10,9 @@ import {
   bookingsTable,
   availabilityRulesTable,
   staffServicesTable,
+  businessesTable,
 } from "@workspace/db";
+import { eq, inArray } from "drizzle-orm";
 import { generateId } from "../lib/id";
 
 const router: IRouter = Router();
@@ -329,6 +331,31 @@ router.post("/dev/seed", requireAuth, async (req, res): Promise<void> => {
       { name: tattoo.name, slug: tattoo.slug, category: "Tattoo Studio",   staff: 2, services: 5, customers: 6,  bookings: 12 },
       { name: gym.name,    slug: gym.slug,    category: "Personal Training",staff: 2, services: 5, customers: 6,  bookings: 14 },
     ],
+  });
+});
+
+router.delete("/dev/seed", requireAuth, async (req, res): Promise<void> => {
+  if (process.env.NODE_ENV === "production") {
+    res.status(403).json({ error: "Wipe not available in production" });
+    return;
+  }
+
+  const userId = getUserId(req);
+  const businesses = await getBusinessesForUser(userId);
+  const businessIds = businesses.map((b) => b.id);
+
+  if (businessIds.length === 0) {
+    res.json({ message: "Nothing to wipe", deleted: 0 });
+    return;
+  }
+
+  // Cascade deletes are configured on FKs: deleting businesses will cascade
+  // to staff/services/customers/bookings/availability/conversations/etc.
+  await db.delete(businessesTable).where(inArray(businessesTable.id, businessIds));
+
+  res.json({
+    message: `Wiped ${businessIds.length} business${businessIds.length === 1 ? "" : "es"} and all related data`,
+    deleted: businessIds.length,
   });
 });
 

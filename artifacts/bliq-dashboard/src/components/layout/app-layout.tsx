@@ -2,11 +2,12 @@ import { Link, useLocation } from "wouter";
 import { ReactNode } from "react";
 import { useBusiness } from "@/lib/business-context";
 import { UserButton } from "@clerk/clerk-react";
-import { LayoutDashboard, CalendarDays, Users, UsersRound, Settings } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Users, UsersRound, Settings, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Inbox", href: "/inbox", icon: Inbox },
   { name: "Bookings", href: "/bookings", icon: CalendarDays },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Staff & Services", href: "/staff", icon: UsersRound },

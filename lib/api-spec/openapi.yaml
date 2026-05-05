@@ -31,6 +31,10 @@ tags:
     description: Dashboard summary and analytics
   - name: feature-flags
     description: Feature flags
+  - name: conversations
+    description: AI inbox conversations and messages
+  - name: chat
+    description: Public AI chat assistant
 
 paths:
   /healthz:
@@ -966,6 +970,114 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /public/b/{slug}/chat:
+    post:
+      operationId: sendPublicChatMessage
+      tags: [chat]
+      summary: Send a message to the public AI booking assistant
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicChatBody"
+      responses:
+        "200":
+          description: Assistant reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicChatResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: List conversations for a business
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [OPEN, HANDED_OFF, CLOSED]
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationListItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/conversations/{conversationId}:
+    get:
+      operationId: getConversation
+      tags: [conversations]
+      summary: Get one conversation with messages
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Conversation thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateConversation
+      tags: [conversations]
+      summary: Update conversation status (take over, close)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConversationBody"
+      responses:
+        "200":
+          description: Updated conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationListItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /public/b/{slug}/book:
     post:
       operationId: createPublicBooking
@@ -1142,6 +1254,16 @@ components:
           type: ["string", "null"]
         instagramHandle:
           type: ["string", "null"]
+        aiEnabled:
+          type: string
+        aiTone:
+          type: string
+        aiGreeting:
+          type: ["string", "null"]
+        aiKnowledge:
+          type: ["string", "null"]
+        aiCanBookDirectly:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -1182,6 +1304,8 @@ components:
       properties:
         name:
           type: string
+        slug:
+          type: string
         description:
           type: string
         category:
@@ -1203,6 +1327,17 @@ components:
         coverImageUrl:
           type: string
         instagramHandle:
+          type: string
+        aiEnabled:
+          type: string
+        aiTone:
+          type: string
+          enum: [PROFESSIONAL, FRIENDLY, PLAYFUL]
+        aiGreeting:
+          type: string
+        aiKnowledge:
+          type: string
+        aiCanBookDirectly:
           type: string
 
     # ── Staff ──
@@ -1841,6 +1976,115 @@ components:
           enum: [WEB, APP, WHATSAPP, SMS, INSTAGRAM, SNAPCHAT, EMAIL]
           default: WEB
       required: [serviceId, startAt, customerFirstName]
+
+    PublicChatBody:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        message:
+          type: string
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerPhone:
+          type: string
+      required: [message]
+
+    PublicChatResponse:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        reply:
+          type: string
+        bookingId:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [OPEN, HANDED_OFF, CLOSED]
+      required: [conversationId, reply, status]
+
+    ConversationListItem:
+      type: object
+      properties:
+        id:
+          type: string
+        businessId:
+          type: string
+        customerId:
+          type: ["string", "null"]
+        channel:
+          type: string
+          enum: [WEB, SMS, INSTAGRAM, WHATSAPP, EMAIL]
+        status:
+          type: string
+          enum: [OPEN, HANDED_OFF, CLOSED]
+        customerName:
+          type: ["string", "null"]
+        customerEmail:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        aiHandled:
+          type: boolean
+        summary:
+          type: ["string", "null"]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        messageCount:
+          type: integer
+        bookingCount:
+          type: integer
+      required: [id, businessId, channel, status, aiHandled, lastMessageAt, createdAt, messageCount, bookingCount]
+
+    ConversationMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        role:
+          type: string
+          enum: [USER, ASSISTANT, SYSTEM, TOOL]
+        content:
+          type: string
+        toolName:
+          type: ["string", "null"]
+        bookingId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, conversationId, role, content, createdAt]
+
+    ConversationDetail:
+      type: object
+      properties:
+        conversation:
+          $ref: "#/components/schemas/ConversationListItem"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationMessage"
+      required: [conversation, messages]
+
+    UpdateConversationBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [OPEN, HANDED_OFF, CLOSED]
+        aiHandled:
+          type: boolean
 
     PublicBookingConfirmation:
       type: object

@@ -64,6 +64,11 @@ export const GetMyBusinessesResponseItem = zod.object({
   logoUrl: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
   instagramHandle: zod.string().nullish(),
+  aiEnabled: zod.string().optional(),
+  aiTone: zod.string().optional(),
+  aiGreeting: zod.string().nullish(),
+  aiKnowledge: zod.string().nullish(),
+  aiCanBookDirectly: zod.string().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -109,6 +114,11 @@ export const GetBusinessResponse = zod.object({
   logoUrl: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
   instagramHandle: zod.string().nullish(),
+  aiEnabled: zod.string().optional(),
+  aiTone: zod.string().optional(),
+  aiGreeting: zod.string().nullish(),
+  aiKnowledge: zod.string().nullish(),
+  aiCanBookDirectly: zod.string().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -122,6 +132,7 @@ export const UpdateBusinessParams = zod.object({
 
 export const UpdateBusinessBody = zod.object({
   name: zod.string().optional(),
+  slug: zod.string().optional(),
   description: zod.string().optional(),
   category: zod.string().optional(),
   email: zod.string().optional(),
@@ -133,6 +144,11 @@ export const UpdateBusinessBody = zod.object({
   logoUrl: zod.string().optional(),
   coverImageUrl: zod.string().optional(),
   instagramHandle: zod.string().optional(),
+  aiEnabled: zod.string().optional(),
+  aiTone: zod.enum(["PROFESSIONAL", "FRIENDLY", "PLAYFUL"]).optional(),
+  aiGreeting: zod.string().optional(),
+  aiKnowledge: zod.string().optional(),
+  aiCanBookDirectly: zod.string().optional(),
 });
 
 export const UpdateBusinessResponse = zod.object({
@@ -151,6 +167,11 @@ export const UpdateBusinessResponse = zod.object({
   logoUrl: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
   instagramHandle: zod.string().nullish(),
+  aiEnabled: zod.string().optional(),
+  aiTone: zod.string().optional(),
+  aiGreeting: zod.string().nullish(),
+  aiKnowledge: zod.string().nullish(),
+  aiCanBookDirectly: zod.string().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1277,6 +1298,130 @@ export const GetPublicSlotsResponse = zod.object({
       available: zod.boolean(),
     }),
   ),
+});
+
+/**
+ * @summary Send a message to the public AI booking assistant
+ */
+export const SendPublicChatMessageParams = zod.object({
+  slug: zod.coerce.string(),
+});
+
+export const SendPublicChatMessageBody = zod.object({
+  conversationId: zod.string().optional(),
+  message: zod.string(),
+  customerName: zod.string().optional(),
+  customerEmail: zod.string().optional(),
+  customerPhone: zod.string().optional(),
+});
+
+export const SendPublicChatMessageResponse = zod.object({
+  conversationId: zod.string(),
+  reply: zod.string(),
+  bookingId: zod.string().nullish(),
+  status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]),
+});
+
+/**
+ * @summary List conversations for a business
+ */
+export const ListConversationsParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const ListConversationsQueryParams = zod.object({
+  status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]).optional(),
+});
+
+export const ListConversationsResponseItem = zod.object({
+  id: zod.string(),
+  businessId: zod.string(),
+  customerId: zod.string().nullish(),
+  channel: zod.enum(["WEB", "SMS", "INSTAGRAM", "WHATSAPP", "EMAIL"]),
+  status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]),
+  customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
+  aiHandled: zod.boolean(),
+  summary: zod.string().nullish(),
+  lastMessage: zod.string().nullish(),
+  lastMessageAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+  messageCount: zod.number(),
+  bookingCount: zod.number(),
+});
+export const ListConversationsResponse = zod.array(
+  ListConversationsResponseItem,
+);
+
+/**
+ * @summary Get one conversation with messages
+ */
+export const GetConversationParams = zod.object({
+  businessId: zod.coerce.string(),
+  conversationId: zod.coerce.string(),
+});
+
+export const GetConversationResponse = zod.object({
+  conversation: zod.object({
+    id: zod.string(),
+    businessId: zod.string(),
+    customerId: zod.string().nullish(),
+    channel: zod.enum(["WEB", "SMS", "INSTAGRAM", "WHATSAPP", "EMAIL"]),
+    status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]),
+    customerName: zod.string().nullish(),
+    customerEmail: zod.string().nullish(),
+    customerPhone: zod.string().nullish(),
+    aiHandled: zod.boolean(),
+    summary: zod.string().nullish(),
+    lastMessage: zod.string().nullish(),
+    lastMessageAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+    messageCount: zod.number(),
+    bookingCount: zod.number(),
+  }),
+  messages: zod.array(
+    zod.object({
+      id: zod.string(),
+      conversationId: zod.string(),
+      role: zod.enum(["USER", "ASSISTANT", "SYSTEM", "TOOL"]),
+      content: zod.string(),
+      toolName: zod.string().nullish(),
+      bookingId: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Update conversation status (take over, close)
+ */
+export const UpdateConversationParams = zod.object({
+  businessId: zod.coerce.string(),
+  conversationId: zod.coerce.string(),
+});
+
+export const UpdateConversationBody = zod.object({
+  status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]).optional(),
+  aiHandled: zod.boolean().optional(),
+});
+
+export const UpdateConversationResponse = zod.object({
+  id: zod.string(),
+  businessId: zod.string(),
+  customerId: zod.string().nullish(),
+  channel: zod.enum(["WEB", "SMS", "INSTAGRAM", "WHATSAPP", "EMAIL"]),
+  status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]),
+  customerName: zod.string().nullish(),
+  customerEmail: zod.string().nullish(),
+  customerPhone: zod.string().nullish(),
+  aiHandled: zod.boolean(),
+  summary: zod.string().nullish(),
+  lastMessage: zod.string().nullish(),
+  lastMessageAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+  messageCount: zod.number(),
+  bookingCount: zod.number(),
 });
 
 /**

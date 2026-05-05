@@ -39,8 +39,9 @@ Multi-tenant, AI-native operating system for appointment-based service businesse
 
 ### Packages
 
-- `lib/db` — Drizzle schema (12 tables), DB client, enums, status-transition helpers.
+- `lib/db` — Drizzle schema (14 tables), DB client, enums, status-transition helpers.
 - `lib/api-spec` — OpenAPI source, `pnpm codegen` regenerates `lib/api-zod` (Zod schemas) and `lib/api-client-react` (React Query hooks).
+- `lib/integrations-anthropic-ai` — thin Anthropic SDK wrapper that wires `AI_INTEGRATIONS_ANTHROPIC_*` env vars (provisioned via Replit AI Integrations) to a single `anthropic` client. Used by the AI chat endpoint.
 
 ### Mobile App Screens (artifacts/bliq-mobile)
 
@@ -109,6 +110,33 @@ The production dashboard at `artifacts/bliq-dashboard/src/pages/dashboard.tsx` i
 - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` — mobile app
 - `DATABASE_URL` — Postgres
 - `EXPO_PUBLIC_DOMAIN` — injected at workflow start from `$REPLIT_DEV_DOMAIN`; used as API base URL in mobile app
+
+### AI Inbox (Wave 2 wedge — May 5)
+
+The wedge: customers chat → AI books → owner sees the thread, can take over, and configure the assistant.
+
+**Schema (`lib/db/src/schema/conversations.ts`):**
+- `conversations` — id (text/nanoid), businessId FK (cascade), customerId? FK, channel (`WEB|SMS|IG|WA`), status (`OPEN|HANDED_OFF|CLOSED`), aiHandled bool, plus contact fields captured pre-customer (customerName/Email/Phone), summary, lastMessageAt.
+- `conversationMessages` — id, conversationId FK (cascade), role (`USER|ASSISTANT|SYSTEM|TOOL`), content text, toolName/toolInput/toolResult (text), bookingId? FK, createdAt.
+- 5 new columns on `businesses`: `aiEnabled`, `aiTone`, `aiGreeting`, `aiKnowledge`, `aiCanBookDirectly` — all stored as **text** (`"true"`/`"false"`) for simplicity. Frontend serialises booleans accordingly.
+
+**Backend (`artifacts/api-server`):**
+- `services/ai-chat.service.ts` — Claude tool-loop. Model `claude-sonnet-4-6`, `max_tokens=8192`, `MAX_TOOL_HOPS=6`. Dynamic system prompt blends business name/category/description + `aiTone` + `aiGreeting` + `aiKnowledge` + an enumerated services list. Two tools registered: `find_slots(serviceId, date, staffId?)` (calls existing `getAvailableSlots`) and `create_booking(serviceId, startAt, customerFirstName, customerEmail|customerPhone, ...)`. The loop persists every USER/ASSISTANT/TOOL message and links the booking back onto the message + conversation.
+- `services/conversations.service.ts` — CRUD + `listConversationsForBusiness` with raw `sql()` aggregates for lastMessage / messageCount / bookingCount.
+- Routes: `POST /api/public/b/:slug/chat` (no auth — same surface as public booking), `GET /api/businesses/:id/conversations`, `GET /api/businesses/:id/conversations/:cid`, `PATCH /api/businesses/:id/conversations/:cid` (status changes for take-over / close).
+- AI is gated by `business.aiEnabled !== "false"`. When disabled the chat endpoint returns a 403.
+
+**Frontend (`artifacts/bliq-dashboard`):**
+- `components/chat-widget.tsx` — floating "Chat with AI" FAB on the public booking page. Slides up into a 400px bottom-right panel (full-screen on mobile). Aurora gradient bubbles, typing dots, suggested prompts on first open, inline booking-confirmation badge when the AI books.
+- `pages/inbox.tsx` — owner's `/inbox` route. Two-pane: conversation list (filterable Open / Taken-over / Closed / All, polls every 10s) + thread view (polls every 5s). Tool messages collapse into `<details>`. "Take over" button flips status to `HANDED_OFF`, pausing the AI; "Resume AI" / "Mark resolved" round-trip back.
+- `pages/settings.tsx` — restructured into Tabs (General / AI Assistant / Demo & Data). AI tab toggles assistant on/off, picks tone (professional/friendly/playful), edits greeting + free-form knowledge, controls auto-book.
+- `components/demo-data-controls.tsx` — reusable seed/wipe button. Used as the empty-state CTA on a brand-new dashboard (when `summary.todayBookings + weekBookings + totalCustomers === 0`) and on the new Settings → Demo & Data tab.
+- Public booking page (`pages/public-booking.tsx`) was tightened: notes textarea, requires email OR phone, full-page loading overlay during booking submit, all `any` typed away, .ics download on confirmation.
+- New `Inbox` nav item between Dashboard and Bookings (`components/layout/app-layout.tsx`).
+
+**Demo flow:** sign in → empty Cockpit dashboard → click **"Load demo data"** → 3 businesses seeded → Settings → copy public link → open in incognito → click "Chat with AI" → "I need a haircut tomorrow at 3pm" → AI responds, books → owner sees thread in `/inbox`. End-to-end smoke-tested against real Anthropic on May 5.
+
+**Dev seed:** `POST /api/dev/seed` creates 3 demo businesses (idempotent — guards on existing). New `DELETE /api/dev/seed` wipes all of the calling user's businesses (cascades through staff/services/customers/bookings/availability/conversations via FK). Both are 403 in production.
 
 ## Roadmap & Active Work
 

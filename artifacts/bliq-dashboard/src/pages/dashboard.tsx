@@ -22,6 +22,7 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  Sparkles,
   UserCog,
   UserPlus,
   Users,
@@ -30,6 +31,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import DemoDataControls from "@/components/demo-data-controls";
 
 // ------------ helpers ------------
 
@@ -266,6 +268,109 @@ export default function DashboardPage() {
     if (!businessId) return;
     updateBooking.mutate({ businessId, bookingId, data: { status } });
   };
+
+  // Brand-new account: no bookings, no customers — show a beautiful onboarding
+  // empty state instead of a sea of zeros.
+  const isFirstRun =
+    !!summary &&
+    !isLoadingSummary &&
+    summary.todayBookings === 0 &&
+    summary.weekBookings === 0 &&
+    summary.totalCustomers === 0;
+
+  if (isFirstRun) {
+    return (
+      <div
+        className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        style={{ fontFamily: "var(--app-font-sans)" }}
+      >
+        <header>
+          <h1
+            className="text-base font-semibold tracking-tight"
+            style={{ fontFamily: "var(--app-font-display)" }}
+          >
+            Welcome to Bliq
+          </h1>
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Your command center is ready. Let's get something on screen.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-[hsl(var(--chart-1))]/10 p-8">
+            <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+            <div className="relative">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--chart-1))] mb-4 shadow-lg shadow-primary/30">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">See Bliq in 5 seconds</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md">
+                Load a demo workspace with 3 example businesses — a hair salon, a tattoo
+                studio, and a personal training gym — pre-loaded with staff, services,
+                customers, and 40+ bookings. Click around, take it apart, and break things
+                freely.
+              </p>
+              <DemoDataControls variant="primary" />
+              <p className="text-[11px] text-muted-foreground mt-3 font-mono">
+                Tip: try the public booking link in /settings → and chat with the AI.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-8">
+            <h2 className="text-base font-semibold mb-4">Or build it yourself</h2>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-5 w-5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground flex items-center justify-center shrink-0">
+                  1
+                </span>
+                <div>
+                  <Link href="/staff">
+                    <span className="font-medium hover:text-primary cursor-pointer">
+                      Add your staff & services
+                    </span>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    Bliq needs to know who works there and what they do.
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-5 w-5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground flex items-center justify-center shrink-0">
+                  2
+                </span>
+                <div>
+                  <Link href="/settings">
+                    <span className="font-medium hover:text-primary cursor-pointer">
+                      Set your booking page
+                    </span>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    Pick your URL slug, add a description, configure the AI assistant.
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-5 w-5 rounded-full bg-muted text-[10px] font-mono text-muted-foreground flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <div>
+                  <Link href="/bookings/new">
+                    <span className="font-medium hover:text-primary cursor-pointer">
+                      Take your first booking
+                    </span>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    Manually or share your public link with customers.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
