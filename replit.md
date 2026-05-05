@@ -89,9 +89,30 @@ All screens pass TypeScript with zero errors.
 ## Roadmap & Active Work
 
 - 7-wave product roadmap lives in `.local/tasks/RELEASE-PLAN.md`. 17 detailed task plans in `.local/tasks/*.md` (project tasks #6–#22).
-- **Wave 1 (active):** Brand & visual identity (Task #18), brand definition (#6), personas/ICP (#7).
-- Brand exploration in progress on the canvas — three directions (Aurora, Atelier, Pulse) under `artifacts/mockup-sandbox/src/components/mockups/brand-explorations/`. User picks the winner; that becomes the design-system source of truth.
+- **Wave 1 (active):**
+  - ✅ Brand definition (#6) — three explorations on canvas (Aurora / Atelier / Pulse), user picked **Aurora**.
+  - ✅ Design system (#18) — Aurora tokens shipped to dashboard `index.css` + mobile `constants/colors.ts`. Sign-in/up branded.
+  - ⏳ Personas / ICP (#7) — next.
+
+## Brand System — Aurora
+
+Bliq's visual identity is **Aurora** — modern premium AI: cinematic midnight base + a violet→cyan→mint gradient as the AI energy signal.
+
+**Tokens (source of truth):**
+- Colors: violet `#8b5cf6`, cyan `#06b6d4` (primary), mint `#10b981`, midnight `#09090b`. Warning `#f59e0b`, destructive `#ef4444`.
+- Fonts: **Plus Jakarta Sans** (display), **Geist** (body/UI), **JetBrains Mono** (data). Loaded in `artifacts/bliq-dashboard/index.html`.
+- Radius: `0.75rem` (12px). Aurora is a softer, rounder system than the prior 8px default.
+
+**Where the tokens live:**
+- Dashboard CSS vars: `artifacts/bliq-dashboard/src/index.css` — `--primary` is cyan `188 95% 43%`; dark mode is the canonical Aurora theme. Brand colors are also exposed as Tailwind utilities (`bg-aurora-violet`, `text-aurora-cyan`, `bg-aurora-mint`) via the `@theme` block.
+- Dashboard utilities: `.aurora-gradient`, `.aurora-gradient-text`, `.aurora-glass`, `.aurora-glow` — use `aurora-gradient-text` for taglines and `aurora-gradient` for AI-energy buttons/badges. Use sparingly.
+- Mobile palette: `artifacts/bliq-mobile/constants/colors.ts` — same Aurora mapping. Exports a named `aurora` object with the three brand hexes.
+- Logo mark: `artifacts/bliq-dashboard/src/components/brand/BliqMark.tsx` — gradient SVG + `<BliqWordmark>`.
+- Brand showcase pages (reference for future brand work): `artifacts/mockup-sandbox/src/components/mockups/brand-explorations/Aurora.{tsx,css}`. Atelier and Pulse are kept on disk for archival/comparison.
+
+**Voice:** precise, calm, slightly poetic. Empty states whisper, success toasts confirm, AI suggestions invite without pressuring. Examples in `Aurora.tsx` section 7.
 
 ## Auth / Clerk Notes
 
 - Clerk app name "Bliq Goldspire" (auto-generated) is overridden client-side via `localization` on `<ClerkProvider>` in `artifacts/bliq-dashboard/src/App.tsx` — sets `signIn.start.title` and `signUp.start.title` to "Sign in to Bliq" / "Create your Bliq account". Per-component `localization` props on `<SignIn>` / `<SignUp>` do NOT override the provider — set it once at the provider level.
+- Clerk appearance variables (also in `App.tsx`) are themed for Aurora: `colorPrimary: "#06b6d4"`, `fontFamily: Geist`, `borderRadius: "0.75rem"`. Sign-in/sign-up pages use `<BliqMark />` and `aurora-gradient-text` for the branded hero.

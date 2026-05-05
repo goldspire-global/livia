@@ -111,8 +111,10 @@ function ClerkProviderWithTheme({ children }: { children: React.ReactNode }) {
       appearance={{
         baseTheme: currentTheme === "dark" ? dark : undefined,
         variables: {
-          colorPrimary: "hsl(262, 83%, 58%)",
-          colorBackground: currentTheme === "dark" ? "hsl(223, 21%, 10%)" : "white",
+          colorPrimary: "#06b6d4",
+          colorBackground: currentTheme === "dark" ? "#0c0c0f" : "#ffffff",
+          fontFamily: '"Geist", "Inter", system-ui, sans-serif',
+          borderRadius: "0.75rem",
         },
       }}
       localization={{

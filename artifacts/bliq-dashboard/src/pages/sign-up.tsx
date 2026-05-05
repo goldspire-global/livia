@@ -1,23 +1,42 @@
 import { SignUp } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { useTheme } from "next-themes";
+import { BliqMark } from "@/components/brand/BliqMark";
 
 export default function SignUpPage() {
   const { theme } = useTheme();
-  
+
   return (
-    <div className="flex min-h-[100dvh] w-full items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Bliq</h1>
-          <p className="text-muted-foreground mt-2">Create your account to get started</p>
+    <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-background p-4">
+      {/* Ambient aurora glow */}
+      <div className="pointer-events-none absolute inset-0 opacity-50">
+        <div className="absolute left-1/4 top-1/3 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-aurora-violet/20 blur-[120px]" />
+        <div className="absolute right-1/4 top-1/2 h-[400px] w-[400px] translate-x-1/2 rounded-full bg-aurora-cyan/20 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-10 text-center">
+          <div className="mb-5 flex items-center justify-center gap-3">
+            <BliqMark className="h-10 w-10" />
+            <span className="font-display text-3xl font-semibold tracking-tight text-foreground">
+              Bliq
+            </span>
+          </div>
+          <h1 className="font-display text-4xl font-bold tracking-tight">
+            Start booking{" "}
+            <span className="aurora-gradient-text">smarter.</span>
+          </h1>
+          <p className="mt-3 text-muted-foreground">
+            Create your account in under a minute.
+          </p>
         </div>
         <SignUp
           appearance={{
             baseTheme: theme === "dark" ? dark : undefined,
             elements: {
-              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-              card: "bg-card border border-border shadow-md",
+              formButtonPrimary:
+                "bg-primary hover:bg-primary/90 text-primary-foreground",
+              card: "bg-card/80 backdrop-blur-xl border border-border shadow-xl",
             },
           }}
           routing="path"
