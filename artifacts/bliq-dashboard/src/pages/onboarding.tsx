@@ -119,7 +119,7 @@ export default function OnboardingPage() {
               Just exploring? Load a demo workspace instantly.
             </p>
             <p className="text-xs text-muted-foreground">
-              Creates Luxe Salon &amp; Spa — 3 staff, 5 services, 8 clients, and 15 bookings — so you can try every feature right away.
+              Creates <strong>3 businesses</strong> across different industries — a hair salon, a tattoo studio, and a personal training gym — each with real staff, services, clients, and bookings so you can explore every feature.
             </p>
             <Button
               type="button"
