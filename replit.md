@@ -12,6 +12,8 @@ Premium AI-native multi-tenant operating system for appointment-based service bu
 
 **Env vars:** `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` (api), `VITE_CLERK_PUBLISHABLE_KEY` (web), `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` + `EXPO_PUBLIC_DOMAIN` (mobile), `DATABASE_URL`, `AI_INTEGRATIONS_ANTHROPIC_*` (provisioned via Replit AI Integrations).
 
+**Observability env vars (optional, Gate-2):** `SENTRY_DSN_API` (api-server), `VITE_SENTRY_DSN` (dashboard), `SENTRY_RELEASE` / `VITE_SENTRY_RELEASE` (release tag). Omit to disable Sentry — SDKs no-op cleanly. `LOG_LEVEL` controls pino level. Codegen guard: `./scripts/check-codegen.sh`.
+
 ## Stack
 
 pnpm workspace monorepo · TypeScript 5.9 · Node 24 · Express 5 · PostgreSQL + Drizzle ORM · Zod (`zod/v4`) + `drizzle-zod` · Orval API codegen · Vite (web) · Expo (mobile) · Clerk auth · Anthropic Claude (AI).
@@ -111,8 +113,17 @@ Production dashboard at `artifacts/bliq-dashboard/src/pages/dashboard.tsx` is th
 - **`business?.name.charAt(0)` fallback** in `app-layout.tsx` still shows "B" when business name is empty — cosmetic, defer until directory rename round.
 - **`shadow*` / `pointerEvents` deprecation warnings** from React Native Web are expected until Expo upstream ships fixes; they do not block the demo.
 
+## Observability (Gate-2 floor, Task #25)
+
+- **Sentry**: api-server (`@sentry/node`) + dashboard (`@sentry/react`). Init gated by DSN env vars (`SENTRY_DSN_API`, `VITE_SENTRY_DSN`). Express error handler wired via `Sentry.setupExpressErrorHandler` before the JSON 500 responder. Mobile (`@sentry/react-native`) deferred — needs Expo native plugin + dev-client rebuild that would break the Expo Go workflow.
+- **Structured request logging**: `pino-http` in `artifacts/api-server/src/app.ts` emits `request_id` (from `x-request-id` header or random UUID, echoed back), `tenant_id` (parsed from `/businesses/:id/` URL or `x-business-id` header), `user_id` (Clerk auth), `method`, `path`, `status`, `responseTime`. Log level via `customLogLevel`: 5xx→error, 4xx→warn, else info.
+- **OpenAPI guard**: `scripts/check-codegen.sh` runs codegen and fails on `git status --porcelain` diff in `lib/api-client-react`/`lib/api-zod`/`lib/api-spec`. Wired into `.github/workflows/ci.yml` (typecheck + codegen-guard) for when the GitHub repo is connected.
+- **Source-map upload** to Sentry deferred — needs `SENTRY_AUTH_TOKEN` from founder + `@sentry/vite-plugin` wiring. SDKs work without it.
+
 ## Pointers
 
 - Skills: `pnpm-workspace`, `clerk-auth`, `database`, `deployment`, `artifacts`, `react-vite`, `expo`, `canvas`, `mockup-sandbox`.
-- Roadmap: `.local/tasks/RELEASE-PLAN.md` + 17 task plans `.local/tasks/*.md` (project tasks #6–#22).
-- Pending plan: `.local/tasks/livia-launch-plan.md` (5 lanes, 3 gates — write in Plan mode).
+- Engineer onboarding: `docs/onboarding-engineer.md`.
+- Demo path: `docs/demo-script.md`.
+- Launch plan: `docs/launch-plan.md` (5 lanes, 3 gates).
+- Legacy roadmap (superseded): `.local/tasks/RELEASE-PLAN.md` + `.local/tasks/0[1-9]-*.md` + `.local/tasks/1[0-7]-*.md`.
