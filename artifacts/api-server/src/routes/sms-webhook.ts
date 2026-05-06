@@ -126,7 +126,9 @@ router.post(
             customerPhone: from,
           });
 
-      // Persist inbound USER message + raw message log.
+      // Persist inbound USER message + raw message log. handlePublicChat
+      // is invoked below with skipPersistence:true so it does NOT
+      // re-append the USER row (or the ASSISTANT — sendAiSms owns that).
       await appendMessage({
         conversationId: conversation.id,
         role: "USER",
@@ -157,6 +159,7 @@ router.post(
             message: body,
             customerName: customer.displayName ?? undefined,
             customerPhone: from,
+            skipPersistence: true,
           });
           if (!result?.reply) return;
           await sendAiSms({

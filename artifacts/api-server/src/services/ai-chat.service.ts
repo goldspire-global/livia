@@ -253,6 +253,7 @@ async function executeTool(args: {
           customerId: customer.id,
           customerPhone: toolInput.customerPhone,
           content: `${serviceName} confirmed for ${startLocal} at ${business.name}. Reply to reschedule.`,
+          fromPhone: business.twilioPhoneNumber ?? null,
         }).catch((err) => {
           console.error("[ai-chat] sendAiSms failed", err);
         });
@@ -297,6 +298,13 @@ export async function handlePublicChat(args: {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  // SMS webhook owns inbound USER persistence (it writes the row before
+  // calling us so the messageLogs row + conversation row are consistent
+  // with the Twilio MessageSid). Pass true to skip the duplicate USER
+  // append here. The final ASSISTANT text is also skipped — the caller
+  // is expected to send via sendAiSms, which writes its own ASSISTANT
+  // row with toolName="sms" so the Art. 50 prefix logic runs.
+  skipPersistence?: boolean;
 }): Promise<{
   conversationId: string;
   reply: string;
@@ -338,12 +346,15 @@ export async function handlePublicChat(args: {
     });
   }
 
-  // Persist the user message
-  await appendMessage({
-    conversationId: conversation.id,
-    role: "USER",
-    content: args.message,
-  });
+  // Persist the user message (skipped when caller already wrote it,
+  // e.g. the Twilio inbound SMS webhook).
+  if (!args.skipPersistence) {
+    await appendMessage({
+      conversationId: conversation.id,
+      role: "USER",
+      content: args.message,
+    });
+  }
 
   // If a human took over OR the conversation is closed, just store the message and return a no-op reply.
   // The AI does not respond unless aiHandled === true AND status === "OPEN".
@@ -461,12 +472,17 @@ export async function handlePublicChat(args: {
     finalText = "Hmm, that took a few tries. Could you tell me again what you'd like to book?";
   }
 
-  await appendMessage({
-    conversationId: conversation.id,
-    role: "ASSISTANT",
-    content: finalText,
-    bookingId: lastBookingId,
-  });
+  // Final ASSISTANT persistence is skipped for SMS callers — they will
+  // re-send via sendAiSms, which writes its own ASSISTANT row with
+  // toolName="sms" so the EU AI Act Art. 50 prefix logic fires.
+  if (!args.skipPersistence) {
+    await appendMessage({
+      conversationId: conversation.id,
+      role: "ASSISTANT",
+      content: finalText,
+      bookingId: lastBookingId,
+    });
+  }
 
   return {
     conversationId: conversation.id,
