@@ -1,9 +1,11 @@
 import { useCreateBusiness } from "@workspace/api-client-react";
 import { useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,14 +13,30 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type StyleProp,
+  type TextStyle,
 } from "react-native";
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
+import { LivPulse } from "@/components/brand/LivPulse";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
 import { aurora } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
+import { SPRING_QUICK } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
@@ -36,6 +54,30 @@ const TIMEZONES = [
   "America/Los_Angeles",
 ];
 
+const { width: SCREEN_W } = Dimensions.get("window");
+
+interface SlideMeta {
+  eyebrow: string;
+  title: string;
+  italic: string;
+  body: string;
+}
+
+const SLIDES: SlideMeta[] = [
+  {
+    eyebrow: "MEET LIV",
+    title: "Your day,",
+    italic: "already handled.",
+    body: "Liv answers, books, reschedules, follows up — so the chair stays full and your phone stays quiet.",
+  },
+  {
+    eyebrow: "ONE CALM HOME",
+    title: "Schedule, clients,",
+    italic: "and the AI — together.",
+    body: "Replace four apps with one operations partner that actually understands appointment-based work.",
+  },
+];
+
 export default function OnboardingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -44,6 +86,35 @@ export default function OnboardingScreen() {
   const { refetch } = useBusiness();
   const { getToken } = useAuth();
 
+  const listRef = useRef<FlatList<SlideMeta | null>>(null);
+  const [page, setPage] = useState(0);
+  const scrollX = useSharedValue(0);
+
+  const items: (SlideMeta | null)[] = [...SLIDES, null]; // last item is the form
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollX.value = e.contentOffset.x;
+    },
+  });
+
+  const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
+    if (next !== page) {
+      setPage(next);
+      haptics.selection(); // haptic tick per step
+    }
+  };
+
+  const goNext = () => {
+    if (page < items.length - 1) {
+      haptics.selection();
+      listRef.current?.scrollToIndex({ index: page + 1, animated: true });
+      setPage(page + 1);
+    }
+  };
+
+  // Form state (used by the third slide)
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [phone, setPhone] = useState("");
@@ -51,7 +122,6 @@ export default function OnboardingScreen() {
   const [showTz, setShowTz] = useState(false);
   const [error, setError] = useState("");
   const [seedLoading, setSeedLoading] = useState(false);
-
   const { mutateAsync: createBusiness, isPending } = useCreateBusiness();
 
   const handleSlugFromName = (v: string) => {
@@ -116,6 +186,13 @@ export default function OnboardingScreen() {
 
   const isLoading = isPending || seedLoading;
 
+  // Header opacity fades in fast, settles
+  const headOpacity = useSharedValue(0);
+  useEffect(() => {
+    headOpacity.value = withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) });
+  }, []);
+  const headStyle = useAnimatedStyle(() => ({ opacity: headOpacity.value }));
+
   const inputStyle = [
     styles.input,
     { backgroundColor: colors.input + "55", color: colors.foreground, borderColor: colors.border },
@@ -126,33 +203,228 @@ export default function OnboardingScreen() {
       style={[styles.root, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {/* Single ambient halo behind everything */}
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <AuroraHalo tone="ambient" size={500} style={{ top: -200, right: -100 }} intensity={0.6} />
+        <AuroraHalo tone="ambient" size={520} style={{ top: -200, right: -120 }} intensity={0.7} />
       </View>
 
+      <Animated.View style={[styles.headerStrip, { paddingTop: insets.top + 18 }, headStyle]}>
+        <LiviaWordmark size="md" color={colors.foreground} />
+        <View style={styles.dots}>
+          {items.map((_, i) => (
+            <Dot key={i} index={i} scrollX={scrollX} color={colors.foreground} />
+          ))}
+        </View>
+      </Animated.View>
+
+      <Animated.FlatList
+        ref={listRef}
+        data={items}
+        keyExtractor={(_, i) => String(i)}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={onMomentumEnd}
+        bounces={false}
+        renderItem={({ item, index }) => {
+          if (item === null) {
+            return (
+              <FormSlide
+                colors={colors}
+                inputStyle={inputStyle}
+                name={name}
+                slug={slug}
+                phone={phone}
+                timezone={timezone}
+                showTz={showTz}
+                error={error}
+                isLoading={isLoading}
+                seedLoading={seedLoading}
+                isPending={isPending}
+                handlers={{
+                  setName: handleSlugFromName,
+                  setSlug,
+                  setPhone,
+                  setTimezone,
+                  setShowTz,
+                  handleCreate,
+                  handleLoadDemo,
+                  haptics,
+                }}
+              />
+            );
+          }
+          return (
+            <Slide
+              meta={item}
+              index={index}
+              scrollX={scrollX}
+              colors={colors}
+            />
+          );
+        }}
+      />
+
+      {/* Bottom CTA — context-aware */}
+      {page < items.length - 1 && (
+        <View style={[styles.bottomCta, { paddingBottom: insets.bottom + 18 }]}>
+          <Pressable
+            onPress={goNext}
+            style={({ pressed }) => [
+              styles.cta,
+              {
+                backgroundColor: colors.primary,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+              },
+              elevation.floating,
+            ]}
+          >
+            <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>
+              {page === items.length - 2 ? "Set up workspace" : "Continue"}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+    </KeyboardAvoidingView>
+  );
+}
+
+/** A single intro slide with a parallax background pulse + staggered headline. */
+function Slide({
+  meta,
+  index,
+  scrollX,
+  colors,
+}: {
+  meta: SlideMeta;
+  index: number;
+  scrollX: SharedValue<number>;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const inputRange = [(index - 1) * SCREEN_W, index * SCREEN_W, (index + 1) * SCREEN_W];
+
+  const parallaxStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(scrollX.value, inputRange, [40, 0, -40], Extrapolation.CLAMP),
+      },
+      {
+        scale: interpolate(scrollX.value, inputRange, [0.92, 1, 0.92], Extrapolation.CLAMP),
+      },
+    ],
+    opacity: interpolate(scrollX.value, inputRange, [0.3, 1, 0.3], Extrapolation.CLAMP),
+  }));
+
+  const textParallax = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(scrollX.value, inputRange, [60, 0, -60], Extrapolation.CLAMP),
+      },
+    ],
+    opacity: interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP),
+  }));
+
+  return (
+    <View style={[styles.slide, { width: SCREEN_W }]}>
+      <Animated.View style={[styles.slideHero, parallaxStyle]}>
+        <View style={styles.heroPulse}>
+          <AuroraHalo tone="primary" size={300} intensity={0.8} style={{ top: -100, left: -100 }} />
+          <View style={styles.pulseCenter}>
+            <LivPulse size={32} state="active" />
+          </View>
+        </View>
+      </Animated.View>
+
+      <Animated.View style={[styles.slideText, textParallax]}>
+        <Text style={[styles.eyebrow, { color: aurora.cyan }]}>{meta.eyebrow}</Text>
+        <Text style={[styles.slideTitle, { color: colors.foreground }]}>
+          {meta.title}{"\n"}
+          <Text style={[styles.slideItalic, { color: colors.mutedForeground }]}>
+            {meta.italic}
+          </Text>
+        </Text>
+        <Text style={[styles.slideBody, { color: colors.mutedForeground }]}>{meta.body}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+/** Animated paging dot — width grows on the active page. */
+function Dot({
+  index,
+  scrollX,
+  color,
+}: {
+  index: number;
+  scrollX: SharedValue<number>;
+  color: string;
+}) {
+  const inputRange = [(index - 1) * SCREEN_W, index * SCREEN_W, (index + 1) * SCREEN_W];
+  const style = useAnimatedStyle(() => ({
+    width: interpolate(scrollX.value, inputRange, [6, 22, 6], Extrapolation.CLAMP),
+    opacity: interpolate(scrollX.value, inputRange, [0.3, 1, 0.3], Extrapolation.CLAMP),
+  }));
+  return <Animated.View style={[styles.dot, { backgroundColor: color }, style]} />;
+}
+
+/** The original onboarding form, now living on the third slide. */
+function FormSlide({
+  colors,
+  inputStyle,
+  name,
+  slug,
+  phone,
+  timezone,
+  showTz,
+  error,
+  isLoading,
+  seedLoading,
+  isPending,
+  handlers,
+}: {
+  colors: ReturnType<typeof useColors>;
+  inputStyle: StyleProp<TextStyle>;
+  name: string;
+  slug: string;
+  phone: string;
+  timezone: string;
+  showTz: boolean;
+  error: string;
+  isLoading: boolean;
+  seedLoading: boolean;
+  isPending: boolean;
+  handlers: {
+    setName: (v: string) => void;
+    setSlug: (v: string) => void;
+    setPhone: (v: string) => void;
+    setTimezone: (v: string) => void;
+    setShowTz: (v: boolean) => void;
+    handleCreate: () => void;
+    handleLoadDemo: () => void;
+    haptics: ReturnType<typeof useHaptics>;
+  };
+}) {
+  return (
+    <View style={[styles.slide, { width: SCREEN_W }]}>
       <ScrollView
-        contentContainerStyle={[
-          styles.container,
-          { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 32 },
-        ]}
+        contentContainerStyle={styles.formScroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <LiviaWordmark size="md" color={colors.foreground} />
-
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>
+        <View style={styles.formHeader}>
+          <Text style={[styles.formTitle, { color: colors.foreground }]}>
             Set up your{"\n"}
-            <Text style={[styles.titleItalic, { color: colors.mutedForeground }]}>
+            <Text style={[styles.slideItalic, { color: colors.mutedForeground }]}>
               command center.
             </Text>
           </Text>
-          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+          <Text style={[styles.formSub, { color: colors.mutedForeground }]}>
             One business, two minutes — Liv handles the rest.
           </Text>
         </View>
 
-        {/* Demo shortcut */}
         <View
           style={[
             styles.demoBox,
@@ -160,24 +432,19 @@ export default function OnboardingScreen() {
             elevation.resting,
           ]}
         >
-          <Text style={[styles.demoTitle, { color: colors.foreground }]}>
-            Just exploring?
-          </Text>
+          <Text style={[styles.demoTitle, { color: colors.foreground }]}>Just exploring?</Text>
           <Text style={[styles.demoSub, { color: colors.mutedForeground }]}>
-            Load 3 demo businesses — a hair salon, a tattoo studio, a personal trainer — all wired with real staff, clients, and bookings.
+            Load 3 demo businesses — a hair salon, a tattoo studio, a personal trainer.
           </Text>
-          <TouchableOpacity
+          <Pressable
             style={[
               styles.demoCta,
-              {
-                backgroundColor: colors.primary + "1f",
-                borderColor: colors.primary + "66",
-              },
+              { backgroundColor: colors.primary + "1f", borderColor: colors.primary + "66" },
               isLoading && { opacity: 0.6 },
             ]}
-            onPress={handleLoadDemo}
+            onPress={handlers.handleLoadDemo}
             disabled={isLoading}
-            activeOpacity={0.85}
+            testID="demo-cta"
           >
             {seedLoading ? (
               <ActivityIndicator color={colors.primary} size="small" />
@@ -186,7 +453,7 @@ export default function OnboardingScreen() {
                 Load demo workspace
               </Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.divider}>
@@ -197,7 +464,6 @@ export default function OnboardingScreen() {
           <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
         </View>
 
-        {/* Manual form */}
         <View style={styles.form}>
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Business name</Text>
@@ -206,11 +472,10 @@ export default function OnboardingScreen() {
               placeholder="e.g. Studio Luxe"
               placeholderTextColor={colors.mutedForeground}
               value={name}
-              onChangeText={handleSlugFromName}
+              onChangeText={handlers.setName}
               testID="business-name-input"
             />
           </View>
-
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>
               URL slug{" "}
@@ -224,13 +489,12 @@ export default function OnboardingScreen() {
               placeholderTextColor={colors.mutedForeground}
               value={slug}
               onChangeText={(v) =>
-                setSlug(v.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40))
+                handlers.setSlug(v.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40))
               }
               autoCapitalize="none"
               testID="slug-input"
             />
           </View>
-
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Phone</Text>
             <TextInput
@@ -238,11 +502,10 @@ export default function OnboardingScreen() {
               placeholder="+353 1 234 5678"
               placeholderTextColor={colors.mutedForeground}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={handlers.setPhone}
               keyboardType="phone-pad"
             />
           </View>
-
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.mutedForeground }]}>Timezone</Text>
             <Pressable
@@ -252,8 +515,8 @@ export default function OnboardingScreen() {
                 { backgroundColor: colors.input + "55", borderColor: colors.border },
               ]}
               onPress={() => {
-                haptics.selection();
-                setShowTz(!showTz);
+                handlers.haptics.selection();
+                handlers.setShowTz(!showTz);
               }}
             >
               <Text style={{ color: colors.foreground, fontFamily: fonts.body, fontSize: 16 }}>
@@ -276,16 +539,17 @@ export default function OnboardingScreen() {
                       pressed && { backgroundColor: colors.primary + "10" },
                     ]}
                     onPress={() => {
-                      haptics.selection();
-                      setTimezone(tz);
-                      setShowTz(false);
+                      handlers.haptics.selection();
+                      handlers.setTimezone(tz);
+                      handlers.setShowTz(false);
                     }}
                   >
                     <Text
-                      style={[
-                        styles.tzText,
-                        { color: tz === timezone ? colors.primary : colors.foreground },
-                      ]}
+                      style={{
+                        fontSize: 14,
+                        fontFamily: fonts.body,
+                        color: tz === timezone ? colors.primary : colors.foreground,
+                      }}
                     >
                       {tz}
                     </Text>
@@ -306,7 +570,7 @@ export default function OnboardingScreen() {
               isLoading && { opacity: 0.6 },
               elevation.floating,
             ]}
-            onPress={handleCreate}
+            onPress={handlers.handleCreate}
             disabled={isLoading}
             testID="create-business-button"
           >
@@ -320,25 +584,81 @@ export default function OnboardingScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  container: { paddingHorizontal: 22, gap: 22 },
-  header: { gap: 8, marginTop: 4 },
-  title: {
-    fontFamily: fonts.serifMedium,
-    fontSize: 34,
-    lineHeight: 40,
-    letterSpacing: -0.5,
+  headerStrip: {
+    paddingHorizontal: 22,
+    paddingBottom: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  titleItalic: {
+  dots: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dot: { height: 6, borderRadius: 3 },
+  slide: {
+    flex: 1,
+    paddingHorizontal: 22,
+  },
+  slideHero: {
+    height: 280,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  heroPulse: {
+    width: 300,
+    height: 300,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pulseCenter: {
+    position: "absolute",
+  },
+  slideText: { gap: 12, marginTop: 28 },
+  eyebrow: { ...type.eyebrow, fontSize: 11 },
+  slideTitle: {
+    fontFamily: fonts.serifMedium,
+    fontSize: 42,
+    lineHeight: 48,
+    letterSpacing: -0.6,
+  },
+  slideItalic: {
     fontFamily: fonts.serifMediumItalic,
     fontStyle: "italic",
   },
-  sub: { ...type.body, fontSize: 15 },
+  slideBody: { ...type.body, fontSize: 16, lineHeight: 23, marginTop: 4 },
+  bottomCta: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 22,
+  },
+  cta: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  ctaText: { fontSize: 16, fontFamily: fonts.bodySemi, letterSpacing: 0.3 },
+
+  // Form slide
+  formScroll: { paddingTop: 8, paddingBottom: 32, gap: 22 },
+  formHeader: { gap: 8 },
+  formTitle: {
+    fontFamily: fonts.serifMedium,
+    fontSize: 32,
+    lineHeight: 38,
+    letterSpacing: -0.5,
+  },
+  formSub: { ...type.body, fontSize: 15 },
   demoBox: {
     borderRadius: 18,
     borderWidth: 1,
@@ -372,13 +692,5 @@ const styles = StyleSheet.create({
   picker: { justifyContent: "center" },
   tzList: { borderRadius: 12, borderWidth: 1, overflow: "hidden", marginTop: 4 },
   tzItem: { paddingHorizontal: 16, paddingVertical: 12 },
-  tzText: { fontSize: 14, fontFamily: fonts.body },
   error: { ...type.body, fontSize: 13, textAlign: "center" },
-  cta: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  ctaText: { fontSize: 16, fontFamily: fonts.bodySemi, letterSpacing: 0.3 },
 });

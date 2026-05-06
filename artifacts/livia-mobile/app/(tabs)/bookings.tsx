@@ -1,8 +1,9 @@
-import { useListBookings } from "@workspace/api-client-react";
+import { useListBookings, useUpdateBooking } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   FlatList,
   LayoutChangeEvent,
   Platform,
@@ -21,6 +22,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BookingCard } from "@/components/BookingCard";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
 import { EmptyState } from "@/components/EmptyState";
+import { QuickActionsSheet, type QuickAction } from "@/components/QuickActionsSheet";
+import { SwipeableRow } from "@/components/SwipeableRow";
 import { elevation } from "@/constants/elevation";
 import { SPRING_QUICK } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
@@ -87,6 +90,49 @@ export default function BookingsScreen() {
     setFilter(key);
     const l = layouts[key];
     if (l) indicator.value = { x: l.x, w: l.w };
+  };
+
+  const { mutateAsync: updateBooking } = useUpdateBooking();
+  const [actionsFor, setActionsFor] = useState<null | { id: string; status: string; name: string }>(null);
+
+  const advanceStatus = async (bookingId: string, current: string) => {
+    if (!currentBusiness?.id) return;
+    // Cycle: PENDING -> CONFIRMED -> COMPLETED. Anything else is a no-op.
+    const next =
+      current === "PENDING" ? "CONFIRMED" : current === "CONFIRMED" ? "COMPLETED" : null;
+    if (!next) {
+      haptics.warning();
+      Alert.alert("Already settled", `This booking is ${current.toLowerCase()}.`);
+      return;
+    }
+    try {
+      await updateBooking({
+        businessId: currentBusiness.id,
+        bookingId,
+        data: { status: next as "CONFIRMED" | "COMPLETED" },
+      });
+      haptics.success();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      haptics.warning();
+      Alert.alert("Error", e?.message ?? "Could not update booking");
+    }
+  };
+
+  const cancelBooking = async (bookingId: string) => {
+    if (!currentBusiness?.id) return;
+    try {
+      await updateBooking({
+        businessId: currentBusiness.id,
+        bookingId,
+        data: { status: "CANCELLED" },
+      });
+      haptics.success();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      haptics.warning();
+      Alert.alert("Error", e?.message ?? "Could not cancel booking");
+    }
   };
 
   const { data, isLoading, refetch, isRefetching } = useListBookings(
@@ -167,14 +213,28 @@ export default function BookingsScreen() {
       <FlatList
         data={bookings}
         keyExtractor={(b) => b.id}
-        renderItem={({ item, index }) => (
-          <BookingCard
-            booking={item}
-            showDate={filter !== "today"}
-            index={index}
-            onPress={() => router.push(`/booking/${item.id}`)}
-          />
-        )}
+        renderItem={({ item, index }) => {
+          const customerName =
+            item.customer?.displayName ?? item.customer?.firstName ?? "Walk-in";
+          return (
+            <SwipeableRow
+              onSwipeRight={() => advanceStatus(item.id, item.status)}
+              onSwipeLeft={() => router.push(`/booking/${item.id}`)}
+              rightLabel={item.status === "PENDING" ? "Confirm" : "Complete"}
+              leftLabel="Reschedule"
+            >
+              <BookingCard
+                booking={item}
+                showDate={filter !== "today"}
+                index={index}
+                onPress={() => router.push(`/booking/${item.id}`)}
+                onLongPress={() =>
+                  setActionsFor({ id: item.id, status: item.status, name: customerName })
+                }
+              />
+            </SwipeableRow>
+          );
+        }}
         contentContainerStyle={[
           styles.list,
           bookings.length === 0 && styles.listEmpty,
@@ -196,8 +256,40 @@ export default function BookingsScreen() {
         }
         scrollEnabled={bookings.length > 0}
       />
+
+      <QuickActionsSheet
+        visible={!!actionsFor}
+        onClose={() => setActionsFor(null)}
+        title={actionsFor ? actionsFor.name.toUpperCase() : undefined}
+        actions={
+          actionsFor
+            ? buildBookingQuickActions(actionsFor, {
+                onAdvance: () => advanceStatus(actionsFor.id, actionsFor.status),
+                onOpen: () => router.push(`/booking/${actionsFor.id}`),
+                onCancel: () => cancelBooking(actionsFor.id),
+              })
+            : []
+        }
+      />
     </View>
   );
+}
+
+function buildBookingQuickActions(
+  ctx: { id: string; status: string; name: string },
+  fns: { onAdvance: () => void; onOpen: () => void; onCancel: () => void },
+): QuickAction[] {
+  const actions: QuickAction[] = [];
+  if (ctx.status === "PENDING") {
+    actions.push({ id: "confirm", label: "Confirm booking", icon: "check-circle", tone: "primary", onPress: fns.onAdvance });
+  } else if (ctx.status === "CONFIRMED") {
+    actions.push({ id: "complete", label: "Mark complete", icon: "check-circle", tone: "primary", onPress: fns.onAdvance });
+  }
+  actions.push({ id: "open", label: "Open details", icon: "chevron-right", onPress: fns.onOpen });
+  if (ctx.status !== "CANCELLED" && ctx.status !== "COMPLETED") {
+    actions.push({ id: "cancel", label: "Cancel booking", icon: "x-circle", tone: "danger", onPress: fns.onCancel });
+  }
+  return actions;
 }
 
 const SEG_PAD_H = 4;

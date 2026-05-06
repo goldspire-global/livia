@@ -46,9 +46,10 @@ interface BookingCardProps {
   showDate?: boolean;
   index?: number;
   onPress?: () => void;
+  onLongPress?: () => void;
 }
 
-export function BookingCard({ booking, showDate = false, index = 0, onPress }: BookingCardProps) {
+export function BookingCard({ booking, showDate = false, index = 0, onPress, onLongPress }: BookingCardProps) {
   const colors = useColors();
   const haptics = useHaptics();
   const c = booking.customer;
@@ -80,6 +81,15 @@ export function BookingCard({ booking, showDate = false, index = 0, onPress }: B
           haptics.tap();
           onPress?.();
         }}
+        onLongPress={
+          onLongPress
+            ? () => {
+                haptics.impact();
+                onLongPress();
+              }
+            : undefined
+        }
+        delayLongPress={350}
         onPressIn={() => {
           press.value = withSpring(0.98, { damping: 14, stiffness: 280 });
         }}
@@ -111,7 +121,11 @@ export function BookingCard({ booking, showDate = false, index = 0, onPress }: B
         </View>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+            <Text
+              nativeID={`booking-${booking.id}-name`}
+              style={[styles.name, { color: colors.foreground }]}
+              numberOfLines={1}
+            >
               {customerName}
             </Text>
             <StatusBadge status={booking.status} />

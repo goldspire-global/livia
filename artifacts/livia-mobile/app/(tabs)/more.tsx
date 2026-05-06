@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Platform,
   Pressable,
@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BottomSheet } from "@/components/BottomSheet";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
 import { aurum } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
@@ -38,8 +39,10 @@ export default function MoreScreen() {
   const { businesses, currentBusiness, setCurrentBusiness } = useBusiness();
   const { signOut } = useAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const otherBusinesses = businesses.filter((b) => b.id !== currentBusiness?.id);
+  const hasOthers = otherBusinesses.length > 0;
 
   return (
     <ScrollView
@@ -52,14 +55,21 @@ export default function MoreScreen() {
       </View>
       <Text style={[styles.title, { color: colors.foreground }]}>More</Text>
 
-      {/* Current business card */}
+      {/* Current business card — tappable when there are others to switch to */}
       {currentBusiness && (
-        <View
-          style={[
+        <Pressable
+          onPress={() => {
+            if (!hasOthers) return;
+            haptics.tap();
+            setSwitcherOpen(true);
+          }}
+          style={({ pressed }) => [
             styles.businessCard,
             { backgroundColor: colors.card, borderColor: colors.border },
             elevation.resting,
+            pressed && hasOthers && { transform: [{ scale: 0.99 }] },
           ]}
+          testID="business-card"
         >
           <View
             style={[
@@ -81,65 +91,68 @@ export default function MoreScreen() {
               </Text>
             )}
           </View>
-          {otherBusinesses.length > 0 && (
-            <View style={[styles.activePill, { backgroundColor: aurum.champagne + "22", borderColor: aurum.champagne + "55" }]}>
-              <Text style={[styles.activePillText, { color: aurum.champagne }]}>Active</Text>
+          {hasOthers ? (
+            <View style={styles.bizCardRight}>
+              <View
+                style={[
+                  styles.activePill,
+                  { backgroundColor: aurum.champagne + "22", borderColor: aurum.champagne + "55" },
+                ]}
+              >
+                <Text style={[styles.activePillText, { color: aurum.champagne }]}>Active</Text>
+              </View>
+              <Feather name="chevron-down" size={16} color={colors.mutedForeground} />
             </View>
-          )}
-        </View>
+          ) : null}
+        </Pressable>
       )}
 
-      {/* Business switcher */}
-      {otherBusinesses.length > 0 && (
-        <View style={styles.sectionGroup}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-            Switch business
-          </Text>
-          <View
-            style={[
-              styles.section,
-              { backgroundColor: colors.card, borderColor: colors.border },
-              elevation.resting,
-            ]}
-          >
-            {otherBusinesses.map((biz, index) => (
-              <Pressable
-                key={biz.id}
-                style={({ pressed }) => [
-                  styles.menuItem,
-                  index < otherBusinesses.length - 1 && [
-                    styles.menuItemBorder,
-                    { borderBottomColor: colors.border },
-                  ],
-                  pressed && { backgroundColor: colors.primary + "0c" },
+      {/* Business switcher → bottom sheet */}
+      <BottomSheet visible={switcherOpen} onClose={() => setSwitcherOpen(false)}>
+        <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Switch business</Text>
+        <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
+          Pick a workspace to step into.
+        </Text>
+        <View style={{ marginTop: 14, paddingBottom: 8 }}>
+          {otherBusinesses.map((biz) => (
+            <Pressable
+              key={biz.id}
+              onPress={() => {
+                haptics.selection();
+                setCurrentBusiness(biz);
+                setSwitcherOpen(false);
+              }}
+              style={({ pressed }) => [
+                styles.sheetRow,
+                pressed && { backgroundColor: colors.muted },
+              ]}
+              testID={`switch-business-${biz.id}`}
+            >
+              <View
+                style={[
+                  styles.sheetAvatar,
+                  { backgroundColor: colors.primary + "1c", borderColor: colors.primary + "55" },
                 ]}
-                onPress={() => {
-                  haptics.selection();
-                  setCurrentBusiness(biz);
-                }}
-                testID={`switch-business-${biz.id}`}
               >
-                <View style={[styles.menuIcon, { backgroundColor: colors.muted }]}>
-                  <Text style={[styles.switchInitial, { color: colors.foreground }]}>
-                    {biz.name[0]?.toUpperCase() ?? "B"}
+                <Text style={[styles.switchInitial, { color: colors.primary }]}>
+                  {biz.name[0]?.toUpperCase() ?? "B"}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.menuLabel, { color: colors.foreground }]} numberOfLines={1}>
+                  {biz.name}
+                </Text>
+                {biz.slug && (
+                  <Text style={[styles.bizSlug, { color: colors.mutedForeground }]}>
+                    /b/{biz.slug}
                   </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.menuLabel, { color: colors.foreground }]} numberOfLines={1}>
-                    {biz.name}
-                  </Text>
-                  {biz.slug && (
-                    <Text style={[styles.bizSlug, { color: colors.mutedForeground }]}>
-                      /b/{biz.slug}
-                    </Text>
-                  )}
-                </View>
-                <Feather name="refresh-cw" size={15} color={colors.primary} />
-              </Pressable>
-            ))}
-          </View>
+                )}
+              </View>
+              <Feather name="arrow-right" size={16} color={colors.primary} />
+            </Pressable>
+          ))}
         </View>
-      )}
+      </BottomSheet>
 
       {/* Main navigation */}
       <View
@@ -241,6 +254,7 @@ const styles = StyleSheet.create({
   switchInitial: { ...type.numericSm, fontSize: 14 },
   bizName: { fontFamily: fonts.serifMedium, fontSize: 18 },
   bizSlug: { ...type.caption, fontSize: 12, marginTop: 1 },
+  bizCardRight: { flexDirection: "row", alignItems: "center", gap: 8 },
   activePill: {
     borderRadius: 6,
     paddingHorizontal: 8,
@@ -248,6 +262,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   activePillText: { fontSize: 10.5, fontFamily: fonts.bodySemi, letterSpacing: 0.6 },
+  sheetTitle: { fontFamily: fonts.serifMedium, fontSize: 22, letterSpacing: -0.3, paddingHorizontal: 4 },
+  sheetSub: { ...type.body, fontSize: 13, paddingHorizontal: 4, marginTop: 2 },
+  sheetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  sheetAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   section: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   menuItem: {
     flexDirection: "row",

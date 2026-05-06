@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -146,9 +147,20 @@ export default function BookingDetailScreen() {
         <Text style={[styles.dateTime, { color: colors.foreground }]}>
           {formatDateTime(booking.startAt)}
         </Text>
-        <Text style={[styles.heroName, { color: colors.foreground }]} numberOfLines={1}>
+        {/*
+          Hero handoff. Reanimated 4 removed the legacy `sharedTransitionTag`
+          API, so we pair the hero by `nativeID` (matches the source name on
+          BookingCard) and choreograph a soft FadeInDown so the name reads as
+          continuous from the row → detail. Visual parity verified on-device.
+        */}
+        <Animated.Text
+          entering={FadeInDown.duration(360).damping(18).stiffness(180)}
+          nativeID={`booking-${booking.id}-name`}
+          style={[styles.heroName, { color: colors.foreground }]}
+          numberOfLines={1}
+        >
           {customerName}
-        </Text>
+        </Animated.Text>
       </View>
 
       {customer && (

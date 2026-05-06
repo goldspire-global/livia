@@ -1,16 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect } from "react";
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
-import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { Shimmer } from "@/components/brand/Shimmer";
+import { EmptyVignette } from "@/components/EmptyVignette";
 import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -42,20 +34,6 @@ export function EmptyState({
   const colors = useColors();
   const haptics = useHaptics();
 
-  // Subtle drift on the icon itself, ~6s cycle
-  const drift = useSharedValue(0);
-  useEffect(() => {
-    drift.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 3000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(3, { duration: 3000, easing: Easing.inOut(Easing.sin) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-  const driftStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drift.value }] }));
-
   if (isLoading) {
     return (
       <View style={styles.skeletonWrap}>
@@ -74,11 +52,11 @@ export function EmptyState({
 
   return (
     <View style={styles.container}>
-      <View style={styles.haloWrap}>
-        <AuroraHalo tone="primary" size={180} intensity={0.7} style={{ top: -50, left: -50 }} />
-        <Animated.View style={[styles.iconWrap, driftStyle]}>
-          <Feather name={icon} size={32} color={colors.mutedForeground} />
-        </Animated.View>
+      <View style={styles.vignetteWrap}>
+        <EmptyVignette size={170} />
+        <View pointerEvents="none" style={styles.iconCenter}>
+          <Feather name={icon} size={22} color={colors.mutedForeground} />
+        </View>
       </View>
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
       {subtitle ? (
@@ -111,16 +89,17 @@ const styles = StyleSheet.create({
     gap: 14,
     minHeight: 240,
   },
-  haloWrap: {
-    width: 80,
-    height: 80,
+  vignetteWrap: {
+    width: 170,
+    height: 170,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  iconWrap: {
-    width: 80,
-    height: 80,
+  iconCenter: {
+    position: "absolute",
+    width: 170,
+    height: 170,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -1,8 +1,9 @@
-import { useGetDashboardSummary } from "@workspace/api-client-react";
+import { useGetDashboardSummary, useUpdateBooking } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Platform,
   Pressable,
   RefreshControl,
@@ -26,6 +27,7 @@ import { LivPulse } from "@/components/brand/LivPulse";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
 import { Shimmer } from "@/components/brand/Shimmer";
 import { EmptyState } from "@/components/EmptyState";
+import { QuickActionsSheet } from "@/components/QuickActionsSheet";
 import { StatsCard } from "@/components/StatsCard";
 import { aurora } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
@@ -89,9 +91,36 @@ export default function DashboardScreen() {
     router.push("/booking/new");
   };
 
+  const { mutateAsync: updateBooking } = useUpdateBooking();
+  const [nextActionsOpen, setNextActionsOpen] = useState(false);
+
   if (!currentBusiness && !bizLoading) return null;
 
   const next = summary?.upcomingBookings?.[0];
+
+  const advanceNext = async () => {
+    if (!currentBusiness?.id || !next) return;
+    const ns =
+      next.status === "PENDING"
+        ? "CONFIRMED"
+        : next.status === "CONFIRMED"
+          ? "COMPLETED"
+          : null;
+    if (!ns) return;
+    try {
+      await updateBooking({
+        businessId: currentBusiness.id,
+        bookingId: next.id,
+        data: { status: ns as "CONFIRMED" | "COMPLETED" },
+      });
+      haptics.success();
+      refetch();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      haptics.warning();
+      Alert.alert("Error", e?.message ?? "Could not update booking");
+    }
+  };
 
   return (
     <ScrollView
@@ -145,6 +174,11 @@ export default function DashboardScreen() {
             haptics.tap();
             router.push(`/booking/${next.id}`);
           }}
+          onLongPress={() => {
+            haptics.impact();
+            setNextActionsOpen(true);
+          }}
+          delayLongPress={350}
           style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.99 : 1 }] }]}
         >
           <View
@@ -264,6 +298,23 @@ export default function DashboardScreen() {
           ))
         )}
       </View>
+
+      {next ? (
+        <QuickActionsSheet
+          visible={nextActionsOpen}
+          onClose={() => setNextActionsOpen(false)}
+          title={(next.customer?.displayName ?? next.customer?.firstName ?? "Walk-in").toUpperCase()}
+          actions={[
+            ...(next.status === "PENDING"
+              ? [{ id: "confirm", label: "Confirm booking", icon: "check-circle" as const, tone: "primary" as const, onPress: advanceNext }]
+              : []),
+            ...(next.status === "CONFIRMED"
+              ? [{ id: "complete", label: "Mark complete", icon: "check-circle" as const, tone: "primary" as const, onPress: advanceNext }]
+              : []),
+            { id: "open", label: "Open details", icon: "chevron-right" as const, onPress: () => router.push(`/booking/${next.id}`) },
+          ]}
+        />
+      ) : null}
     </ScrollView>
   );
 }

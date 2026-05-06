@@ -1,11 +1,13 @@
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
+import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import { PlatformPressable } from "@react-navigation/elements";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import React from "react";
-import { Platform, Pressable, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -78,9 +80,18 @@ function ClassicTabLayout() {
           fontFamily: fonts.bodyMed,
           letterSpacing: 0.3,
         },
-        tabBarButton: (props) => (
-          <Pressable {...(props as any)} onPressIn={onTabPress} />
-        ),
+        tabBarButton: (props: BottomTabBarButtonProps) => {
+          const { onPressIn, ...rest } = props;
+          return (
+            <PlatformPressable
+              {...rest}
+              onPressIn={(e) => {
+                onTabPress();
+                onPressIn?.(e);
+              }}
+            />
+          );
+        },
       }}
     >
       <Tabs.Screen
