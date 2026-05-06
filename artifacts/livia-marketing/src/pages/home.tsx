@@ -104,7 +104,7 @@ export default function Home() {
             transition={{ duration: 1 }}
           >
             <div className="aspect-[16/9] md:aspect-[21/9] relative bg-[#09090b]">
-               <img src="/product-surface.png" alt="Livia abstract product surface" className="w-full h-full object-cover opacity-80" />
+               <img src={`${import.meta.env.BASE_URL}product-surface.png`} alt="Livia abstract product surface" className="w-full h-full object-cover opacity-80" />
                <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent" />
             </div>
           </motion.div>
@@ -305,7 +305,7 @@ export default function Home() {
         {/* Founder Note & CTA */}
         <section className="py-32 px-6 relative" ref={formRef}>
           <div className="absolute inset-0 bg-[#09090b] pointer-events-none">
-            <img src="/aurora-abstract.png" alt="" className="w-full h-full object-cover opacity-20 mix-blend-screen" />
+            <img src={`${import.meta.env.BASE_URL}aurora-abstract.png`} alt="" className="w-full h-full object-cover opacity-20 mix-blend-screen" />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
 
