@@ -283,7 +283,7 @@ export default function Home() {
             <AccordionItem value="item-6" className="border-white/10 px-2">
               <AccordionTrigger className="text-left text-lg font-medium hover:no-underline hover:text-aurora-cyan transition-colors">Are you GDPR and EU AI Act compliant?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                Yes. Livia is built in Europe, for Europe. We adhere to GDPR for all customer data and align with EU AI Act Art. 50 — every Liv-authored message identifies itself as AI. EU data residency rolls out at general availability; closed beta runs on the same EU-region infrastructure we'll lock for launch.
+                GDPR is a first-class commitment. Liv's chat and email replies already carry the EU AI Act Art. 50 disclosure that identifies the assistant as AI; full coverage of that disclosure across SMS and the public chat widget footer is rolling out before closed beta. Pinning production hosting to an EU region is a public-launch commitment, not a current claim.
               </AccordionContent>
             </AccordionItem>
 
