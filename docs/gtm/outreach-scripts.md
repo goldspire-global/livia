@@ -44,11 +44,9 @@ Five scripts the founder uses to convert a stranger into a design partner. Found
 
 ## 2. In-person walk-in pitch (60 seconds spoken)
 
-> Hi — sorry to interrupt. My name's {{founder_first_name}}, I won't take more than a minute of your time. I live around {{neighbourhood}} and I've been working on something I think might genuinely save you a few hours a week.
+> Hi — sorry to interrupt, one minute promise. I'm {{founder_first_name}}, based around {{neighbourhood}}. I built something called Livia. When someone DMs you on Instagram or texts after hours, Livia replies on your behalf — knows your prices, your slots, your house rules — and books them in. You see every conversation and take over any time.
 >
-> It's called Livia. The short version: when someone messages you on Instagram or texts you outside opening hours, Livia replies on your behalf, knows your prices and your availability, and books them in. You see the whole conversation and can take over any time.
->
-> I'm looking for ten Dublin shops to try it free for three months in exchange for telling me honestly what's broken about it. No contracts, no card. Could I leave you my card and follow up next week?
+> Looking for ten Dublin shops to try it free for three months in exchange for honest feedback. No contracts, no card. Could I leave you my card and follow up next week?
 
 ---
 
@@ -58,13 +56,11 @@ Five scripts the founder uses to convert a stranger into a design partner. Found
 >
 > Hi {{first_name}},
 >
-> I'm {{founder_first_name}}, based in Dublin, and I've spent the last six months building something for shops like {{shop_name}}.
+> I'm {{founder_first_name}}, based in Dublin. I built something for shops like {{shop_name}} called Livia. It answers DMs and texts on your behalf — knows your prices, your slots, your house rules — and turns evening enquiries into morning bookings while you sleep. You see every conversation in a clean inbox and can step in any time.
 >
-> It's called Livia. It answers DMs and texts on your behalf — knows your prices, your slot availability, your house rules — and turns evening enquiries into morning bookings while you sleep. You see every conversation in a clean inbox and can step in any time.
+> Onboarding ten Dublin design partners free for three months. In return: a fifteen-minute call once a month to hear what's working and what isn't.
 >
-> I'm onboarding ten Dublin design partners free for three months. In return I'd love a fifteen-minute call once a month to hear what's working and what isn't.
->
-> Would {{shop_name}} be one of them? Happy to send a two-minute Loom showing exactly what it does.
+> Want {{shop_name}} to be one of them? Happy to send a two-minute Loom.
 >
 > Best,
 > {{founder_first_name}}
@@ -87,16 +83,14 @@ Five scripts the founder uses to convert a stranger into a design partner. Found
 
 > **Subject:** Tiny ask — intro to {{first_name}} at {{shop_name}}?
 >
-> Hey {{mutual_first_name}},
+> Hey {{mutual_first_name}}, quick favour.
 >
-> Hope you're well. Quick favour — I'm building a small tool for Dublin appointment shops and I think {{shop_name}} would be a brilliant first design partner. I'd rather come in warm than cold-DM them.
->
-> If you're comfortable, would you mind forwarding the note below to {{first_name}}? Totally fine if not — no awkwardness either way.
+> I'm building a tool for Dublin appointment shops and I think {{shop_name}} would be a brilliant first design partner. Rather come in warm than cold-DM them — would you mind forwarding the note below to {{first_name}}? Totally fine if not.
 >
 > *(Forward block:)*
-> *"This is {{founder_first_name}}, who I mentioned a while back. He's building Livia — handles DMs and texts for shops, books appointments while you sleep. Looking for ten Dublin shops to try it free. Worth a fifteen-minute chat in my view."*
+> *"This is {{founder_first_name}}, who I mentioned. He's built Livia — handles DMs and texts for shops, books appointments while you sleep. Looking for ten Dublin shops to try it free. Worth a fifteen-minute chat in my view."*
 >
-> Thanks {{mutual_first_name}} — owe you one.
+> Thanks — owe you one.
 >
 > — {{founder_first_name}}
 
