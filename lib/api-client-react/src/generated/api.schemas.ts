@@ -150,6 +150,153 @@ export interface UpdateBusinessBody {
   aiCanBookDirectly?: string;
 }
 
+export type MembershipRole =
+  (typeof MembershipRole)[keyof typeof MembershipRole];
+
+export const MembershipRole = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  STAFF: "STAFF",
+} as const;
+
+export interface Membership {
+  businessId: string;
+  role: MembershipRole;
+  /** @nullable */
+  staffId?: string | null;
+}
+
+export type MyDayRole = (typeof MyDayRole)[keyof typeof MyDayRole];
+
+export const MyDayRole = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  STAFF: "STAFF",
+} as const;
+
+export type MyDayEffectiveRole =
+  (typeof MyDayEffectiveRole)[keyof typeof MyDayEffectiveRole];
+
+export const MyDayEffectiveRole = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  STAFF: "STAFF",
+} as const;
+
+export type BookingChannelType =
+  (typeof BookingChannelType)[keyof typeof BookingChannelType];
+
+export const BookingChannelType = {
+  WEB: "WEB",
+  APP: "APP",
+  WHATSAPP: "WHATSAPP",
+  SMS: "SMS",
+  INSTAGRAM: "INSTAGRAM",
+  SNAPCHAT: "SNAPCHAT",
+  EMAIL: "EMAIL",
+} as const;
+
+export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
+
+export const BookingStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+  NO_SHOW: "NO_SHOW",
+} as const;
+
+export interface Booking {
+  id: string;
+  businessId: string;
+  /** @nullable */
+  staffId?: string | null;
+  serviceId: string;
+  customerId: string;
+  channelType: BookingChannelType;
+  startAt: string;
+  endAt: string;
+  status: BookingStatus;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  internalNotes?: string | null;
+  /** @nullable */
+  cancellationReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Customer {
+  id: string;
+  businessId: string;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  tags?: string[] | null;
+  isBlocked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyDay {
+  /** @nullable */
+  staffId?: string | null;
+  today: Booking[];
+  next?: Booking | null;
+  myCustomers: Customer[];
+  todayCount: number;
+  weekCount: number;
+  role: MyDayRole;
+  effectiveRole: MyDayEffectiveRole;
+}
+
+export type CreateInvitationBodyRole =
+  (typeof CreateInvitationBodyRole)[keyof typeof CreateInvitationBodyRole];
+
+export const CreateInvitationBodyRole = {
+  ADMIN: "ADMIN",
+  STAFF: "STAFF",
+} as const;
+
+export interface CreateInvitationBody {
+  email: string;
+  role: CreateInvitationBodyRole;
+  /**
+   * Optional URL Clerk redirects to after the invitee accepts.
+   * @nullable
+   */
+  redirectUrl?: string | null;
+}
+
+/**
+ * Includes `livia.{ businessId, businessName, role, invitedBy }`.
+ */
+export type InvitationPublicMetadata = { [key: string]: unknown };
+
+export interface Invitation {
+  id: string;
+  emailAddress: string;
+  status: string;
+  /**
+   * Clerk timestamp (ms since epoch)
+   * @nullable
+   */
+  createdAt?: number | null;
+  /** Includes `livia.{ businessId, businessName, role, invitedBy }`. */
+  publicMetadata?: InvitationPublicMetadata;
+}
+
 export interface Staff {
   id: string;
   businessId: string;
@@ -249,77 +396,11 @@ export interface UpdateServiceBody {
   sortOrder?: number;
 }
 
-export interface Customer {
-  id: string;
-  businessId: string;
-  /** @nullable */
-  firstName?: string | null;
-  /** @nullable */
-  lastName?: string | null;
-  /** @nullable */
-  displayName?: string | null;
-  /** @nullable */
-  email?: string | null;
-  /** @nullable */
-  phone?: string | null;
-  /** @nullable */
-  notes?: string | null;
-  /** @nullable */
-  tags?: string[] | null;
-  isBlocked: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface CustomerListResponse {
   data: Customer[];
   total: number;
   limit: number;
   offset: number;
-}
-
-export type BookingChannelType =
-  (typeof BookingChannelType)[keyof typeof BookingChannelType];
-
-export const BookingChannelType = {
-  WEB: "WEB",
-  APP: "APP",
-  WHATSAPP: "WHATSAPP",
-  SMS: "SMS",
-  INSTAGRAM: "INSTAGRAM",
-  SNAPCHAT: "SNAPCHAT",
-  EMAIL: "EMAIL",
-} as const;
-
-export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
-
-export const BookingStatus = {
-  PENDING: "PENDING",
-  CONFIRMED: "CONFIRMED",
-  CANCELLED: "CANCELLED",
-  COMPLETED: "COMPLETED",
-  NO_SHOW: "NO_SHOW",
-} as const;
-
-export interface Booking {
-  id: string;
-  businessId: string;
-  /** @nullable */
-  staffId?: string | null;
-  serviceId: string;
-  customerId: string;
-  channelType: BookingChannelType;
-  startAt: string;
-  endAt: string;
-  status: BookingStatus;
-  /** @nullable */
-  notes?: string | null;
-  /** @nullable */
-  internalNotes?: string | null;
-  /** @nullable */
-  cancellationReason?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export type CustomerDetail = Customer & {
@@ -717,9 +798,21 @@ export type NotFoundResponse = ErrorResponse;
 export type BadRequestResponse = ErrorResponse;
 
 /**
+ * Forbidden (insufficient role or read-only persona)
+ */
+export type ForbiddenResponse = ErrorResponse;
+
+/**
  * Conflict (e.g. slug taken, slot unavailable)
  */
 export type ConflictResponse = ErrorResponse;
+
+export type GetMyDayParams = {
+  /**
+   * OWNER/ADMIN may pass an explicit staffId to audit a persona.
+   */
+  staffId?: string;
+};
 
 export type ListStaffParams = {
   isActive?: boolean;

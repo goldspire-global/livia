@@ -13,7 +13,7 @@ version = "1.0.0"
 ensurePreviewReachable = "/status"
 name = "expo"
 paths = [ "/mobile/" ]
-localPort = 24839
+localPort = 25811
 
 [services.development]
 run = "pnpm --filter @workspace/livia-mobile run dev"
@@ -23,5 +23,5 @@ build = [ "pnpm", "--filter", "@workspace/livia-mobile", "run", "build" ]
 run = [ "pnpm", "--filter", "@workspace/livia-mobile", "run", "serve" ]
 
 [services.env]
-PORT = "24839"
+PORT = "25811"
 BASE_PATH = "/mobile/"

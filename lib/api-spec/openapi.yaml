@@ -113,6 +113,83 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /me/businesses/{businessId}/membership:
+    get:
+      operationId: getMyMembership
+      tags: [me]
+      summary: Get caller's role + staff link inside a business
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Membership info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Membership"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/my-day:
+    get:
+      operationId: getMyDay
+      tags: [my-day]
+      summary: Staff-scoped "my day" slate (today's bookings, next-up, my customers)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: staffId
+          in: query
+          required: false
+          schema: { type: string }
+          description: OWNER/ADMIN may pass an explicit staffId to audit a persona.
+      responses:
+        "200":
+          description: My Day slate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyDay"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/invitations:
+    post:
+      operationId: createInvitation
+      tags: [invitations]
+      summary: Invite a teammate (Clerk invitation w/ role metadata)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvitationBody"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "503":
+          description: Clerk integration not configured
+
   # ─── Businesses ───────────────────────────────────────────────────────────
   /businesses:
     post:
@@ -1426,6 +1503,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden (insufficient role or read-only persona)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     Conflict:
       description: Conflict (e.g. slug taken, slot unavailable)
       content:
@@ -1616,6 +1699,69 @@ components:
           type: string
 
     # ── Staff ──
+    Membership:
+      type: object
+      required: [businessId, role]
+      properties:
+        businessId: { type: string }
+        role:
+          type: string
+          enum: [OWNER, ADMIN, STAFF]
+        staffId:
+          type: ["string", "null"]
+
+    MyDay:
+      type: object
+      required: [today, myCustomers, todayCount, weekCount, role, effectiveRole]
+      properties:
+        staffId:
+          type: ["string", "null"]
+        today:
+          type: array
+          items: { $ref: "#/components/schemas/Booking" }
+        next:
+          oneOf:
+            - { $ref: "#/components/schemas/Booking" }
+            - { type: "null" }
+        myCustomers:
+          type: array
+          items: { $ref: "#/components/schemas/Customer" }
+        todayCount: { type: integer }
+        weekCount: { type: integer }
+        role:
+          type: string
+          enum: [OWNER, ADMIN, STAFF]
+        effectiveRole:
+          type: string
+          enum: [OWNER, ADMIN, STAFF]
+
+    CreateInvitationBody:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, format: email }
+        role:
+          type: string
+          enum: [ADMIN, STAFF]
+        redirectUrl:
+          type: ["string", "null"]
+          description: Optional URL Clerk redirects to after the invitee accepts.
+
+    Invitation:
+      type: object
+      required: [id, emailAddress, status]
+      properties:
+        id: { type: string }
+        emailAddress: { type: string }
+        status: { type: string }
+        createdAt:
+          type: ["integer", "null"]
+          description: Clerk timestamp (ms since epoch)
+        publicMetadata:
+          type: object
+          additionalProperties: true
+          description: Includes `livia.{ businessId, businessName, role, invitedBy }`.
+
     Staff:
       type: object
       properties:

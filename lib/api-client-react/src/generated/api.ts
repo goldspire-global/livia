@@ -31,6 +31,7 @@ import type {
   CreateBookingBody,
   CreateBusinessBody,
   CreateCustomerBody,
+  CreateInvitationBody,
   CreateMarketingLeadBody,
   CreatePublicBookingBody,
   CreateServiceBody,
@@ -42,10 +43,13 @@ import type {
   CustomerListResponse,
   DashboardSummary,
   FeatureFlag,
+  ForbiddenResponse,
   GetActivityFeedParams,
   GetAvailableSlotsParams,
+  GetMyDayParams,
   GetPublicSlotsParams,
   HealthStatus,
+  Invitation,
   ListAvailabilityRulesParams,
   ListAvailableSmsNumbers200,
   ListAvailableSmsNumbersParams,
@@ -56,6 +60,8 @@ import type {
   ListStaffParams,
   ListTimeOffParams,
   MarketingLeadAck,
+  Membership,
+  MyDay,
   NotFoundResponse,
   ProvisionSmsNumber201,
   ProvisionSmsNumberBody,
@@ -392,6 +398,302 @@ export function useGetMyBusinesses<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get caller's role + staff link inside a business
+ */
+export const getGetMyMembershipUrl = (businessId: string) => {
+  return `/api/me/businesses/${businessId}/membership`;
+};
+
+export const getMyMembership = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<Membership> => {
+  return customFetch<Membership>(getGetMyMembershipUrl(businessId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyMembershipQueryKey = (businessId: string) => {
+  return [`/api/me/businesses/${businessId}/membership`] as const;
+};
+
+export const getGetMyMembershipQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyMembership>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyMembership>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMyMembershipQueryKey(businessId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyMembership>>> = ({
+    signal,
+  }) => getMyMembership(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyMembership>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyMembershipQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyMembership>>
+>;
+export type GetMyMembershipQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Get caller's role + staff link inside a business
+ */
+
+export function useGetMyMembership<
+  TData = Awaited<ReturnType<typeof getMyMembership>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyMembership>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyMembershipQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Staff-scoped "my day" slate (today's bookings, next-up, my customers)
+ */
+export const getGetMyDayUrl = (businessId: string, params?: GetMyDayParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/businesses/${businessId}/my-day?${stringifiedParams}`
+    : `/api/businesses/${businessId}/my-day`;
+};
+
+export const getMyDay = async (
+  businessId: string,
+  params?: GetMyDayParams,
+  options?: RequestInit,
+): Promise<MyDay> => {
+  return customFetch<MyDay>(getGetMyDayUrl(businessId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyDayQueryKey = (
+  businessId: string,
+  params?: GetMyDayParams,
+) => {
+  return [
+    `/api/businesses/${businessId}/my-day`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetMyDayQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyDay>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  businessId: string,
+  params?: GetMyDayParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyDay>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMyDayQueryKey(businessId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyDay>>> = ({
+    signal,
+  }) => getMyDay(businessId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMyDay>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetMyDayQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyDay>>
+>;
+export type GetMyDayQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Staff-scoped "my day" slate (today's bookings, next-up, my customers)
+ */
+
+export function useGetMyDay<
+  TData = Awaited<ReturnType<typeof getMyDay>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  businessId: string,
+  params?: GetMyDayParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyDay>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyDayQueryOptions(businessId, params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Invite a teammate (Clerk invitation w/ role metadata)
+ */
+export const getCreateInvitationUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/invitations`;
+};
+
+export const createInvitation = async (
+  businessId: string,
+  createInvitationBody: CreateInvitationBody,
+  options?: RequestInit,
+): Promise<Invitation> => {
+  return customFetch<Invitation>(getCreateInvitationUrl(businessId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createInvitationBody),
+  });
+};
+
+export const getCreateInvitationMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | void
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInvitation>>,
+    TError,
+    { businessId: string; data: BodyType<CreateInvitationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createInvitation>>,
+  TError,
+  { businessId: string; data: BodyType<CreateInvitationBody> },
+  TContext
+> => {
+  const mutationKey = ["createInvitation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createInvitation>>,
+    { businessId: string; data: BodyType<CreateInvitationBody> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return createInvitation(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateInvitationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createInvitation>>
+>;
+export type CreateInvitationMutationBody = BodyType<CreateInvitationBody>;
+export type CreateInvitationMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | void
+>;
+
+/**
+ * @summary Invite a teammate (Clerk invitation w/ role metadata)
+ */
+export const useCreateInvitation = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | ForbiddenResponse | void
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInvitation>>,
+    TError,
+    { businessId: string; data: BodyType<CreateInvitationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createInvitation>>,
+  TError,
+  { businessId: string; data: BodyType<CreateInvitationBody> },
+  TContext
+> => {
+  return useMutation(getCreateInvitationMutationOptions(options));
+};
 
 /**
  * @summary Create a new business

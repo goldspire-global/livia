@@ -75,6 +75,140 @@ export const GetMyBusinessesResponseItem = zod.object({
 export const GetMyBusinessesResponse = zod.array(GetMyBusinessesResponseItem);
 
 /**
+ * @summary Get caller's role + staff link inside a business
+ */
+export const GetMyMembershipParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetMyMembershipResponse = zod.object({
+  businessId: zod.string(),
+  role: zod.enum(["OWNER", "ADMIN", "STAFF"]),
+  staffId: zod.string().nullish(),
+});
+
+/**
+ * @summary Staff-scoped "my day" slate (today's bookings, next-up, my customers)
+ */
+export const GetMyDayParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetMyDayQueryParams = zod.object({
+  staffId: zod.coerce
+    .string()
+    .optional()
+    .describe("OWNER\/ADMIN may pass an explicit staffId to audit a persona."),
+});
+
+export const GetMyDayResponse = zod.object({
+  staffId: zod.string().nullish(),
+  today: zod.array(
+    zod.object({
+      id: zod.string(),
+      businessId: zod.string(),
+      staffId: zod.string().nullish(),
+      serviceId: zod.string(),
+      customerId: zod.string(),
+      channelType: zod.enum([
+        "WEB",
+        "APP",
+        "WHATSAPP",
+        "SMS",
+        "INSTAGRAM",
+        "SNAPCHAT",
+        "EMAIL",
+      ]),
+      startAt: zod.coerce.date(),
+      endAt: zod.coerce.date(),
+      status: zod.enum([
+        "PENDING",
+        "CONFIRMED",
+        "CANCELLED",
+        "COMPLETED",
+        "NO_SHOW",
+      ]),
+      notes: zod.string().nullish(),
+      internalNotes: zod.string().nullish(),
+      cancellationReason: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  next: zod
+    .union([
+      zod.object({
+        id: zod.string(),
+        businessId: zod.string(),
+        staffId: zod.string().nullish(),
+        serviceId: zod.string(),
+        customerId: zod.string(),
+        channelType: zod.enum([
+          "WEB",
+          "APP",
+          "WHATSAPP",
+          "SMS",
+          "INSTAGRAM",
+          "SNAPCHAT",
+          "EMAIL",
+        ]),
+        startAt: zod.coerce.date(),
+        endAt: zod.coerce.date(),
+        status: zod.enum([
+          "PENDING",
+          "CONFIRMED",
+          "CANCELLED",
+          "COMPLETED",
+          "NO_SHOW",
+        ]),
+        notes: zod.string().nullish(),
+        internalNotes: zod.string().nullish(),
+        cancellationReason: zod.string().nullish(),
+        createdAt: zod.coerce.date(),
+        updatedAt: zod.coerce.date(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  myCustomers: zod.array(
+    zod.object({
+      id: zod.string(),
+      businessId: zod.string(),
+      firstName: zod.string().nullish(),
+      lastName: zod.string().nullish(),
+      displayName: zod.string().nullish(),
+      email: zod.string().nullish(),
+      phone: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      tags: zod.array(zod.string()).nullish(),
+      isBlocked: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  todayCount: zod.number(),
+  weekCount: zod.number(),
+  role: zod.enum(["OWNER", "ADMIN", "STAFF"]),
+  effectiveRole: zod.enum(["OWNER", "ADMIN", "STAFF"]),
+});
+
+/**
+ * @summary Invite a teammate (Clerk invitation w/ role metadata)
+ */
+export const CreateInvitationParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const CreateInvitationBody = zod.object({
+  email: zod.string().email(),
+  role: zod.enum(["ADMIN", "STAFF"]),
+  redirectUrl: zod
+    .string()
+    .nullish()
+    .describe("Optional URL Clerk redirects to after the invitee accepts."),
+});
+
+/**
  * @summary Create a new business
  */
 export const CreateBusinessBody = zod.object({
