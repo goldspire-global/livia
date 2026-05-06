@@ -147,7 +147,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-medium mb-3">Revenue Protection</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  End the pain of empty chairs. Beautifully timed booking reminders and smart no-show recovery, with deposit-ready scheduling rolling out at public launch.
+                  End the pain of empty chairs. Smart no-show recovery, with beautifully timed booking reminders and deposit-ready scheduling rolling out before public launch.
                 </p>
               </motion.div>
 
