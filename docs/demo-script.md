@@ -1,72 +1,128 @@
-# Livia — 90-second demo script
+# Livia — demo script
 
 A founder-narratable walkthrough that lands every wedge of the product without
-ever feeling rushed. Total ~90 seconds when read at conversational pace.
+ever feeling rushed. Three acts, ~3 minutes total at a conversational pace.
 
-## Setup (do once before the meeting)
+The script is written against the **real seed** the product ships with, not a
+fictionalised version — what you read here is what the demo viewer sees.
 
-1. Open two browser windows side-by-side:
-   - **Owner** — Livia dashboard, signed in as the demo owner.
-   - **Customer** — incognito window, no auth.
-2. In the owner window, go to **Settings → Demo & Data → Reload demo data**.
-   Wait ~3 seconds. The cockpit hydrates with three businesses, real bookings.
-3. Pick **Salon Aurora** from the business switcher (top-left).
-4. In the owner window, copy the public booking URL from
-   **Settings → General → Public booking link**.
-5. Paste that URL into the **Customer** incognito window. Do not load it yet.
+---
+
+## Setup (do once, ~30 seconds before the meeting)
+
+1. **Open all three surfaces side-by-side**, in this order, so the audience can
+   follow the arc:
+   - **The pitch** — `livia.io` (the marketing artifact).
+   - **The owner's command center** — the dashboard, signed in as the demo
+     owner.
+   - **The shop floor** — the mobile artifact (Expo preview, phone-shaped).
+   - Optional: a fourth incognito window for the **customer's view** of the
+     public booking page (used in Act 2).
+2. In the dashboard, sign in. Clerk is in **development mode**, so you can use
+   any email; the magic-link is logged to the API console.
+3. **Seed the workspace.** Go to **Settings → Demo & Data → Reload demo data**.
+   Wait ~3 seconds. The cockpit hydrates with three businesses:
+   - **Luxe Salon & Spa** (hair & wellness, London) — 3 staff, 5 services, 8
+     customers, 15 bookings spread across past + upcoming.
+   - **Iron & Ink Tattoo Studio** (tattoo, Manchester) — 2 staff, 5 services,
+     6 customers, 12 bookings.
+   - **Peak Performance** (personal training, Birmingham) — 2 staff, 5
+     services, 6 customers, 14 bookings.
+4. Pick **Luxe Salon & Spa** from the business switcher (top-left of the
+   dashboard). The cockpit hydrates with today's plan.
+5. Copy Luxe Salon & Spa's public booking URL — `<dashboard-host>/b/<slug>`
+   (visible in **Settings → General**) — and paste it (don't load) into the
+   incognito tab.
 
 You're ready.
 
-## Beat 1 — "This is what an owner sees when they sit down" (0:00 – 0:20)
+---
 
-- Land on the cockpit. Read the header line out loud:
-  > "Today's flight plan — 8 today · 2 to confirm. The agent has 2 actions ready."
-- Point at the **timeline spine** — "every booking on a single hour-by-hour
-  track, with a live now-marker. No staring at a Google Calendar grid."
-- Hover one **Action Queue** card and confirm it inline.
-  > "I just confirmed that without changing pages or opening a modal."
+## Act 1 — "This is the brand promise" (0:00 – 0:30)
 
-## Beat 2 — "The wedge — AI takes the call" (0:20 – 0:55)
+Open `livia.io`. Read the headline aloud:
 
-- Switch to the **Customer** incognito window. Load the public booking page.
-- Click the floating **Chat with Liv** widget bottom-right. Type:
-  > "Hey, I'd like a haircut tomorrow afternoon."
-- Liv replies in under five seconds with two or three slot options. Pick one.
-  Liv asks for a name + contact, you confirm.
+> *"For barbershops, tattoo studios, dental practices — and every appointment
+> in between."*
+
+Scroll once through the three pillars (AI Inbox, Revenue Protection, Owner
+Cockpit). Pause on Pricing.
+
+> "Three honest tiers — €49, €99, €149. The product behind that pricing is
+> what I'm about to show you."
+
+This 30-second beat exists so the audience meets the brand voice before they
+meet the dashboard. Skip it if you've already shown the site.
+
+---
+
+## Act 2 — "The owner sits down" (0:30 – 1:30)
+
+Switch to the dashboard cockpit. Read the header line:
+
+> *"Today's flight plan."*
+
+- Point at the **timeline spine** — every booking on a single hour-by-hour
+  track with a live now-marker. "Not a Google Calendar grid. A live
+  conductor's view."
+- Point at the **Action Queue** card — pending bookings inline-confirm.
+  Confirm one without changing pages.
+- Click into the **Inbox** in the left rail to show the recent customer
+  conversations (seeded threads + any live ones).
+
+This is the "calm interface" pillar from the marketing site, made real.
+
+---
+
+## Act 3 — "AI takes the call" (1:30 – 2:30)
+
+Switch to the **incognito** tab and load the public booking URL you prepared.
+The page renders Luxe Salon & Spa's services and a **Chat with Liv** widget
+bottom-right.
+
+- Click the widget. Liv opens with the EU AI Act Art. 50 disclosure first
+  bubble: *"Hi, I'm Liv — an AI assistant booking on behalf of Luxe Salon &
+  Spa…"*. Point at it.
+  > "Notice the disclosure. We don't pretend Liv is a human. The EU AI Act
+  > requires it; we built it into the product instead of bolting it on."
+- Type: *"Hey, can I get a haircut tomorrow afternoon with Maya?"*
+- Liv replies in under five seconds with two or three slot options, picks up
+  the staff name, and offers to book. Pick a slot, give a name + contact,
+  confirm.
 - Watch the **champagne shimmer + chime** on the confirmation screen.
   > "That's the sound of revenue you weren't going to capture at 11pm."
 
-## Beat 3 — "The owner sees everything" (0:55 – 1:20)
+Switch back to the **dashboard → Inbox**. The thread is live (5-second poll).
+Click **Take over** in the thread header.
 
-- Back to the **Owner** window → click **Inbox** in the left rail.
-- Show the live thread (it polls every 5 seconds — the conversation appears).
-- Click **Take over** in the thread header.
-  > "Now Liv stops responding and I'm in the seat. The customer never knew
-  > there was a swap."
-- Switch back to the **Cockpit**. The new booking is on the timeline,
-  flagged with the AI badge.
+> "Liv stops responding; I'm in the seat. The customer never knew there was
+> a swap. That's the model: AI by default, human override always one click."
 
-## Beat 4 — "And it's tunable" (1:20 – 1:30)
+---
 
-- Open **Settings → AI Assistant**.
-- Show the four controls: **enable**, **auto-book**, **tone**, **knowledge**.
-- Type one new line into knowledge — e.g. "We don't bleach after 5pm." — save.
-  > "Next conversation knows. No retraining, no engineers, no waiting."
+## Act 4 — "The shop floor" (2:30 – 3:00)
 
-End on the cockpit. Total time: ~90 seconds.
+Switch to the **mobile** artifact. This is what staff see when they open the
+app at the start of their shift:
+
+- **My Day** tab (default for STAFF role) — today's appointments only for
+  the signed-in staff member, with the next one + a countdown.
+- Switch to **Bookings** — the same shop's calendar, scoped to the staff
+  member's view.
+- Switch to **Clients** — the staff member's customers list.
+
+> "Same product, different lens. Owners get the cockpit; staff get the
+> day. Nobody sees data they shouldn't."
+
+End on the dashboard cockpit. Total: ~3 minutes.
+
+---
 
 ## Reset between demos
 
 - **Settings → Demo & Data → Wipe all my data**, then **Reload demo data**.
 - Takes ~5 seconds. Use this between back-to-back investor calls so every
   demo lands on a fresh, identical workspace.
-
-## Seed credentials
-
-Demo workspace seeded by `POST /api/dev/seed` includes three businesses on
-the calling owner: **Salon Aurora** (hair), **Tattoo Ember** (tattoo),
-**Smile Atelier** (dental-style). Each comes pre-loaded with staff, services,
-customers, and a realistic spread of past + upcoming bookings.
 
 ## Wow-moment kill switches
 
@@ -79,5 +135,20 @@ localStorage.setItem("livia.celebrate", "off");
 
 Re-enable with `localStorage.removeItem("livia.celebrate")`.
 
-The shimmer + chime also auto-disable when the OS reports
-`prefers-reduced-motion: reduce`.
+## Surfaces & paths cheat sheet
+
+| Surface | Path | Role |
+|---|---|---|
+| Marketing | `/livia-marketing/` | The pitch |
+| Dashboard (owner cockpit, inbox, settings) | `/` | The command center |
+| Public booking + Liv chat | `/b/<business-slug>` | What the customer sees |
+| Mobile (My Day, Bookings, Clients) | Expo preview URL | The shop floor |
+
+## When the demo breaks
+
+- **"Loading…" never resolves on mobile** → you're not signed in on mobile.
+  Use the mobile sign-in flow before showing Act 4.
+- **Cockpit empty after seed** → seed only runs once per user; if you've
+  seeded before, **Wipe all my data** first then **Reload**.
+- **Chat replies feel slow** → first request to Anthropic warms up the
+  integration. Send a throwaway "hi" before the demo and discard the reply.
