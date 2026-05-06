@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { aurora } from "@/constants/colors";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -25,6 +27,10 @@ interface CustomerCardProps {
     phone?: string | null;
     totalBookings?: number;
     isBlocked?: boolean;
+    /** When true, render a small aurora dot — the only sanctioned AI-moment
+     *  gradient on this row (per ADR 0007). Optional; backend may not yet
+     *  emit this flag — UI is ready for when it does. */
+    hasUnreadLivMessage?: boolean | null;
   };
   index?: number;
   onPress?: () => void;
@@ -83,6 +89,15 @@ export function CustomerCard({ customer, index = 0, onPress }: CustomerCardProps
       >
         <View style={[styles.avatar, { backgroundColor: colors.primary + "1f", borderColor: colors.primary + "44" }]}>
           <Text style={[styles.initials, { color: colors.primary }]}>{initials}</Text>
+          {customer.hasUnreadLivMessage ? (
+            <LinearGradient
+              colors={[aurora.cyan, aurora.violet, aurora.mint]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.livDot, { borderColor: colors.card }]}
+              testID={`liv-dot-${customer.id}`}
+            />
+          ) : null}
         </View>
         <View style={styles.content}>
           <Text
@@ -125,6 +140,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  livDot: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
   },
   initials: { ...type.numericSm, fontSize: 14 },
   content: { flex: 1, gap: 2 },

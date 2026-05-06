@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import React, { useEffect } from "react";
+import { Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, {
   Easing,
+  useAnimatedProps,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withDelay,
   withSequence,
@@ -23,6 +25,8 @@ interface StatsCardProps {
   variant?: "default" | "hero";
 }
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
 export function StatsCard({
   label,
   value,
@@ -33,36 +37,23 @@ export function StatsCard({
 }: StatsCardProps) {
   const colors = useColors();
   const accent = color ?? colors.primary;
+  const isNumeric = typeof value === "number" && Number.isFinite(value);
 
-  // Tween JS state — RN <Text> can't read SharedValues directly.
-  const [shown, setShown] = useState<number | string>(
-    typeof value === "number" ? 0 : value,
-  );
-  const rafRef = useRef<number | null>(null);
+  // Count-up runs entirely on the UI thread via Reanimated. We bind a
+  // SharedValue's text projection to an AnimatedTextInput's `text` prop —
+  // the standard worklet-safe pattern for animating numeric strings.
+  const tween = useSharedValue(isNumeric ? 0 : 0);
 
   useEffect(() => {
-    if (typeof value !== "number" || !Number.isFinite(value)) {
-      setShown(value);
-      return;
+    if (isNumeric) {
+      tween.value = withSpring(value as number, { damping: 22, stiffness: 180, mass: 0.6 });
     }
-    const start = Date.now();
-    const from = typeof shown === "number" ? shown : 0;
-    const to = value;
-    const duration = 700;
-    const tick = () => {
-      const t = Math.min(1, (Date.now() - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const next = Math.round(from + (to - from) * eased);
-      setShown(next);
-      if (t < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, isNumeric]);
+
+  const text = useDerivedValue(() =>
+    isNumeric ? Math.round(tween.value).toLocaleString() : String(value),
+  );
+  const textProps = useAnimatedProps(() => ({ text: text.value, defaultValue: text.value }));
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(10);
@@ -104,9 +95,18 @@ export function StatsCard({
       <Animated.View style={[styles.dot, { backgroundColor: accent + "26" }, dotStyle]}>
         <View style={[styles.dotInner, { backgroundColor: accent }]} />
       </Animated.View>
-      <Text style={[styles.value, { color: colors.foreground }]} numberOfLines={1}>
-        {typeof shown === "number" ? shown.toLocaleString() : shown}
-      </Text>
+      {isNumeric ? (
+        <AnimatedTextInput
+          editable={false}
+          underlineColorAndroid="transparent"
+          animatedProps={textProps}
+          style={[styles.value, styles.valueInput, { color: colors.foreground }]}
+        />
+      ) : (
+        <Text style={[styles.value, { color: colors.foreground }]} numberOfLines={1}>
+          {String(value)}
+        </Text>
+      )}
       <Text style={[styles.label, { color: colors.mutedForeground }]} numberOfLines={1}>
         {label}
       </Text>
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   value: { ...type.numeric, fontSize: 26, letterSpacing: -0.8 },
+  valueInput: { padding: 0, margin: 0, height: 32 },
   label: { ...type.label, fontSize: 12 },
   subtitle: { ...type.caption, fontSize: 11 },
 });
