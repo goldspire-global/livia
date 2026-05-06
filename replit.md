@@ -123,7 +123,6 @@ Production dashboard at `artifacts/bliq-dashboard/src/pages/dashboard.tsx` is th
 ## Pointers
 
 - Skills: `pnpm-workspace`, `clerk-auth`, `database`, `deployment`, `artifacts`, `react-vite`, `expo`, `canvas`, `mockup-sandbox`.
-- Engineer onboarding: `docs/onboarding-engineer.md`.
-- Demo path: `docs/demo-script.md`.
-- Launch plan: `docs/launch-plan.md` (5 lanes, 3 gates).
-- Legacy roadmap (superseded): `.local/tasks/RELEASE-PLAN.md` + `.local/tasks/0[1-9]-*.md` + `.local/tasks/1[0-7]-*.md`.
+- **Roadmap source of truth: `docs/launch-plan.md`** — 5 lanes (Engineering / Brand / Compliance / Launch ops / GTM), 3 gates (Demo Day ✅ / Closed Beta / Public Launch). Updated weekly. Legacy `.local/tasks/RELEASE-PLAN.md` + `01-…17-*.md` are archived (superseded; project tasks #6–#22 CANCELLED).
+- **Operating cadence:** `docs/operating-cadence.md` (weekly review, daily build, release + incident protocol, design-partner rhythm).
+- **Engineer onboarding:** `docs/onboarding-engineer.md` — read this first before any PR.

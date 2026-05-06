@@ -1,85 +1,77 @@
-# Engineering onboarding — Livia
+# Onboarding — first engineer / designer
 
-Welcome. This is the 30-minute version. For deeper context read `replit.md`, then `docs/launch-plan.md`, then this file's "Things never to do" section.
+Welcome. This is the only doc you have to read before your first PR. Everything else is linked from here.
 
 ## What Livia is
 
-Premium AI-native multi-tenant operating system for appointment-based service businesses (beauty/wellness/barber/tattoo/dental). Beachhead: EU/Ireland. The AI character is **Liv** — never marketed at brand level, only disclosed where the EU AI Act and GDPR require.
+Livia is a premium AI-native operating system for appointment-based service businesses — barbershops, tattoo studios, dental practices, nail salons. Beachhead market: EU, starting Dublin. The product is **Livia**; the AI character that does the work under the hood is called **Liv**. We never market "Liv" as the product, and we never market Livia as "AI software" — the AI shows up only where it has to (legally) and where it actually helps the customer.
 
-## Run the repo
+## What's shipped
 
-```bash
-pnpm install
-pnpm run typecheck                      # full workspace typecheck
-pnpm --filter @workspace/api-server run dev
-pnpm --filter @workspace/bliq-dashboard run dev
-pnpm --filter @workspace/bliq-mobile run dev
-```
+- Multi-tenant API (Node 24 + Express 5 + Postgres + Drizzle), with Clerk auth and conflict-safe booking creation under advisory locks.
+- Web dashboard (React + Vite) — the **Cockpit** layout shipped May 5, with a live timeline spine, action queue, and staff-on-shift card.
+- Mobile app (Expo, iOS + Android) — premium polish pass complete: Aurora ambient backdrop, gradient CTAs, haptics, custom sign-in.
+- Public booking page at `/b/:slug` with chat widget powered by Liv (Anthropic Claude tool-loop, `find_slots` + `create_booking`).
+- AI Inbox — owners watch Liv's conversations live, can take over, and configure tone / greeting / knowledge / auto-book in Settings → AI Assistant.
+- Demo-ready surface — token sweep complete, wow-moment champagne shimmer + welcome aurora sweep, demo script in `docs/demo-script.md`.
 
-Workflows are managed by Replit; you usually just restart them from the workspace.
+## What's next
 
-### Required env vars
-
-| Var | Where | Purpose |
-|-----|-------|---------|
-| `DATABASE_URL` | api-server | Neon Postgres connection string |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | api-server | Auth |
-| `VITE_CLERK_PUBLISHABLE_KEY` | dashboard | Auth |
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` / `EXPO_PUBLIC_DOMAIN` | mobile | Auth + API host |
-| `AI_INTEGRATIONS_ANTHROPIC_*` | api-server | Liv (provisioned via Replit AI Integrations) |
-
-### Optional observability env vars (Gate-2 work)
-
-| Var | Where | Purpose |
-|-----|-------|---------|
-| `SENTRY_DSN_API` | api-server | Server-side error reporting. Omit to disable. |
-| `VITE_SENTRY_DSN` | dashboard | Client-side error reporting. Omit to disable. |
-| `SENTRY_RELEASE` / `VITE_SENTRY_RELEASE` | both | Release tag (commit hash). Optional. |
-| `LOG_LEVEL` | api-server | Pino level — `debug` / `info` (default) / `warn` / `error`. |
-
-Set Sentry secrets via Replit's environment-secrets pane (never hardcoded). Source-map upload to Sentry is a separate follow-up; SDKs work without it.
+`docs/launch-plan.md` — the single source of truth. Five lanes (Engineering / Brand / Compliance / Launch ops / GTM), three gates (Demo Day ✅ / Closed Beta / Public Launch). Everything else is downstream of that doc.
 
 ## Where to start reading
 
-1. `replit.md` — single-page snapshot.
-2. `lib/db/src/schema/` — domain model is the truth.
-3. `lib/api-spec/openapi.yaml` — API contract is the truth.
-4. `artifacts/api-server/src/services/` — business logic.
-5. `artifacts/bliq-dashboard/src/pages/` — owner UI.
-6. `artifacts/bliq-mobile/app/` — mobile UI.
-7. `docs/launch-plan.md` — five lanes / three gates / per-lane backlog.
-8. `docs/demo-script.md` — the 90-second walkthrough.
+In this order:
 
-## Brand rules (non-negotiable)
+1. `replit.md` — repo conventions, brand layers (Aurora vs Aurum), gotchas, AI character.
+2. `docs/launch-plan.md` — what we're shipping and why.
+3. `docs/operating-cadence.md` — how we run the week.
+4. `docs/demo-script.md` — what the product *should feel like* when it works.
+5. `docs/adr/` — architecture decision records (Aurora/Aurum split, Clerk auth, Anthropic via Replit Integrations, pnpm monorepo routing). Read these before you suggest changing anything load-bearing.
+6. `lib/db/src/schema/` — single source of truth for the data model. Conversations live in `conversations.ts`; the 5 AI columns on `businesses` are the contract for Liv's behaviour.
+7. `lib/api-spec/openapi.yaml` — single source of truth for HTTP. `pnpm --filter @workspace/api-spec run codegen` regenerates hooks + Zod schemas. The CI guard is in lane Engineering E4.
 
-- Aurora tokens for product surfaces (cyan = primary action, violet = AI moment, mint = success). See `replit.md` "Brand — two layers".
-- Aurum tokens are **brand-only** — never on action buttons. Sole exception: the celebrate shimmer on booking confirmation.
-- Wordmark uses Cormorant Garamond italic *v*. Don't restyle it.
-- Voice: precise, calm, slightly poetic. Empty states whisper.
+## How to run the repo
+
+```bash
+pnpm install
+pnpm run typecheck                # full graph
+pnpm --filter @workspace/db run push                # dev DB schema
+pnpm --filter @workspace/api-server run dev          # API
+# Web + Mobile artifacts auto-start via the workflow runner.
+```
+
+Required env vars are listed in `replit.md` → "Run & Operate". Anthropic credentials come via Replit AI Integrations — there is no `ANTHROPIC_API_KEY` to set.
+
+## Brand rules — non-negotiable
+
+- **Aurora** = product surface. Cyan (`#06b6d4`) is the only primary action colour. Violet for AI moments, mint for success.
+- **Aurum** = wordmark only — champagne / cream / bronze chrome. **Never** Aurum on action buttons. The single sanctioned exception is `.celebrate-shimmer` (one-shot champagne sweep on booking confirmation).
+- **Wordmark** = Cormorant Garamond, italic *v*. Lock-up is on canvas at `livia-wm-aurum`.
+- **Voice** = precise, calm, slightly poetic. Empty states whisper. AI suggestions invite, never pressure.
+- Tagline: *For barbershops, tattoo studios, dental practices — and every appointment in between.*
 
 ## AI guardrails
 
-- The AI is **Liv**. The product is **Livia**. Marketing surfaces never lead with "AI-powered."
-- Disclosure surfaces (required): chat widget first message, ToS, Privacy, public booking page Anthropic AUP line.
-- Tool-loop in `artifacts/api-server/src/services/ai-chat.service.ts`. Model: `claude-sonnet-4-6`, max 6 tool hops, two tools (`find_slots`, `create_booking`).
+- Liv is the AI character. The product is Livia. Never collapse the two in customer-facing copy.
+- Brand layer is silent on "AI" — no "AI-powered" badges in marketing.
+- Disclosure shows up where it legally must: chat widget first message (EU AI Act Art. 50), Privacy + ToS (GDPR Art. 22), Anthropic AUP footer on the public booking page.
+- Liv's behaviour is configured per-business via the 5 AI columns on `businesses` — no global hardcoded persona.
 
-## Observability (Gate 2)
+## EU compliance posture
 
-- Logs: structured JSON via `pino-http`. Every request emits `request_id`, `tenant_id` (when in URL), `user_id` (when authed), `method`, `path`, `status`, `responseTime` (ms). Request id is echoed back as `x-request-id` header.
-- Errors: Sentry (api-server + dashboard) when DSN is set.
-- CI guard: `./scripts/check-codegen.sh` fails if the OpenAPI source and the generated client drift apart. Wired into `.github/workflows/ci.yml`.
+- We assume EU AI Act + GDPR apply from day one. We are a deployer of an AI system; disclosures are mandatory; data-export and data-delete must work end-to-end before Gate 3.
+- We are an Anthropic processor — their AUP applies downstream.
+- Compliance lane in `docs/launch-plan.md` (C1–C12) is the working list. Don't ship a feature that adds a new disclosure surface without ticking the matching C-item.
 
-## Compliance posture
+## Things to never do
 
-- EU AI Act Art. 50 — automated-interaction disclosure on every AI surface.
-- GDPR Art. 22 — automated-decision-making disclosure in ToS + Privacy.
-- Data lives in EU. DPA available on request. SOC 2 Type 1 is on the launch plan.
+- **Never reintroduce the name "Bliq" in user-facing copy.** Internal slugs (`bliq-mobile`, `bliq-dashboard`, `STORAGE_KEY = "bliq_current_business_id"`, scheme `bliq-mobile`) are deliberately preserved — changing them breaks Clerk redirect URIs, Google OAuth callbacks, and on-device storage. See `replit.md` → "Where things live" + "Gotchas".
+- **Never use the name "Olivia" anywhere** — in code, comments, copy, file names, UI strings, or commit messages. It's the founder's daughter's name and is privately reserved. There is a CI guard in lane Compliance C12 that fails the build if it appears.
+- **Never use Aurum for an action button.** Cyan stays the action colour. The only exception is the celebrate shimmer.
+- **Never edit `lib/db/src/schema/*` without a migration**, and never edit `lib/api-spec/openapi.yaml` without re-running `pnpm codegen`.
+- **Never deploy on a Friday after 16:00 IST** unless it's a P0 hotfix (see `docs/operating-cadence.md`).
 
-## Things never to do
+## When you're stuck
 
-- Don't rename the `bliq-mobile` Expo slug or scheme — breaks Google OAuth callback and deep links.
-- Don't change `STORAGE_KEY = "bliq_current_business_id"` in mobile `BusinessContext.tsx` — orphans existing devices.
-- Don't use Aurum (champagne/cream/bronze) for action buttons.
-- Don't surface the name **Olivia** anywhere — repo, copy, UI, tests, comments. (Founder's daughter; private.)
-- Don't introduce silent fallbacks. If a required env var is missing, throw at startup.
-- Don't bypass the booking conflict-safe transaction in `services/booking.service.ts`.
+Ping the founder. We're small enough that there's no escalation ladder — direct is correct.
