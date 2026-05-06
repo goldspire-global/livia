@@ -256,6 +256,19 @@
 
 /* ============================================================
    AURORA UTILITIES — gradient signals for AI / brand moments
+   ============================================================
+   DISCIPLINE (Task #40, locked May 2026):
+   `livia.io` is the brand bible. The dashboard rebases onto it.
+   The aurora gradient is an ACCENT, not a headline treatment.
+   Permitted uses:
+     1. Primary CTA buttons (the "do this now" surface).
+     2. AI / automation chips and badges ("Liv replied", "Liv booked").
+     3. The wordmark badge `Lᴠ` — and nowhere else on page chrome.
+   Never:
+     - Page or sign-in headlines (use `font-serif` Cormorant instead,
+       with a muted italic continuation for the second line).
+     - Section H2s, settings copy, or empty-state heroes.
+     - Persistent page-chrome glows (use a single soft cyan radial halo).
    ============================================================ */
 
 /* The signature aurora gradient — use sparingly for AI / brand-energy moments */
