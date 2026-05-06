@@ -90,6 +90,27 @@ export async function listConversationsForBusiness(
   return rows;
 }
 
+export async function findOpenConversationByChannelAndPhone(
+  businessId: string,
+  channel: ConversationChannel,
+  customerPhone: string,
+): Promise<Conversation | null> {
+  const [row] = await db
+    .select()
+    .from(conversationsTable)
+    .where(
+      and(
+        eq(conversationsTable.businessId, businessId),
+        eq(conversationsTable.channel, channel),
+        eq(conversationsTable.status, "OPEN"),
+        eq(conversationsTable.customerPhone, customerPhone),
+      ),
+    )
+    .orderBy(desc(conversationsTable.lastMessageAt))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function listMessagesForConversation(
   conversationId: string,
 ): Promise<ConversationMessage[]> {

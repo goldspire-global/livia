@@ -70,7 +70,7 @@ export function initTransports(): void {
     );
   } else {
     logger.warn(
-      "TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN not set — SMS sends will write PENDING rows only.",
+      "TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN not set — outbound SMS sends will be logged as FAILED until provisioned.",
     );
   }
 
@@ -93,7 +93,7 @@ export function initTransports(): void {
     logger.info({ resendDefaultFrom }, "Resend email transport wired");
   } else {
     logger.warn(
-      "RESEND_API_KEY not set — email sends will write PENDING rows only.",
+      "RESEND_API_KEY not set — outbound email sends will be logged as FAILED until provisioned.",
     );
   }
 }

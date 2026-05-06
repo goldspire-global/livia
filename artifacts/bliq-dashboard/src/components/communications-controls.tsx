@@ -168,7 +168,7 @@ export default function CommunicationsControls({ businessId }: { businessId: str
         },
       );
       setLastResult(r);
-      toast({ title: `Test ${testChannel} ${r.status}`, description: r.status === "SENT" ? "Check your inbox/phone." : "Logged as PENDING/FAILED — see notification logs." });
+      toast({ title: `Test ${testChannel} ${r.status}`, description: r.status === "SENT" ? "Check your inbox/phone." : "Logged as FAILED — see notification logs (transport not configured or send rejected)." });
     } catch (e) {
       toast({ title: "Test send failed", description: String(e), variant: "destructive" });
     } finally {
@@ -195,13 +195,13 @@ export default function CommunicationsControls({ businessId }: { businessId: str
           <b>SMS provider:</b>{" "}
           {sms === "twilio"
             ? "Twilio (live)"
-            : "Not configured — outbound SMS will be queued only until TWILIO_ACCOUNT_SID is set."}
+            : "Not configured — outbound SMS will be logged as FAILED until TWILIO_ACCOUNT_SID is set."}
         </div>
         <div>
           <b>Email provider:</b>{" "}
           {email === "resend"
             ? `Resend (live · default from ${config.providerStatus.emailDefaultFrom})`
-            : "Not configured — outbound email will be queued only until RESEND_API_KEY is set."}
+            : "Not configured — outbound email will be logged as FAILED until RESEND_API_KEY is set."}
         </div>
         {config.smsWebhookUrl && (
           <div className="break-all">

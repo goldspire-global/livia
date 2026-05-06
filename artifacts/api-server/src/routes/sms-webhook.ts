@@ -15,7 +15,7 @@ import { generateId } from "../lib/id";
 import {
   createConversation,
   appendMessage,
-  listConversationsForBusiness,
+  findOpenConversationByChannelAndPhone,
 } from "../services/conversations.service";
 import { handlePublicChat } from "../services/ai-chat.service";
 import { sendAiSms } from "../services/ai-outbound.service";
@@ -109,13 +109,13 @@ router.post(
         customer = created;
       }
 
-      // Find an existing OPEN SMS conversation for this customer, else create one.
-      const existing = await listConversationsForBusiness(business.id, {
-        status: "OPEN",
-        limit: 50,
-      });
-      const candidate = existing.find(
-        (c) => c.channel === "SMS" && c.customerPhone === from,
+      // DB-level lookup of the existing OPEN SMS conversation for
+      // (businessId, customerPhone). Indexed scan, no list cap, so
+      // older threads in high-volume shops still resume cleanly.
+      const candidate = await findOpenConversationByChannelAndPhone(
+        business.id,
+        "SMS",
+        from,
       );
       const conversation = candidate
         ? candidate
