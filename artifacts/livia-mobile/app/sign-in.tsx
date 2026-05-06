@@ -74,7 +74,7 @@ export default function SignInScreen() {
 
   useEffect(() => {
     wordmarkOpacity.value = withTiming(1, { duration: 540, easing: Easing.out(Easing.cubic) });
-    wordmarkY.value = withSpring(0, { damping: 16, stiffness: 130 });
+    wordmarkY.value = withSpring(0, SPRING_GENTLE);
     headlineOpacity.value = withDelay(180, withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) }));
     headlineY.value = withDelay(180, withSpring(0, SPRING_GENTLE));
     taglineOpacity.value = withDelay(360, withTiming(1, { duration: 460 }));

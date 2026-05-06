@@ -44,4 +44,5 @@ Aurora cyan `#06b6d4` = primary action; violet `#8b5cf6` = Liv/AI moments; mint 
 ## Pointers
 
 - Roadmap: `docs/launch-plan.md` · Cadence: `docs/operating-cadence.md` · Demo: `docs/demo-script.md`.
+- Mobile motion + materiality: `docs/adr/0008-mobile-motion-and-materiality.md` (dark-default, serif headlines via Cormorant, breathing AuroraHalo, stagger=70ms, springs in `constants/motion.ts`, haptics in `hooks/useHaptics.ts`).
 - Skills: `pnpm-workspace`, `clerk-auth`, `database`, `deployment`, `artifacts`, `react-vite`, `expo`, `canvas`, `mockup-sandbox`.

@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { Shimmer } from "@/components/brand/Shimmer";
+import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -85,7 +86,7 @@ export function EmptyState({
       ) : null}
       {actionLabel && onAction ? (
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
+          style={[styles.button, { backgroundColor: colors.primary }, elevation.floating]}
           onPress={() => {
             haptics.tap();
             onAction();

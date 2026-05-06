@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
@@ -50,6 +50,7 @@ export function StatsCard({
   const [shown, setShown] = useState<number | string>(
     typeof value === "number" ? 0 : value,
   );
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -60,17 +61,19 @@ export function StatsCard({
     const from = typeof shown === "number" ? shown : 0;
     const to = value;
     const duration = 700;
-    let raf: number;
     const tick = () => {
       const t = Math.min(1, (Date.now() - start) / duration);
       // Ease-out cubic for a "settling" feel.
       const eased = 1 - Math.pow(1 - t, 3);
       const next = Math.round(from + (to - from) * eased);
       setShown(next);
-      if (t < 1) raf = requestAnimationFrame(tick);
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
@@ -80,7 +83,8 @@ export function StatsCard({
   const dotScale = useSharedValue(0.6);
 
   useEffect(() => {
-    const delay = index * 70;
+    // Cap stagger to avoid runaway timelines if a row ever balloons (ADR 0008).
+    const delay = Math.min(index, 8) * 70;
     opacity.value = withDelay(delay, withTiming(1, { duration: 320, easing: Easing.out(Easing.cubic) }));
     translateY.value = withDelay(delay, withSpring(0, SPRING_GENTLE));
     dotScale.value = withDelay(
