@@ -11,18 +11,6 @@ import Animated, {
 import { aurora } from "@/constants/colors";
 import { BREATH_PERIOD_MS } from "@/constants/motion";
 
-/**
- * Single, breathing aurora halo. Replaces the older "three coloured orbs"
- * backdrop (which felt closer to a bootcamp template than to a flagship
- * surface). Per ADR 0007: cyan-led, violet only as a faint companion, never
- * a hard-edged gradient pill.
- *
- * - `tone="primary"` (default): cyan-dominant — used on dashboard / customers
- * - `tone="ambient"`: champagne-tinged — used on sign-in / onboarding
- *
- * The halo breathes (~4.2s cycle) on the UI thread via Reanimated worklets
- * so it never blocks JS or interaction.
- */
 export function AuroraHalo({
   tone = "primary",
   size = 360,

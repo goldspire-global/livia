@@ -219,8 +219,16 @@ export default function BookingsScreen() {
           return (
             <SwipeableRow
               onSwipeRight={() => advanceStatus(item.id, item.status)}
-              onSwipeLeft={() => router.push(`/booking/${item.id}`)}
-              rightLabel={item.status === "PENDING" ? "Confirm" : "Complete"}
+              onSwipeLeft={() =>
+                router.push(`/booking/${item.id}?intent=reschedule`)
+              }
+              rightLabel={
+                item.status === "PENDING"
+                  ? "Confirm"
+                  : item.status === "CONFIRMED"
+                    ? "Done"
+                    : "—"
+              }
               leftLabel="Reschedule"
             >
               <BookingCard

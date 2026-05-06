@@ -36,6 +36,7 @@ import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 
 function timeOfDayGreeting(): string {
   const h = new Date().getHours();
@@ -97,6 +98,18 @@ export default function DashboardScreen() {
   if (!currentBusiness && !bizLoading) return null;
 
   const next = summary?.upcomingBookings?.[0];
+  const nextRelative = useRelativeTime(next?.startAt);
+
+  // Halo pulse intensifies during pull-to-refresh — replaces the stock spinner
+  // feel by tying the refresh state to the always-present aurora.
+  const haloIntensity = useSharedValue(0.85);
+  useEffect(() => {
+    haloIntensity.value = withTiming(isRefetching ? 1.4 : 0.85, { duration: 320 });
+  }, [isRefetching]);
+  const refreshHaloStyle = useAnimatedStyle(() => ({
+    opacity: haloIntensity.value,
+    transform: [{ scale: 0.9 + haloIntensity.value * 0.1 }],
+  }));
 
   const advanceNext = async () => {
     if (!currentBusiness?.id || !next) return;
@@ -130,17 +143,20 @@ export default function DashboardScreen() {
       refreshControl={
         <RefreshControl
           refreshing={isRefetching}
-          onRefresh={refetch}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
+          onRefresh={() => {
+            haptics.tap();
+            refetch();
+          }}
+          tintColor="transparent"
+          colors={["transparent"]}
+          progressBackgroundColor="transparent"
         />
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* Single soft halo behind the greeting — replaces the two-orb glow */}
-      <View pointerEvents="none" style={styles.glowWrap}>
-        <AuroraHalo tone="primary" size={420} style={{ top: -160, left: -100 }} intensity={0.85} />
-      </View>
+      <Animated.View pointerEvents="none" style={[styles.glowWrap, refreshHaloStyle]}>
+        <AuroraHalo tone="primary" size={420} style={{ top: -160, left: -100 }} intensity={1} />
+      </Animated.View>
 
       {/* Header */}
       <Animated.View style={[styles.headerBlock, headStyle]}>
@@ -190,13 +206,20 @@ export default function DashboardScreen() {
           >
             <View style={styles.nextRow}>
               <Text style={[styles.nextEyebrow, { color: aurora.cyan }]}>NEXT UP</Text>
-              <Text style={[styles.nextTime, { color: colors.foreground }]}>
-                {new Date(next.startAt).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
-              </Text>
+              <View style={styles.nextTimes}>
+                {nextRelative ? (
+                  <Text style={[styles.nextCountdown, { color: aurora.cyan }]}>
+                    {nextRelative}
+                  </Text>
+                ) : null}
+                <Text style={[styles.nextTime, { color: colors.foreground }]}>
+                  {new Date(next.startAt).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </Text>
+              </View>
             </View>
             <Text style={[styles.nextName, { color: colors.foreground }]} numberOfLines={1}>
               {next.customer?.displayName ?? next.customer?.firstName ?? "Walk-in"}
@@ -362,6 +385,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   nextEyebrow: { ...type.eyebrow, fontSize: 10 },
+  nextTimes: { flexDirection: "row", alignItems: "center", gap: 10 },
+  nextCountdown: { ...type.numericSm, fontSize: 12, letterSpacing: 0.4 },
   nextTime: { ...type.numericSm, fontSize: 14 },
   nextName: { fontFamily: fonts.serifMedium, fontSize: 24, letterSpacing: -0.3 },
   nextSub: { ...type.body, fontSize: 14 },

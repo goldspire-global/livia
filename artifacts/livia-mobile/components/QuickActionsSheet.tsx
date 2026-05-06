@@ -22,11 +22,6 @@ interface QuickActionsSheetProps {
   actions: QuickAction[];
 }
 
-/**
- * Bottom-sheet quick actions menu — used by the dashboard "Next up" hero
- * (long-press) and booking rows (long-press). Snap-spring entry, blurred
- * backdrop, drag-down to dismiss. Each action gets a haptic tap + closes.
- */
 export function QuickActionsSheet({ visible, onClose, title, actions }: QuickActionsSheetProps) {
   const colors = useColors();
   const haptics = useHaptics();
@@ -34,7 +29,6 @@ export function QuickActionsSheet({ visible, onClose, title, actions }: QuickAct
   const fire = (a: QuickAction) => {
     haptics.tap();
     onClose();
-    // Defer to the next tick so the sheet has time to start its close animation.
     setTimeout(() => a.onPress(), 80);
   };
 

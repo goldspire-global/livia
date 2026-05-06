@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
+import { aurora } from "@/constants/colors";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { elevation } from "@/constants/elevation";
@@ -52,7 +53,7 @@ const STATUS_ACTIONS: Record<string, Array<{ label: string; next: string; danger
 export default function BookingDetailScreen() {
   const colors = useColors();
   const haptics = useHaptics();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, intent } = useLocalSearchParams<{ id: string; intent?: string }>();
   const { currentBusiness } = useBusiness();
 
   const { data: booking, isLoading, refetch } = useGetBooking(
@@ -130,6 +131,20 @@ export default function BookingDetailScreen() {
       <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 240, overflow: "hidden" }}>
         <AuroraHalo tone="primary" size={360} intensity={0.6} style={{ top: -120, left: -60 }} />
       </View>
+
+      {intent === "reschedule" ? (
+        <View
+          style={[
+            styles.intentBanner,
+            { backgroundColor: aurora.cyan + "1c", borderColor: aurora.cyan + "55" },
+          ]}
+        >
+          <Feather name="calendar" size={14} color={aurora.cyan} />
+          <Text style={[styles.intentText, { color: aurora.cyan }]}>
+            Rescheduling — pick a new time below.
+          </Text>
+        </View>
+      ) : null}
 
       <View
         style={[
@@ -258,6 +273,16 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   content: { padding: 16, gap: 12, paddingBottom: 60 },
+  intentBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  intentText: { ...type.label, fontSize: 12.5 },
   heroCard: {
     borderRadius: 20,
     borderWidth: 1,

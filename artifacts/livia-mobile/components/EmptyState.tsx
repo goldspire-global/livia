@@ -17,12 +17,6 @@ interface EmptyStateProps {
   isLoading?: boolean;
 }
 
-/**
- * Empty / loading vignette. Loading state shows shimmer skeletons (so the
- * surface still feels alive). Empty state shows a single soft halo behind
- * a feathered icon — no harsh muted-grey circle. Per the brand bible: a
- * blank screen is still a Livia screen, and Livia is never sterile.
- */
 export function EmptyState({
   icon = "inbox",
   title,

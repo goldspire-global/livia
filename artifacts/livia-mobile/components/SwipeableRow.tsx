@@ -29,15 +29,6 @@ interface SwipeableRowProps {
   disabled?: boolean;
 }
 
-/**
- * Wraps a row with horizontal swipe gestures driven on the UI thread:
- * right-swipe → onSwipeRight (mint flash), left-swipe → onSwipeLeft (cyan
- * flash). The gesture rubberbands past the threshold so the swipe always
- * feels responsive.
- *
- * Per ADR 0008 / task 47: swipe-right = mark arrived/confirm,
- * swipe-left = reschedule. All animation runs in worklets.
- */
 export function SwipeableRow({
   children,
   onSwipeRight,
@@ -59,7 +50,6 @@ export function SwipeableRow({
     .enabled(!disabled)
     .onUpdate((e) => {
       const raw = e.translationX;
-      // Rubberband past the limit so the swipe never feels infinite.
       const sign = Math.sign(raw);
       const abs = Math.min(Math.abs(raw), RUBBERBAND_LIMIT + 60);
       tx.value =
@@ -92,7 +82,6 @@ export function SwipeableRow({
 
   return (
     <View style={styles.root}>
-      {/* Background reveals (mint right / cyan left) — sit beneath the row */}
       {onSwipeRight ? (
         <Animated.View
           style={[styles.bg, styles.bgLeft, { backgroundColor: aurora.mint + "26" }, rightBgStyle]}

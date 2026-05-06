@@ -39,12 +39,6 @@ interface BottomSheetProps {
 const SCREEN_H = Dimensions.get("window").height;
 const DEFAULT_MAX = SCREEN_H * 0.78;
 
-/**
- * A spring-snap bottom sheet with a blurred backdrop and rubberband drag-down
- * dismiss. Used for the business switcher (More tab) and quick-action sheets
- * on bookings. Worklet-driven — gestures and the snap animation never touch
- * the JS thread.
- */
 export function BottomSheet({
   visible,
   onClose,
@@ -74,7 +68,6 @@ export function BottomSheet({
 
   const pan = Gesture.Pan()
     .onUpdate((e) => {
-      // Rubberband on negative (upward) drag — strong resistance.
       drag.value = e.translationY > 0 ? e.translationY : e.translationY * 0.25;
     })
     .onEnd((e) => {

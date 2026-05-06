@@ -15,12 +15,6 @@ import { BREATH_PERIOD_MS } from "@/constants/motion";
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-/**
- * Animated SVG vignette for empty states (per task 47: never the stock
- * circle-with-icon). Three concentric arcs slowly inhale/exhale; three small
- * "satellite" dots drift on independent sine cycles. Worklet-driven, no JS
- * tick. Always cyan-led (gradient is reserved for AI moments — ADR 0007).
- */
 export function EmptyVignette({ size = 160 }: { size?: number }) {
   const breath = useSharedValue(1);
   const d1 = useSharedValue(0);
@@ -70,7 +64,6 @@ export function EmptyVignette({ size = 160 }: { size?: number }) {
         </Svg>
       </Animated.View>
 
-      {/* Satellite dots — overlay so they can drift independently */}
       <Animated.View style={[styles.satellite, { left: c - 50, top: c - 56 }, dot1]}>
         <View style={[styles.dot, { backgroundColor: aurora.cyan }]} />
       </Animated.View>
