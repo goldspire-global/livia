@@ -2,7 +2,7 @@ kind = "web"
 previewPath = "/"
 title = "Livia Dashboard"
 version = "1.0.0"
-id = "artifacts/bliq-dashboard"
+id = "artifacts/livia-dashboard"
 router = "path"
 
 [[integratedSkills]]
@@ -15,11 +15,11 @@ paths = [ "/" ]
 localPort = 20645
 
 [services.development]
-run = "pnpm --filter @workspace/bliq-dashboard run dev"
+run = "pnpm --filter @workspace/livia-dashboard run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/bliq-dashboard", "run", "build" ]
-publicDir = "artifacts/bliq-dashboard/dist/public"
+build = [ "pnpm", "--filter", "@workspace/livia-dashboard", "run", "build" ]
+publicDir = "artifacts/livia-dashboard/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]

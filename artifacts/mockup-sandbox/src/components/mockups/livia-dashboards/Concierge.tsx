@@ -141,7 +141,7 @@ export function Concierge() {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-[hsl(188_95%_43%)] to-[hsl(258_90%_66%)] text-white font-bold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             B
           </div>
-          <span className="text-xl font-extrabold tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Bliq</span>
+          <span className="text-xl font-extrabold tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Livia</span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">

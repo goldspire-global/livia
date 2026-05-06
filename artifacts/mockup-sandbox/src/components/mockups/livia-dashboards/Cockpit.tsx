@@ -48,7 +48,7 @@ export function Cockpit() {
           <div className="w-6 h-6 rounded flex items-center justify-center font-display font-bold text-xs" style={{ background: 'linear-gradient(135deg, hsl(188 95% 43%) 0%, hsl(258 90% 66%) 100%)' }}>
             B
           </div>
-          <span className="font-display font-bold text-base tracking-tight">Bliq</span>
+          <span className="font-display font-bold text-base tracking-tight">Livia</span>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

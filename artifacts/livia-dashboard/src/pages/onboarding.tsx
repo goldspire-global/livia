@@ -35,7 +35,7 @@ export default function OnboardingPage() {
   const [seedLoading, setSeedLoading] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as any),
     defaultValues: {
       name: "",
       slug: "",

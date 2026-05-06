@@ -1,6 +1,6 @@
 /**
  * Livia brand color system, mobile edition.
- * Mirrors artifacts/bliq-dashboard/src/index.css token semantics.
+ * Mirrors artifacts/livia-dashboard/src/index.css token semantics.
  *
  * Two-layer brand:
  *   - Aurora (product surface): midnight base + violet/cyan/mint gradient.

@@ -95,7 +95,7 @@ Sizing: **S** ≤ one focused day · **M** 2-5 days · **L** > 1 week. Target ga
 | B7 | Social presence seeded: X/@liviaio, LinkedIn page, Instagram (handle parked at minimum). | S | 3 |
 | B8 | Press kit at `livia.io/press` — one-pager, founder photo, screenshots, logo zip. | S | 3 |
 | B9 | First eight founder posts written + scheduled (Linear or a Notion calendar). | M | 3 |
-| B10 | Brand audit: every "Bliq" string in code, copy, comments, file paths reviewed. Anything user-facing must read "Livia" or "Liv". Internal slugs stay (documented in `replit.md`). | M | 2 |
+| B10 | ✅ Brand audit complete (Task #38, May 6 2026): full repo rename `bliq` → `livia`. Surviving `bliq` strings are the legacy mobile URL scheme retained for in-flight OAuth (`livia-mobile/app.json`), the `LEGACY_STORAGE_KEY` AsyncStorage migration shim, and historical brand-exploration mockups. | M | 2 |
 
 ### Lane 3 — Compliance
 

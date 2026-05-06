@@ -20,7 +20,8 @@ interface BusinessContextValue {
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null);
-const STORAGE_KEY = "bliq_current_business_id";
+const STORAGE_KEY = "livia_current_business_id";
+const LEGACY_STORAGE_KEY = "bliq_current_business_id";
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const [currentBusinessId, setCurrentBusinessId] = useState<string | null>(
@@ -35,9 +36,21 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   } = useGetMyBusinesses();
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((id) => {
-      if (id) setCurrentBusinessId(id);
-    });
+    // One-shot migration: if a legacy bliq_* value exists and the new key is
+    // empty, copy it across and delete the old key. Safe to run on every boot.
+    (async () => {
+      const current = await AsyncStorage.getItem(STORAGE_KEY);
+      if (current) {
+        setCurrentBusinessId(current);
+        return;
+      }
+      const legacy = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy) {
+        await AsyncStorage.setItem(STORAGE_KEY, legacy);
+        await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+        setCurrentBusinessId(legacy);
+      }
+    })();
   }, []);
 
   useEffect(() => {

@@ -125,7 +125,7 @@ export default function SignInScreen() {
       // Generate platform-aware redirect URI so this works in Expo Go,
       // dev clients, web preview, and standalone builds.
       const redirectUrl = AuthSession.makeRedirectUri({
-        scheme: "bliq-mobile",
+        scheme: "livia-mobile",
         path: "oauth-callback",
       });
 

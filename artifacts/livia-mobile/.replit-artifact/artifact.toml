@@ -2,7 +2,7 @@ kind = "mobile"
 previewPath = "/mobile/"
 title = "Livia Mobile"
 version = "1.0.0"
-id = "artifacts/bliq-mobile"
+id = "artifacts/livia-mobile"
 router = "expo-domain"
 
 [[integratedSkills]]
@@ -16,11 +16,11 @@ paths = [ "/mobile/" ]
 localPort = 24839
 
 [services.development]
-run = "pnpm --filter @workspace/bliq-mobile run dev"
+run = "pnpm --filter @workspace/livia-mobile run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/bliq-mobile", "run", "build" ]
-run = [ "pnpm", "--filter", "@workspace/bliq-mobile", "run", "serve" ]
+build = [ "pnpm", "--filter", "@workspace/livia-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/livia-mobile", "run", "serve" ]
 
 [services.env]
 PORT = "24839"

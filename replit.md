@@ -22,8 +22,8 @@ pnpm workspace monorepo · TypeScript 5.9 · Node 24 · Express 5 · PostgreSQL 
 ## Where things live
 
 - `artifacts/api-server` — Express REST API at `/api`. Auth via `@clerk/express`.
-- `artifacts/bliq-dashboard` — React + Vite owner dashboard. Auth via `@clerk/clerk-react`. Public booking + chat at `/b/:slug`.
-- `artifacts/bliq-mobile` — Expo iOS/Android. Auth via `@clerk/clerk-expo`.
+- `artifacts/livia-dashboard` — React + Vite owner dashboard. Auth via `@clerk/clerk-react`. Public booking + chat at `/b/:slug`.
+- `artifacts/livia-mobile` — Expo iOS/Android. Auth via `@clerk/clerk-expo`. Scheme `livia-mobile://` (legacy `bliq-mobile://` retained as second scheme entry through one release for in-flight OAuth flows).
 - `artifacts/livia-marketing` — public marketing site (livia.io v1) at `/livia-marketing/`. Lead form posts to `POST /api/public/marketing/leads`.
 - `artifacts/mockup-sandbox` — design preview sandbox (canvas iframes).
 - `lib/db` — Drizzle schema (15 tables incl. `marketing_leads` + `conversations`), DB client, enums, status-transition helpers.
@@ -42,13 +42,13 @@ pnpm workspace monorepo · TypeScript 5.9 · Node 24 · Express 5 · PostgreSQL 
 
 ## Brand — two layers
 
-**Aurora (product surface).** Cinematic midnight base + violet→cyan→mint gradient. Cyan `#06b6d4` is the primary action colour; violet `#8b5cf6` signals automated/Liv moments; mint `#10b981` for success. Tokens live in `artifacts/bliq-dashboard/src/index.css` (`--color-aurora-*`) and `artifacts/bliq-mobile/constants/colors.ts` (`aurora` export). Utilities `.aurora-gradient`, `.aurora-gradient-text`, `.aurora-glass`, `.aurora-glow` — use sparingly.
+**Aurora (product surface).** Cinematic midnight base + violet→cyan→mint gradient. Cyan `#06b6d4` is the primary action colour; violet `#8b5cf6` signals automated/Liv moments; mint `#10b981` for success. Tokens live in `artifacts/livia-dashboard/src/index.css` (`--color-aurora-*`) and `artifacts/livia-mobile/constants/colors.ts` (`aurora` export). Utilities `.aurora-gradient`, `.aurora-gradient-text`, `.aurora-glass`, `.aurora-glow` — use sparingly.
 
 **Aurum (wordmark accent).** Champagne/cream/bronze chrome **reserved for the Livia wordmark and the italic *v* only**. Tokens: `--color-aurum-champagne #d9c39a`, `--color-aurum-cream #f6f3ec`, `--color-aurum-bronze #8a7549`. Mobile tokens exported from `colors.ts` as `aurum`. **Never use Aurum on action buttons or section headings.** The one sanctioned exception is the celebrate shimmer (`.celebrate-shimmer`) on booking confirmation.
 
 **Type.** Display = Plus Jakarta Sans. Body/UI = Geist. Data = JetBrains Mono. **Wordmark = Cormorant Garamond** (italic *v*). Radius `0.75rem` (12px).
 
-**Logo mark:** `artifacts/bliq-dashboard/src/components/brand/BliqMark.tsx` exports `LiviaMark`/`LiviaWordmark` (and legacy `BliqMark`/`BliqWordmark` aliases for the dashboard, since the in-app rebrand is gated to avoid a wide import refactor). The marketing artifact has its own `LiviaMark.tsx` with **no** `Bliq*` aliases.
+**Logo mark:** `artifacts/livia-dashboard/src/components/brand/LiviaMark.tsx` exports `LiviaMark`/`LiviaWordmark`. The marketing artifact has its own `LiviaMark.tsx`. No `Bliq*` aliases remain.
 
 **Voice.** Precise, calm, slightly poetic. Empty states whisper, success toasts confirm, AI suggestions invite without pressuring.
 
@@ -70,8 +70,8 @@ The AI is **Liv** — the brand's quiet helper. Liv has a name and a personality
 
 ## Product surfaces
 
-- **Dashboard (`artifacts/bliq-dashboard/src/pages/`):** dashboard (Cockpit), bookings, customers, services, staff, availability, time-off, inbox (AI conversations), settings (General / AI Assistant / Demo & Data), onboarding, sign-in/up, public-booking (`/b/:slug`).
-- **Mobile (`artifacts/bliq-mobile/app/`):** dashboard, bookings, customers, more (tab), booking detail/new, customer detail, staff list/detail, services, sign-in, onboarding.
+- **Dashboard (`artifacts/livia-dashboard/src/pages/`):** dashboard (Cockpit), bookings, customers, services, staff, availability, time-off, inbox (AI conversations), settings (General / AI Assistant / Demo & Data), onboarding, sign-in/up, public-booking (`/b/:slug`).
+- **Mobile (`artifacts/livia-mobile/app/`):** dashboard, bookings, customers, more (tab), booking detail/new, customer detail, staff list/detail, services, sign-in, onboarding.
 - **AI Inbox (shipped May 5):** customers chat → Liv books → owner sees the thread, can take over. Schema in `lib/db/src/schema/conversations.ts`. Public chat: `POST /api/public/b/:slug/chat`. Owner views: `GET /api/businesses/:id/conversations[/:cid]` + `PATCH` for take-over/close. Widget: `components/chat-widget.tsx`. Inbox UI: `pages/inbox.tsx` (polls 10s list / 5s thread, per-IP rate-limited).
 - **Cockpit (graduated May 5):** live timeline spine (8am–8pm @ 96px/hour), greedy interval-packing into lanes, current-time marker, action queue + staff-on-shift derived from `summary.upcomingBookings`. Layout `max-width: 1600px`. *Known follow-up: `enrichBooking` in `dashboard.service.ts` is N+1 — batch when latency regresses.*
 - **Demo data:** `POST /api/dev/seed` (3 demo businesses, idempotent), `DELETE /api/dev/seed` (wipes calling user's businesses, cascades). Both 403 in production. Reusable component: `components/demo-data-controls.tsx`.
@@ -82,7 +82,7 @@ The AI is **Liv** — the brand's quiet helper. Liv has a name and a personality
 - Aurora theme: `colorPrimary: "#06b6d4"`, `fontFamily: Geist`, `borderRadius: "0.75rem"`.
 - Use `signInFallbackRedirectUrl` / `signUpFallbackRedirectUrl` (deprecated `fallbackRedirectUrl` is wrong).
 - `proxyUrl` set only in production builds (`import.meta.env.PROD`).
-- **Mobile sign-in is fully custom** (not Clerk hosted UI): 3 modes (sign-in / sign-up / verify-OTP), Google OAuth via `useOAuth({ strategy: "oauth_google" })` with `WebBrowser.maybeCompleteAuthSession()` at module scope. Redirect URI generated per-platform via `AuthSession.makeRedirectUri({ scheme: "bliq-mobile", path: "oauth-callback" })` — never hardcoded.
+- **Mobile sign-in is fully custom** (not Clerk hosted UI): 3 modes (sign-in / sign-up / verify-OTP), Google OAuth via `useOAuth({ strategy: "oauth_google" })` with `WebBrowser.maybeCompleteAuthSession()` at module scope. Redirect URI generated per-platform via `AuthSession.makeRedirectUri({ scheme: "livia-mobile", path: "oauth-callback" })` — never hardcoded. **External config required before next mobile build ships:** add `livia-mobile://oauth-callback` to Clerk dashboard + Google OAuth allowed redirect URIs (alongside the existing `bliq-mobile://` entries — do NOT remove old until Task #38 follow-up).
 
 ## Per-shop comms (Task #28, Closed Beta)
 
@@ -102,7 +102,7 @@ The AI is **Liv** — the brand's quiet helper. Liv has a name and a personality
 ## Gotchas
 
 - **Always `pnpm run typecheck` before declaring done** — generated hooks + Zod schemas have strict shapes that ripple.
-- **Don't rename `bliq-mobile` slug or scheme, or `bliq-dashboard` directory** — would break Clerk redirect URIs, Google OAuth callback, mobile deep links, and `STORAGE_KEY = "bliq_current_business_id"` in `BusinessContext.tsx`.
+- **Naming history:** repo was rebranded `bliq` → `livia` in Task #38. Mobile `app.json` keeps `scheme: ["livia-mobile", "bliq-mobile"]` until Clerk + Google OAuth allow lists are pruned; `BusinessContext` runs a one-shot `bliq_current_business_id` → `livia_current_business_id` AsyncStorage migration. `BliqEvent` type renamed to `LiviaEvent`.
 - **Aurum is brand-only**, never use champagne for action buttons. Cyan is the primary action colour.
 - **`shadow*` / `pointerEvents` deprecation warnings** from React Native Web are expected until Expo upstream ships fixes.
 

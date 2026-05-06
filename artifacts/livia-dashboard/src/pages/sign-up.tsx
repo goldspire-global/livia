@@ -1,7 +1,7 @@
 import { SignUp } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { useTheme } from "next-themes";
-import { BliqMark } from "@/components/brand/BliqMark";
+import { LiviaMark } from "@/components/brand/LiviaMark";
 
 export default function SignUpPage() {
   const { theme } = useTheme();
@@ -17,7 +17,7 @@ export default function SignUpPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-10 text-center">
           <div className="mb-5 flex items-center justify-center gap-3">
-            <BliqMark className="h-10 w-10" />
+            <LiviaMark className="h-10 w-10" />
             <span className="font-serif text-4xl font-normal tracking-tight text-foreground" style={{ letterSpacing: "0.01em" }}>
               Li
               <span

@@ -57,7 +57,7 @@ export function Atrium() {
                  style={{ background: 'linear-gradient(135deg, hsl(188 95% 43%) 0%, hsl(258 90% 66%) 100%)' }}>
               B
             </div>
-            <span className="font-display font-extrabold text-xl tracking-tight">Bliq</span>
+            <span className="font-display font-extrabold text-xl tracking-tight">Livia</span>
           </div>
 
           <nav className="space-y-1">
