@@ -18,6 +18,7 @@ import {
   updateConversationContact,
   type ConversationMessageRole,
 } from "./conversations.service";
+import { AI_DISCLOSURE } from "../lib/ai-disclosure";
 
 const MODEL = "claude-sonnet-4-6";
 const MAX_TOOL_HOPS = 6;
@@ -270,6 +271,15 @@ export async function handlePublicChat(args: {
       customerName: args.customerName,
       customerEmail: args.customerEmail,
       customerPhone: args.customerPhone,
+    });
+    // EU AI Act Art. 50 — seed the conversation with a non-removable
+    // disclosure as the very first ASSISTANT message. The widget renders
+    // the same string locally on open; persisting it here guarantees the
+    // owner Inbox view shows the disclosure exactly as the customer saw it.
+    await appendMessage({
+      conversationId: conversation.id,
+      role: "ASSISTANT",
+      content: AI_DISCLOSURE.chatFirstMessage(business.name),
     });
   } else if (args.customerName || args.customerEmail || args.customerPhone) {
     // Backfill conversation contact info from latest message envelope

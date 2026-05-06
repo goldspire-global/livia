@@ -57,9 +57,11 @@ The AI is **Liv** — the brand's quiet helper. Liv has a name and a personality
 ## Compliance guardrails
 
 - **Brand layer is silent on "AI"** — no "AI-powered" badges in marketing. Disclosure happens where it legally must:
-  - Chat widget first message (EU AI Act Art. 50 — automated interaction disclosure).
+  - Chat widget first message + persistent footer (EU AI Act Art. 50 — automated interaction disclosure).
+  - Outbound SMS prefix + outbound email block when Liv authors them (Art. 50, wired when Twilio/Resend land in Task #28).
   - Privacy policy + Terms (GDPR Art. 22 — automated decision-making).
   - Anthropic AUP compliance copy on the public booking page.
+- **Disclosure copy is centralised** in `artifacts/api-server/src/lib/ai-disclosure.ts` and treated as legal text — never paraphrased, never per-business overridable. Frontend constants in `chat-widget.tsx` MUST stay byte-identical (drift checked in code review).
 - **One name to never surface anywhere** in repo, copy, comments, UI, or commits: **Olivia** (founder's daughter — kept private).
 
 ## Product surfaces

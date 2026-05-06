@@ -17,6 +17,14 @@ const SUGGESTED = [
   "Book a 1-hour massage this weekend",
 ];
 
+// EU AI Act Art. 50 disclosure copy. MUST stay byte-identical to the strings
+// in `artifacts/api-server/src/lib/ai-disclosure.ts`. Treated as legal text:
+// never paraphrased, never per-business overridable.
+function disclosureFirstMessage(businessName: string): string {
+  return `Hi, I'm Liv — an AI assistant booking on behalf of ${businessName}. I keep notes for the team and a human can take over any time.`;
+}
+const DISCLOSURE_FOOTER = "AI-assisted by Liv · Powered by Anthropic Claude";
+
 interface ChatWidgetProps {
   slug: string;
   businessName: string;
@@ -46,10 +54,21 @@ export default function ChatWidget({
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      const intro =
-        greeting?.trim() ||
-        `Hi! I'm the AI assistant for ${businessName}. I can help you book an appointment — what are you looking for?`;
-      setMessages([{ id: "intro", role: "assistant", content: intro }]);
+      // EU AI Act Art. 50 — locked disclosure is ALWAYS the first message,
+      // before any per-business greeting. Order matters: customer must see
+      // the AI identity before the warmer greeting copy.
+      const seed: ChatMessage[] = [
+        {
+          id: "disclosure",
+          role: "assistant",
+          content: disclosureFirstMessage(businessName),
+        },
+      ];
+      const customGreeting = greeting?.trim();
+      if (customGreeting) {
+        seed.push({ id: "greeting", role: "assistant", content: customGreeting });
+      }
+      setMessages(seed);
     }
   }, [open, greeting, businessName, messages.length]);
 
@@ -184,7 +203,7 @@ export default function ChatWidget({
             </div>
           )}
 
-          {messages.length === 1 && !sendMessage.isPending && (
+          {messages.length <= 2 && !sendMessage.isPending && (
             <div className="flex flex-wrap gap-2 pt-2">
               {SUGGESTED.map((s) => (
                 <button
@@ -227,6 +246,14 @@ export default function ChatWidget({
             <Send className="h-4 w-4" />
           </Button>
         </form>
+
+        {/* EU AI Act Art. 50 + Anthropic AUP — persistent disclosure footer. */}
+        <div
+          data-testid="chat-disclosure-footer"
+          className="px-3 py-1.5 text-[10px] text-center text-muted-foreground border-t border-border bg-muted/30 sm:rounded-b-2xl"
+        >
+          {DISCLOSURE_FOOTER}
+        </div>
       </div>
     </div>
   );
