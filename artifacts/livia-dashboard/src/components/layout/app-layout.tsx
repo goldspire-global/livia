@@ -51,6 +51,40 @@ function visibleNav(effectiveRole: Role | null): NavItem[] {
   return NAV_ITEMS.filter((i) => RANK[effectiveRole] >= RANK[i.min]);
 }
 
+/**
+ * Tenant axis switcher (ADR 0010). Only renders when the signed-in user
+ * has memberships in 2+ businesses — solo-shop owners (the median) never
+ * see this chrome. Switching invalidates the query cache so the entire
+ * surface repaints with the new tenant's data.
+ */
+function BusinessSwitcher() {
+  const { business, businesses, setBusinessById } = useBusiness();
+  if (businesses.length < 2 || !business) return null;
+  return (
+    <div className="px-4 py-2 border-b border-border" data-testid="business-switcher">
+      <label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">
+        Business
+      </label>
+      <Select value={business.id} onValueChange={setBusinessById}>
+        <SelectTrigger className="h-8 text-xs" data-testid="business-switcher-trigger">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {businesses.map((b) => (
+            <SelectItem
+              key={b.id}
+              value={b.id}
+              data-testid={`business-switcher-option-${b.id}`}
+            >
+              {b.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function PersonaSwitcher() {
   const { business } = useBusiness();
   const { role, viewingAsStaffId, setViewingAsStaffId } = useMembership();
@@ -117,6 +151,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </div>
+        <BusinessSwitcher />
         <nav className="flex-1 space-y-1 p-4">
           {items.map((item) => {
             const isActive = location === item.href || location.startsWith(`${item.href}/`);

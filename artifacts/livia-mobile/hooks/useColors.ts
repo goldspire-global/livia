@@ -1,19 +1,23 @@
-import { useColorScheme } from "react-native";
+import { Platform } from "react-native";
 
 import colors from "@/constants/colors";
 
 /**
  * Returns the design tokens for the current color scheme.
  *
- * Per ADR 0008 (mobile motion + materiality), Livia mobile defaults to the
- * **dark** midnight palette so the surface aligns with `livia.io` and the
- * dashboard. Light mode is honoured only when the device explicitly opts in
- * via `light` color-scheme — `null` (no preference) and `dark` both resolve
- * to the dark palette.
+ * Per ADR 0008 (mobile motion + materiality) and the Aurora-Midnight brand
+ * system, Livia is a dark-only surface. Both the marketing site and the web
+ * dashboard force the dark palette; the mobile app does the same so a user
+ * who jumps between phone and laptop never sees the brand "flip".
+ *
+ * On the Replit web preview specifically, `useColorScheme()` reports the
+ * *browser*'s preference (often `"light"`), which would otherwise paint the
+ * mobile preview in a non-brand palette. We therefore hard-default to the
+ * dark palette across all platforms. If we ever ship a true light mode, it
+ * will land behind a user-controlled setting, not a system signal.
  */
 export function useColors() {
-  const scheme = useColorScheme();
-  const isLight = scheme === "light";
-  const palette = isLight ? colors.light : colors.dark;
-  return { ...palette, radius: colors.radius };
+  // Future: read a persisted user preference here. For now, always dark.
+  void Platform.OS; // keep platform import live for future per-platform tweaks
+  return { ...colors.dark, radius: colors.radius };
 }

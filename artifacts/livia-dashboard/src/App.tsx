@@ -27,6 +27,9 @@ import SettingsPage from "@/pages/settings";
 import InboxPage from "@/pages/inbox";
 import MyDayPage from "@/pages/my-day";
 import PublicBookingPage from "@/pages/public-booking";
+import DemoLauncher from "@/pages/demo/Launcher";
+import DemoShowcase from "@/pages/demo/Showcase";
+import { DemoProvider } from "@/lib/demo/demo-context";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +83,10 @@ function AppRouter() {
       <Route path="/sign-in" component={SignInPage} />
       <Route path="/sign-up" component={SignUpPage} />
       <Route path="/b/:slug" component={PublicBookingPage} />
+
+      {/* Public demo gateway — no Clerk required. ADR 0010 + docs/demo-gateway.md */}
+      <Route path="/demo" component={DemoLauncher} />
+      <Route path="/demo/:persona" component={DemoShowcase} />
 
       <Route path="/onboarding">
         {() => (
@@ -147,10 +154,12 @@ function App() {
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
         <ClerkProviderWithTheme>
           <TooltipProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <AppRouter />
-            </WouterRouter>
-            <Toaster />
+            <DemoProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <AppRouter />
+              </WouterRouter>
+              <Toaster />
+            </DemoProvider>
           </TooltipProvider>
         </ClerkProviderWithTheme>
       </ThemeProvider>

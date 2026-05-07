@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useGetMyBusinesses } from "@workspace/api-client-react";
 import type { Business } from "@workspace/api-client-react";
+import { useSegments } from "expo-router";
 import React, {
   ReactNode,
   createContext,
@@ -20,36 +21,55 @@ interface BusinessContextValue {
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null);
-const STORAGE_KEY = "livia_current_business_id";
-const LEGACY_STORAGE_KEY = "bliq_current_business_id";
+// ADR 0010 — unified key across web + mobile. Web uses the same string in
+// `artifacts/livia-dashboard/src/lib/business-context.tsx` so a founder who
+// switches business on her phone sees the change reflected next time she
+// logs into the dashboard (and vice versa). Two legacy keys are migrated.
+const STORAGE_KEY = "livia.currentBusinessId";
+const LEGACY_KEYS = ["livia_current_business_id", "bliq_current_business_id"];
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const [currentBusinessId, setCurrentBusinessId] = useState<string | null>(
     null
   );
 
+  // The /demo surface is a public, mocked walk-through (the "hotel principle"
+  // showcase). It must not hit any tenant-aware endpoint, otherwise an
+  // anonymous visitor would trigger /me/businesses and we'd leak the auth
+  // boundary out of the demo. Disable the query while the user is inside the
+  // demo route tree.
+  const segments = useSegments();
+  const inDemo = segments[0] === "demo";
+
   const {
     data: businesses = [],
     isLoading,
     isError,
     refetch,
-  } = useGetMyBusinesses();
+  } = useGetMyBusinesses({ query: { enabled: !inDemo } } as Parameters<
+    typeof useGetMyBusinesses
+  >[0]);
 
   useEffect(() => {
-    // One-shot migration: if a legacy bliq_* value exists and the new key is
-    // empty, copy it across and delete the old key. Safe to run on every boot.
+    // One-shot migration: walk the legacy keys (in priority order) and copy
+    // the first one we find into the unified key, then clear all legacy keys.
+    // Safe to run on every boot.
     (async () => {
       const current = await AsyncStorage.getItem(STORAGE_KEY);
       if (current) {
         setCurrentBusinessId(current);
         return;
       }
-      const legacy = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
-      if (legacy) {
-        await AsyncStorage.setItem(STORAGE_KEY, legacy);
-        await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
-        setCurrentBusinessId(legacy);
+      for (const key of LEGACY_KEYS) {
+        const legacy = await AsyncStorage.getItem(key);
+        if (legacy) {
+          await AsyncStorage.setItem(STORAGE_KEY, legacy);
+          setCurrentBusinessId(legacy);
+          break;
+        }
       }
+      // Clean up any remaining legacy keys regardless.
+      await Promise.all(LEGACY_KEYS.map((k) => AsyncStorage.removeItem(k)));
     })();
   }, []);
 

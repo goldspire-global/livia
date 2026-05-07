@@ -23,12 +23,23 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 mix-blend-difference">
         <LiviaWordmark size="md" />
-        <button 
-          onClick={scrollToForm}
-          className="text-sm font-medium text-white/70 hover:text-white transition-colors"
-        >
-          Join beta
-        </button>
+        <div className="flex items-center gap-5">
+          {/* Cross-artifact link to the dashboard's public demo gateway. */}
+          <a
+            href="/livia-dashboard/demo"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white transition-colors"
+            data-testid="marketing-demo-link"
+          >
+            See it in action
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+          <button
+            onClick={scrollToForm}
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+          >
+            Join beta
+          </button>
+        </div>
       </nav>
 
       <main>

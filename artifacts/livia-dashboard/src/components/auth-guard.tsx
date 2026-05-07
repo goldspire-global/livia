@@ -56,14 +56,15 @@ function BusinessDataLoader({ children }: { children: ReactNode }) {
     );
   }
 
-  const business = businesses && businesses.length > 0 ? businesses[0] : null;
+  const list = businesses ?? [];
+  const hasAny = list.length > 0;
 
-  if (!business && location !== "/onboarding") {
+  if (!hasAny && location !== "/onboarding") {
     return <Redirect to="/onboarding" />;
   }
 
   return (
-    <BusinessProvider initialBusiness={business} isLoading={isLoading}>
+    <BusinessProvider businesses={list} isLoading={isLoading}>
       <MembershipProvider>
         <RoleGate>{children}</RoleGate>
       </MembershipProvider>

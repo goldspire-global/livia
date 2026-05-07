@@ -58,7 +58,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
     const onSignIn = segments[0] === "sign-in";
-    if (!isSignedIn && !onSignIn) {
+    // ADR 0010 / docs/demo-gateway.md — `/demo` is a public showcase. It must
+    // not require Clerk so a prospect can tap a link and step inside any of
+    // the seven persona doors without an account.
+    const onDemo = segments[0] === "demo";
+    if (!isSignedIn && !onSignIn && !onDemo) {
       router.replace("/sign-in");
     } else if (isSignedIn && onSignIn) {
       router.replace("/");
@@ -81,6 +85,8 @@ function RootLayoutNav() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="demo/index" options={{ headerShown: false }} />
+          <Stack.Screen name="demo/[persona]" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="booking/[id]" options={{ title: "Booking" }} />
           <Stack.Screen name="booking/new" options={{ title: "New Booking" }} />
