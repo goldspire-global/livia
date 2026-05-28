@@ -7,7 +7,7 @@ import metaWebhookRouter from "./routes/meta-webhook";
 import cors from "cors";
 import { corsOrigin } from "./lib/cors-config";
 import { randomUUID } from "node:crypto";
-import pinoHttp from "pino-http";
+import { pinoHttpFactory } from "./lib/pino-http-middleware";
 import { getAuth, clerkMiddleware } from "@clerk/express";
 import { simAuthMiddleware } from "./lib/sim-auth";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
@@ -71,12 +71,12 @@ app.use((req, res, next) => {
 });
 
 app.use(
-  pinoHttp({
+  pinoHttpFactory({
     logger,
     genReqId: (req) => (req as Request & { id?: string }).id ?? randomUUID(),
     customProps: (req, res) => ({
       request_id: (req as Request & { id?: string }).id,
-      tenant_id: extractTenantId(req as Request) ?? req.resolvedTenant?.businessId,
+      tenant_id: extractTenantId(req as Request) ?? (req as Request).resolvedTenant?.businessId,
       user_id: extractUserId(req as Request),
       plan_tier: extractPlanTier(req as Request),
       method: req.method,
