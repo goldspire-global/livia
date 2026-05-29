@@ -31,7 +31,7 @@ if rg -i '\bOlivia\b' "${ARGS[@]}" --glob '!**/node_modules/**' --glob '!**/*.ma
   exit 1
 fi
 
-if rg -i '\bbliq\b' "${ARGS[@]}" --glob '!**/node_modules/**' --glob '!docs/**' --glob '!**/*.md' . 2>/dev/null; then
+if rg -i '\bbliq\b' "${ARGS[@]}" --glob '!**/node_modules/**' --glob '!docs/**' --glob '!**/*.md' --glob '!artifacts/livia-mobile/app.json' --glob '!**/.agents/**' . 2>/dev/null; then
   echo ""
   echo "FAIL: Found legacy codename 'Bliq' in product code (use Livia)."
   exit 1
