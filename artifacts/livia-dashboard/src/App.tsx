@@ -72,6 +72,12 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
+/** Clerk Frontend API proxy only works with production instance keys (pk_live_). */
+const CLERK_PROXY_URL =
+  import.meta.env.PROD && PUBLISHABLE_KEY.startsWith("pk_live_")
+    ? `${window.location.origin}/api/__clerk`
+    : undefined;
+
 function AuthenticatedRoutes() {
   return (
     <AuthGuard>
