@@ -115,7 +115,7 @@ jobs:
         run: bash scripts/deploy-migrate.sh
 
       - name: Seed demo business
-        run: pnpm run db:seed
+        run: node scripts/seed-demo.mjs
 
       - name: Build api-server
         run: pnpm --filter @workspace/api-server run build

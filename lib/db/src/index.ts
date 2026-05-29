@@ -18,9 +18,20 @@ if (!connectionString) {
   );
 }
 
+function poolSsl(connectionString: string): false | { rejectUnauthorized: false } {
+  try {
+    const normalized = connectionString.replace(/^postgresql:\/\//, "postgres://");
+    const host = new URL(normalized).hostname;
+    if (host === "localhost" || host === "127.0.0.1") return false;
+  } catch {
+    /* keep Supabase SSL default below */
+  }
+  return { rejectUnauthorized: false };
+}
+
 export const pool = new Pool({
   connectionString,
-  ssl: { rejectUnauthorized: false },
+  ssl: poolSsl(connectionString),
 });
 
 export const schema = {
