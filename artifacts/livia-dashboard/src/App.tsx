@@ -49,12 +49,16 @@ import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import OnboardingPage from "@/pages/onboarding";
 import OnboardingPreviewPage from "@/pages/dev/onboarding-preview";
+import PlatformSurfacesGalleryPage from "@/pages/dev/platform-surfaces-gallery";
+import BrandLogoGalleryPage from "@/pages/dev/brand-logo-gallery";
+import LiviaEvolutionGalleryPage from "@/pages/dev/livia-evolution-gallery";
 import LegalAcceptancePage from "@/pages/legal-acceptance";
 import DashboardPage from "@/pages/dashboard";
 import PublicBookingPage from "@/pages/public-booking";
 import PublicVisitPage from "@/pages/public-visit";
 import PublicPremisesPage from "@/pages/public-premises";
 import DemoLauncher from "@/pages/demo/Launcher";
+import DemoWedgeStoryPage from "@/pages/demo/WedgeStory";
 import { DemoProvider } from "@/lib/demo/demo-context";
 import { isProductionCustomerSurface } from "@/lib/production-surface";
 import { isOnboardingPreviewRouteEnabled } from "@/lib/onboarding-preview-route";
@@ -174,6 +178,13 @@ function AppRouter() {
           <Route path="/dev/onboarding-preview" component={OnboardingPreviewPage} />
         </>
       ) : null}
+      {import.meta.env.DEV ? (
+        <>
+          <Route path="/experience/platform-surfaces" component={PlatformSurfacesGalleryPage} />
+          <Route path="/experience/brand-logos" component={BrandLogoGalleryPage} />
+          <Route path="/experience/livia-evolution" component={LiviaEvolutionGalleryPage} />
+        </>
+      ) : null}
       <Route path="/b/:slug/visit/:token" component={PublicVisitPage} />
       <Route path="/b/:slug" component={PublicBookingPage} />
       <Route path="/p/:slug" component={PublicPremisesPage} />
@@ -183,6 +194,7 @@ function AppRouter() {
         <>
           <Route path="/guides">{() => <LazyRoute page={LazyGuidesPage} />}</Route>
           <Route path="/demo" component={DemoLauncher} />
+          <Route path="/demo/wedge/:vertical" component={DemoWedgeStoryPage} />
           <Route path="/demo/:persona">{() => <LazyRoute page={LazyDemoShowcase} />}</Route>
         </>
       ) : (

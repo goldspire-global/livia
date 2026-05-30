@@ -439,4 +439,25 @@ router.get("/public/vertical-coverage", async (_req, res): Promise<void> => {
   res.json({ data: listVerticalCoverage() });
 });
 
+router.get("/public/wedge-demo/:vertical", async (req, res): Promise<void> => {
+  const vertical = Array.isArray(req.params.vertical) ? req.params.vertical[0] : req.params.vertical;
+  const { resolveWedgeDemoStory, listWedgeDemoVerticals } = await import("@workspace/policy");
+  const story = resolveWedgeDemoStory(vertical);
+  if (!story) {
+    sendError(res, req, 404, "Unknown or deferred vertical");
+    return;
+  }
+  res.json({ data: story, verticals: listWedgeDemoVerticals() });
+});
+
+router.get("/public/wedge-demo", async (_req, res): Promise<void> => {
+  const { listWedgeDemoVerticals, getWedgeDemoStory } = await import("@workspace/policy");
+  const verticals = listWedgeDemoVerticals();
+  res.json({
+    data: verticals
+      .map((v) => getWedgeDemoStory(v))
+      .filter((s): s is NonNullable<typeof s> => s != null),
+  });
+});
+
 export default router;
