@@ -111,5 +111,54 @@ for (const slug of DEMO_SLUGS) {
   ok = pass && ok;
 }
 
+// One visit-token round-trip (E6 API smoke)
+try {
+  const bizRes = await fetch(`${apiBase}/api/public/b/luxe-salon-spa`, { signal: AbortSignal.timeout(12000) });
+  if (bizRes.ok) {
+    const biz = (await bizRes.json()) as { services?: Array<{ id: string }> };
+    const serviceId = biz.services?.[0]?.id;
+    if (serviceId) {
+      const day = new Date();
+      day.setDate(day.getDate() + 10);
+      const date = day.toISOString().split("T")[0];
+      const slotsRes = await fetch(
+        `${apiBase}/api/public/b/luxe-salon-spa/slots?serviceId=${serviceId}&date=${date}`,
+        { signal: AbortSignal.timeout(12000) },
+      );
+      if (slotsRes.ok) {
+        const { slots } = (await slotsRes.json()) as { slots?: Array<{ startAt: string; available: boolean }> };
+        const slot = slots?.find((s) => s.available);
+        if (slot?.startAt) {
+          const book = await fetch(`${apiBase}/api/public/b/luxe-salon-spa/book`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              serviceId,
+              startAt: slot.startAt,
+              customerFirstName: "Headless",
+              customerLastName: "Visit",
+              customerEmail: `headless-visit-${Date.now()}@test.livia.local`,
+            }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (book.ok) {
+            const booked = (await book.json()) as { guestToken?: string };
+            if (booked.guestToken) {
+              const visitPass = await check(
+                "Visit token API",
+                `${apiBase}/api/public/b/luxe-salon-spa/visit/${booked.guestToken}`,
+              );
+              ok = visitPass && ok;
+            }
+          }
+        }
+      }
+    }
+  }
+} catch (e) {
+  console.log(`✗ Visit token API — ${e instanceof Error ? e.message : "failed"}`);
+  ok = false;
+}
+
 console.log(ok ? "\n✓ R1 headless lifecycle passed\n" : "\n✗ R1 headless lifecycle had failures\n");
 process.exit(ok ? 0 : 1);

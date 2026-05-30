@@ -22,6 +22,7 @@ import {
   ensurePlatformLegalAccepted,
   signInBusiness,
 } from "../helpers/demo-auth";
+import { bookPublicSlot } from "../helpers/public-book";
 
 test.describe("All verticals smoke", () => {
   test.describe.configure({ mode: "serial", timeout: 600_000 });
@@ -172,5 +173,42 @@ test.describe("All verticals smoke", () => {
     await page.goto(`/b/${slug}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await assertHealthyPage(page, `/b/${slug}`);
     await expect(page.getByTestId("ritual-step-consent")).toBeVisible();
+  });
+
+  test("visit token page loads for all demo verticals", async ({ page, request }) => {
+    let checked = 0;
+    for (const shop of VERTICAL_DEMO_SHOPS) {
+      if (!(await demoHasBusiness(request, shop.slug))) continue;
+      if (shop.vertical === "medspa") continue;
+
+      const suffix = `${shop.slug.slice(0, 6)}-${Date.now().toString().slice(-5)}`;
+      const bookRes = await bookPublicSlot(
+        request,
+        shop.slug,
+        {
+          customerFirstName: "E2E",
+          customerLastName: "Visit",
+          customerEmail: `e2e-visit-${suffix}@test.livia.local`,
+          customerPhone: `+35387${suffix.replace(/\D/g, "").slice(-7)}`,
+        },
+        { workerIndex: checked },
+      );
+      if (!bookRes?.ok()) continue;
+
+      const body = (await bookRes.json()) as { visitPath?: string; guestToken?: string };
+      expect(body.visitPath).toMatch(new RegExp(`/b/${shop.slug}/visit/`));
+      expect(body.guestToken).toBeTruthy();
+
+      const apiVisit = await request.get(
+        `${apiBase}/api/public/b/${shop.slug}/visit/${body.guestToken}`,
+      );
+      expect(apiVisit.ok()).toBeTruthy();
+
+      await page.goto(body.visitPath!, { waitUntil: "domcontentloaded", timeout: 45_000 });
+      await assertHealthyPage(page, body.visitPath!);
+      await expect(page.locator("body")).toContainText(/your visit|booking summary|appointment/i);
+      checked += 1;
+    }
+    expect(checked, "need at least one vertical visit token smoke").toBeGreaterThan(0);
   });
 });
