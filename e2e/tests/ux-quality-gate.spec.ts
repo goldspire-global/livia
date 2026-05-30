@@ -11,7 +11,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const apiBase = process.env.E2E_API_BASE ?? "http://127.0.0.1:3000";
+import { apiBase, clerkTicketSignIn, dismissPlatformTour } from "../helpers/demo-auth";
+
 const demoSlug = process.env.E2E_DEMO_SLUG ?? "luxe-salon-spa";
 
 const ERROR_PATTERNS = [
@@ -57,14 +58,6 @@ function record(route: string, kind: Finding["kind"], detail: string) {
   findings.push({ route, kind, detail });
 }
 
-async function dismissPlatformTour(page: import("@playwright/test").Page) {
-  const skip = page.getByRole("button", { name: /skip tour/i });
-  if (await skip.isVisible().catch(() => false)) {
-    await skip.click();
-    await page.waitForTimeout(400);
-  }
-}
-
 async function signInOwner(page: import("@playwright/test").Page) {
   await page.addInitScript(() => {
     try {
@@ -77,12 +70,19 @@ async function signInOwner(page: import("@playwright/test").Page) {
   if (!res.ok()) {
     test.skip(true, `Clerk sign-in unavailable (${res.status()}) — skip authenticated wedge checks`);
   }
-  const { token } = (await res.json()) as { token?: string };
+  const { token, landingPath = "/dashboard", businessId, email } = (await res.json()) as {
+    token?: string;
+    landingPath?: string;
+    businessId?: string;
+    email?: string;
+  };
   if (!token) throw new Error("No clerk ticket");
-  await page.goto(`/sign-in?__clerk_ticket=${encodeURIComponent(token)}`, {
-    waitUntil: "networkidle",
+  await clerkTicketSignIn(page, token, {
+    businessId,
+    landingPath,
+    devPersona: "owner",
+    fallbackEmail: email,
   });
-  await page.waitForURL(/\/(dashboard|chain|inbox)/, { timeout: 45_000 });
   await dismissPlatformTour(page);
 }
 
