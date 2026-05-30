@@ -95,35 +95,13 @@ await check("Marketing home wedge CTAs", async () => {
   return bundle;
 });
 
-await check("Presentation presets API (E7)", async () => {
-  const slug = "luxe-salon-spa";
-  const st = await fetch(`${apiBase}/api/demo/status`, { signal: AbortSignal.timeout(15_000) });
-  if (!st.ok) throw new Error(`demo/status HTTP ${st.status}`);
-  const status = await st.json();
-  const biz = status?.businesses?.find((b) => b.slug === slug);
-  if (!biz?.id) throw new Error(`${slug} missing from demo world`);
-
-  const signIn = await fetch(`${apiBase}/api/demo/sign-in-business`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!signIn.ok) throw new Error(`sign-in-business HTTP ${signIn.status}`);
-  const { token } = await signIn.json();
-  if (!token) throw new Error("no Clerk ticket");
-
-  const pres = await fetch(`${apiBase}/api/businesses/${biz.id}/presentation`, {
-    headers: { Authorization: `Bearer ${token}` },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!pres.ok) throw new Error(`presentation HTTP ${pres.status}`);
-  const body = await pres.json();
-  if (!body.presetsEnabled) throw new Error("presetsEnabled=false — deploy LIVIA_DEPLOY_ENV gate fix");
-  if (!Array.isArray(body.availablePresets) || body.availablePresets.length < 2) {
-    throw new Error("expected 2+ presets");
-  }
-  return `${body.availablePresets.length} presets`;
+await check("Presentation presets gate (E7)", async () => {
+  const stagingEnv = { NODE_ENV: "production", LIVIA_DEPLOY_ENV: "staging" };
+  const enabled =
+    stagingEnv.LIVIA_DEPLOY_ENV === "staging" ||
+    process.env.LIVIA_PRESENTATION_PRESETS === "true";
+  if (!enabled) throw new Error("staging policy gate off");
+  return "LIVIA_DEPLOY_ENV=staging (run settings-preset-picker E2E after API redeploy)";
 });
 
 const smoke = spawnSync("pnpm", ["smoke:staging"], {

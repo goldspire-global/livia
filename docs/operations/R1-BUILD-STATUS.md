@@ -73,7 +73,7 @@ LIVIA FINAL BUILD PLAN (master)
 | E13 | Continuity templates all verticals | **Done** | policy test |
 | E14 | typecheck clean | **Done** | CI |
 
-**R1 exit:** **14/14 done (automated)** → **founder staging E2E pass** is the last step.
+**R1 exit:** **14/14 automated** → **founder staging walkthrough** is the last step (see checklist § below).
 
 ### Staging deploy status (post PR #3)
 
