@@ -189,3 +189,31 @@ export async function toggleGuestFavorite(hubToken: string, businessId: string, 
   }
   return getGuestHubView(hubToken);
 }
+
+/** Opt-in from public book — creates vault row + shop link before OTP verify. */
+export async function ensureGuestVaultLinkFromBook(
+  phoneRaw: string,
+  businessId: string,
+  bookingStartAt: Date,
+  defaultCountry = "IE",
+) {
+  const phoneE164 = normalizePhoneE164(phoneRaw, defaultCountry);
+  if (!phoneE164) return null;
+
+  const [existingGuest] = await db
+    .select({ id: guestIdentitiesTable.id })
+    .from(guestIdentitiesTable)
+    .where(eq(guestIdentitiesTable.phoneE164, phoneE164))
+    .limit(1);
+
+  const guestId = existingGuest?.id ?? generateId();
+  if (!existingGuest) {
+    await db.insert(guestIdentitiesTable).values({
+      id: guestId,
+      phoneE164,
+    });
+  }
+
+  await linkGuestToShop(guestId, businessId, bookingStartAt);
+  return { guestId, phoneE164, myLiviaPath: "/my" };
+}

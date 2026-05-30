@@ -22,6 +22,8 @@ import {
   getRegulatoryOverlay,
   resolveJurisdictionCode,
   getVerticalPlaybook,
+  resolvePresentationPreset,
+  PLATFORM_DEFAULT_PRESET_ID,
 } from "@workspace/policy";
 import type { BusinessVertical } from "@workspace/policy";
 import type { Service } from "@workspace/db";
@@ -30,6 +32,7 @@ import { getPremisesBySlug } from "../services/premises.service";
 import { buildCountryPackForBusiness } from "../services/country-pack.service";
 import { getPublicDayPackages, bookDayPackage } from "../services/day-packages.service";
 import { ensureBookingGuestAccess, getGuestBookingByToken } from "../services/booking-guest-access.service";
+import { ensureGuestVaultLinkFromBook } from "../services/guest-hub.service";
 import {
   getGuestProofByToken,
   submitGuestProofDecision,
@@ -143,7 +146,14 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
       locale: biz.locale,
       name: biz.name,
     }),
-    experienceSkin: publicExperienceSkin(biz.vertical, biz.country),
+    experienceSkin: {
+      ...publicExperienceSkin(biz.vertical, biz.country),
+      presentation: resolvePresentationPreset(
+        biz.vertical as BusinessVertical,
+        biz.presentationPresetId ?? PLATFORM_DEFAULT_PRESET_ID,
+      ).cssPreset,
+      brandAccentHex: biz.brandAccentHex ?? null,
+    },
     socialProof: socialProofForVertical(biz.vertical),
   });
 }
@@ -226,7 +236,7 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
   const {
     serviceId, staffId, startAt,
     customerFirstName, customerLastName, customerEmail, customerPhone,
-    notes, channelType, guardAnswers, medspaConsent,
+    notes, channelType, guardAnswers, medspaConsent, saveToMyLivia,
   } = req.body;
 
   if (!serviceId || !startAt || !customerFirstName) {
@@ -329,6 +339,16 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
     const guestToken = await ensureBookingGuestAccess(biz.id, booking.id);
     const visitPath = `/b/${biz.slug}/visit/${guestToken}`;
 
+    let myLivia: { myLiviaPath: string } | null = null;
+    if (saveToMyLivia !== false && customerPhone) {
+      myLivia = await ensureGuestVaultLinkFromBook(
+        customerPhone,
+        biz.id,
+        new Date(booking.startAt),
+        biz.country?.slice(0, 2) ?? "IE",
+      );
+    }
+
     void markOnboardingTestBooking(biz.id).catch(() => undefined);
 
     res.status(201).json({
@@ -344,6 +364,8 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       instagramDeepLink: igDeepLink ?? null,
       guestToken,
       visitPath,
+      myLiviaPath: myLivia?.myLiviaPath ?? null,
+      savedToMyLivia: Boolean(myLivia),
     });
   } catch (err: unknown) {
     if (replyDomainError(req, res, err)) return;
