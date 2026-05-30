@@ -13,7 +13,7 @@
 |------------|------|
 | **Start heavy build** | [`product/LIVIA-FINAL-BUILD-PLAN.md`](./product/LIVIA-FINAL-BUILD-PLAN.md) |
 | Understand the company | [`LIVIA-ALIGNMENT.md`](./LIVIA-ALIGNMENT.md) |
-| Build something today | [`product/OPERATION-SOLIDIFY.md`](./product/OPERATION-SOLIDIFY.md) + [`operations/PLATFORM-BACKLOG.md`](./operations/PLATFORM-BACKLOG.md) |
+| Build something today | [`BUILD-PLAN-WIRE.md`](./operations/BUILD-PLAN-WIRE.md) · [`R1-BUILD-STATUS.md`](./operations/R1-BUILD-STATUS.md) · [`PLATFORM-BACKLOG.md`](./operations/PLATFORM-BACKLOG.md) |
 | Ship a platform release | [`product/PLATFORM-RELEASE-PROGRAM.md`](./product/PLATFORM-RELEASE-PROGRAM.md) |
 | See honest API vs UI gaps | [`product/LIVIA-IDEA-TO-REALITY.md`](./product/LIVIA-IDEA-TO-REALITY.md) |
 | Run locally | [`START-HERE.md`](./START-HERE.md) · [`LOCAL_DEV.md`](./LOCAL_DEV.md) |
@@ -104,6 +104,7 @@
 | Workforce / beta access | `operations/WORKFORCE-ONBOARDING.md` | Track H in evolution program |
 | Env vars | `operations/ENV-VARIABLES.md` | `.env.example` |
 | Platform backlog | `operations/PLATFORM-BACKLOG.md` | audits |
+| **R1 live status (URL map + exit criteria)** | `operations/R1-BUILD-STATUS.md` | — |
 | Founder OKRs | `company/EXECUTIVE-ACTION-PLAN.md` | `EXECUTIVE-MULTI-HAT-REVIEW.md` |
 | GTM / markets | `business/MARKET-COUNTRY-PLAYBOOKS.md` | `business/sales-motion.md` |
 | Operator go-live | `business/OPERATOR-READY-PACK.md` | templates/ |

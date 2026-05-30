@@ -34,6 +34,7 @@
     "smoke:gate3": "node scripts/gate3-smoke.mjs",
     "smoke:uat": "node scripts/uat-concurrent-smoke.mjs",
     "env:production-checklist": "node scripts/print-production-env.mjs",
+    "railway:build-prod-env": "node scripts/build-railway-production-env.mjs --write",
     "prod:smoke": "node scripts/prod-smoke.mjs",
     "smoke:staging": "node scripts/prod-smoke.mjs --app https://app.staging.livia-hq.com --api https://api.staging.livia-hq.com",
     "prod:verify-domains": "node scripts/verify-production-domains.mjs",

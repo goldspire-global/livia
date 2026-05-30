@@ -112,9 +112,9 @@ export default function PricingPage() {
 
               key={id}
 
-              className={`rounded-sm border p-8 flex flex-col ${
+              className={`rounded-sm border p-8 flex flex-col bg-[#0c0c10]/80 backdrop-blur-sm ${
 
-                highlight ? "border-aurora-cyan/40 bg-aurora-cyan/5" : "border-white/10"
+                highlight ? "border-aurora-cyan/40 ring-2 ring-aurora-cyan/30" : "border-white/10"
 
               }`}
 
