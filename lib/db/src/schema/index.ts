@@ -21,6 +21,7 @@ export * from "./booking/hiring";
 export * from "./booking/class-sessions";
 export * from "./booking/package-credits";
 export * from "./booking/design-proofs";
+export * from "./booking/design-proof-guest-access";
 export * from "./booking/booking-resources";
 export * from "./booking/day-packages";
 export * from "./booking/care-series";
