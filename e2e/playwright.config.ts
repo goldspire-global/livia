@@ -223,6 +223,16 @@ export default defineConfig({
       },
     },
     {
+      name: "settings-preset-picker",
+      testMatch: /settings-preset-picker\.spec\.ts/,
+      timeout: 180_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
       name: "marketing-lifecycle",
       testMatch: /marketing-lifecycle\.spec\.ts/,
       timeout: 180_000,

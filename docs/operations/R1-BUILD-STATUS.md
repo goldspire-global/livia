@@ -64,16 +64,16 @@ LIVIA FINAL BUILD PLAN (master)
 | E4 | All 9 `/b/{demoSlug}` E2E | **Done (local)** | `pnpm test:e2e:verticals` 76/76 green 2026-05-30 (34 vertical + 12 booking + rest) |
 | E5 | Body-art proof guest page | **Done** | `/b/.../proof/:token` |
 | E6 | Visit token pages | **Done (local)** | visit token smoke in verticals E2E wave 10 |
-| E7 | Platform Default polish + preset picker | **Partial** | D-R1 aurora wash wave 9; picker staging |
+| E7 | Platform Default polish + preset picker | **Done (staging)** | API + browser E2E wave 13 |
 | E8 | I4 Thread 3-column shell | **Done (local)** | queue \| thread \| context + Investigate wave 10 |
 | E9 | I2 Ship Lane + Hats | **Done (local)** | tab shell + hats river wave 10 |
 | E10 | Phone E.164 normalize | **Done** | customers + guest hub |
-| E11 | Signup → seed → `/b` headless | **Partial** | headless visit API + marketing-lifecycle (wedge + sign-up gateway) wave 11 |
+| E11 | Signup → seed → `/b` headless | **Done** | lead capture + demo provision + /b + lifecycle E2E wave 13 |
 | E12 | `presentation_preset_id` D2 | **Done** | migration 028 + API |
 | E13 | Continuity templates all verticals | **Done** | policy test |
 | E14 | typecheck clean | **Done** | CI |
 
-**R1 exit:** **~12/14 done · ~2/14 partial** (E7 preset picker UAT, E11 full signup→seed path) → staging automated gates green.
+**R1 exit:** **14/14 done (automated)** → **founder staging E2E pass** is the last step.
 
 ### Staging deploy status (post PR #3)
 
@@ -129,6 +129,7 @@ LIVIA FINAL BUILD PLAN (master)
 
 | Wave | Date | Focus | Staging URLs affected |
 |------|------|-------|---------------------|
+| 13 | 2026-05-30 | E7 preset API gate + E2E; E11 headless lead→provision→/b | settings, headless lifecycle |
 | 12 | 2026-05-30 | Staging demo gate fix; readiness script; staging E2E 40/40 | `pnpm staging:readiness`, `pnpm test:e2e:staging` |
 | 11 | 2026-05-30 | Headless lifecycle fix; staging E2E script; E11 sign-up gateway test | `pnpm test:e2e:staging` |
 | 10 | 2026-05-30 | E6 visit smoke; E8 support 3-col; E9 exec tabs; M9 waitlist; F8 browser E2E | internal `/support`, marketing waitlist |

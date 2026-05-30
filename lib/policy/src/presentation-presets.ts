@@ -583,7 +583,9 @@ export function isValidPresentationPreset(
 export function presentationPresetsEnabled(env?: Record<string, string | undefined>): boolean {
   const e = env ?? (typeof process !== "undefined" ? process.env : {});
   if (e.LIVIA_PRESENTATION_PRESETS === "true") return true;
+  if (e.LIVIA_DEPLOY_ENV === "staging") return true;
   if (e.LIVIA_ENV === "staging") return true;
   if (e.RAILWAY_ENVIRONMENT_NAME === "staging") return true;
+  if (e.NODE_ENV === "development" || e.NODE_ENV === "test") return true;
   return false;
 }

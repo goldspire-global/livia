@@ -41,7 +41,9 @@ assert.equal(isValidPresentationPreset("hair", "hair-barber-bold"), true);
 assert.equal(isValidPresentationPreset("hair", "body-art-studio-dark"), false);
 
 assert.equal(presentationPresetsEnabled({ LIVIA_ENV: "staging" }), true);
+assert.equal(presentationPresetsEnabled({ LIVIA_DEPLOY_ENV: "staging", NODE_ENV: "production" }), true);
 assert.equal(presentationPresetsEnabled({ LIVIA_PRESENTATION_PRESETS: "true" }), true);
+assert.equal(presentationPresetsEnabled({ NODE_ENV: "development" }), true);
 assert.equal(presentationPresetsEnabled({ NODE_ENV: "production" }), false);
 
 console.log("presentation-presets.test.ts OK");

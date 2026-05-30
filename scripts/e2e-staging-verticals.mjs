@@ -53,6 +53,9 @@ ok =
 ok =
   run("Public booking quality", ["pnpm", ...e2e, "--project=public-booking-quality", "--workers=1"]) &&
   ok;
+ok =
+  run("Settings preset picker (E7)", ["pnpm", ...e2e, "--project=settings-preset-picker", "--workers=1"]) &&
+  ok;
 
 if (full) {
   ok =

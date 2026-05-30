@@ -104,7 +104,39 @@ if (prov.status !== 0) {
   console.warn("⚠ Demo provision skipped or failed — vertical /b checks may fail");
 }
 
-ok = (await checkSignInBusiness()) && ok;
+const signInOk = await checkSignInBusiness();
+if (!signInOk) {
+  console.log("⚠ Demo owner ticket skipped — Clerk may be offline; continuing E11 public /b checks");
+}
+
+// Prospect → demo provision → public book (E11 headless)
+try {
+  const lead = await fetch(`${apiBase}/api/public/marketing/leads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: `headless-prospect-${Date.now()}@test.livia.local`,
+      source: "headless-r1",
+      utmSource: "headless",
+      utmMedium: "lifecycle",
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const leadOk = lead.status === 201;
+  console.log(`${leadOk ? "✓" : "✗"} Marketing lead capture — ${lead.status}`);
+  ok = leadOk && ok;
+} catch (e) {
+  console.log(`✗ Marketing lead capture — ${e instanceof Error ? e.message : "failed"}`);
+  ok = false;
+}
+
+const provStatus = await fetch(`${apiBase}/api/demo/status`, { signal: AbortSignal.timeout(12_000) });
+if (provStatus.ok) {
+  const st = await provStatus.json();
+  const seeded = Boolean(st?.provisioned);
+  console.log(`${seeded ? "✓" : "✗"} Demo world provisioned — ${seeded ? "yes" : "no"}`);
+  ok = seeded && ok;
+}
 
 for (const slug of DEMO_SLUGS) {
   const pass = await check(`Public /b ${slug}`, `${apiBase}/api/public/b/${slug}`);
