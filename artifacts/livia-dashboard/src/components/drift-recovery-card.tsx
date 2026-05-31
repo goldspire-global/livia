@@ -59,7 +59,7 @@ export function DriftRecoveryCard() {
                 </p>
               </div>
               <Button size="sm" variant="outline" asChild>
-                <Link href="/inbox">Ask Liv</Link>
+                <Link href={`/customers/${r.customerId}`}>View client</Link>
               </Button>
             </div>
           ))

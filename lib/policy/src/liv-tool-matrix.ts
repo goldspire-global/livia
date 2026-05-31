@@ -113,6 +113,13 @@ export const LIV_TOOL_MATRIX: LivToolMatrixRow[] = [
     profiles: ["livia_internal"],
     surfaceIds: ["internal.support.thread"],
   },
+  {
+    toolId: "guest_deposit_checkout",
+    label: "Guest deposit pay (Stripe Checkout)",
+    status: "live",
+    profiles: [],
+    surfaceIds: ["public.deposit-pay"],
+  },
 ];
 
 export function listLivToolMatrixRows(): LivToolMatrixRow[] {

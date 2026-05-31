@@ -72,6 +72,7 @@ export default function MyLiviaPage() {
   const [busy, setBusy] = useState(false);
   const [favoriteBusy, setFavoriteBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [resendSec, setResendSec] = useState(0);
 
   const loadView = useCallback(async (token: string) => {
     const r = await fetch("/api/public/guest-hub/me", {
@@ -87,6 +88,14 @@ export default function MyLiviaPage() {
       .then(setSurfaceConfig)
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (resendSec <= 0) return;
+    const t = window.setInterval(() => {
+      setResendSec((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [resendSec]);
 
   useEffect(() => {
     if (!hubToken) return;
@@ -126,6 +135,7 @@ export default function MyLiviaPage() {
       setDevOtp(j.devOtp ?? null);
       setMagicOtp(j.magicOtpCode ?? surfaceConfig?.guestHub.magicOtpCode ?? null);
       if (j.magicOtpCode) setCode(j.magicOtpCode);
+      setResendSec(60);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Try again");
     } finally {
@@ -224,8 +234,18 @@ export default function MyLiviaPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   data-testid="guest-hub-phone"
                 />
-                <Button className="w-full" disabled={busy || !phone.trim()} onClick={() => void requestOtp()}>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send code"}
+                <Button
+                  className="w-full"
+                  disabled={busy || !phone.trim() || resendSec > 0}
+                  onClick={() => void requestOtp()}
+                >
+                  {busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : resendSec > 0 ? (
+                    `Resend in ${resendSec}s`
+                  ) : (
+                    "Send code"
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -250,6 +270,15 @@ export default function MyLiviaPage() {
                 />
                 <Button className="w-full" disabled={busy || code.length < 4} onClick={() => void verifyOtp()}>
                   Verify
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-xs text-muted-foreground"
+                  disabled={busy || resendSec > 0}
+                  onClick={() => void requestOtp()}
+                >
+                  {resendSec > 0 ? `Resend code in ${resendSec}s` : "Resend code"}
                 </Button>
               </CardContent>
             </Card>

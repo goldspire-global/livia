@@ -1,7 +1,8 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   db,
   businessesTable,
+  bookingsTable,
   customersTable,
   staffTable,
   servicesTable,
@@ -301,4 +302,31 @@ export async function getDemoGuestIntakeToken(slug: string): Promise<string | nu
 
   const { ensureMedicalIntakeGuestAccess } = await import("./medical-intake-guest-access.service");
   return ensureMedicalIntakeGuestAccess(biz.id, draft.id);
+}
+
+/** Pending booking with deposit due — for guest pay E2E. */
+export async function getDemoGuestPayToken(slug: string): Promise<string | null> {
+  const [biz] = await db
+    .select({ id: businessesTable.id })
+    .from(businessesTable)
+    .where(eq(businessesTable.slug, slug))
+    .limit(1);
+  if (!biz) return null;
+
+  const [booking] = await db
+    .select({ id: bookingsTable.id })
+    .from(bookingsTable)
+    .where(
+      and(
+        eq(bookingsTable.businessId, biz.id),
+        eq(bookingsTable.status, "PENDING"),
+        sql`${bookingsTable.depositPaidEurCents} = 0`,
+      ),
+    )
+    .orderBy(desc(bookingsTable.createdAt))
+    .limit(1);
+  if (!booking) return null;
+
+  const { ensureBookingGuestAccess } = await import("./booking-guest-access.service");
+  return ensureBookingGuestAccess(biz.id, booking.id);
 }

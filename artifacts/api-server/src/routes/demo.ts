@@ -165,6 +165,22 @@ router.get("/demo/guest-surfaces/:slug/proof", async (req, res): Promise<void> =
 });
 
 /** Demo-only: guest intake token for E2E / medspa walkthroughs. */
+router.get("/demo/guest-surfaces/:slug/pay", async (req, res): Promise<void> => {
+  const slug = String(req.params.slug ?? "").trim();
+  if (!slug) {
+    sendError(res, req, 400, "slug is required");
+    return;
+  }
+  const { getDemoGuestPayToken } = await import("../services/demo-showcase-depth");
+  const token = await getDemoGuestPayToken(slug);
+  if (!token) {
+    sendError(res, req, 404, "No pending deposit booking for this demo shop");
+    return;
+  }
+  const dashboardBase = process.env.LIVIA_DASHBOARD_URL?.replace(/\/+$/, "") ?? "http://127.0.0.1:5173";
+  res.json({ slug, token, path: `/b/${slug}/pay/${token}`, url: `${dashboardBase}/b/${slug}/pay/${token}` });
+});
+
 router.get("/demo/guest-surfaces/:slug/intake", async (req, res): Promise<void> => {
   const slug = String(req.params.slug ?? "").trim();
   if (!slug) {

@@ -1,7 +1,12 @@
 import { getGuestBookingByToken } from "./booking-guest-access.service";
 import { policiesFromBusiness } from "./policies.service";
-import { db, businessesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { createBookingPaymentIntent } from "./payment.service";
+import { getDashboardUrl } from "../lib/public-urls";
+import { getStripe, isStripeConfigured, logStripeSkip } from "../lib/stripe";
+import { db, bookingsTable, businessesTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
+import { EventType } from "@workspace/db";
+import { logEvent } from "./events.service";
 
 export type GuestDepositPayView = {
   bookingId: string;
@@ -20,9 +25,19 @@ export type GuestDepositPayView = {
   depositPercent: number;
   depositRequired: boolean;
   logoUrl: string | null;
-  /** Stripe Checkout not wired in R2 — UI shows amount + policy copy. */
   checkoutAvailable: boolean;
 };
+
+export function computeDepositDueMinor(args: {
+  priceMinor: number;
+  depositPercent: number;
+  depositRequired: boolean;
+  depositPaidMinor: number;
+}): number {
+  if (!args.depositRequired) return 0;
+  const target = Math.round((args.priceMinor * args.depositPercent) / 100);
+  return Math.max(0, target - args.depositPaidMinor);
+}
 
 export async function getGuestDepositPayView(
   slug: string,
@@ -41,9 +56,16 @@ export async function getGuestDepositPayView(
   const policies = policiesFromBusiness(biz);
   const depositRequired = policies.operational.depositRequired;
   const depositPercent = policies.operational.depositPercent ?? 0;
-  const depositDueMinor = depositRequired
-    ? Math.max(0, Math.round((view.priceMinor * depositPercent) / 100) - view.depositPaidEurCents)
-    : 0;
+  const depositDueMinor = computeDepositDueMinor({
+    priceMinor: view.priceMinor,
+    depositPercent,
+    depositRequired,
+    depositPaidMinor: view.depositPaidEurCents,
+  });
+
+  const canPay =
+    depositDueMinor > 0 &&
+    (isStripeConfigured() || process.env.NODE_ENV !== "production");
 
   return {
     bookingId: view.bookingId,
@@ -62,6 +84,141 @@ export async function getGuestDepositPayView(
     depositPercent,
     depositRequired,
     logoUrl: view.logoUrl,
-    checkoutAvailable: false,
+    checkoutAvailable: canPay,
   };
+}
+
+async function applySimulatedGuestDeposit(args: {
+  businessId: string;
+  bookingId: string;
+  amountMinor: number;
+}): Promise<void> {
+  const [row] = await db
+    .select({ depositPaidEurCents: bookingsTable.depositPaidEurCents })
+    .from(bookingsTable)
+    .where(
+      and(eq(bookingsTable.id, args.bookingId), eq(bookingsTable.businessId, args.businessId)),
+    )
+    .limit(1);
+  if (!row) return;
+
+  const nextPaid = row.depositPaidEurCents + args.amountMinor;
+  await db
+    .update(bookingsTable)
+    .set({ depositPaidEurCents: nextPaid, updatedAt: new Date() })
+    .where(
+      and(eq(bookingsTable.id, args.bookingId), eq(bookingsTable.businessId, args.businessId)),
+    );
+
+  await logEvent({
+    businessId: args.businessId,
+    type: EventType.PAYMENT_SUCCEEDED,
+    entityType: "booking",
+    entityId: args.bookingId,
+    context: { simulated: true, amountMinor: args.amountMinor, guestDeposit: true },
+  });
+}
+
+export type GuestDepositCheckoutResult =
+  | { mode: "stripe"; checkoutUrl: string }
+  | { mode: "dev"; message: string }
+  | { mode: "error"; message: string };
+
+/** Start Stripe Checkout or simulate deposit in non-production when Stripe is off. */
+export async function createGuestDepositCheckout(
+  slug: string,
+  token: string,
+): Promise<GuestDepositCheckoutResult> {
+  const view = await getGuestBookingByToken(slug, token);
+  if (!view) return { mode: "error", message: "Payment link not found" };
+
+  const [biz] = await db
+    .select()
+    .from(businessesTable)
+    .where(eq(businessesTable.id, view.businessId))
+    .limit(1);
+  if (!biz) return { mode: "error", message: "Shop not found" };
+
+  const policies = policiesFromBusiness(biz);
+  const depositPercent = policies.operational.depositPercent ?? 0;
+  const depositDueMinor = computeDepositDueMinor({
+    priceMinor: view.priceMinor,
+    depositPercent,
+    depositRequired: policies.operational.depositRequired,
+    depositPaidMinor: view.depositPaidEurCents,
+  });
+
+  if (depositDueMinor <= 0) {
+    return { mode: "error", message: "No deposit due on this booking" };
+  }
+
+  const stripe = getStripe();
+  if (!stripe || !isStripeConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      return { mode: "error", message: "Card checkout is not available yet" };
+    }
+    logStripeSkip("guest-deposit-checkout");
+    await applySimulatedGuestDeposit({
+      businessId: view.businessId,
+      bookingId: view.bookingId,
+      amountMinor: depositDueMinor,
+    });
+    return {
+      mode: "dev",
+      message: "Deposit recorded (development — Stripe not configured).",
+    };
+  }
+
+  const intent = await createBookingPaymentIntent({
+    businessId: view.businessId,
+    bookingId: view.bookingId,
+    customerId: view.customerId,
+    amountMinor: depositDueMinor,
+    currency: view.currency,
+    description: `Deposit — ${view.serviceName}`,
+  });
+
+  const base = getDashboardUrl().replace(/\/+$/, "");
+  const returnPath = `/b/${slug}/pay/${token}`;
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [
+      {
+        price_data: {
+          currency: view.currency.toLowerCase(),
+          unit_amount: depositDueMinor,
+          product_data: {
+            name: `Deposit — ${view.serviceName}`,
+            description: `${view.businessName} · ${view.startAt.toLocaleDateString("en-IE")}`,
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    payment_intent_data: {
+      metadata: {
+        businessId: view.businessId,
+        bookingId: view.bookingId,
+        customerId: view.customerId,
+        paymentIntentRecordId: intent.paymentIntentRecordId,
+        kind: "guest_deposit",
+        guestPayToken: token,
+      },
+    },
+    metadata: {
+      businessId: view.businessId,
+      bookingId: view.bookingId,
+      kind: "guest_deposit",
+      guestPayToken: token,
+    },
+    success_url: `${base}${returnPath}?status=success`,
+    cancel_url: `${base}${returnPath}?status=cancel`,
+  });
+
+  if (!session.url) {
+    return { mode: "error", message: "Could not start checkout" };
+  }
+
+  return { mode: "stripe", checkoutUrl: session.url };
 }

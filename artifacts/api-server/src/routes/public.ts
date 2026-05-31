@@ -611,6 +611,22 @@ router.get("/public/b/:slug/pay/:token", async (req, res): Promise<void> => {
   res.json(view);
 });
 
+router.post("/public/b/:slug/pay/:token/checkout", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const { createGuestDepositCheckout } = await import("../services/guest-deposit-pay.service");
+  try {
+    const result = await createGuestDepositCheckout(slug, token);
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
+  }
+});
+
 router.get("/public/vertical-coverage", async (_req, res): Promise<void> => {
   const { listVerticalCoverage } = await import("@workspace/policy");
   res.json({ data: listVerticalCoverage() });

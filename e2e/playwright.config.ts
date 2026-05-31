@@ -262,6 +262,26 @@ export default defineConfig({
         baseURL: dashboardBase,
       },
     },
+    {
+      name: "guest-hub",
+      testMatch: /guest-hub\.spec\.ts/,
+      timeout: 60_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "guest-pay",
+      testMatch: /guest-pay\.spec\.ts/,
+      timeout: 180_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
   ],
   metadata: {
     demoSlug,
