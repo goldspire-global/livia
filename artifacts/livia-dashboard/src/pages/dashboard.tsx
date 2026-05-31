@@ -37,7 +37,6 @@ import { LivCommandHub } from "@/components/liv/liv-command-hub";
 import { VerticalHomeModules } from "@/components/dashboard/vertical-home-modules";
 import { OwnerHomeRitual } from "@/components/dashboard/owner-home-ritual";
 import { OwnerDashboardLoading } from "@/components/dashboard/owner-dashboard-loading";
-import { PublicBookingIntakePanel } from "@/components/dashboard/public-booking-intake-panel";
 import { VisitFeedbackStrip } from "@/components/dashboard/visit-feedback-strip";
 import { LazyMount } from "@/components/lazy-mount";
 import { isDemoLoginEnabled, usePersona } from "@/lib/persona";
@@ -45,6 +44,7 @@ import { useUser } from "@clerk/clerk-react";
 import { timeGreeting } from "@/lib/persona-rituals";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { ActivationWelcome } from "@/components/activation/activation-welcome";
+import { shouldShowRunningLateAffordance } from "@workspace/policy";
 
 // ------------ helpers ------------
 
@@ -404,14 +404,11 @@ export default function DashboardPage() {
 
   return (
     <div
-      className={`flex w-full min-w-0 max-w-6xl flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${
+      className={`flex w-full min-w-0 max-w-5xl flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${
         showWelcomeSweep ? "welcome-sweep" : ""
       }`}
       style={{ fontFamily: "var(--app-font-sans)" }}
     >
-      <ActivationWelcome />
-      <OperatorMaturityBanner />
-
       {isOperatorHome ? (
         <OwnerHomeRitual
           summary={summary as Parameters<typeof OwnerHomeRitual>[0]["summary"]}
@@ -438,39 +435,29 @@ export default function DashboardPage() {
         />
       ) : null}
 
-      {isOperatorHome && persona === "owner" && business?.id ? (
-        <PublicBookingIntakePanel businessId={business.id} />
-      ) : null}
+      <ActivationWelcome />
+      <OperatorMaturityBanner />
 
       {(persona === "owner" || persona === "org_admin") && <LifecycleNudges compact />}
 
       {!isOperatorHome && persona === "org_admin" && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <LivProposalsPanel />
-            <VerticalTodayInsights />
-          </div>
-          {business?.id ? <PublicBookingIntakePanel businessId={business.id} /> : null}
-        </>
-      )}
-
-      {showTenantOpsPanels && (
-        <LivMomentsStrip />
-      )}
-
-      {showTenantOpsPanels && (
-        <LivIncidentsStrip />
-      )}
-
-      {showTenantOpsPanels && (
-        <div className="flex flex-wrap gap-2">
-          <RunningLateSheet />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <LivProposalsPanel />
+          <VerticalTodayInsights />
         </div>
       )}
 
-      {(persona === "owner" || persona === "org_admin") && <AccountantPreviewCard />}
+      {showTenantOpsPanels && !isOperatorHome && <LivMomentsStrip />}
 
-      {/* Command hub stays available on /toolkit; dashboard keeps focus on operations. */}
+      {showTenantOpsPanels && !isOperatorHome && <LivIncidentsStrip />}
+
+      {showTenantOpsPanels && shouldShowRunningLateAffordance(todayTotal) ? (
+        <div className="flex flex-wrap gap-2">
+          <RunningLateSheet />
+        </div>
+      ) : null}
+
+      {persona === "org_admin" && <AccountantPreviewCard />}
 
       {persona === "org_admin" && (
         <LazyMount minHeight={160}>
@@ -478,13 +465,15 @@ export default function DashboardPage() {
         </LazyMount>
       )}
 
-      {showTenantOpsPanels && (
+      {showTenantOpsPanels && !isOperatorHome && (
         <LazyMount minHeight={80}>
           <VisitFeedbackStrip />
         </LazyMount>
       )}
 
-      {/* ============== Operational cockpit ============== */}
+      {isOperatorHome ? null : (
+      <>
+      {/* ============== Operational cockpit (org_admin / legacy) ============== */}
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between relative z-10">
         <div className="flex items-center gap-3 flex-wrap">
           <h2
@@ -826,6 +815,8 @@ export default function DashboardPage() {
           )}
         </Panel>
       </div>
+      </>
+      )}
     </div>
   );
 }

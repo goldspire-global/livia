@@ -157,12 +157,9 @@ test.describe("All verticals smoke", () => {
     await page.goto("/dashboard", { waitUntil: "domcontentloaded", timeout: 45_000 });
     await dismissPlatformTour(page);
     await assertHealthyPage(page, "/dashboard");
-    const liv = page.getByTestId("liv-moments-strip").or(page.getByTestId("liv-proposals-panel"));
-    if ((await liv.count()) > 0) {
-      await expect(liv.first()).toBeVisible({ timeout: 20_000 });
-    } else {
-      await expect(page.locator("body")).toContainText(/liv/i);
-    }
+    await expect(page.getByTestId("owner-home-ritual")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("owner-dashboard-greeting")).toBeVisible();
+    await expect(page.locator("body")).toContainText(/liv/i);
   });
 
   test("medspa public booking shows consent progress step", async ({ page, request }) => {

@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { useBusiness } from "@/lib/business-context";
 import { usePersona } from "@/lib/persona";
+import { shouldShowOnboardingMaturityBanner } from "@workspace/policy";
 import { maturityBannerCopy, resolveOperatorMaturity } from "@/lib/operator-maturity";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,7 @@ export function OperatorMaturityBanner() {
   });
 
   if (!maturity || !business) return null;
+  if (!shouldShowOnboardingMaturityBanner(pct)) return null;
 
   const copy = maturityBannerCopy(maturity, persona);
 

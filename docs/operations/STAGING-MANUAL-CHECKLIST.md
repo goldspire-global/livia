@@ -27,6 +27,8 @@ You have **Livia Staging** (`cztfyxmlguqnxkgisfnh.supabase.co`). `main` + “PRO
 
 ## Phase B — API (Railway staging)
 
+**Do not** use `railway up` from an unconfigured root (413 ~277MB). Prefer **GitHub → Railway** deploy, or `railway up` with repo **`.railwayignore`**. See [`RAILWAY-DEPLOY.md`](./RAILWAY-DEPLOY.md).
+
 Screenshot shows **@workspace/api-server** deployed but **Unexposed**.
 
 - [ ] **B1.** Railway → **staging** environment → **api-server** → **Variables**  

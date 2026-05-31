@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import { useBusiness } from "@/lib/business-context";
 import { verticalHomeModules } from "@/lib/vertical-features";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { getVerticalPlaybook, resolveVerticalFromCategory, type BusinessVertical } from "@workspace/policy";
+import { getVerticalPlaybook, resolveVerticalFromCategory, VERTICAL_HOME_SHORTCUTS_VISIBLE, type BusinessVertical } from "@workspace/policy";
 import { MOTION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export function VerticalHomeModules() {
   const { business } = useBusiness();
@@ -15,54 +17,58 @@ export function VerticalHomeModules() {
   const vocab = verticalPackUi(vertical, category);
   const vKey = (vertical ?? resolveVerticalFromCategory(category)) as BusinessVertical;
   const playbook = getVerticalPlaybook(vKey);
+  const [showAll, setShowAll] = useState(false);
 
   if (modules.length === 0) return null;
 
+  const visible = showAll ? modules : modules.slice(0, VERTICAL_HOME_SHORTCUTS_VISIBLE);
+  const hiddenCount = modules.length - VERTICAL_HOME_SHORTCUTS_VISIBLE;
+
   return (
-    <section className="space-y-3" data-testid="vertical-home-modules">
-      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/10 px-4 py-3">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-aurora-cyan/10 blur-2xl" />
-        <div className="pointer-events-none absolute -left-6 bottom-0 h-20 w-20 rounded-full bg-aurora-violet/10 blur-2xl" />
-        <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground relative">
-          {vocab.label}
-        </p>
-        <h2 className="text-sm font-semibold tracking-tight relative mt-0.5">
-          Built for your workflow
-        </h2>
-        <p className="text-xs text-muted-foreground mt-1 max-w-xl leading-relaxed relative">
-          {playbook.wedge}
-        </p>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {modules.map((m, i) => {
+    <section className="space-y-2" data-testid="vertical-home-modules">
+      <p className="text-[11px] text-muted-foreground leading-snug">
+        <span className="font-mono uppercase tracking-wider">{vocab.label}</span>
+        <span className="mx-1.5">·</span>
+        {playbook.wedge}
+      </p>
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {visible.map((m, i) => {
           const Icon = m.icon;
           return (
             <Link key={m.id} href={m.href}>
               <div
                 data-testid={m.testId}
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl border border-border/70 bg-card/50 backdrop-blur-sm px-3 py-3",
-                  "hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm hover:shadow-primary/5",
-                  "transition-all duration-300",
+                  "group flex items-center gap-2.5 rounded-lg border border-border/70 bg-card/50 px-2.5 py-2",
+                  "hover:border-primary/40 hover:bg-primary/5 transition-colors",
                   MOTION.listItem,
                 )}
-                style={{ animationDelay: `${i * 40}ms` }}
+                style={{ animationDelay: `${i * 30}ms` }}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-violet-500/15 text-primary ring-1 ring-primary/10 group-hover:ring-primary/25 transition-all">
-                  <Icon className="h-4 w-4" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <Icon className="h-3.5 w-3.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{m.title}</p>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
-                    {m.description}
-                  </p>
+                  <p className="text-xs font-medium truncate">{m.title}</p>
+                  <p className="text-[10px] text-muted-foreground line-clamp-1">{m.description}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-50 group-hover:opacity-100" />
               </div>
             </Link>
           );
         })}
       </div>
+      {!showAll && hiddenCount > 0 ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs w-full"
+          onClick={() => setShowAll(true)}
+        >
+          Show {hiddenCount} more shortcut{hiddenCount === 1 ? "" : "s"}
+        </Button>
+      ) : null}
     </section>
   );
 }

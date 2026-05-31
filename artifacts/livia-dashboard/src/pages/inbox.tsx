@@ -24,6 +24,7 @@ import {
   inboxScreenTitle,
   INBOX_QUEUE_LENS_LABELS,
   matchesInboxQueueLens,
+  shouldShowInboxContextRail,
   type InboxQueueLens,
 } from "@workspace/policy";
 import { InboxThreadList } from "@/components/inbox/inbox-thread-list";
@@ -268,6 +269,11 @@ export default function InboxPage() {
       : INBOX_QUEUE_LENS_LABELS[queueLens].description
     : "When customers message Liv on your booking page or SMS line, conversations appear here.";
 
+  const showContextRail = shouldShowInboxContextRail(!!selectedConversation);
+  const paneGrid = showContextRail
+    ? "lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,260px)]"
+    : "lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]";
+
   return (
     <OperationalPageShell
       title={showRitual ? ritualTitle : "Inbox"}
@@ -314,7 +320,7 @@ export default function InboxPage() {
       }
     >
       <div
-        className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_280px] gap-0 lg:gap-0 border border-border/80 rounded-xl overflow-hidden bg-card min-h-[min(720px,calc(100vh-200px))]"
+        className={`grid grid-cols-1 ${paneGrid} gap-0 border border-border/80 rounded-xl overflow-hidden bg-card min-h-[min(560px,calc(100vh-220px))] max-h-[calc(100vh-160px)]`}
         data-testid="inbox-three-pane"
       >
         {/* Thread list */}
@@ -675,7 +681,9 @@ export default function InboxPage() {
           )}
         </div>
 
-        <InboxContextRail businessId={businessId ?? ""} conversation={selectedConversation} />
+        {showContextRail ? (
+          <InboxContextRail businessId={businessId ?? ""} conversation={selectedConversation} />
+        ) : null}
       </div>
     </OperationalPageShell>
   );

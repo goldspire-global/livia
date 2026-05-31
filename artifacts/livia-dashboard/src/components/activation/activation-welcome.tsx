@@ -7,7 +7,11 @@ import { useBusiness } from "@/lib/business-context";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMembership } from "@/lib/membership-context";
-import { resolveTenantExperience, type OnboardingState } from "@workspace/policy";
+import {
+  resolveTenantExperience,
+  shouldShowActivationWelcomeCard,
+  type OnboardingState,
+} from "@workspace/policy";
 
 const WELCOME_DISMISSED_KEY = "livia.activationWelcomeDismissed";
 
@@ -72,37 +76,14 @@ export function ActivationWelcome() {
 
   const steps = resolved.onboarding.activationSteps;
   const pending = steps.filter((s) => !s.done);
-  const allDone = pending.length === 0;
 
-  if (allDone && resolved.onboarding.appUnlocked) {
-    return (
-      <Card className="mb-4 border-primary/20 bg-primary/5" data-testid="activation-welcome-done">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-serif flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            {resolved.onboarding.welcomeHeadline}
-          </CardTitle>
-          <CardDescription>{resolved.playbook.wedge}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" asChild>
-            <Link href="/inbox">Open inbox</Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/b/${business.slug}`} target="_blank">
-              {resolved.playbook.publicCta}
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => writeDismissed(business.id)}
-          >
-            Dismiss
-          </Button>
-        </CardContent>
-      </Card>
-    );
+  if (
+    !shouldShowActivationWelcomeCard({
+      activationStepsPending: pending.length,
+      dismissed: readDismissed(business.id),
+    })
+  ) {
+    return null;
   }
 
   return (

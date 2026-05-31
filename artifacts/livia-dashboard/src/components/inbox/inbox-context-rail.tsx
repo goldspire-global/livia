@@ -39,11 +39,7 @@ export function InboxContextRail({
   });
 
   if (!conversation) {
-    return (
-      <aside className="hidden lg:flex flex-col bg-card/30 p-4 min-h-0" data-testid="inbox-context-rail">
-        <p className="text-sm text-muted-foreground">Select a thread for customer context.</p>
-      </aside>
-    );
+    return null;
   }
 
   const customerSince = new Date(conversation.createdAt).toLocaleDateString([], {

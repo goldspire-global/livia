@@ -43,3 +43,4 @@ export * from "./staging-relaxations";
 export * from "./operational-wiring";
 export * from "./workforce-access";
 export * from "./exec-hats";
+export * from "./tenant-surface-density";

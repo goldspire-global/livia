@@ -1,0 +1,44 @@
+# Railway CLI upload excludes (monorepo root — api-server service)
+# Without this, `railway up` can upload ~300MB+ (node_modules, mobile, e2e) → 413.
+
+node_modules
+**/node_modules
+.git
+.cursor
+.turbo
+dist
+**/dist
+out-tsc
+**/*.tsbuildinfo
+.expo
+.expo-shared
+coverage
+uploads
+e2e
+e2e/visual-captures
+.inspiration-samples
+.cache
+.local
+testem.log
+
+# Frontends & non-API artifacts (API build uses root + lib + artifacts/api-server)
+artifacts/livia-dashboard
+artifacts/livia-marketing
+artifacts/livia-mobile
+artifacts/livia-internal
+artifacts/mockup-sandbox
+
+# Docs & design assets (not needed at runtime)
+docs
+assets
+**/*.png
+**/*.jpg
+**/*.webp
+agent-transcripts
+
+# Local / secrets
+.env
+.env.*
+railway.production.env
+**/.env
+!**/.env.example

@@ -81,7 +81,11 @@ function parseEnvFile(path) {
 
 if (!existsSync(envFile)) {
   console.error(`Missing ${envFile}`);
-  console.error("Copy railway.production.env.example → railway.production.env and fill values.");
+  console.error("Missing railway.production.env");
+  console.error("  pnpm railway:build-prod-env --write   # from railway.env.example + .env");
+  console.error("  or: cp railway.production.env.example railway.production.env");
+  console.error("Then edit secrets and re-run: pnpm railway:sync-env");
+  console.error("See docs/operations/RAILWAY-DEPLOY.md");
   process.exit(1);
 }
 

@@ -1,5 +1,7 @@
 # Start here — engineers
 
+**Where we are (one page):** [`LIVIA-STATUS.md`](./LIVIA-STATUS.md) — top-level progress; engineering done ≠ product finished.
+
 **✅ Build active (2026-05-31):** G-DOC founder sign-off received. Authority: [`product/LIVIA-BUILD-PLAN-V2.md`](./product/LIVIA-BUILD-PLAN-V2.md) + [`product/LIVIA-DOCUMENTATION-PROGRAM.md`](./product/LIVIA-DOCUMENTATION-PROGRAM.md).
 
 **Canonical doc index:** [`DOC-CANONICAL-INDEX.md`](./DOC-CANONICAL-INDEX.md) (when two docs disagree, the index wins).

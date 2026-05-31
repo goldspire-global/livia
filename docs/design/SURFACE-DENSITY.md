@@ -1,0 +1,41 @@
+# Surface density — platform pattern
+
+**Status:** canonical (2026-05-31)  
+**Applies to:** all tenant personas and verticals — not one-off page tweaks.
+
+---
+
+## Principle
+
+A surface answers **one job** first. Everything else is **deferred**: another route, a disclosure, or a contextual strip that **only mounts when a signal exists**.
+
+This is stronger than “make boxes smaller”: empty modules must not reserve height; veteran tenants must not see onboarding chrome; duplicate timelines stay off home.
+
+---
+
+## Three tiers
+
+| Tier | When | Examples |
+|------|------|----------|
+| **Primary** | Always for that surface’s job | Owner greeting, Liv briefing, KPI chips, the one module with signal |
+| **Contextual** | Mount when policy signal | Pending queue, inbox preview, activation checklist, running-late |
+| **Deferred** | Collapsed or linked | Vertical shortcuts, Liv mandate (when R3+), full timeline → `/bookings` |
+
+Rules live in **`lib/policy/src/tenant-surface-density.ts`** so web and mobile can share the same gates.
+
+---
+
+## Owner `/dashboard` (reference)
+
+- Module layout: `resolveOwnerHomeModuleLayout` — one panel, two, or compact “all clear” (no twin 220px empty cards).
+- Guardrails: `shouldShowOwnerLivGuardrails` — not a permanent strip.
+- Chrome: activation / maturity / running-late gated by onboarding %, steps pending, bookings today.
+- Shortcuts: `VERTICAL_HOME_SHORTCUTS_VISIBLE` then disclosure.
+
+Other P0 surfaces should adopt the same tier model in their screen cards over R∞.
+
+---
+
+## UI primitive
+
+Dashboard uses native `<details>` via `SettingsDisclosure` / surface disclosures — no new dependency. Prefer **disclosure + route** over infinite scroll on home.
