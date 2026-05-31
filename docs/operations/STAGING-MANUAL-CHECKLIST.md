@@ -72,10 +72,12 @@ Screenshot shows **livia staging / Development** — good for staging (test keys
 
 Build failed: `PORT environment variable is required` — fixed in repo; **push + redeploy**.
 
-- [ ] **D1.** New Vercel project (or existing staging project):
-  - **Root Directory:** `artifacts/livia-dashboard`
+- [ ] **D0.** Read [`VERCEL-DEPLOY-ENVIRONMENTS.md`](./VERCEL-DEPLOY-ENVIRONMENTS.md) — **“Production Deployment” email on `livia-stg` is not prod customers**; fix Root Directory if build failed.
+- [ ] **D1.** Vercel project **`livia-stg`** (staging only — separate from prod `livia-app`):
+  - **Root Directory:** `artifacts/livia-dashboard` (**not** repo root)
   - **Framework:** Vite
-  - **Build:** `pnpm --filter @workspace/livia-dashboard run build` (or use repo `vercel.json` install/build)
+  - **Build:** `pnpm run build` (prebuild checks `VITE_LIVIA_DEPLOY_ENV=staging`)
+  - **Rewrites:** use [`vercel.staging.json`](../../artifacts/livia-dashboard/vercel.staging.json) (staging API only)
 - [ ] **D2.** **Environment variables** (Production + Preview):
 
   | Variable | Value |

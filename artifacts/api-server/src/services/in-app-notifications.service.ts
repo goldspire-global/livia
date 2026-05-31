@@ -21,6 +21,14 @@ import { getChainRollupForOwner } from "./chain-rollup.service";
 
 const RECEPTION_HINT = /(reception|front[ -]?desk|concierge)/i;
 
+function isPgUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const o = err as { code?: string; cause?: { code?: string }; message?: string };
+  if (o.code === "23505" || o.cause?.code === "23505") return true;
+  const msg = String(o.message ?? "");
+  return /unique constraint|duplicate key/i.test(msg);
+}
+
 type MembershipRole = "OWNER" | "ADMIN" | "STAFF";
 
 export type InAppDelivery = {
@@ -184,8 +192,7 @@ export async function deliverInAppNotification(delivery: InAppDelivery): Promise
       });
       written += 1;
     } catch (err: unknown) {
-      const code = (err as { code?: string })?.code;
-      if (code !== "23505") {
+      if (!isPgUniqueViolation(err)) {
         logger.warn({ err, dedupeKey }, "in-app notification insert failed");
       }
     }

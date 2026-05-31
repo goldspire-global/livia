@@ -61,7 +61,7 @@
 | Item | Notes |
 |------|-------|
 | **Your UAT** | Medspa + Luxe paths in [`FOUNDER-UAT-CHECKLIST.md`](operations/FOUNDER-UAT-CHECKLIST.md) |
-| Staging | Pull `main` on Vercel app |
+| Staging | **`livia-stg`** only — [`VERCEL-DEPLOY-ENVIRONMENTS.md`](operations/VERCEL-DEPLOY-ENVIRONMENTS.md) |
 | Local automation | `pnpm founder:uat-preflight` then `test:founder-uat` |
 
 ---

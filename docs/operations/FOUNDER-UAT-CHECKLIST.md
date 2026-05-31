@@ -3,6 +3,8 @@
 **Updated:** 2026-05-31  
 **Use after** Bucket B deploy on staging (`app.staging.livia-hq.com` or local).
 
+**Not production:** Vercel project `livia-stg` may email “Production Deployment” — that is Vercel’s label for `main` on the **staging** project, not `app.livia-hq.com`. See [`VERCEL-DEPLOY-ENVIRONMENTS.md`](./VERCEL-DEPLOY-ENVIRONMENTS.md).
+
 Automated prelude:
 
 ```bash
