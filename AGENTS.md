@@ -10,6 +10,36 @@ Read this before large edits or refactors.
 4. [`docs/START-HERE.md`](docs/START-HERE.md)
 5. [`docs/DOC-CANONICAL-INDEX.md`](docs/DOC-CANONICAL-INDEX.md)
 
+## Before you edit (narrow task + system-wide vision)
+
+Every change should answer **both**:
+
+1. **Local:** What file/feature am I fixing and what is the minimal correct diff?
+2. **Platform:** What else must stay in sync so Livia stays coherent?
+
+**Cascade map** (things call each other — do not bypass):
+
+```text
+lib/policy (vertical, onboarding, presets, guest surfaces)
+    → API routes + services (createBusiness, tenant-experience, public /b)
+    → codegen (OpenAPI → api-client-react)
+    → artifacts/* surfaces (dashboard, mobile, marketing, internal — thin renderers)
+    → demo seed + E2E + registry (VERTICAL_COVERAGE_REGISTRY)
+```
+
+**Checklist before claiming done:**
+
+| If you touched… | Also verify… |
+|-----------------|--------------|
+| New/changed **vertical** | All `Record<BusinessVertical, …>` in policy; registry row; demo slug; `/b` + tenant-experience; see [`VERTICAL-ADD-PLAYBOOK.md`](docs/engineering/VERTICAL-ADD-PLAYBOOK.md) |
+| New/changed **business create/seed** | `POST /businesses` path, onboarding acts, public `/b`, demo parity; [`LIVIA-PLATFORM-LIFECYCLE.md`](docs/product/LIVIA-PLATFORM-LIFECYCLE.md) §3 |
+| **Demo gateway / roster** | Structure vs vertical scenarios; Clerk sync scope; chain HQ vs location owner emails |
+| **Public `/b` or guest flow** | Playbook + guest surfaces in policy; all verticals with same pattern, not one-off |
+| **UI copy/nouns** | `GET /me/tenant-experience` / vocabulary — not hardcoded "salon" |
+| **New route/surface** | W1–W6 boundary; support `surfaceId` if ops-facing |
+
+**North-star (not fully automated yet):** register once at the hub → downstream consumers update via policy + CI, not manual grep. Target: `defineVerticalPack()` + `pnpm vertical:check` ([`LIVIA-FINAL-BUILD-PLAN.md`](docs/product/LIVIA-FINAL-BUILD-PLAN.md) §2).
+
 ## Architecture
 
 - **Monorepo (pnpm):** `artifacts/*` deployable apps, `lib/*` shared packages.
