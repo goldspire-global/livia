@@ -98,6 +98,16 @@ test.describe("P0 visual / density", () => {
     await expect(page.getByTestId("medspa-hub-page")).toBeVisible();
   });
 
+  test("customers list shell", async ({ page, request }) => {
+    if (!(await demoCanSignIn(request, OWNER_SLUG))) {
+      test.skip(true, "Clerk sign-in unavailable");
+    }
+    await signInBusiness(page, OWNER_SLUG);
+    await page.goto("/customers", { waitUntil: "domcontentloaded" });
+    await dismissPlatformTour(page);
+    await expect(page.getByTestId("customers-page")).toBeVisible();
+  });
+
   test("design proofs queue first", async ({ page, request }) => {
     if (!(await demoHasBusiness(request, "ink-anchor-galway"))) {
       test.skip(true, "body-art demo missing");

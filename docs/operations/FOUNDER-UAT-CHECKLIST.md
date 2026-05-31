@@ -23,10 +23,11 @@ pnpm --filter @workspace/e2e run test:founder-uat    # needs Clerk + API + dashb
 | 1 | `/dashboard` | | Ritual home only — **no** “public link” mega-card; briefing + pending/inbox modules contextual |
 | 2 | `/medspa` | | Consents/intakes/waitlist — busiest tab opens first |
 | 3 | `/inbox` | | Three-pane; context rail **only** when a thread is selected |
-| 4 | `/bookings` | | Compact list; open one row → detail merged client/service card |
-| 5 | `/settings?tab=shop` | | Booking link strip at top; contact fields collapsed |
-| 6 | `/settings?tab=appearance` | | Preset + `/b` preview updates when accent changes |
-| 7 | `/b/clarity-medspa-dublin` | | Mobile 390px — medspa skin, consent step if applicable |
+| 4 | `/customers` | | Compact roster; merge panel only when suggestions exist |
+| 5 | `/bookings` | | Compact list; open one row → detail merged client/service card |
+| 6 | `/settings?tab=shop` | | Booking link strip at top; contact fields collapsed |
+| 7 | `/settings?tab=appearance` | | Preset + `/b` preview updates when accent changes |
+| 8 | `/b/clarity-medspa-dublin` | | Mobile 390px — medspa skin, consent step if applicable |
 
 ---
 
@@ -37,9 +38,11 @@ pnpm --filter @workspace/e2e run test:founder-uat    # needs Clerk + API + dashb
 | 1 | `/dashboard` | | Same density rules as medspa |
 | 2 | `/inbox` | | |
 | 3 | `/toolkit` | | Focused Liv hub — no stuck/drift/moments strips |
-| 4 | `/bookings` | | |
-| 5 | `/settings?tab=appearance` | | Live preview iframe |
-| 6 | `/b/luxe-salon-spa` | | Public book flow ≤90s on phone |
+| 4 | `/customers` | | |
+| 5 | `/staff` | | |
+| 6 | `/bookings` | | |
+| 7 | `/settings?tab=appearance` | | Live preview iframe |
+| 8 | `/b/luxe-salon-spa` | | Public book flow ≤90s on phone |
 
 ---
 
@@ -47,8 +50,8 @@ pnpm --filter @workspace/e2e run test:founder-uat    # needs Clerk + API + dashb
 
 | Item | Founder | Date |
 |------|---------|------|
-| Medspa paths 1–7 feel “finished” for R1 demo | | |
-| Salon paths 1–6 feel “finished” for R1 demo | | |
+| Medspa paths 1–8 feel “finished” for R1 demo | | |
+| Salon paths 1–8 feel “finished” for R1 demo | | |
 | Bucket C → production preset flag OK | | |
 
 When both vertical rows are checked, reply **“Bucket C UAT passed”** (with exceptions listed).

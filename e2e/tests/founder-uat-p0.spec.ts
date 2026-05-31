@@ -60,6 +60,11 @@ test.describe("Founder UAT P0", () => {
       await expectNoSeriousAxe(page, "medspa hub");
     });
 
+    test("customers roster", async ({ page }) => {
+      await page.goto("/customers", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("customers-page")).toBeVisible();
+    });
+
     test("settings shop tab — booking link strip", async ({ page }) => {
       await page.goto("/settings?tab=shop", { waitUntil: "domcontentloaded" });
       await expect(page.getByTestId("settings-page")).toBeVisible();
@@ -90,6 +95,11 @@ test.describe("Founder UAT P0", () => {
       await page.goto("/toolkit", { waitUntil: "domcontentloaded" });
       await expect(page.getByTestId("toolkit-page")).toBeVisible();
       await expect(page.getByTestId("liv-moments-strip")).toHaveCount(0);
+    });
+
+    test("staff roster", async ({ page }) => {
+      await page.goto("/staff", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("staff-page")).toBeVisible();
     });
 
     test("public appearance preview frame", async ({ page }) => {

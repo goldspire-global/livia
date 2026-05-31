@@ -17,7 +17,7 @@
 |--------|--------|------------------------|
 | **A — Platform engineering** | **Done** | APIs, policy hub, 9 verticals, guest `/b`, presets matrix, CI, demo seeds, support registry, mobile parity hooks |
 | **B — Screen implementation** | **Done** | Density + northstar gate — see **Bucket B checklist** below |
-| **C — Visual & founder acceptance** | **In progress (~40%)** | Automated UAT specs + checklist — **your staging walkthrough** closes this bucket |
+| **C — Visual & founder acceptance** | **In progress (~55%)** | UAT specs + staging bundle leak check — **your walkthrough** closes this bucket |
 | **D — Launch & field** | **Not done** | Gate 2 (10 Dublin shops), prod preset flag, App Store / Stripe prod evidence |
 
 **You are right to UAT now for feel and layout** — that is bucket **B + C**. There is no R4; only **R∞** (incremental polish toward north-star screens).
@@ -49,6 +49,8 @@
 | Screen-card pixel diff (`screen-card-p0-pixel.spec.ts`) | Done |
 | `preset-public-parity` in dashboard CI project | Done |
 | G-VISUAL: settings / bookings / medspa PNG mapped | Done |
+| Staging readiness: dashboard bundle API leak check | Done |
+| `/customers` + `/staff` density | Done |
 | **Founder staging walkthrough signed** | **Not done** — you |
 | Tighten northstar `maxDiffPixelRatio` after sign-off | Not started |
 

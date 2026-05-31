@@ -74,6 +74,27 @@ await check("App /api/healthz rewrite", async () => {
   return "200 JSON";
 });
 
+await check("Dashboard bundle uses staging API (not prod leak)", async () => {
+  const { res, text: html } = await fetchText(`${appBase}/`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const srcMatch = html.match(/src="(\/assets\/[^"]+\.js)"/);
+  if (!srcMatch) throw new Error("no JS bundle in index.html");
+  const { res: jsRes, text: js } = await fetchText(`${appBase}${srcMatch[1]}`);
+  if (!jsRes.ok) throw new Error(`bundle HTTP ${jsRes.status}`);
+  const hasStagingApi = js.includes("api.staging.livia-hq.com");
+  const hasProdApiOnly =
+    js.includes("api.livia-hq.com") && !js.includes("api.staging.livia-hq.com");
+  if (hasProdApiOnly) {
+    throw new Error(
+      "bundle references api.livia-hq.com without staging — fix livia-stg Root Directory + env (see VERCEL-DEPLOY-ENVIRONMENTS.md)",
+    );
+  }
+  if (!hasStagingApi && !js.includes("127.0.0.1")) {
+    throw new Error("bundle missing api.staging.livia-hq.com — check VITE_API_BASE_URL");
+  }
+  return srcMatch[1];
+});
+
 await check("Demo portal enabled (GET /api/demo/status)", async () => {
   const res = await fetch(`${apiBase}/api/demo/status`, { signal: AbortSignal.timeout(15_000) });
   if (res.status === 404) {

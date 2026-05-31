@@ -167,6 +167,7 @@ export default function OnboardingPage() {
 
   return (
     <OnboardingExperienceShell vertical={themeVertical} country="IE">
+      <div data-testid="onboarding-page" className="contents">
       {portalExperience ? (
         wizard
       ) : (
@@ -187,6 +188,7 @@ export default function OnboardingPage() {
           </div>
         </div>
       )}
+      </div>
     </OnboardingExperienceShell>
   );
 }
