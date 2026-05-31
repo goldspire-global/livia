@@ -26,7 +26,7 @@ import {
   hasCurrentPlatformLegal,
 } from "../lib/platform-legal-gate";
 import { createBusiness } from "./businesses.service";
-import { applyDemoPublicBranding } from "../lib/demo-public-assets";
+import { applyDemoPublicBranding, backfillAllDemoPublicBranding } from "../lib/demo-public-assets";
 import { backfillDemoServiceImages } from "../lib/demo-service-images";
 import { inferDemoServiceImageUrl } from "../lib/experience-skin";
 import { createStaff, updateStaff } from "./staff.service";
@@ -826,6 +826,7 @@ export async function syncDemoWorld(): Promise<{
   provisioned: boolean;
   rosterAccounts: number;
   clerkSynced: number;
+  brandingUpdated?: number;
   passwordHint: string;
   businesses: Array<{ slug: string; id: string; name: string }>;
 }> {
@@ -843,15 +844,17 @@ export async function syncDemoWorld(): Promise<{
   }
 
   const started = Date.now();
-  const [clerkResult, rosterResult] = await Promise.all([
+  const [clerkResult, rosterResult, brandingUpdated] = await Promise.all([
     syncAllDemoClerkUsers(),
     seedDemoBusinessRosters(),
+    backfillAllDemoPublicBranding(DEMO_WORLD_SLUGS),
   ]);
   logger.info(
     {
       duration_ms: Date.now() - started,
       clerkSynced: clerkResult.synced,
       rosterAccounts: rosterResult.accounts,
+      brandingUpdated,
     },
     "demo.sync.completed",
   );
@@ -862,6 +865,7 @@ export async function syncDemoWorld(): Promise<{
     provisioned: refreshed.provisioned,
     rosterAccounts: rosterResult.accounts,
     clerkSynced: clerkResult.synced,
+    brandingUpdated,
     passwordHint: publicDemoPasswordHint(),
     businesses: refreshed.businesses.map((b) => ({
       slug: b.slug,

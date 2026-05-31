@@ -45,7 +45,7 @@ const SERVICE_IMAGES: Record<string, string> = {
   nail: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop",
   brow: "https://images.unsplash.com/photo-1487412940907-6530b50e3063?w=400&h=300&fit=crop",
   massage: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop",
-  tattoo: "https://images.unsplash.com/photo-1598371839696-5c5bb00bc9bc?w=400&h=300&fit=crop",
+  tattoo: "https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=400&h=300&fit=crop",
   consult: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop",
   botox: "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=400&h=300&fit=crop",
   filler: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop",

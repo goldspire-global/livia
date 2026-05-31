@@ -19,7 +19,7 @@ const ASSETS: Partial<
     coverImageUrl:
       "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=1200&h=600&fit=crop",
     logoUrl:
-      "https://images.unsplash.com/photo-1487412940907-6530b50e3063?w=200&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=200&h=200&fit=crop",
     instagramHandle: "bloombeauty.dublin",
   },
   wellness: {
@@ -31,14 +31,14 @@ const ASSETS: Partial<
   },
   "body-art": {
     coverImageUrl:
-      "https://images.unsplash.com/photo-1598371839696-5c5bb00bc9bc?w=1200&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1719376885101-0c4ddd5a3834?w=1200&h=600&fit=crop",
     logoUrl:
-      "https://images.unsplash.com/photo-1611501275019-9b5cda994e08?w=200&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1745777723328-6228e34ed2aa?w=200&h=200&fit=crop",
     instagramHandle: "inkanchorgalway",
   },
   "pet-grooming": {
     coverImageUrl:
-      "https://images.unsplash.com/photo-1516734212186-a967f81ad12d?w=1200&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1200&h=600&fit=crop",
     logoUrl:
       "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop",
     instagramHandle: "pawsparlour",
@@ -54,14 +54,14 @@ const ASSETS: Partial<
     coverImageUrl:
       "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&h=600&fit=crop",
     logoUrl:
-      "https://images.unsplash.com/photo-1631217868264-e5b964bb3e93?w=200&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",
     instagramHandle: "motionphysio",
   },
   "automotive-detailing": {
     coverImageUrl:
-      "https://images.unsplash.com/photo-1601362841437-42e164e303e7?w=1200&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&h=600&fit=crop",
     logoUrl:
-      "https://images.unsplash.com/photo-1619642751034-765df6387c12?w=200&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=200&h=200&fit=crop",
     instagramHandle: "shinestudiobelfast",
   },
   fitness: {
@@ -85,4 +85,29 @@ export async function applyDemoPublicBranding(
     logoUrl: pack.logoUrl,
     instagramHandle: overrides?.instagramHandle ?? pack.instagramHandle,
   });
+}
+
+/** Re-apply stable CDN branding for all demo tenants (fixes dead Unsplash IDs). */
+export async function backfillAllDemoPublicBranding(
+  slugs: readonly string[],
+): Promise<number> {
+  const { db, businessesTable } = await import("@workspace/db");
+  const { inArray } = await import("drizzle-orm");
+  const rows = await db
+    .select({
+      id: businessesTable.id,
+      slug: businessesTable.slug,
+      vertical: businessesTable.vertical,
+    })
+    .from(businessesTable)
+    .where(inArray(businessesTable.slug, [...slugs]));
+
+  let updated = 0;
+  for (const row of rows) {
+    const vertical = row.vertical as BusinessVertical | null;
+    if (!vertical || !ASSETS[vertical]) continue;
+    await applyDemoPublicBranding(row.id, vertical);
+    updated += 1;
+  }
+  return updated;
 }
