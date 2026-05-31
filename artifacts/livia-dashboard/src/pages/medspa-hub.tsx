@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useBusiness } from "@/lib/business-context";
 import { customFetch } from "@workspace/api-client-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardCheck, FileHeart, ListOrdered } from "lucide-react";
 import { Link } from "wouter";
 import { Input } from "@/components/ui/input";
+import { OperationalPageShell } from "@/components/layout/operational-page-shell";
+import { resolveMedspaHubDefaultTab, type MedspaHubTab } from "@workspace/policy";
 
 type ConsentRow = {
   id: string;
@@ -36,6 +37,14 @@ type WaitlistRow = {
   createdAt: string;
 };
 
+function EmptyTab({ message }: { message: string }) {
+  return (
+    <p className="text-sm text-muted-foreground text-center py-8 rounded-lg border border-dashed border-border/70 bg-muted/20">
+      {message}
+    </p>
+  );
+}
+
 export default function MedspaHubPage() {
   const { business } = useBusiness();
   const bid = business?.id ?? "";
@@ -45,6 +54,7 @@ export default function MedspaHubPage() {
   const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
   const [signId, setSignId] = useState<string | null>(null);
   const [signature, setSignature] = useState("");
+  const [activeTab, setActiveTab] = useState<MedspaHubTab>("consents");
 
   const load = useCallback(async () => {
     if (!bid) return;
@@ -58,6 +68,13 @@ export default function MedspaHubPage() {
       setConsents(c.data);
       setIntakes(i.data);
       setWaitlist(w.data);
+      setActiveTab(
+        resolveMedspaHubDefaultTab({
+          consents: c.data.length,
+          intakes: i.data.length,
+          waitlist: w.data.length,
+        }),
+      );
     } finally {
       setLoading(false);
     }
@@ -93,7 +110,7 @@ export default function MedspaHubPage() {
   if (vertical !== "medspa") {
     return (
       <div className="p-6 max-w-lg">
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Clinical hub is for medspa verticals. Switch business or update vertical in settings.
         </p>
       </div>
@@ -101,144 +118,149 @@ export default function MedspaHubPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Clinical hub</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Consent queue, intake review, and slot waitlist — counsel-reviewed copy ships from policy
-          packs.
-        </p>
-      </div>
-
-      <Tabs defaultValue="consents">
-        <TabsList>
-          <TabsTrigger value="consents" className="gap-2">
-            <ClipboardCheck className="h-4 w-4" />
+    <OperationalPageShell
+      title="Clinical hub"
+      subtitle="Consents, intake review, and waitlist — open the tab with work waiting."
+      width="lg"
+    >
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as MedspaHubTab)}
+        data-testid="medspa-hub-page"
+      >
+        <TabsList className="h-auto flex-wrap gap-1">
+          <TabsTrigger value="consents" className="gap-1.5 text-xs">
+            <ClipboardCheck className="h-3.5 w-3.5" />
             Consents
-            {consents.length > 0 && (
-              <Badge variant="secondary" className="ml-1">
+            {consents.length > 0 ? (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
                 {consents.length}
               </Badge>
-            )}
+            ) : null}
           </TabsTrigger>
-          <TabsTrigger value="intakes" className="gap-2">
-            <FileHeart className="h-4 w-4" />
+          <TabsTrigger value="intakes" className="gap-1.5 text-xs">
+            <FileHeart className="h-3.5 w-3.5" />
             Intakes
+            {intakes.length > 0 ? (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {intakes.length}
+              </Badge>
+            ) : null}
           </TabsTrigger>
-          <TabsTrigger value="waitlist" className="gap-2">
-            <ListOrdered className="h-4 w-4" />
+          <TabsTrigger value="waitlist" className="gap-1.5 text-xs">
+            <ListOrdered className="h-3.5 w-3.5" />
             Waitlist
+            {waitlist.length > 0 ? (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {waitlist.length}
+              </Badge>
+            ) : null}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="consents" className="mt-4 space-y-3">
+        <TabsContent value="consents" className="mt-3 space-y-2">
           {loading ? (
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-24 w-full" />
           ) : consents.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                No pending consents — web bookings sign at checkout.
-              </CardContent>
-            </Card>
+            <EmptyTab message="No pending consents — web bookings sign at checkout." />
           ) : (
             consents.map((row) => (
-              <Card key={row.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{row.procedureLabel}</CardTitle>
-                  <CardDescription>
-                    Customer {row.customerId.slice(-6)}
-                    {row.bookingId ? (
-                      <>
-                        {" "}
-                        ·{" "}
-                        <Link href={`/bookings/${row.bookingId}`} className="text-primary underline">
-                          Booking
-                        </Link>
-                      </>
-                    ) : null}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {signId === row.id ? (
-                    <>
-                      <Input
-                        value={signature}
-                        onChange={(e) => setSignature(e.target.value)}
-                        placeholder="Client legal name"
-                      />
-                      <Button size="sm" onClick={() => void signConsent(row.id, row.bookingId)}>
-                        Record signature
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setSignId(null)}>
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button size="sm" variant="outline" onClick={() => setSignId(row.id)}>
-                      Sign in clinic
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="intakes" className="mt-4 space-y-3">
-          {loading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : intakes.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                No intakes awaiting review.
-              </CardContent>
-            </Card>
-          ) : (
-            intakes.map((row) => (
-              <Card key={row.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Medical intake</CardTitle>
-                  <CardDescription>
-                    {row.allergies ? `Allergies: ${row.allergies}` : "—"}
-                    {row.medications ? ` · Meds: ${row.medications}` : ""}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button size="sm" onClick={() => void markIntakeReviewed(row.id)}>
-                    Mark reviewed
-                  </Button>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="waitlist" className="mt-4 space-y-3">
-          {loading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : waitlist.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                Waitlist empty — cancellations auto-offer via workflow.
-              </CardContent>
-            </Card>
-          ) : (
-            waitlist.map((row) => (
-              <Card key={row.id}>
-                <CardContent className="py-4 flex justify-between items-center">
-                  <div className="text-sm">
-                    {row.phone ?? row.email ?? "Contact on file"}
+              <div
+                key={row.id}
+                className="rounded-lg border border-border/80 bg-card px-3 py-3 space-y-2"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{row.procedureLabel}</p>
                     <p className="text-xs text-muted-foreground">
-                      Joined {new Date(row.createdAt).toLocaleString()}
+                      Customer …{row.customerId.slice(-6)}
+                      {row.bookingId ? (
+                        <>
+                          {" · "}
+                          <Link href={`/bookings/${row.bookingId}`} className="text-primary underline">
+                            Booking
+                          </Link>
+                        </>
+                      ) : null}
                     </p>
                   </div>
-                  <Badge variant="outline">Active</Badge>
-                </CardContent>
-              </Card>
+                </div>
+                {signId === row.id ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Input
+                      value={signature}
+                      onChange={(e) => setSignature(e.target.value)}
+                      placeholder="Client legal name"
+                      className="h-9 max-w-xs"
+                    />
+                    <Button size="sm" onClick={() => void signConsent(row.id, row.bookingId)}>
+                      Record signature
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSignId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-8" onClick={() => setSignId(row.id)}>
+                    Sign in clinic
+                  </Button>
+                )}
+              </div>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="intakes" className="mt-3 space-y-2">
+          {loading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : intakes.length === 0 ? (
+            <EmptyTab message="No intakes awaiting review." />
+          ) : (
+            intakes.map((row) => (
+              <div
+                key={row.id}
+                className="rounded-lg border border-border/80 bg-card px-3 py-3 flex flex-wrap items-center justify-between gap-2"
+              >
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium">Medical intake</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {row.allergies ? `Allergies: ${row.allergies}` : "—"}
+                    {row.medications ? ` · Meds: ${row.medications}` : ""}
+                  </p>
+                </div>
+                <Button size="sm" className="h-8 shrink-0" onClick={() => void markIntakeReviewed(row.id)}>
+                  Mark reviewed
+                </Button>
+              </div>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="waitlist" className="mt-3 space-y-2">
+          {loading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : waitlist.length === 0 ? (
+            <EmptyTab message="Waitlist empty — cancellations auto-offer via workflow." />
+          ) : (
+            waitlist.map((row) => (
+              <div
+                key={row.id}
+                className="rounded-lg border border-border/80 bg-card px-3 py-2.5 flex justify-between items-center gap-2"
+              >
+                <div className="text-sm min-w-0">
+                  <p className="truncate">{row.phone ?? row.email ?? "Contact on file"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Joined {new Date(row.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className="shrink-0 text-[10px]">
+                  Active
+                </Badge>
+              </div>
             ))
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </OperationalPageShell>
   );
 }

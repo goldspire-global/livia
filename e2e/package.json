@@ -21,6 +21,7 @@
     "test:preflight": "playwright test --project=v3-preflight-ui && playwright test --project=founder-auth-setup --project=v3-preflight-auth --project=api --project=dashboard --project=internal --project=marketing",
     "test:preflight:fast": "playwright test --project=api --project=dashboard --project=internal tests/v3-preflight.spec.ts",
     "test:demo-owner": "playwright test tests/demo-owner-flow.spec.ts --project=dashboard",
+    "test:p0-visual": "playwright test tests/visual-screen-p0.spec.ts --project=dashboard --workers=1",
     "install-browsers": "playwright install chromium --with-deps"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
 import {
   resolveOwnerHomeModuleLayout,
   shouldShowActivationWelcomeCard,
@@ -7,72 +7,60 @@ import {
   shouldShowRunningLateAffordance,
   shouldShowInboxContextRail,
   shouldShowStaffMyDayTimeline,
+  resolveMedspaHubDefaultTab,
+  chainShopsVisibleSlice,
+  designProofsSubmitDefaultOpen,
 } from "../tenant-surface-density";
 
-describe("tenant-surface-density", () => {
-  it("collapses to all_clear when no inbox or pending", () => {
-    expect(resolveOwnerHomeModuleLayout({ pendingCount: 0, openInboxCount: 0 })).toEqual({
-      mode: "all_clear",
-    });
-  });
-
-  it("single column pending when only pending", () => {
-    expect(resolveOwnerHomeModuleLayout({ pendingCount: 2, openInboxCount: 0 })).toEqual({
-      mode: "single",
-      focus: "pending",
-    });
-  });
-
-  it("dual when both signals", () => {
-    expect(resolveOwnerHomeModuleLayout({ pendingCount: 1, openInboxCount: 3 })).toEqual({
-      mode: "dual",
-    });
-  });
-
-  it("guardrails when Liv act or early rung", () => {
-    expect(shouldShowOwnerLivGuardrails({ livNeedsAttention: true, mandateRung: "R4" })).toBe(
-      true,
-    );
-    expect(shouldShowOwnerLivGuardrails({ mandateRung: "R1" })).toBe(true);
-    expect(shouldShowOwnerLivGuardrails({ mandateRung: "R4" })).toBe(false);
-  });
-
-  it("onboarding banner only before 100%", () => {
-    expect(shouldShowOnboardingMaturityBanner(80)).toBe(true);
-    expect(shouldShowOnboardingMaturityBanner(100)).toBe(false);
-  });
-
-  it("activation only with pending steps", () => {
-    expect(shouldShowActivationWelcomeCard({ activationStepsPending: 1, dismissed: false })).toBe(
-      true,
-    );
-    expect(shouldShowActivationWelcomeCard({ activationStepsPending: 0, dismissed: false })).toBe(
-      false,
-    );
-  });
-
-  it("running late only with bookings today", () => {
-    expect(shouldShowRunningLateAffordance(0)).toBe(false);
-    expect(shouldShowRunningLateAffordance(4)).toBe(true);
-  });
-
-  it("inbox context rail only with selection", () => {
-    expect(shouldShowInboxContextRail(false)).toBe(false);
-    expect(shouldShowInboxContextRail(true)).toBe(true);
-  });
-
-  it("staff timeline hidden for empty or single-booking day", () => {
-    expect(shouldShowStaffMyDayTimeline({ todayBookingCount: 0, hasNextBooking: false })).toBe(
-      false,
-    );
-    expect(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: true })).toBe(
-      false,
-    );
-    expect(shouldShowStaffMyDayTimeline({ todayBookingCount: 2, hasNextBooking: true })).toBe(
-      true,
-    );
-    expect(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: false })).toBe(
-      true,
-    );
-  });
+assert.deepEqual(resolveOwnerHomeModuleLayout({ pendingCount: 0, openInboxCount: 0 }), {
+  mode: "all_clear",
 });
+
+assert.deepEqual(resolveOwnerHomeModuleLayout({ pendingCount: 2, openInboxCount: 0 }), {
+  mode: "single",
+  focus: "pending",
+});
+
+assert.deepEqual(resolveOwnerHomeModuleLayout({ pendingCount: 1, openInboxCount: 3 }), {
+  mode: "dual",
+});
+
+assert.equal(shouldShowOwnerLivGuardrails({ livNeedsAttention: true, mandateRung: "R4" }), true);
+assert.equal(shouldShowOwnerLivGuardrails({ mandateRung: "R1" }), true);
+assert.equal(shouldShowOwnerLivGuardrails({ mandateRung: "R4" }), false);
+
+assert.equal(shouldShowOnboardingMaturityBanner(80), true);
+assert.equal(shouldShowOnboardingMaturityBanner(100), false);
+
+assert.equal(shouldShowActivationWelcomeCard({ activationStepsPending: 1, dismissed: false }), true);
+assert.equal(shouldShowActivationWelcomeCard({ activationStepsPending: 0, dismissed: false }), false);
+
+assert.equal(shouldShowRunningLateAffordance(0), false);
+assert.equal(shouldShowRunningLateAffordance(4), true);
+
+assert.equal(shouldShowInboxContextRail(false), false);
+assert.equal(shouldShowInboxContextRail(true), true);
+
+assert.equal(resolveMedspaHubDefaultTab({ consents: 2, intakes: 1, waitlist: 5 }), "consents");
+assert.equal(resolveMedspaHubDefaultTab({ consents: 0, intakes: 1, waitlist: 5 }), "intakes");
+assert.equal(resolveMedspaHubDefaultTab({ consents: 0, intakes: 0, waitlist: 0 }), "waitlist");
+
+const shops = [
+  { pulseStatus: "ok" as const },
+  { pulseStatus: "ok" as const },
+  { pulseStatus: "ok" as const },
+  { pulseStatus: "ok" as const },
+  { pulseStatus: "ok" as const },
+  { pulseStatus: "act" as const },
+];
+const slice = chainShopsVisibleSlice(shops, false);
+assert.equal(slice.visible.length, 4);
+assert.equal(slice.hiddenCount, 2);
+
+assert.equal(designProofsSubmitDefaultOpen(0), true);
+assert.equal(designProofsSubmitDefaultOpen(3), false);
+
+assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 0, hasNextBooking: false }), false);
+assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: true }), false);
+assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 2, hasNextBooking: true }), true);
+assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: false }), true);

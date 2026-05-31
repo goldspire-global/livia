@@ -12,7 +12,14 @@ import { LivMomentsStrip } from "@/components/ritual/liv-moments-strip";
 /**
  * Liv as the visible centre of the owner/org-admin day — briefing, inbox, toolkit, public preview.
  */
-export function LivCommandHub({ compact }: { compact?: boolean }) {
+export function LivCommandHub({
+  compact,
+  density = "full",
+}: {
+  compact?: boolean;
+  /** focused = toolkit/home — actions only, no recovery strips */
+  density?: "full" | "focused";
+}) {
   const { business } = useBusiness();
   const { toast } = useToast();
   const bid = business?.id ?? "";
@@ -78,15 +85,15 @@ export function LivCommandHub({ compact }: { compact?: boolean }) {
             </Button>
           ) : null}
         </div>
-        {!compact ? (
+        {density === "full" && !compact ? (
           <p className="text-xs text-muted-foreground leading-relaxed">
             In inbox, use <strong className="text-foreground">Ask Liv</strong> on any open thread — she drafts with
             morning context, booking tools, and your tone pack.
           </p>
         ) : null}
-        {!compact ? <StuckContinuityCard /> : null}
-        {!compact ? <DriftRecoveryCard /> : null}
-        {!compact ? <LivMomentsStrip /> : null}
+        {density === "full" && !compact ? <StuckContinuityCard /> : null}
+        {density === "full" && !compact ? <DriftRecoveryCard /> : null}
+        {density === "full" && !compact ? <LivMomentsStrip /> : null}
       </CardContent>
     </Card>
   );

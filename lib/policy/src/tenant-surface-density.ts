@@ -68,6 +68,57 @@ export function shouldShowInboxContextRail(hasSelectedThread: boolean): boolean 
   return hasSelectedThread;
 }
 
+export type MedspaHubTab = "consents" | "intakes" | "waitlist";
+
+/** Open the medspa hub tab with the most signal first. */
+export function resolveMedspaHubDefaultTab(counts: {
+  consents: number;
+  intakes: number;
+  waitlist: number;
+}): MedspaHubTab {
+  if (counts.consents > 0) return "consents";
+  if (counts.intakes > 0) return "intakes";
+  return "waitlist";
+}
+
+/** Chain glance — collapsed shop grid before expanding all locations. */
+export const CHAIN_SHOPS_COLLAPSED_VISIBLE = 4;
+
+export type ChainPulseLike = { pulseStatus: "ok" | "watch" | "act" };
+
+export function chainShopsVisibleSlice<T extends ChainPulseLike>(
+  shops: T[],
+  showAll: boolean,
+): { visible: T[]; hiddenCount: number } {
+  if (showAll || shops.length <= CHAIN_SHOPS_COLLAPSED_VISIBLE) {
+    return { visible: shops, hiddenCount: 0 };
+  }
+  const priority = shops.filter((s) => s.pulseStatus !== "ok");
+  const ordered =
+    priority.length > 0
+      ? [...priority, ...shops.filter((s) => s.pulseStatus === "ok")]
+      : shops;
+  const visible = ordered.slice(0, CHAIN_SHOPS_COLLAPSED_VISIBLE);
+  return { visible, hiddenCount: Math.max(0, shops.length - visible.length) };
+}
+
+/** Design proofs — collapse submit form when queue already has work. */
+export function designProofsSubmitDefaultOpen(queueLength: number): boolean {
+  return queueLength === 0;
+}
+
+/** Lifecycle page — static program cards only when a suggestion triggers them. */
+export function shouldShowLifecycleProgramCard(args: {
+  programId: "G3" | "G8";
+  suggestions: Array<{ id: string }>;
+  multiShop: boolean;
+}): boolean {
+  if (args.programId === "G3") {
+    return args.suggestions.some((s) => s.id === "G3") || args.multiShop;
+  }
+  return args.suggestions.some((s) => s.id === "G8");
+}
+
 /** Staff my-day timeline — hide when only the hero booking exists or day is empty. */
 export function shouldShowStaffMyDayTimeline(args: {
   todayBookingCount: number;

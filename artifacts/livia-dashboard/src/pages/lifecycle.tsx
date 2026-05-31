@@ -8,6 +8,9 @@ import { fetchUserLifecycle, type GraduationSuggestion } from "@/lib/lifecycle-a
 import { useMembership } from "@/lib/membership-context";
 import { useBusiness } from "@/lib/business-context";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
+import { PageFrame } from "@/components/ui/page-frame";
+import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
+import { shouldShowLifecycleProgramCard } from "@workspace/policy";
 
 export default function LifecyclePage() {
   const { role } = useMembership();
@@ -18,8 +21,6 @@ export default function LifecyclePage() {
   );
   const [suggestions, setSuggestions] = useState<GraduationSuggestion[]>([]);
   const multiShop = businesses.length >= 2;
-  const showChainChecklist = suggestions.some((s) => s.id === "G3") || multiShop;
-  const showSuccession = suggestions.some((s) => s.id === "G8");
 
   useEffect(() => {
     if (role !== "OWNER") return;
@@ -28,16 +29,27 @@ export default function LifecyclePage() {
       .catch(() => setSuggestions([]));
   }, [role]);
 
+  const showChain = shouldShowLifecycleProgramCard({
+    programId: "G3",
+    suggestions,
+    multiShop,
+  });
+  const showSuccession = shouldShowLifecycleProgramCard({
+    programId: "G8",
+    suggestions,
+    multiShop,
+  });
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <PageFrame width="md" className="space-y-4 pb-12">
       <div>
-        <p className="text-xs font-mono uppercase tracking-wider text-primary mb-2 flex items-center gap-2">
+        <p className="text-xs font-mono uppercase tracking-wider text-primary mb-1 flex items-center gap-2">
           <BookOpen className="h-4 w-4" />
           Lifecycle
         </p>
-        <h1 className="font-serif text-3xl tracking-tight mb-2">Your growth on Livia</h1>
-        <p className="text-muted-foreground leading-relaxed text-sm">
-          We only surface graduation steps when your shop is ready — not a catalogue of every stage.
+        <h1 className="font-serif text-2xl tracking-tight">Your growth on Livia</h1>
+        <p className="text-muted-foreground text-sm mt-1 max-w-lg">
+          Graduation steps appear when your shop is ready — not a catalogue of every stage.
         </p>
       </div>
 
@@ -45,28 +57,32 @@ export default function LifecyclePage() {
 
       {suggestions.length > 0 ? (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Suggested for you now</CardTitle>
-            <CardDescription>Based on staff count, locations, and how you use Livia today.</CardDescription>
+            <CardDescription className="text-xs">
+              Based on staff count, locations, and how you use Livia today.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {suggestions.map((s) => (
               <div
                 key={s.id}
-                className="rounded-md border border-primary/40 bg-primary/5 p-4"
+                className="rounded-md border border-primary/40 bg-primary/5 p-3"
               >
                 <p className="text-sm font-medium">
                   {s.id} — {s.title}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{s.summary}</p>
-                <p className="text-xs text-muted-foreground mt-2 italic">{s.whyNow}</p>
-                <div className="flex flex-wrap gap-2 mt-3">
+                <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">{s.whyNow}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
                   <Link href={s.primaryCta.href}>
-                    <Button size="sm">{s.primaryCta.label}</Button>
+                    <Button size="sm" className="h-8">
+                      {s.primaryCta.label}
+                    </Button>
                   </Link>
                   {s.secondaryCta ? (
                     <Link href={s.secondaryCta.href}>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="h-8">
                         {s.secondaryCta.label}
                       </Button>
                     </Link>
@@ -76,59 +92,74 @@ export default function LifecyclePage() {
             ))}
           </CardContent>
         </Card>
-      ) : null}
+      ) : (
+        <p className="text-sm text-muted-foreground rounded-lg border border-border/70 px-4 py-6 text-center">
+          No graduation steps right now — keep running your floor; we&apos;ll surface the next move when it matters.
+        </p>
+      )}
 
-      {showChainChecklist ? (
-        <Card id="chain">
-          <CardHeader>
-            <CardTitle className="text-base">Multi-location checklist</CardTitle>
-            <CardDescription>
-              Shown because you run more than one {vocab.locationNoun.toLowerCase()} or we detected G3 readiness.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={
-                  businesses[0]?.id
-                    ? `/onboarding?intent=second-shop&parentBusinessId=${businesses[0].id}`
-                    : "/onboarding?intent=second-shop"
-                }
-              >
-                <Button size="sm">Add location</Button>
-              </Link>
-              <Link href="/chain">
-                <Button size="sm" variant="outline">
-                  Chain glance
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {showSuccession ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <KeyRound className="h-4 w-4" />
-              Ownership succession
-            </CardTitle>
-            <CardDescription>Transfer keys with audit trail — only when this step is relevant.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/settings?tab=ownership">
-              <Button size="sm">Open ownership transfer</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      {showChain || showSuccession ? (
+        <SettingsDisclosure
+          title="Growth programs"
+          description="Multi-location and succession — only when relevant."
+          defaultOpen={false}
+        >
+          <div className="space-y-3 pt-1">
+            {showChain ? (
+              <Card id="chain" className="border-border/70">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Multi-location</CardTitle>
+                  <CardDescription className="text-xs">
+                    {vocab.locationNoun} expansion and chain glance.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Link
+                    href={
+                      businesses[0]?.id
+                        ? `/onboarding?intent=second-shop&parentBusinessId=${businesses[0].id}`
+                        : "/onboarding?intent=second-shop"
+                    }
+                  >
+                    <Button size="sm" className="h-8">
+                      Add location
+                    </Button>
+                  </Link>
+                  <Link href="/chain">
+                    <Button size="sm" variant="outline" className="h-8">
+                      Chain glance
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : null}
+            {showSuccession ? (
+              <Card className="border-border/70">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    Ownership succession
+                  </CardTitle>
+                  <CardDescription className="text-xs">Transfer keys with audit trail.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href="/settings?tab=ownership">
+                    <Button size="sm" className="h-8">
+                      Open ownership transfer
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+        </SettingsDisclosure>
       ) : null}
 
       <Link href="/guides">
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="h-8">
           Demo playbook →
         </Button>
       </Link>
-    </div>
+    </PageFrame>
   );
 }

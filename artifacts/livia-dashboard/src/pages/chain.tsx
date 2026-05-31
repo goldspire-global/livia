@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CHAIN_SHOPS_COLLAPSED_VISIBLE, chainShopsVisibleSlice } from "@workspace/policy";
 import { useLocation } from "wouter";
 import { useBusiness } from "@/lib/business-context";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +34,7 @@ export default function ChainPage() {
   const [rollup, setRollup] = useState<ChainRollup | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<ChainPeriod>("week");
+  const [showAllShops, setShowAllShops] = useState(false);
 
   const verticalById = useMemo(
     () =>
@@ -89,8 +91,10 @@ export default function ChainPage() {
     );
   }
 
+  const shopSlice = chainShopsVisibleSlice(rollup?.shops ?? [], showAllShops);
+
   return (
-    <PageFrame width="lg" data-testid="founder-chain-page">
+    <PageFrame width="lg" className="space-y-4" data-testid="founder-chain-page">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
@@ -181,8 +185,8 @@ export default function ChainPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {rollup?.shops.map((shop) => (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {shopSlice.visible.map((shop) => (
           <FounderShopCard
             key={shop.businessId}
             shop={shop}
@@ -192,6 +196,30 @@ export default function ChainPage() {
           />
         ))}
       </div>
+      {shopSlice.hiddenCount > 0 ? (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAllShops(true)}
+            data-testid="chain-show-all-shops"
+          >
+            Show all {rollup?.shops.length ?? 0} locations ({shopSlice.hiddenCount} more)
+          </Button>
+        </div>
+      ) : showAllShops && (rollup?.shops.length ?? 0) > CHAIN_SHOPS_COLLAPSED_VISIBLE ? (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAllShops(false)}
+          >
+            Show fewer
+          </Button>
+        </div>
+      ) : null}
     </PageFrame>
   );
 }

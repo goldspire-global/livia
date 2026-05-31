@@ -127,6 +127,7 @@ export default function BookingsPage() {
 
   return (
     <OperationalPageShell
+      data-testid="bookings-page"
       title={
         showRitual
           ? persona === "receptionist"
@@ -192,7 +193,7 @@ export default function BookingsPage() {
           {listLoading ? (
             <div className="divide-y divide-border">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4">
+                <div key={i} className="flex items-center gap-3 p-3">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-48" />
@@ -203,8 +204,8 @@ export default function BookingsPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Calendar className="h-9 w-9 text-muted-foreground mb-3 opacity-40" />
               <p className="font-medium">No bookings found</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {search || statusFilter !== "ALL"
@@ -225,7 +226,7 @@ export default function BookingsPage() {
                 <Link key={booking.id} href={`/bookings/${booking.id}`}>
                   <div
                     data-testid={`row-booking-${booking.id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors cursor-pointer"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
                       {booking.customer?.firstName?.charAt(0) ?? "?"}

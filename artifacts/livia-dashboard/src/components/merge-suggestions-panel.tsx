@@ -68,6 +68,7 @@ export function MergeSuggestionsPanel() {
   }
 
   if (!bid) return null;
+  if (!loading && rows.length === 0) return null;
 
   return (
     <Card data-testid="merge-suggestions-panel">

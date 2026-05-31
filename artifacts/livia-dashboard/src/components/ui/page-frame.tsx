@@ -6,6 +6,7 @@ type Props = {
   className?: string;
   /** Default max-w-3xl — chain uses lg */
   width?: "md" | "lg" | "full";
+  "data-testid"?: string;
 };
 
 const WIDTH = {
@@ -15,9 +16,10 @@ const WIDTH = {
 } as const;
 
 /** Consistent page rhythm: enter motion, width, bottom padding for mobile nav. */
-export function PageFrame({ children, className, width = "md" }: Props) {
+export function PageFrame({ children, className, width = "md", "data-testid": testId }: Props) {
   return (
     <div
+      data-testid={testId}
       className={cn(
         "mx-auto w-full space-y-6 pb-16 px-1",
         WIDTH[width],

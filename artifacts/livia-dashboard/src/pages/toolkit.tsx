@@ -6,20 +6,21 @@ import { LivCommandHub } from "@/components/liv/liv-command-hub";
 import { PayrollExportCard } from "@/components/payroll-export-card";
 import { EnterpriseExportCard } from "@/components/enterprise-export-card";
 import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles } from "lucide-react";
+import { PageFrame } from "@/components/ui/page-frame";
+import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
+import { ChevronRight, Sparkles } from "lucide-react";
 import {
   showEnterpriseToolkitExports,
   showPayrollToolkitExport,
 } from "@workspace/policy";
 
 const LIV_LINKS = [
-  { href: "/settings?tab=liv", label: "Liv voice & prompts", blurb: "Tone, greeting, knowledge, prompt versions." },
-  { href: "/settings?tab=policy", label: "Booking policy", blurb: "Deposits, no-shows, trusted clients — what Liv enforces." },
-  { href: "/settings?tab=comms", label: "Channels", blurb: "SMS, email, and what's live vs roadmap." },
+  { href: "/settings?tab=liv", label: "Liv voice & prompts" },
+  { href: "/settings?tab=policy", label: "Booking policy" },
+  { href: "/settings?tab=comms", label: "Channels" },
 ] as const;
 
-/** Org-admin/owner Liv command centre — not a second app map (no Operations grid). */
+/** Org-admin/owner Liv command centre — deferred exports and settings links. */
 export default function ToolkitPage() {
   const { business } = useBusiness();
   const { effectiveRole } = useMembership();
@@ -31,46 +32,64 @@ export default function ToolkitPage() {
   const showEnterprise = showExports && showEnterpriseToolkitExports(vertical, tier);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <PageFrame width="md" className="space-y-4" data-testid="toolkit-page">
       <PersonaRitualHeader
         variant="page"
         title="Liv command"
-        subtitle="Briefing, tuning, and exports — your operating brain. Day-to-day work stays on Today, Queue, and the floor."
+        subtitle="Briefing and tuning — day-to-day work stays on Today and Queue."
       />
 
-      <LivCommandHub />
+      <LivCommandHub density="focused" />
 
-      {showPayroll ? <PayrollExportCard /> : null}
-      {showEnterprise ? <EnterpriseExportCard /> : null}
+      {showPayroll || showEnterprise ? (
+        <SettingsDisclosure
+          title="Exports"
+          description="Payroll and enterprise reports when your plan includes them."
+          defaultOpen={false}
+        >
+          <div className="space-y-3 pt-1">
+            {showPayroll ? <PayrollExportCard /> : null}
+            {showEnterprise ? <EnterpriseExportCard /> : null}
+          </div>
+        </SettingsDisclosure>
+      ) : null}
 
-      <section>
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5" />
-          Liv & trust
-        </h2>
-        <div className="grid sm:grid-cols-2 gap-3">
+      <SettingsDisclosure
+        title="Liv & trust settings"
+        description="Voice, policy, and channels."
+        defaultOpen={false}
+      >
+        <ul className="divide-y divide-border/60 pt-1">
           {LIV_LINKS.map((t) => (
-            <Link key={t.href} href={t.href}>
-              <Card className="h-full hover:border-primary/40 transition-colors">
-                <CardContent className="p-4">
-                  <p className="font-medium text-sm">{t.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t.blurb}</p>
-                </CardContent>
-              </Card>
-            </Link>
+            <li key={t.href}>
+              <Link
+                href={t.href}
+                className="flex items-center justify-between gap-2 py-2.5 text-sm hover:text-primary transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden />
+                  {t.label}
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              </Link>
+            </li>
           ))}
-        </div>
-      </section>
+        </ul>
+      </SettingsDisclosure>
 
       {business?.slug ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground text-center">
           Customer-facing Liv:{" "}
-          <a className="text-primary hover:underline" href={`/b/${business.slug}`} target="_blank" rel="noreferrer">
+          <a
+            className="text-primary hover:underline font-mono"
+            href={`/b/${business.slug}`}
+            target="_blank"
+            rel="noreferrer"
+          >
             /b/{business.slug}
           </a>
         </p>
       ) : null}
-    </div>
+    </PageFrame>
   );
 }
-

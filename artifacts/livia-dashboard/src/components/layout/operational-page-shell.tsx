@@ -12,6 +12,7 @@ type Props = {
   children: React.ReactNode;
   width?: "md" | "lg" | "full";
   className?: string;
+  "data-testid"?: string;
   /** Subtle vertical accent on the page background */
   tone?: boolean;
 };
@@ -27,6 +28,7 @@ export function OperationalPageShell({
   children,
   width = "full",
   className,
+  "data-testid": testId,
   tone = true,
 }: Props) {
   const { business } = useBusiness();
@@ -34,7 +36,7 @@ export function OperationalPageShell({
   const toneClass = tone && vertical ? verticalToneClass(vertical) : undefined;
 
   return (
-    <PageFrame width={width} className={cn(toneClass, className)}>
+    <PageFrame width={width} className={cn(toneClass, className)} data-testid={testId}>
       <PersonaRitualHeader variant="page" title={title} subtitle={subtitle}>
         {actions}
       </PersonaRitualHeader>

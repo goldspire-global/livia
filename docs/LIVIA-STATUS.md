@@ -16,7 +16,7 @@
 | Bucket | Status | What it means for you |
 |--------|--------|------------------------|
 | **A — Platform engineering** | **Done** | APIs, policy hub, 9 verticals, guest `/b`, presets matrix, CI, demo seeds, support registry, mobile parity hooks |
-| **B — Screen implementation** | **In progress (~55%)** | Density program — see **Bucket B checklist** below |
+| **B — Screen implementation** | **In progress (~85%)** | Density program — see **Bucket B checklist** below |
 | **C — Visual & founder acceptance** | **Not done** | No full P0 screenshot gate in CI; Figma frames incomplete; founder field UAT not signed off for production presets |
 | **D — Launch & field** | **Not done** | Gate 2 (10 Dublin shops), prod preset flag, App Store / Stripe prod evidence |
 
@@ -32,11 +32,17 @@
 | Spec: `docs/design/SURFACE-DENSITY.md` | Done |
 | Owner/manager `/dashboard` | Done (ritual, contextual modules, disclosures) |
 | `/inbox` three-pane density | Done (context rail only when thread selected; shorter viewport) |
-| Staff `/my-day` | Done (timeline only when 2+ bookings; tighter spacing) |
-| `/settings` shop + tabs | Done (compact booking link strip; contact fields collapsed) |
-| Other P0 tenant routes (bookings list, toolkit, etc.) | Not started |
-| P0 visual regression CI (`visual-screen-p0`) | Not started |
-| Founder compare to northstar PNGs | Not started |
+| Staff `/my-day` | Done |
+| `/settings` shop + tabs | Done |
+| `/toolkit` | Done (focused Liv hub; deferred exports/settings) |
+| `/chain` | Done (collapsed shop grid; alerts only when present) |
+| `/medspa` clinical hub | Done (signal-first tab; compact rows) |
+| `/design-proofs` | Done (queue first; submit collapsed when busy) |
+| `/lifecycle` | Done (programs disclosure; empty state) |
+| `/customers` | Done (merge panel hidden when empty) |
+| `/bookings` list | Done (compact rows + test id) |
+| P0 E2E density smoke (`e2e/tests/visual-screen-p0.spec.ts`) | Done |
+| Founder northstar PNG pixel diff in CI | Not started |
 
 **Bucket B is complete** when every row above is **Done** and staging deploy includes the changes.
 
@@ -46,10 +52,9 @@
 
 | Item | Notes |
 |------|-------|
-| My-day + settings density | Next engineering slice |
-| P0 visual regression | After density pass |
-| Railway deploy | Use GitHub or `railway up` with `.railwayignore` — [`docs/operations/RAILWAY-DEPLOY.md`](operations/RAILWAY-DEPLOY.md) |
-| Env sync | `pnpm railway:build-prod-env --write` then `pnpm railway:sync-env` |
+| Bucket B finish | Founder northstar PNG diff in CI (last checklist row) |
+| Staging deploy | Pull `main` — Vercel app + Railway GitHub |
+| Run locally | `pnpm --filter @workspace/e2e run test:p0-visual` |
 
 ---
 
