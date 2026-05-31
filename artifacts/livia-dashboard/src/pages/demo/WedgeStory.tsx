@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "wouter";
-import { useAuth, useSignIn, useClerk } from "@clerk/clerk-react";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { useSignIn, useClerk } from "@clerk/clerk-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  ClipboardCheck,
+  ImageIcon,
+  Inbox,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import { LiviaWordmark } from "@/components/brand/LiviaMark";
 import {
   getWedgeDemoStory,
@@ -10,19 +20,25 @@ import {
 } from "@workspace/policy";
 import {
   applyDemoSessionContext,
+  fetchDemoCatalog,
   fetchDemoStatus,
+  provisionDemoWorld,
   requestDemoSignInAsBusiness,
   type DemoSignInResult,
 } from "@/lib/demo-portal";
+import { completeDemoClerkSignIn } from "@/lib/demo-clerk-sign-in";
 import { useToast } from "@/hooks/use-toast";
 
-const CROP_LABEL: Record<string, string> = {
-  inbox: "Inbox",
-  "public-book": "Book",
-  proof: "Proof",
-  consent: "Consent",
-  sms: "SMS",
-  today: "Today",
+const CROP_META: Record<
+  string,
+  { label: string; icon: typeof Inbox; chip: string; ring: string }
+> = {
+  inbox: { label: "Inbox", icon: Inbox, chip: "bg-violet-500/15 text-violet-300", ring: "border-violet-500/25" },
+  "public-book": { label: "Book", icon: Calendar, chip: "bg-cyan-500/15 text-cyan-300", ring: "border-cyan-500/25" },
+  proof: { label: "Proof", icon: ImageIcon, chip: "bg-amber-500/15 text-amber-300", ring: "border-amber-500/25" },
+  consent: { label: "Consent", icon: ClipboardCheck, chip: "bg-rose-500/15 text-rose-300", ring: "border-rose-500/25" },
+  sms: { label: "SMS", icon: MessageSquare, chip: "bg-emerald-500/15 text-emerald-300", ring: "border-emerald-500/25" },
+  today: { label: "Today", icon: Sparkles, chip: "bg-sky-500/15 text-sky-300", ring: "border-sky-500/25" },
 };
 
 export default function DemoWedgeStoryPage() {
@@ -30,9 +46,22 @@ export default function DemoWedgeStoryPage() {
   const story = getWedgeDemoStory(vertical as WedgeDemoStory["vertical"]);
   const { toast } = useToast();
   const { signIn, isLoaded: signInLoaded } = useSignIn();
-  const { isSignedIn, signOut, session, setActive } = useClerk();
+  const { signOut, session, setActive } = useClerk();
   const [busy, setBusy] = useState(false);
+  const [devPassword, setDevPassword] = useState("LiviaDemo2026!");
+  const [provisioned, setProvisioned] = useState(false);
   const [resolvedSlug, setResolvedSlug] = useState<string | null>(story?.demoSlug ?? null);
+
+  useEffect(() => {
+    void fetchDemoCatalog()
+      .then((c) => {
+        if (c.devPassword) setDevPassword(c.devPassword);
+      })
+      .catch(() => undefined);
+    void fetchDemoStatus()
+      .then((st) => setProvisioned(st.provisioned))
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (story?.demoSlug) {
@@ -53,40 +82,41 @@ export default function DemoWedgeStoryPage() {
         toast({ title: "Clerk not ready", variant: "destructive" });
         return;
       }
-      if (isSignedIn && session?.id) {
-        await signOut({ sessionId: session.id });
-      }
-      const attempt = await signIn.create({
-        strategy: "ticket",
-        ticket: result.token!,
-      });
-      if (attempt.status === "complete" && attempt.createdSessionId) {
-        await setActive({ session: attempt.createdSessionId });
-        applyDemoSessionContext(result);
-        window.location.href = result.landingPath;
-      } else {
-        toast({
-          title: "Sign-in incomplete",
-          description: "Try the demo launcher with provisioned world.",
-          variant: "destructive",
-        });
-      }
+      await completeDemoClerkSignIn(
+        signIn,
+        { signOut, setActive, sessionId: session?.id },
+        result,
+        devPassword,
+      );
+      applyDemoSessionContext(result);
+      window.location.href = result.landingPath;
     },
-    [isSignedIn, session?.id, signIn, signInLoaded, setActive, signOut, toast],
+    [devPassword, session?.id, signIn, signInLoaded, setActive, signOut, toast],
   );
 
   async function enterDemo() {
-    if (!resolvedSlug) {
-      toast({
-        title: "Demo shop not ready",
-        description: "Provision demo world from /demo first.",
-        variant: "destructive",
-      });
-      return;
-    }
     setBusy(true);
     try {
-      const result = await requestDemoSignInAsBusiness(resolvedSlug);
+      if (!provisioned) {
+        await provisionDemoWorld();
+        setProvisioned(true);
+        toast({ title: "Demo world ready", description: "Opening owner view…" });
+      }
+      const slug =
+        resolvedSlug ??
+        story?.demoSlug ??
+        (await fetchDemoStatus()).businesses?.find(
+          (b) => (b.vertical ?? "").toLowerCase() === vertical.toLowerCase(),
+        )?.slug;
+      if (!slug) {
+        toast({
+          title: "Demo shop not found",
+          description: "Try /demo → Set up full demo world.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const result = await requestDemoSignInAsBusiness(slug);
       await completeTicketSignIn(result);
     } catch (e: unknown) {
       toast({
@@ -110,6 +140,8 @@ export default function DemoWedgeStoryPage() {
     );
   }
 
+  const hook = story.beats[0]?.headline ?? story.label;
+
   return (
     <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -123,68 +155,78 @@ export default function DemoWedgeStoryPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          All trades
+          Demo hub
         </Link>
       </header>
 
       <main className="relative z-10 mx-auto w-full max-w-lg flex-1 px-6 pb-16 pt-4">
-        <p className="text-xs uppercase tracking-widest text-aurora-cyan/80">{story.tier.replace("-", " ")}</p>
+        <p className="text-xs uppercase tracking-widest text-aurora-cyan/80">{story.vertical.replace("-", " ")}</p>
         <h1 className="mt-2 font-serif text-3xl font-normal tracking-tight md:text-4xl">{story.label}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Four beats — how Liv runs this trade on Livia. Same clarity on web and mobile.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{hook}</p>
 
-        <ol className="mt-10 space-y-6">
-          {story.beats.map((beat, i) => (
-            <li
-              key={beat.headline}
-              className="rounded-2xl border border-border/60 bg-card/40 p-5 backdrop-blur-sm"
-            >
-              <div className="flex items-start gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 font-serif text-sm text-primary">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium leading-snug">{beat.headline}</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{beat.detail}</p>
-                  <span className="mt-3 inline-block rounded-md bg-muted/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {CROP_LABEL[beat.cropHint] ?? beat.cropHint}
+        <ol className="mt-8 space-y-4">
+          {story.beats.map((beat, i) => {
+            const meta = CROP_META[beat.cropHint] ?? CROP_META.inbox;
+            const Icon = meta.icon;
+            return (
+              <li
+                key={`${beat.cropHint}-${beat.headline}`}
+                className={`rounded-2xl border bg-card/40 p-4 backdrop-blur-sm ${meta.ring}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif text-sm text-primary">
+                    {i + 1}
                   </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium leading-snug">{beat.headline}</p>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] uppercase tracking-wide ${meta.chip}`}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {meta.label}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-sm text-muted-foreground">{beat.detail}</p>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ol>
 
         <button
           type="button"
           disabled={busy}
           onClick={() => void enterDemo()}
-          className="mt-10 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Enter demo
+          Enter as owner
           {!busy ? <ArrowRight className="h-4 w-4" /> : null}
         </button>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Opens seeded {story.label.toLowerCase()} tenant — owner view on web; same OS on mobile.
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {provisioned ? "Demo ready" : "Auto-provisions demo world on first click"} · password{" "}
+          <code className="text-[10px]">{devPassword}</code>
         </p>
 
-        <div className="mt-12 flex flex-wrap gap-2 border-t border-border/40 pt-8">
+        <nav className="mt-10 flex flex-wrap gap-2 border-t border-border/40 pt-6" aria-label="Other trades">
           {listWedgeDemoVerticals()
             .filter((v) => v !== story.vertical)
-            .slice(0, 5)
-            .map((v) => (
-              <Link
-                key={v}
-                href={`/demo/wedge/${v}`}
-                className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground"
-              >
-                {v.replace("-", " ")}
-              </Link>
-            ))}
-        </div>
+            .map((v) => {
+              const s = getWedgeDemoStory(v);
+              return (
+                <Link
+                  key={v}
+                  href={`/demo/wedge/${v}`}
+                  className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                >
+                  {s?.label ?? v}
+                </Link>
+              );
+            })}
+        </nav>
       </main>
     </div>
   );

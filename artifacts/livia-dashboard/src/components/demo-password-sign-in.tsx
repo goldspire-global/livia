@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSignIn, useClerk } from "@clerk/clerk-react";
 import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,15 +10,22 @@ import {
   applyDemoSessionContext,
   type DemoSignInResult,
 } from "@/lib/demo-portal";
+import { completeDemoClerkSignIn } from "@/lib/demo-clerk-sign-in";
 
 type Props = {
   defaultEmail?: string;
   devPasswordHint?: string;
+  /** When true, omit outer border — parent provides chrome. */
+  embedded?: boolean;
 };
 
-export function DemoPasswordSignIn({ defaultEmail = "", devPasswordHint }: Props) {
-  const { signIn, isLoaded, setActive } = useSignIn();
-  const { signOut, session } = useClerk();
+export function DemoPasswordSignIn({
+  defaultEmail = "owner-luxe@demo.livia-hq.com",
+  devPasswordHint,
+  embedded = false,
+}: Props) {
+  const { signIn, isLoaded } = useSignIn();
+  const { signOut, session, setActive } = useClerk();
   const [, navigate] = useLocation();
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
@@ -34,25 +42,19 @@ export function DemoPasswordSignIn({ defaultEmail = "", devPasswordHint }: Props
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      if (session?.id) {
-        await signOut({ sessionId: session.id });
-      }
-      const attempt = await signIn.create({
-        strategy: "ticket",
-        ticket: result.token!,
-      });
-      if (attempt.status === "complete" && attempt.createdSessionId) {
-        await setActive({ session: attempt.createdSessionId });
-        applyDemoSessionContext(result);
-        navigate(result.landingPath);
-      } else {
-        setError("Sign-in did not complete. Run demo provision, then try again.");
-      }
+      await completeDemoClerkSignIn(
+        signIn,
+        { signOut, setActive, sessionId: session?.id },
+        result,
+        password,
+      );
+      applyDemoSessionContext(result);
+      navigate(result.landingPath);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
           ? err.message
-          : "Could not sign in. Use LIVIA_DEMO_PASSWORD from .env (default LiviaDemo2026!).";
+          : "Could not sign in. Use LIVIA_DEMO_PASSWORD (default LiviaDemo2026!).";
       setError(msg);
     } finally {
       setBusy(false);
@@ -62,53 +64,57 @@ export function DemoPasswordSignIn({ defaultEmail = "", devPasswordHint }: Props
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-6 space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-left"
+      className={
+        embedded
+          ? "space-y-3 text-left"
+          : "mt-6 space-y-3 rounded-xl border border-border/60 bg-muted/20 p-4 text-left"
+      }
       data-testid="demo-password-sign-in"
     >
-      <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
-        Demo account (direct sign-in)
-      </p>
-      <div className="space-y-2">
-        <Label htmlFor="demo-email" className="text-xs">
-          Email
-        </Label>
-        <Input
-          id="demo-email"
-          type="email"
-          autoComplete="username"
-          placeholder="desk@livia.io"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="demo-password" className="text-xs">
-          Password
-        </Label>
-        <Input
-          id="demo-password"
-          type="password"
-          autoComplete="current-password"
-          placeholder={devPasswordHint ?? "LiviaDemo2026!"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+      {!embedded ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Demo tenants only — password{" "}
+          <code className="text-[10px]">{devPasswordHint ?? "LiviaDemo2026!"}</code>. Or use the{" "}
+          <Link href="/demo" className="text-primary underline underline-offset-2">
+            demo launcher
+          </Link>
+          .
+        </p>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="demo-email" className="text-xs">
+            Demo email
+          </Label>
+          <Input
+            id="demo-email"
+            type="email"
+            autoComplete="username"
+            placeholder="owner-luxe@demo.livia-hq.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="demo-password" className="text-xs">
+            Demo password
+          </Label>
+          <Input
+            id="demo-password"
+            type="password"
+            autoComplete="current-password"
+            placeholder={devPasswordHint ?? "LiviaDemo2026!"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <div className="flex items-end">
+          <Button type="submit" className="w-full" disabled={busy || !email.trim() || !password}>
+            {busy ? "Signing in…" : "Sign in as demo"}
+          </Button>
+        </div>
       </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
-      <Button type="submit" className="w-full" disabled={busy || !email.trim() || !password}>
-        {busy ? "Signing in…" : "Sign in as demo"}
-      </Button>
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Uses a Clerk ticket so you skip “extra verification” steps. Password is{" "}
-        <code className="text-[10px]">LIVIA_DEMO_PASSWORD</code>
-        {devPasswordHint ? (
-          <>
-            {" "}
-            — dev default <code className="text-[10px]">{devPasswordHint}</code>
-          </>
-        ) : null}
-        . Not <code className="text-[10px]">LiveDemo2026!</code>.
-      </p>
     </form>
   );
 }

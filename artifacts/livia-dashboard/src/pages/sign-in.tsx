@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { SignIn } from "@clerk/clerk-react";
 import { useTheme } from "next-themes";
+import { ChevronDown } from "lucide-react";
 import { LiviaWordmark } from "@/components/brand/LiviaMark";
 import { DemoPasswordSignIn } from "@/components/demo-password-sign-in";
 import { fetchDemoCatalog } from "@/lib/demo-portal";
@@ -47,52 +48,35 @@ export default function SignInPage() {
               <span className="block mt-1 italic text-muted-foreground/90">already handled.</span>
             </h1>
             <p className="mt-3 text-sm text-aurum-champagne/80 font-serif italic">Her name is Liv.</p>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Sign in with email and password — your command center for bookings, inbox, and Today.
-            </p>
           </div>
 
-          <SignIn
-            appearance={clerkGatewayAppearance(theme)}
-            routing="path"
-            path="/sign-in"
-            signUpUrl="/sign-up"
-            fallbackRedirectUrl="/dashboard"
-          />
+          <div className="rounded-2xl border border-border/50 bg-card/30 p-1 backdrop-blur-sm">
+            <SignIn
+              appearance={clerkGatewayAppearance(theme)}
+              routing="path"
+              path="/sign-in"
+              signUpUrl="/sign-up"
+              fallbackRedirectUrl="/dashboard"
+            />
+          </div>
 
-          <p className="mt-5 text-center text-xs text-muted-foreground">
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             New here?{" "}
-            <a
-              href="/sign-up"
-              className="font-medium text-primary underline underline-offset-2 hover:text-primary/90"
-            >
+            <a href="/sign-up" className="font-medium text-primary underline underline-offset-2">
               Create an account
-            </a>
-            {" · "}
-            <a href={marketing} className="hover:text-foreground transition-colors">
-              {marketing.replace(/^https?:\/\//, "")}
             </a>
           </p>
 
           {isDemoLoginEnabled ? (
-            <>
-              <DemoPasswordSignIn devPasswordHint={devPassword} />
-              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4 text-center">
-                <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-2">
-                  Full Livia demo
-                </p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Provision once at{" "}
-                  <Link href="/demo" className="text-primary font-medium underline underline-offset-2">
-                    /demo
-                  </Link>
-                  , then open any vertical as owner.
-                </p>
-                <Link href="/guides">
-                  <span className="text-xs text-primary hover:underline">E2E playbook →</span>
-                </Link>
+            <details className="mt-6 group rounded-xl border border-dashed border-border/70 bg-muted/10 open:bg-muted/20 transition-colors">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <span>Staging demo access</span>
+                <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-border/40 px-4 pb-4 pt-3">
+                <DemoPasswordSignIn devPasswordHint={devPassword} embedded />
               </div>
-            </>
+            </details>
           ) : null}
         </div>
       </main>

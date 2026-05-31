@@ -33,6 +33,7 @@ import {
 } from "@/lib/demo-portal";
 import { useToast } from "@/hooks/use-toast";
 import { listWedgeDemoVerticals, getWedgeDemoStory } from "@workspace/policy";
+import { completeDemoClerkSignIn } from "@/lib/demo-clerk-sign-in";
 
 const VERTICAL_LABELS: Record<string, string> = {
   hair: "Hair & barber",
@@ -65,7 +66,6 @@ export default function DemoLauncher() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { signIn, isLoaded: signInLoaded } = useSignIn();
-  const { isSignedIn } = useAuth();
   const { setActive, signOut, session } = useClerk();
   const [catalog, setCatalog] = useState<DemoCatalogPersona[]>([]);
   const [tenants, setTenants] = useState<DemoBusinessTenant[]>([]);
@@ -128,24 +128,14 @@ export default function DemoLauncher() {
       toast({ title: "Clerk not ready", variant: "destructive" });
       return;
     }
-    if (isSignedIn && session?.id) {
-      await signOut({ sessionId: session.id });
-    }
-    const attempt = await signIn.create({
-      strategy: "ticket",
-      ticket: result.token!,
-    });
-    if (attempt.status === "complete" && attempt.createdSessionId) {
-      await setActive({ session: attempt.createdSessionId });
-      applyDemoSessionContext(result);
-      navigate(result.landingPath);
-    } else {
-      toast({
-        title: "Sign-in incomplete",
-        description: "Try /sign-in → Demo account form with the same email + password.",
-        variant: "destructive",
-      });
-    }
+    await completeDemoClerkSignIn(
+      signIn,
+      { signOut, setActive, sessionId: session?.id },
+      result,
+      devPassword,
+    );
+    applyDemoSessionContext(result);
+    navigate(result.landingPath);
   }
 
   async function enterBusiness(slug: string) {
@@ -285,31 +275,60 @@ export default function DemoLauncher() {
         <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-[#10b981]/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 pt-20 pb-24">
-        <header className="mb-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[11px] font-mono tracking-wide text-[#22d3ee] uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#06b6d4] animate-pulse" />
-            Livia · live demo gateway
-          </div>
+      <div className="max-w-5xl mx-auto px-6 pt-16 pb-20">
+        <header className="mb-8 max-w-2xl">
+          <p className="text-[11px] font-mono tracking-wide text-[#22d3ee] uppercase mb-3">
+            Demo gateway · staging
+          </p>
           <h1
-            className="text-4xl md:text-6xl tracking-tight leading-[1.05] mb-6"
+            className="text-3xl md:text-5xl tracking-tight leading-[1.08] mb-4"
             style={{ fontFamily: "var(--app-font-serif)" }}
           >
-            Test every business
-            <span className="block text-white/50 italic">on Livia, one owner at a time.</span>
+            Pick a trade, enter as owner.
           </h1>
-          <p className="text-base md:text-lg text-white/60 max-w-2xl leading-relaxed">
-            <strong className="text-white/80">18 businesses</strong> across hair, beauty, wellness,
-            medspa, pets, body art, fitness, and EU markets — <strong className="text-white/80">open as
-            owner</strong> for one tenant at a time (Liv, inbox, vertical home). Use{" "}
-            <strong className="text-white/80">public booking</strong> for the customer view, or staff
-            cards below for RBAC rehearsals.
+          <p className="text-sm md:text-base text-white/60 leading-relaxed">
+            Wedge stories show how Liv runs each vertical. Provision once, then open any seeded tenant.
+            Password: <code className="text-white/80">{devPassword ?? "LiviaDemo2026!"}</code>
           </p>
         </header>
 
-        <section className="mb-12">
-          <h2 className="text-sm font-mono uppercase tracking-widest text-white/40 mb-4">
-            Pick your world · G1-A wedge
+        <div className="mb-8 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void handleProvision()}
+            disabled={!!busy}
+            className="inline-flex items-center gap-2 rounded-full bg-[#06b6d4] text-black px-4 py-2 text-sm font-semibold hover:bg-[#22d3ee] disabled:opacity-60"
+            data-testid="demo-provision-btn"
+          >
+            {busy === "provision" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {provisioned ? "Reset demo world" : "Set up demo world"}
+          </button>
+          {provisioned ? (
+            <span className="text-[11px] font-mono text-emerald-400/90">
+              {tenants.length} businesses ready
+            </span>
+          ) : (
+            <span className="text-[11px] font-mono text-amber-400/90">Provision first</span>
+          )}
+          <Link href="/sign-in">
+            <span className="text-xs text-white/50 hover:text-white/80 underline underline-offset-2">
+              Sign-in
+            </span>
+          </Link>
+          <Link href="/guides">
+            <span className="text-xs text-white/50 hover:text-white/80 underline underline-offset-2">
+              Playbook
+            </span>
+          </Link>
+        </div>
+
+        <section className="mb-10">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-white/40 mb-3">
+            Wedge · one story per trade
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {listWedgeDemoVerticals().map((v) => {
@@ -331,91 +350,32 @@ export default function DemoLauncher() {
           </div>
         </section>
 
-        <div className="mb-10 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => void handleProvision()}
-            disabled={!!busy}
-            className="inline-flex items-center gap-2 rounded-full bg-[#06b6d4] text-black px-5 py-2.5 text-sm font-semibold hover:bg-[#22d3ee] disabled:opacity-60 transition-colors"
-            data-testid="demo-provision-btn"
-          >
-            {busy === "provision" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {provisioned ? "Reset demo world" : "Set up full demo world"}
-          </button>
-          <Link href="/guides">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 hover:bg-white/5 transition-colors">
-              <BookOpen className="h-4 w-4" />
-              E2E playbook
-            </span>
-          </Link>
-          <Link href="/portal">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 hover:bg-white/5 transition-colors">
-              Portal hub
-            </span>
-          </Link>
-          <Link href="/sign-up">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm text-emerald-200 hover:bg-emerald-500/15 transition-colors">
-              Real signup test
-            </span>
-          </Link>
-          {provisioned ? (
-            <span className="text-[11px] font-mono text-emerald-400/90">
-              ● {tenants.length} businesses ready
-            </span>
-          ) : (
-            <span className="text-[11px] font-mono text-amber-400/90">○ Provision once, then open any business</span>
-          )}
-        </div>
-
-        {passwordHint ? (
-          <p className="mb-6 text-xs font-mono text-white/40 max-w-3xl">{passwordHint}</p>
-        ) : null}
-
-        <section className="mb-12" data-testid="demo-tenant-tour">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-sm font-mono uppercase tracking-wider text-white/50 mb-1">
-                Businesses on Livia
-              </h2>
-              <p className="text-sm text-white/60 max-w-xl">
-                Each row = one real tenant. Owner sees only that shop (not 17 locations).
-              </p>
-            </div>
-            <div className="w-full sm:w-64 flex flex-col gap-1">
-              <label className="text-[11px] font-mono uppercase tracking-wider text-white/40">
-                Country
-                <select
-                  value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-                  aria-label="Filter demo businesses by country"
-                >
-                  {countries.map((c) => (
-                    <option key={c} value={c} className="bg-[#09090b] text-white">
-                      {c === "ALL" ? "All countries" : c}
-                    </option>
-                  ))}
-                </select>
-              </label>
+        <section className="mb-10" data-testid="demo-tenant-tour">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-white/40">
+              All demo tenants
+            </h2>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <select
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white"
+                aria-label="Filter by country"
+              >
+                {countries.map((c) => (
+                  <option key={c} value={c} className="bg-[#09090b]">
+                    {c === "ALL" ? "All countries" : c}
+                  </option>
+                ))}
+              </select>
               <input
                 type="search"
-                placeholder="Filter as you type — hair, medspa, london…"
+                placeholder="Filter…"
                 value={tenantFilter}
                 onChange={(e) => setTenantFilter(e.target.value)}
-                className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30"
-                aria-label="Filter demo businesses"
+                className="flex-1 sm:w-48 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/30"
+                aria-label="Filter businesses"
               />
-              {tenantFilter.trim() ? (
-                <p className="text-[11px] text-white/40 text-right">
-                  {filterPending
-                    ? "Filtering…"
-                    : `${filteredTenants.length} match${filteredTenants.length === 1 ? "" : "es"}`}
-                </p>
-              ) : null}
             </div>
           </div>
           {!provisioned ? (
@@ -437,8 +397,6 @@ export default function DemoLauncher() {
                       .map((t) => {
                         const loading = busy === t.slug;
                         const ownerPersona = t.ownerPersonaId;
-                        const isChainOwner = ownerPersona === "org_admin";
-                        const roleLoading = (id: string) => busy === id;
                         return (
                           <div
                             key={t.slug}
@@ -447,61 +405,48 @@ export default function DemoLauncher() {
                           >
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-white truncate">{t.name}</p>
-                              <p className="text-[10px] font-mono text-white/40 mt-0.5">
-                                {t.slug} · {(t.country ?? "—").toUpperCase()} · {t.ownerEmail}
-                                {isChainOwner ? (
-                                  <span className="text-white/30">
-                                    {" "}
-                                    · Chain owner — pick the shop after sign-in
-                                  </span>
-                                ) : null}
+                              <p className="text-[10px] font-mono text-white/40 mt-0.5 truncate">
+                                {t.slug} · {t.ownerEmail}
                               </p>
-                              <div className="mt-2 flex flex-wrap gap-2">
+                              <details className="mt-2">
+                                <summary className="cursor-pointer text-[10px] text-white/45 hover:text-white/70">
+                                  Staff roles
+                                </summary>
+                                <div className="mt-2 flex flex-wrap gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => void enterPersonaForBusiness("manager", t.slug)}
                                   disabled={!!busy}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-white/20 px-3 py-1.5 text-[11px] text-white/85 hover:bg-white/5 disabled:opacity-60"
+                                  className="rounded-md border border-white/15 px-2 py-1 text-[10px] text-white/80 hover:bg-white/5 disabled:opacity-60"
                                 >
-                                  {roleLoading(`manager:${t.slug}`) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : null}
-                                  Open as manager
+                                  Manager
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => void enterPersonaForBusiness("receptionist", t.slug)}
                                   disabled={!!busy}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-white/20 px-3 py-1.5 text-[11px] text-white/85 hover:bg-white/5 disabled:opacity-60"
+                                  className="rounded-md border border-white/15 px-2 py-1 text-[10px] text-white/80 hover:bg-white/5 disabled:opacity-60"
                                 >
-                                  {roleLoading(`receptionist:${t.slug}`) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : null}
-                                  Open as reception
+                                  Reception
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => void enterPersonaForBusiness("staff-senior", t.slug)}
                                   disabled={!!busy}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-white/20 px-3 py-1.5 text-[11px] text-white/85 hover:bg-white/5 disabled:opacity-60"
+                                  className="rounded-md border border-white/15 px-2 py-1 text-[10px] text-white/80 hover:bg-white/5 disabled:opacity-60"
                                 >
-                                  {roleLoading(`staff-senior:${t.slug}`) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : null}
-                                  Open as staff (senior)
+                                  Staff senior
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => void enterPersonaForBusiness("staff-junior", t.slug)}
                                   disabled={!!busy}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-white/20 px-3 py-1.5 text-[11px] text-white/85 hover:bg-white/5 disabled:opacity-60"
+                                  className="rounded-md border border-white/15 px-2 py-1 text-[10px] text-white/80 hover:bg-white/5 disabled:opacity-60"
                                 >
-                                  {roleLoading(`staff-junior:${t.slug}`) ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : null}
-                                  Open as staff (junior)
+                                  Staff junior
                                 </button>
-                              </div>
+                                </div>
+                              </details>
                             </div>
                             <div className="flex flex-wrap gap-2 shrink-0">
                               <button
