@@ -6,12 +6,19 @@ import { listSupportTickets } from "./support-tickets.service";
 export type InternalSupportBundle = {
   businessId: string;
   vertical: string;
+  slug: string;
   operatorPackSections: string[];
   suggestedReplySnippets: string[];
   recentAudit: Array<{ type: string; createdAt: string; entityType: string | null }>;
   openTickets: Array<{ id: string; category: string; severity: string; description: string }>;
   recentFeedback: Array<{ score: number; comment: string | null; createdAt: string }>;
   impersonationPolicy: string;
+  /** R2-E8 — open tenant from thread without impersonation JWT. */
+  tenantLinks: {
+    internalTenantPath: string;
+    publicBookingUrl: string;
+    tenantDashboardUrl: string | null;
+  };
 };
 
 function packSectionsForVertical(vertical: string): string[] {
@@ -88,6 +95,7 @@ export async function buildInternalSupportBundle(
 
   return {
     businessId,
+    slug: detail.slug,
     vertical: detail.vertical,
     operatorPackSections: packSectionsForVertical(detail.vertical),
     suggestedReplySnippets: snippetsForCategory(topCategory, detail.vertical),
@@ -108,6 +116,11 @@ export async function buildInternalSupportBundle(
       createdAt: f.createdAt.toISOString(),
     })),
     impersonationPolicy:
-      "Do not use tenant JWT from this portal. Owner view-as is audited in tenant dashboard only.",
+      "Do not use tenant JWT from this portal. Open tenant health in Internal → Tenants; owner view-as is audited in tenant dashboard only.",
+    tenantLinks: {
+      internalTenantPath: `/tenants/${businessId}`,
+      publicBookingUrl: detail.deepLinks.publicBooking ?? `/b/${detail.slug}`,
+      tenantDashboardUrl: detail.deepLinks.tenantDashboard,
+    },
   };
 }

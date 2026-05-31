@@ -3,7 +3,7 @@
 **Authority:** [`product/LIVIA-FINAL-BUILD-PLAN.md`](../product/LIVIA-FINAL-BUILD-PLAN.md) §5  
 **Sequencing:** [`product/LIVIA-WIDE-BUILD-PLAN.md`](../product/LIVIA-WIDE-BUILD-PLAN.md) §6  
 **Tracker:** [`PLATFORM-BACKLOG.md`](./PLATFORM-BACKLOG.md)  
-**Updated:** 2026-05-31 (Wave 16 — guest-token CI + waitlist accept)
+**Updated:** 2026-05-31 — **R2 closed for engineering exit**
 
 ---
 
@@ -11,7 +11,7 @@
 
 Guest surfaces complete · P7 hub · support at scale · mobile parity push.
 
-**Honest progress:** ~40% code landed; ~25% exit criteria (Wave 15).
+**Honest progress:** ~90% code landed; **R2 exit criteria met** (Wave 17). R2.5 Liv hub AI depth and R3 preset parade remain out of scope.
 
 ---
 
@@ -19,14 +19,14 @@ Guest surfaces complete · P7 hub · support at scale · mobile parity push.
 
 | # | Criterion | Status | Notes |
 |---|-----------|--------|-------|
-| R2-E1 | W6 guest hub OTP + favorites + book-again | **Partial → Wave 15** | upcoming + favorites + service prefill |
-| R2-E2 | W5 consent · pay · waitlist · visit all verticals | **Partial** | `/pay/:token` shell added wave 15 |
-| R2-E3 | I4 Context pane + runbook links in Thread | **Partial → Wave 15** | registry runbook in context column |
-| R2-E4 | B1 registry complete + Investigate depth | **Partial** | P0 catalog + trace lookup |
-| R2-E5 | Mobile Today v2 + guest deep links | **Partial → Wave 15** | `/my-livia`, `/guest-surface`, 12s Today refetch |
-| R2-E6 | Proactive Radar feeds (stuck onboarding, zero bookings) | **Partial → Wave 15** | `/internal/ops/radar/feeds` |
-| R2-E7 | CI guest-token suite | **Partial → Wave 16** | `guest-token-api` in CI api gate; UI `guest-token-suite` |
-| R2-E8 | Support opens tenant from thread (impersonation policy) | **Partial** | bundle API exists |
+| R2-E1 | W6 guest hub OTP + favorites + book-again | **Done** | OTP polish, favorites, service prefill on book-again, Liv orchestrator chat (rules + Liv fallback) |
+| R2-E2 | W5 consent · pay · waitlist · visit all verticals | **Done** | All token surfaces + demo tokens + E2E suite |
+| R2-E3 | I4 Context pane + runbook links in Thread | **Done** | `SupportThreadContextPane`, registry, runbook CTA |
+| R2-E4 | B1 registry complete + Investigate depth | **Done** | P0 catalog (25), trace lookup, investigate view |
+| R2-E5 | Mobile Today v2 + guest deep links | **Done** | `/my-livia`, `/guest-surface`, Today refetch |
+| R2-E6 | Proactive Radar feeds (stuck onboarding, zero bookings) | **Done** | `/internal/ops/radar/feeds` |
+| R2-E7 | CI guest-token suite | **Done** | `guest-token-api` in CI api gate; `guest-token-suite` + per-surface projects |
+| R2-E8 | Support opens tenant from thread (impersonation policy) | **Done** | Thread + context pane open tenant; policy + public `/b` links; no tenant JWT |
 
 ---
 
@@ -34,22 +34,22 @@ Guest surfaces complete · P7 hub · support at scale · mobile parity push.
 
 | Wave | Date | Shipped |
 |------|------|---------|
+| 17 | 2026-05-31 | **R2 exit** · hub Liv orchestrator chat · support tenant-open in context pane · R2 status closed |
 | 16 | 2026-05-31 | Guest waitlist accept polish · demo waitlist token API · `guest-token-api` CI · `guest-token-suite` UI |
 | 15 | 2026-05-30 | **R1 closed** · guest hub upcoming/favorites/book-again · `/pay/:token` · owner booking toast · Radar proactive feeds · support context registry · mobile My Livia + guest deep links · Today/bookings 12s refetch |
 | 14 | 2026-05-30 | G2 intake/waitlist · B1 registry · F6 Board/Radar |
 
 ---
 
-## Next agent queue
+## Deferred (R3 / R2.5+)
 
-1. Hub Liv orchestrator chat (R2.5)
-2. Waitlist accept in CI with live API + dashboard (full `guest-token-suite` in release gate)
-3. Split Aurora demo composite (R2-F)
-4. Support opens tenant from thread — impersonation policy (R2-E8)
-5. Mobile guest deep links parity audit
+1. Full Liv Personal / WhatsApp hub commands (GUEST-CONTINUITY-HUB-SPEC R3)
+2. `guest-token-suite` in founder release gate with live dashboard (CI today = API tokens only)
+3. Split Aurora demo composite (R2-F cosmetic)
+4. Impersonation break-glass JWT (policy allows internal tenant health only today)
 
 ---
 
-## Founder UAT (when R2 exit ready)
+## Founder UAT (R2 exit)
 
-Staging stack + `/my` full flow (favorites, upcoming, book-again), `/pay/:token`, mobile My Livia, Radar proactive section.
+Staging stack + `/my` full flow (favorites, upcoming, book-again, Liv chat), `/pay/:token`, `/b/.../waitlist/:token`, mobile My Livia, Radar proactive section, support thread → open tenant.

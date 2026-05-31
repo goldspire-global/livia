@@ -36,7 +36,7 @@ export default defineConfig({
     {
       name: "api",
       testMatch:
-        /(api-gate|phase10-gate|integrations-gate|meta-channels|demo-channels-stack|booking-continuity|v3-preflight-api|tenant-experience-api|full-platform-demo)\.spec\.ts/,
+        /(api-gate|phase10-gate|integrations-gate|meta-channels|demo-channels-stack|booking-continuity|v3-preflight-api|tenant-experience-api|full-platform-demo|guest-token-api)\.spec\.ts/,
       use: {
         baseURL: apiBase,
       },

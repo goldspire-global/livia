@@ -533,6 +533,7 @@ export function SupportQueueView({
         livBundle={livBundle}
         timelineEvents={timelineEvents}
         onOpenKnowledgeDoc={onOpenKnowledgeDoc}
+        onOpenTenant={onOpenTenant}
       />
     </div>
   );

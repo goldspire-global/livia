@@ -30,8 +30,8 @@
 | liv-chat | ✅ embed | ✅ | ✅ | partial |
 | visit | ✅ | ✅ | ✅ | ✅ |
 | proof | ✅ `PublicProofPage` | ✅ + decision | ✅ body-art | ✅ `demo-proof-token` |
-| consent | ✅ `PublicIntakePage` | 🔨 partial | 🔨 medspa | 📋 |
-| deposit-pay | ✅ `PublicPayPage` | 🔨 Stripe | 📋 | 📋 |
+| deposit-pay | ✅ `PublicPayPage` | ✅ Checkout + dev simulate | ✅ | ✅ `guest-pay`, `guest-token-*` |
+| consent | ✅ `PublicIntakePage` | ✅ | ✅ medspa | ✅ `demo-intake-token` |
 | waitlist-accept | ✅ `PublicWaitlistPage` | ✅ accept | ✅ fitness | ✅ `demo-waitlist-token`, `guest-token-*` |
 
 ---
@@ -48,12 +48,11 @@
 
 ---
 
-## 4. Gaps (R2)
+## 4. Gaps (post-R2 → R3)
 
-1. Wire consent + deposit-pay dashboard routes to match policy route patterns.
-2. Fitness waitlist accept flow end-to-end.
-3. Extend E2E matrix in [`DEMO-FULL-SHOWCASE.md`](../testing/DEMO-FULL-SHOWCASE.md).
-4. Regenerate this audit when routes change (agent checklist item).
+1. Liv hub orchestrator — MVP shipped (rules + shop Liv fallback); full cross-shop tool calls → R2.5/R3.
+2. Extend E2E matrix in [`DEMO-FULL-SHOWCASE.md`](../testing/DEMO-FULL-SHOWCASE.md) for founder UAT script.
+3. Regenerate this audit when routes change (agent checklist item).
 
 ---
 

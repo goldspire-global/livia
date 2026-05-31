@@ -25,6 +25,7 @@ type Props = {
   livBundle: LivIncidentBundle | null;
   timelineEvents: Array<{ at: string; label: string; body?: string }>;
   onOpenKnowledgeDoc?: (docPath: string) => void;
+  onOpenTenant?: (businessId: string) => void;
 };
 
 function resolvePoint(
@@ -47,6 +48,7 @@ export function SupportThreadContextPane({
   livBundle,
   timelineEvents,
   onOpenKnowledgeDoc,
+  onOpenTenant,
 }: Props) {
   const supportPoint = resolvePoint(surfaceId, supportPoints);
   const platformSurface = surfaceId ? getPlatformSurface(surfaceId) : undefined;
@@ -119,16 +121,58 @@ export function SupportThreadContextPane({
         </p>
       ) : null}
 
-      {tenantPreview ? (
+      {tenantPreview && detail && bundle ? (
+        <div
+          style={{ fontSize: 12, color: "#64748b", marginBottom: 12, lineHeight: 1.5 }}
+          data-testid="support-context-tenant-open"
+        >
+          <strong style={{ color: "#e2e8f0" }}>{tenantPreview.name ?? "Tenant"}</strong>
+          <p style={{ margin: "6px 0 0" }}>
+            AI {tenantPreview.aiEnabled ? "on" : "off"} · {tenantPreview.bookingCount} bookings · last
+            booking {tenantPreview.lastBookingAt ?? "—"}
+          </p>
+          {bundle.suggestedReplySnippets[0] ? (
+            <p style={{ marginTop: 6, color: "#94a3b8" }}>Snippet: {bundle.suggestedReplySnippets[0]}</p>
+          ) : null}
+          <p style={{ marginTop: 8, color: "#94a3b8", fontSize: 11 }}>{bundle.impersonationPolicy}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            {onOpenTenant ? (
+              <button
+                type="button"
+                style={{ ...buttonStyle, fontSize: 11, padding: "4px 10px" }}
+                data-testid="support-open-tenant-context"
+                onClick={() => onOpenTenant(detail.businessId)}
+              >
+                Open tenant
+              </button>
+            ) : null}
+            <a
+              href={bundle.tenantLinks.publicBookingUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{ fontSize: 11, color: "#fbbf24" }}
+            >
+              Public /b
+            </a>
+            {bundle.tenantLinks.tenantDashboardUrl ? (
+              <a
+                href={bundle.tenantLinks.tenantDashboardUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 11, color: "#94a3b8" }}
+              >
+                Tenant app
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : tenantPreview ? (
         <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12, lineHeight: 1.5 }}>
           <strong style={{ color: "#e2e8f0" }}>{tenantPreview.name ?? "Tenant"}</strong>
           <p style={{ margin: "6px 0 0" }}>
             AI {tenantPreview.aiEnabled ? "on" : "off"} · {tenantPreview.bookingCount} bookings · last
             booking {tenantPreview.lastBookingAt ?? "—"}
           </p>
-          {bundle?.suggestedReplySnippets?.[0] ? (
-            <p style={{ marginTop: 6, color: "#94a3b8" }}>Snippet: {bundle.suggestedReplySnippets[0]}</p>
-          ) : null}
         </div>
       ) : (
         <p style={{ color: "#64748b", fontSize: 12, marginBottom: 12 }}>Select a ticket for tenant health.</p>

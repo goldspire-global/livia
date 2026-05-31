@@ -408,6 +408,7 @@ export async function getTenant(businessId: string) {
 
 export type InternalSupportBundle = {
   businessId: string;
+  slug: string;
   vertical: string;
   operatorPackSections: string[];
   suggestedReplySnippets: string[];
@@ -415,6 +416,11 @@ export type InternalSupportBundle = {
   openTickets: Array<{ id: string; category: string; severity: string; description: string }>;
   recentFeedback: Array<{ score: number; comment: string | null; createdAt: string }>;
   impersonationPolicy: string;
+  tenantLinks: {
+    internalTenantPath: string;
+    publicBookingUrl: string;
+    tenantDashboardUrl: string | null;
+  };
 };
 
 export async function getRequestTrace(requestId: string, businessId?: string) {

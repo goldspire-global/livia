@@ -2,15 +2,18 @@ import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import { LiviaWordmark } from "@/components/brand/LiviaMark";
 import { PublicSurfaceFooter } from "@/components/public/public-surface-chrome";
+import { GuestHubLivChat } from "@/components/guest/guest-hub-liv-chat";
 
 export function GuestHubShell({
   children,
   testId,
   phoneE164,
+  hubToken,
 }: {
   children: ReactNode;
   testId?: string;
   phoneE164?: string;
+  hubToken?: string | null;
 }) {
   return (
     <div
@@ -26,7 +29,7 @@ export function GuestHubShell({
           ) : null}
         </header>
         {children}
-        <GuestHubLivStrip />
+        {hubToken ? <GuestHubLivChat hubToken={hubToken} /> : <GuestHubLivStrip />}
         <PublicSurfaceFooter />
       </div>
     </div>

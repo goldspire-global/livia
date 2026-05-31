@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { sendError } from "../lib/http-errors";
+import { publicChatRateLimitOk } from "../lib/public-chat-rate-limit";
+import { logRouteError, safeClientMessage, sendError } from "../lib/http-errors";
 import {
   getGuestHubView,
   requestGuestHubOtp,
@@ -92,6 +93,49 @@ router.post("/public/guest-hub/favorites/:businessId", async (req, res): Promise
       return;
     }
     throw e;
+  }
+});
+
+router.post("/public/guest-hub/chat", async (req, res): Promise<void> => {
+  const token =
+    (typeof req.headers["x-guest-hub-token"] === "string"
+      ? req.headers["x-guest-hub-token"]
+      : typeof req.body?.hubToken === "string"
+        ? req.body.hubToken
+        : "") || "";
+  const message = typeof req.body?.message === "string" ? req.body.message : "";
+  if (!token) {
+    sendError(res, req, 401, "Guest hub token required");
+    return;
+  }
+  if (!message.trim()) {
+    sendError(res, req, 400, "message is required");
+    return;
+  }
+  if (message.length > 2000) {
+    sendError(res, req, 400, "message too long (max 2000 chars)");
+    return;
+  }
+
+  const ip = (req.ip || req.socket.remoteAddress || "unknown") as string;
+  const limit = await publicChatRateLimitOk(ip);
+  if (!limit.ok) {
+    res.setHeader("Retry-After", String(limit.retryAfter ?? 60));
+    sendError(res, req, 429, "Too many messages. Please wait a moment.");
+    return;
+  }
+
+  try {
+    const { handleGuestHubChat } = await import("../services/guest-hub-orchestrator.service");
+    const result = await handleGuestHubChat(token, message);
+    if (!result) {
+      sendError(res, req, 401, "Session expired — verify your phone again");
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    logRouteError(req, err, "Guest hub chat failed");
+    sendError(res, req, 500, safeClientMessage(err, "Chat failed"));
   }
 });
 

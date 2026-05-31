@@ -238,7 +238,7 @@ export default function MyLiviaPage() {
   const moreUpcoming = view.upcomingBookings.slice(1);
 
   return (
-    <GuestHubShell testId="guest-hub-home" phoneE164={view.phoneE164}>
+    <GuestHubShell testId="guest-hub-home" phoneE164={view.phoneE164} hubToken={hubToken}>
       <div className="text-center">
         <h1 className="text-2xl font-serif">Your vault</h1>
         <p className="text-xs text-muted-foreground mt-1">Every Livia shop you&apos;ve booked with</p>
