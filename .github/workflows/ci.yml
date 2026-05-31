@@ -47,6 +47,9 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Vertical registry check (R3)
+        run: pnpm vertical:check
+
       - name: Liv golden eval (pre-merge)
         run: pnpm --filter @workspace/eval run test
 

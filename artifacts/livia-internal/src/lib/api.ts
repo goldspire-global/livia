@@ -149,6 +149,7 @@ export type SupportTicketListFilters = {
   priority?: string;
   assignedTo?: string;
   businessId?: string;
+  surfaceId?: string;
   q?: string;
 };
 
@@ -484,6 +485,7 @@ export async function listSupportTickets(filters: SupportTicketListFilters = {})
   if (filters.priority) params.set("priority", filters.priority);
   if (filters.assignedTo) params.set("assignedTo", filters.assignedTo);
   if (filters.businessId) params.set("businessId", filters.businessId);
+  if (filters.surfaceId) params.set("surfaceId", filters.surfaceId);
   if (filters.q) params.set("q", filters.q);
   params.set("limit", "100");
   const qs = params.toString();

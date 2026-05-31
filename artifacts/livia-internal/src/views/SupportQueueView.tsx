@@ -235,6 +235,20 @@ export function SupportQueueView({
             ))}
           </select>
           <select
+            value={filters.surfaceId ?? ""}
+            onChange={(e) => setFilters((f) => ({ ...f, surfaceId: e.target.value }))}
+            style={{ ...inputStyle, width: "auto", minWidth: 160 }}
+            aria-label="Filter by surface"
+            data-testid="support-filter-surface"
+          >
+            <option value="">All surfaces</option>
+            {[...new Set(supportPoints.map((p) => p.surfaceId))].sort().map((sid) => (
+              <option key={sid} value={sid}>
+                {sid}
+              </option>
+            ))}
+          </select>
+          <select
             value={filters.category ?? ""}
             onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
             style={{ ...inputStyle, width: "auto" }}

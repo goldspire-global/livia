@@ -89,6 +89,7 @@ export async function listInternalSupportTickets(opts: {
   priority?: string;
   assignedTo?: string;
   businessId?: string;
+  surfaceId?: string;
   q?: string;
   limit?: number;
   offset?: number;
@@ -125,8 +126,22 @@ export async function listInternalSupportTickets(opts: {
   if (opts.businessId?.trim()) {
     conditions.push(eq(supportTicketsTable.businessId, opts.businessId.trim()));
   }
-  if (opts.q?.trim()) {
-    conditions.push(ilike(supportTicketsTable.description, `%${opts.q.trim()}%`));
+
+  let freeTextQ = opts.q?.trim() ?? "";
+  if (freeTextQ.toLowerCase().startsWith("surface:")) {
+    const sid = freeTextQ.slice("surface:".length).trim();
+    if (sid) {
+      conditions.push(sql`(${supportTicketsTable.context}->>'surfaceId') = ${sid}`);
+      freeTextQ = "";
+    }
+  }
+  if (opts.surfaceId?.trim()) {
+    conditions.push(
+      sql`(${supportTicketsTable.context}->>'surfaceId') = ${opts.surfaceId.trim()}`,
+    );
+  }
+  if (freeTextQ) {
+    conditions.push(ilike(supportTicketsTable.description, `%${freeTextQ}%`));
   }
 
   const whereClause = conditions.length ? and(...conditions) : undefined;

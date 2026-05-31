@@ -122,6 +122,7 @@ router.get("/internal/ops/support-tickets", async (req, res): Promise<void> => {
     priority: typeof q.priority === "string" ? q.priority : undefined,
     assignedTo: typeof q.assignedTo === "string" ? q.assignedTo : undefined,
     businessId: typeof q.businessId === "string" ? q.businessId : undefined,
+    surfaceId: typeof q.surfaceId === "string" ? q.surfaceId : undefined,
     q: typeof q.q === "string" ? q.q : undefined,
     limit: q.limit ? parseInt(String(q.limit), 10) : 100,
     offset: q.offset ? parseInt(String(q.offset), 10) : 0,

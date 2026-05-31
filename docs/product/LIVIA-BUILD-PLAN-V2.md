@@ -128,6 +128,7 @@ Founder sign-off row in documentation program §6.
 
 | Date | Change |
 |------|--------|
+| 2026-05-31 | R3 Wave 1 — `vertical:check`, `defineVerticalPack`, support `surfaceId` filter |
 | 2026-05-31 | **R2 engineering exit** — hub Liv orchestrator, support tenant-open (E8), all R2-E* criteria met |
 | 2026-05-31 | R2 wave 16 — CI guest-token API suite, waitlist accept page + demo token, registry `w5.waitlist-accept` |
 | 2026-05-31 | R2 wave — guest deposit Stripe Checkout, pay page sticky CTA, guest-hub/pay e2e |

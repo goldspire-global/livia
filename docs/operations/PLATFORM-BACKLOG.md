@@ -22,9 +22,10 @@
 - [ ] **R2-F** Split Aurora composite demo (chain HQ vs host vs franchisor) or label clearly in gateway
 - [x] **R2-C** Owner notification on new booking (toast web + mobile 12s refetch)
 - [ ] **`vertical-check.mjs`** — registry row requires demo slug + E2E file (R2 precursor)
-- [ ] **`defineVerticalPack()`** factory in policy (R3)
+- [x] **`defineVerticalPack()`** factory in policy (R3 Wave 1)
 - [ ] **`platform-lifecycle.service.ts`** — post-create fan-out handler (R3)
-- [ ] **`pnpm vertical:check`** in CI (R3)
+- [x] **`pnpm vertical:check`** script (R3 Wave 1) — wire CI next
+- [x] **B3** Internal queue filter by `surfaceId` (R3 Wave 1)
 
 ---
 
