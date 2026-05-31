@@ -116,5 +116,15 @@ export async function seedCiDemoWorld(): Promise<Awaited<ReturnType<typeof getDe
   await seedMarketShowcaseShops(CI_DEMO_FOUNDER_ID);
   await seedRealWorldScenarios(CI_DEMO_FOUNDER_ID);
 
+  const { ensureDemoGuestWaitlistOffer } = await import("./demo-showcase-depth");
+  for (const slug of ["peak-fitness-dublin"]) {
+    const [biz] = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .where(eq(businessesTable.slug, slug))
+      .limit(1);
+    if (biz) await ensureDemoGuestWaitlistOffer(biz.id);
+  }
+
   return getDemoPortalStatus();
 }
