@@ -13,6 +13,7 @@ const northstarBaselines = path.resolve(
   "livia-evolution",
   "northstar",
 );
+const screenCardBaselines = path.resolve(__dirname, "..", "docs", "design", "assets", "screen-cards");
 const rootEnv = path.resolve(__dirname, "..", ".env");
 if (existsSync(rootEnv)) {
   for (const line of readFileSync(rootEnv, "utf8").split("\n")) {
@@ -53,7 +54,7 @@ export default defineConfig({
     {
       name: "dashboard",
       testMatch:
-        /(dashboard-gate|eu-owner-self-onboard|prod-onboarding-notifications|demo-owner-flow|visual-screen-p0)\.spec\.ts/,
+        /(dashboard-gate|eu-owner-self-onboard|prod-onboarding-notifications|demo-owner-flow|visual-screen-p0|preset-public-parity)\.spec\.ts/,
       testIgnore: /v3-preflight\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
@@ -71,6 +72,32 @@ export default defineConfig({
           pathTemplate: "{snapshotDir}/{arg}{ext}",
         },
       },
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "screen-card-p0",
+      testMatch: /screen-card-p0-pixel\.spec\.ts/,
+      workers: 1,
+      timeout: 120_000,
+      snapshotDir: screenCardBaselines,
+      expect: {
+        toHaveScreenshot: {
+          pathTemplate: "{snapshotDir}/{arg}{ext}",
+        },
+      },
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "founder-uat-p0",
+      testMatch: /founder-uat-p0\.spec\.ts/,
+      workers: 1,
+      timeout: 120_000,
       use: {
         ...devices["Desktop Chrome"],
         baseURL: dashboardBase,

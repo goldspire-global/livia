@@ -23,6 +23,8 @@
     "test:demo-owner": "playwright test tests/demo-owner-flow.spec.ts --project=dashboard",
     "test:p0-visual": "playwright test tests/visual-screen-p0.spec.ts --project=dashboard --workers=1",
     "test:northstar-p0": "playwright test tests/northstar-p0-pixel.spec.ts --project=northstar-p0 --workers=1",
+    "test:screen-card-p0": "playwright test tests/screen-card-p0-pixel.spec.ts --project=screen-card-p0 --workers=1",
+    "test:founder-uat": "playwright test tests/founder-uat-p0.spec.ts --project=founder-uat-p0 --workers=1",
     "install-browsers": "playwright install chromium --with-deps"
   },
   "devDependencies": {

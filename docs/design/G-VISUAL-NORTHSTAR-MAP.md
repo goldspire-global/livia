@@ -27,6 +27,14 @@
 
 ---
 
+## Screen-card baselines (P0 E2E pixel diff)
+
+| meta.id | Source PNG | Status |
+|---------|------------|--------|
+| w4.ops.settings.web | `screen-cards/w4.ops.settings.web.png` | ✅ |
+| w4.ops.bookings.list.web | `screen-cards/w4.ops.bookings.list.web.png` | ✅ |
+| w4.ops.medspa.hub.web | `screen-cards/w4.ops.medspa.hub.web.png` | ✅ |
+
 ## Figma session required (no northstar yet)
 
 | meta.id | Notes |
@@ -34,10 +42,7 @@
 | w5.public.intake.mobile | Medspa consent — derive from book card + medspa smoke |
 | w5.public.pay.mobile | R2 prep — stub frame OK |
 | w4.owner.chain.web | Multi-location owner view |
-| w4.ops.settings.web | Tenant settings shell |
-| w4.ops.bookings.list.web | Bookings table |
 | w4.ops.bookings.new.web | Create booking wizard |
-| w4.ops.medspa.hub.web | Clinical hub |
 | w4m.founder.shops.mobile | Founder mobile shops list |
 | w2.gateway.onboarding.web | Onboarding wizard |
 | w2.gateway.legal-accept.web | Legal gate |

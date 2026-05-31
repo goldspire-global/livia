@@ -217,7 +217,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <PageFrame width="md">
+    <PageFrame width="md" data-testid="settings-page">
       <PersonaRitualHeader
         variant="page"
         title="Settings"
@@ -594,7 +594,15 @@ export default function SettingsPage() {
                 </form>
               </CardContent>
             </Card>
-            {livEditable ? <LivMandateControls /> : null}
+            {livEditable ? (
+              <SettingsDisclosure
+                title="Liv mandate & autonomy"
+                description="How much Liv can act without asking."
+                defaultOpen={false}
+              >
+                <LivMandateControls />
+              </SettingsDisclosure>
+            ) : null}
             {livEditable ? (
               <SettingsDisclosure
                 title="Prompt overrides"
@@ -615,11 +623,11 @@ export default function SettingsPage() {
           )}
 
           {visibleTabs.includes("comms") && showComms && (
-            <TabsContent value="comms" className="space-y-4 mt-0">
+            <TabsContent value="comms" className="space-y-3 mt-0" data-testid="settings-comms-tab">
               {bid ? (
                 <>
                   <Card>
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2">
                       <CardTitle className="text-base">Notifications</CardTitle>
                       <CardDescription>Push and email alerts for you and your team.</CardDescription>
                     </CardHeader>
@@ -627,20 +635,13 @@ export default function SettingsPage() {
                       <NotificationPreferencesControls />
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <MessageSquare className="h-4 w-4" />
-                        SMS, email & social
-                      </CardTitle>
-                      <CardDescription>
-                        Your shop number, WhatsApp, and Instagram — Liv replies from one inbox.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <CommunicationsControls businessId={bid} />
-                    </CardContent>
-                  </Card>
+                  <SettingsDisclosure
+                    title="SMS, email & social"
+                    description="Shop number, WhatsApp, and Instagram — Liv replies from one inbox."
+                    defaultOpen={false}
+                  >
+                    <CommunicationsControls businessId={bid} />
+                  </SettingsDisclosure>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">Select a business first.</p>

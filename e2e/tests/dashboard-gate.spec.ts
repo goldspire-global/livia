@@ -30,6 +30,7 @@ const AUTH_SHELL_ROUTES: { path: string; pattern: RegExp }[] = [
   { path: "/classes", pattern: /class|roster|capacity|livia/i },
   { path: "/franchise", pattern: /franchise|network|livia/i },
   { path: "/design-proofs", pattern: /design|proof|tattoo|livia/i },
+  { path: "/medspa", pattern: /medspa|consent|intake|waitlist|clinical|livia/i },
   { path: "/chain", pattern: /shop|glance|chain|livia/i },
   { path: "/toolkit", pattern: /liv command|toolkit|briefing|livia/i },
   { path: "/launch-status", pattern: /launch|status|livia/i },

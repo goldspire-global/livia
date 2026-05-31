@@ -53,6 +53,17 @@ test.describe("P0 visual / density", () => {
     await expect(page.getByTestId("liv-moments-strip")).toHaveCount(0);
   });
 
+  test("settings shop tab", async ({ page, request }) => {
+    if (!(await demoCanSignIn(request, OWNER_SLUG))) {
+      test.skip(true, "Clerk sign-in unavailable");
+    }
+    await signInBusiness(page, OWNER_SLUG);
+    await page.goto("/settings?tab=shop", { waitUntil: "domcontentloaded" });
+    await dismissPlatformTour(page);
+    await expect(page.getByTestId("settings-page")).toBeVisible();
+    await expect(page.getByTestId("settings-booking-link-strip")).toBeVisible();
+  });
+
   test("bookings list shell", async ({ page, request }) => {
     if (!(await demoCanSignIn(request, OWNER_SLUG))) {
       test.skip(true, "Clerk sign-in unavailable");
