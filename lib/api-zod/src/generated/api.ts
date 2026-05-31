@@ -2443,6 +2443,21 @@ export const CreatePublicBookingBody = zod.object({
 });
 
 /**
+ * @summary Request OTP for guest continuity hub
+ */
+export const RequestGuestHubOtpBody = zod.object({
+  phone: zod.string().optional(),
+  country: zod.string().optional(),
+});
+
+/**
+ * @summary Guest hub home (vault, upcoming, favorites)
+ */
+export const GetGuestHubMeHeader = zod.object({
+  "x-guest-hub-token": zod.string(),
+});
+
+/**
  * @summary Capture a closed-beta signup from livia.io
  */
 export const CreateMarketingLeadBody = zod.object({

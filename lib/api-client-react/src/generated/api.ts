@@ -100,6 +100,7 @@ import type {
   PublicChatBody,
   PublicChatResponse,
   RegisterDeviceTokenBody,
+  RequestGuestHubOtpBody,
   SearchAuditLogParams,
   SearchInternalTenantsParams,
   SeedDevWorkspace200,
@@ -5825,6 +5826,165 @@ export const useCreatePublicBooking = <
 > => {
   return useMutation(getCreatePublicBookingMutationOptions(options));
 };
+
+/**
+ * @summary Request OTP for guest continuity hub
+ */
+export const getRequestGuestHubOtpUrl = () => {
+  return `/api/public/guest-hub/otp/request`;
+};
+
+export const requestGuestHubOtp = async (
+  requestGuestHubOtpBody: RequestGuestHubOtpBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRequestGuestHubOtpUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(requestGuestHubOtpBody),
+  });
+};
+
+export const getRequestGuestHubOtpMutationOptions = <
+  TError = ErrorType<BadRequestResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestGuestHubOtp>>,
+    TError,
+    { data: BodyType<RequestGuestHubOtpBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestGuestHubOtp>>,
+  TError,
+  { data: BodyType<RequestGuestHubOtpBody> },
+  TContext
+> => {
+  const mutationKey = ["requestGuestHubOtp"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestGuestHubOtp>>,
+    { data: BodyType<RequestGuestHubOtpBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestGuestHubOtp(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestGuestHubOtpMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestGuestHubOtp>>
+>;
+export type RequestGuestHubOtpMutationBody = BodyType<RequestGuestHubOtpBody>;
+export type RequestGuestHubOtpMutationError = ErrorType<BadRequestResponse>;
+
+/**
+ * @summary Request OTP for guest continuity hub
+ */
+export const useRequestGuestHubOtp = <
+  TError = ErrorType<BadRequestResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestGuestHubOtp>>,
+    TError,
+    { data: BodyType<RequestGuestHubOtpBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestGuestHubOtp>>,
+  TError,
+  { data: BodyType<RequestGuestHubOtpBody> },
+  TContext
+> => {
+  return useMutation(getRequestGuestHubOtpMutationOptions(options));
+};
+
+/**
+ * @summary Guest hub home (vault, upcoming, favorites)
+ */
+export const getGetGuestHubMeUrl = () => {
+  return `/api/public/guest-hub/me`;
+};
+
+export const getGuestHubMe = async (options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getGetGuestHubMeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetGuestHubMeQueryKey = () => {
+  return [`/api/public/guest-hub/me`] as const;
+};
+
+export const getGetGuestHubMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGuestHubMe>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getGuestHubMe>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetGuestHubMeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuestHubMe>>> = ({
+    signal,
+  }) => getGuestHubMe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGuestHubMe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetGuestHubMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGuestHubMe>>
+>;
+export type GetGuestHubMeQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Guest hub home (vault, upcoming, favorites)
+ */
+
+export function useGetGuestHubMe<
+  TData = Awaited<ReturnType<typeof getGuestHubMe>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getGuestHubMe>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetGuestHubMeQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Capture a closed-beta signup from livia.io

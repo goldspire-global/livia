@@ -17,9 +17,14 @@ export async function ensureDemoProvisioned(request: APIRequestContext) {
   if (!body?.provisioned) {
     const prov = await request.post(`${apiBase}/api/demo/provision`, { timeout: 180_000 });
     if (!prov.ok()) {
+      const ciSeed = await request.post(`${apiBase}/api/demo/seed-ci-db`, { timeout: 300_000 });
       const retry = await request.get(`${apiBase}/api/demo/status`);
-      if (!retry.ok() || !(await retry.json() as { provisioned?: boolean }).provisioned) {
-        throw new Error(`Demo provision failed (${prov.status()}): ${(await prov.text()).slice(0, 300)}`);
+      const retryBody = retry.ok() ? ((await retry.json()) as { provisioned?: boolean }) : null;
+      if (!retryBody?.provisioned) {
+        const detail = ciSeed.ok()
+          ? "seed-ci-db ran but status still not provisioned"
+          : `provision ${prov.status()}, seed-ci-db ${ciSeed.status()}: ${(await prov.text()).slice(0, 120)}`;
+        throw new Error(`Demo provision failed — ${detail}`);
       }
     }
     return;

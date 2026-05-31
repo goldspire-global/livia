@@ -1519,6 +1519,43 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
+  # ─── Guest hub (W6) ───────────────────────────────────────────────────────
+  /public/guest-hub/otp/request:
+    post:
+      operationId: requestGuestHubOtp
+      tags: [public]
+      summary: Request OTP for guest continuity hub
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string }
+                country: { type: string }
+      responses:
+        "201":
+          description: OTP session started
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /public/guest-hub/me:
+    get:
+      operationId: getGuestHubMe
+      tags: [public]
+      summary: Guest hub home (vault, upcoming, favorites)
+      parameters:
+        - name: x-guest-hub-token
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Hub view
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   # ─── Marketing (livia.io) ─────────────────────────────────────────────────
   /public/marketing/leads:
     post:

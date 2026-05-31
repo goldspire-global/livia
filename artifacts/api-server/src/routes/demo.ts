@@ -39,6 +39,22 @@ router.get("/demo/status", async (_req, res) => {
   res.json(await getDemoPortalStatus());
 });
 
+/** CI / local: DB-only vertical showcase (no Clerk). */
+router.post("/demo/seed-ci-db", async (req, res): Promise<void> => {
+  if (process.env.CI !== "true" && process.env.NODE_ENV === "production") {
+    sendError(res, req, 404, "Not found");
+    return;
+  }
+  try {
+    const { seedCiDemoWorld } = await import("../services/demo-ci-seed.service");
+    const status = await seedCiDemoWorld();
+    res.json({ ok: true, provisioned: status.provisioned, businessCount: status.businesses.length });
+  } catch (e: unknown) {
+    const err = e as Error;
+    sendError(res, req, 500, err.message ?? "CI demo seed failed");
+  }
+});
+
 /** Idempotent: Clerk users + Aurora demo world (4 businesses, 6 staff logins). */
 router.post("/demo/provision", async (req, res): Promise<void> => {
   const requestId = (req as Request & { id?: string }).id;

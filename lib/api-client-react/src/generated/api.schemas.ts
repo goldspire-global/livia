@@ -1452,6 +1452,11 @@ export type SendConversationMessageBody = {
   content: string;
 };
 
+export type RequestGuestHubOtpBody = {
+  phone?: string;
+  country?: string;
+};
+
 export type CreateBillingCheckoutSessionBodyPlanId =
   (typeof CreateBillingCheckoutSessionBodyPlanId)[keyof typeof CreateBillingCheckoutSessionBodyPlanId];
 

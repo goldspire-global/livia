@@ -95,6 +95,7 @@ jobs:
       DATABASE_URL: postgresql://livia:livia@localhost:5432/livia
       SUPABASE_DATABASE_URL: postgresql://livia:livia@localhost:5432/livia
       CI: "true"
+      LIVIA_DEMO_ENABLED: "true"
       E2E_API_BASE: http://127.0.0.1:3001
       E2E_DEMO_SLUG: luxe-salon-spa
       # Minimal env so api-server boots in CI without real vendors
@@ -124,7 +125,7 @@ jobs:
       - name: Schema + SQL migrations
         run: bash scripts/deploy-migrate.sh
 
-      - name: Seed demo business
+      - name: Seed demo business (minimal)
         run: node scripts/seed-demo.mjs
 
       - name: Build api-server
@@ -139,6 +140,9 @@ jobs:
             sleep 2
           done
           curl -sf http://127.0.0.1:3001/api/healthz
+
+      - name: Seed CI demo showcase (DB-only, no Clerk)
+        run: curl -sf -X POST http://127.0.0.1:3001/api/demo/seed-ci-db
 
       - name: Founder release gate (truth + api smoke + wargame)
         run: pnpm founder:release-gate -- --level=ci --out=artifacts/founder-gate.json
