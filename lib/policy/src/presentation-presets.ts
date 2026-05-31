@@ -595,7 +595,7 @@ export function presetPreservesVerticalGates(
   return true;
 }
 
-/** Staging-only gate — presentation picker + token bundles ship behind this until prod promotion. */
+/** Staging / dev gate — presentation picker + token bundles. */
 export function presentationPresetsEnabled(env?: Record<string, string | undefined>): boolean {
   const e = env ?? (typeof process !== "undefined" ? process.env : {});
   if (e.LIVIA_PRESENTATION_PRESETS === "true") return true;
@@ -605,3 +605,4 @@ export function presentationPresetsEnabled(env?: Record<string, string | undefin
   if (e.NODE_ENV === "development" || e.NODE_ENV === "test") return true;
   return false;
 }
+

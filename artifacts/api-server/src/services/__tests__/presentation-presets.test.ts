@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import {
+  getPresentationPromotionMatrix,
   isValidPresentationPreset,
   listPresentationPresets,
   PLATFORM_DEFAULT_PRESET_ID,
   presetPreservesVerticalGates,
+  presentationPresetsActive,
   presentationPresetsEnabled,
+  presentationPresetsProductionEnabled,
   resolvePresentationPreset,
 } from "@workspace/policy";
 
@@ -56,5 +59,15 @@ assert.equal(presentationPresetsEnabled({ LIVIA_DEPLOY_ENV: "staging", NODE_ENV:
 assert.equal(presentationPresetsEnabled({ LIVIA_PRESENTATION_PRESETS: "true" }), true);
 assert.equal(presentationPresetsEnabled({ NODE_ENV: "development" }), true);
 assert.equal(presentationPresetsEnabled({ NODE_ENV: "production" }), false);
+
+assert.equal(presentationPresetsProductionEnabled({ LIVIA_PRESENTATION_PRESETS: "true" }), true);
+assert.equal(presentationPresetsProductionEnabled({ NODE_ENV: "production" }), false);
+assert.equal(presentationPresetsActive({ NODE_ENV: "production" }), false);
+assert.equal(presentationPresetsActive({ LIVIA_PRESENTATION_PRESETS: "true" }), true);
+assert.equal(presentationPresetsActive({ LIVIA_ENV: "staging" }), true);
+
+const matrix = getPresentationPromotionMatrix();
+assert.equal(matrix.length, verticals.length * 4, "9×4 promotion matrix");
+assert.ok(matrix.every((r) => r.productionReady), "all presets production-ready when flag on");
 
 console.log("presentation-presets.test.ts OK");

@@ -2,7 +2,7 @@
 
 **Authority:** [`product/LIVIA-FINAL-BUILD-PLAN.md`](../product/LIVIA-FINAL-BUILD-PLAN.md) §6  
 **Tracker:** [`PLATFORM-BACKLOG.md`](./PLATFORM-BACKLOG.md)  
-**Updated:** 2026-05-31 — **R3 Wave 1 active** (post-R2 exit)
+**Updated:** 2026-05-31 — **R3 engineering exit closed**
 
 ---
 
@@ -10,7 +10,7 @@
 
 Platform coherence · preset parade · Gate 2 field proof · ops scale.
 
-**Honest progress:** ~15% (Wave 1 — registry gates + support surface filter). Preset prod promotion and mobile parity are next waves.
+**Honest progress:** **R3 engineering exit complete** (~100% in-repo). Founder/field items (prod preset flag, 10 Dublin shops) remain outside repo.
 
 ---
 
@@ -18,14 +18,14 @@ Platform coherence · preset parade · Gate 2 field proof · ops scale.
 
 | # | Criterion | Status | Notes |
 |---|-----------|--------|-------|
-| R3-E1 | 4×9 preset staging→prod promotion matrix | **Partial** | Catalog + settings UI + audit; prod flag still staging-only |
-| R3-E2 | Mobile ~95% ADR 0011 parity | Not started | |
-| R3-E3 | Exec + support unified amber · Track H employed hats | Partial | Support context pane shipped R2 |
-| R3-E4 | Workforce access prod-complete | Partial (R1 code) | |
-| R3-E5 | 10 Dublin shops Gate 2 evidence | Business / field | |
-| R3-E6 | `pnpm vertical:check` + `defineVerticalPack()` factory | **Partial → Wave 1** | Factory + CI script; not in GitHub CI yet |
-| R3-E7 | Full headless lifecycle incl. support ticket | Partial | `headless:lifecycle:r1`; extend for support |
-| R3-E8 | `v3/` evolution tier matches shipped UI | Not started | |
+| R3-E1 | 4×9 preset staging→prod promotion matrix | **Done** | `presentation-promotion.ts` · [`PRESENTATION-PRESET-PRODUCTION.md`](./PRESENTATION-PRESET-PRODUCTION.md) |
+| R3-E2 | Mobile ~95% ADR 0011 parity | **Done (eng)** | Logo URL · `MobilePresentationCard` · Today tenant accent · `pnpm mobile:parity-audit` |
+| R3-E3 | Exec + support unified amber · Track H employed hats | **Done (eng)** | `platform-ops-tokens.ts` · exec hat script (`pnpm exec:hat-work`) |
+| R3-E4 | Workforce access prod-complete | **Done (eng)** | Policy + tests; Railway `LIVIA_STAFF_EMAIL_DOMAINS` in template |
+| R3-E5 | 10 Dublin shops Gate 2 evidence | **Field** | `pnpm smoke:gate2` · founder backlog |
+| R3-E6 | `pnpm vertical:check` + `defineVerticalPack()` factory | **Done** | Packs registered via factory in `verticals.ts` · CI |
+| R3-E7 | Full headless lifecycle incl. support ticket | **Done** | `pnpm headless:lifecycle:r3` (manual with API up) |
+| R3-E8 | `v3/` evolution tier matches shipped UI | **Done** | `pnpm evolution:v3-check` · gallery assets |
 
 ---
 
@@ -33,25 +33,30 @@ Platform coherence · preset parade · Gate 2 field proof · ops scale.
 
 | Wave | Date | Shipped |
 |------|------|---------|
-| 1 | 2026-05-31 | `defineVerticalPack()` · `pnpm vertical:check` · support queue `surfaceId` filter (B3) |
+| 3 | 2026-05-31 | `defineVerticalPack` on all packs · `platform-ops-tokens` · `r3:exit-verify` · CI R3 gate · mobile Today accent |
+| 2 | 2026-05-31 | Preset prod promotion · onboarding preset pick · `headless:lifecycle:r3` · mobile logo + presentation card |
+| 1 | 2026-05-31 | `defineVerticalPack()` · `pnpm vertical:check` · support queue `surfaceId` filter |
 | — | 2026-05-31 | R2 engineering exit (prerequisite) |
 
 ---
 
-## Next agent queue
+## Verify
 
-1. Wire `pnpm vertical:check` into `.github/workflows/ci.yml`
-2. Preset prod promotion matrix + `LIVIA_PRESENTATION_PRESETS` prod allowlist doc
-3. Onboarding optional preset picker step (Track D3.7)
-4. Headless lifecycle: support ticket creation step (R3-E7)
-5. Mobile parity audit vs [`WEB-MOBILE-PARITY.md`](../product/WEB-MOBILE-PARITY.md)
+```bash
+pnpm r3:exit-verify          # CI: vertical + mobile parity + v3 tier + gate2 doc
+pnpm headless:lifecycle:r3   # manual: API + demo provisioned
+```
 
 ---
 
-## Dependencies
+## Post-R3 (R∞ / field)
 
-- **R2 complete** ✅
-- **R1 prod sign-off** — founder visual UAT on staging → prod promote
+See [`PROGRAM-ENGINEERING-EXIT.md`](./PROGRAM-ENGINEERING-EXIT.md).
+
+1. Founder staging UAT → `LIVIA_PRESENTATION_PRESETS=true` on production  
+2. Gate 2: 10 Dublin shops evidence  
+3. Mobile full preset morph (phone/tablet) — northstar density  
+4. WhatsApp Liv Personal pilot · custom domain `/b`
 
 ---
 

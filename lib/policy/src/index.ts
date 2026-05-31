@@ -24,6 +24,7 @@ export * from "./vertical-playbooks";
 export * from "./onboarding-program";
 export * from "./tenant-experience";
 export * from "./presentation-presets";
+export * from "./presentation-promotion";
 export * from "./liv-mandate";
 export * from "./liv-voice-character";
 export * from "./liv-tool-matrix";

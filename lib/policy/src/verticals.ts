@@ -1,4 +1,6 @@
 import type { BusinessVertical, VerticalPack } from "./types";
+import { businessVerticalSchema } from "./types";
+import { defineVerticalPack } from "./vertical-pack-factory";
 
 const OWNER_STAFF = (name: string, color: string) => ({
   firstName: name,
@@ -6,7 +8,7 @@ const OWNER_STAFF = (name: string, color: string) => ({
   color,
 });
 
-export const VERTICAL_PACKS: Record<BusinessVertical, VerticalPack> = {
+const VERTICAL_PACKS_RAW: Record<BusinessVertical, VerticalPack> = {
   hair: {
     vertical: "hair",
     label: "Hair & barbering",
@@ -114,6 +116,14 @@ export const VERTICAL_PACKS: Record<BusinessVertical, VerticalPack> = {
     ],
   },
 };
+
+/** All packs validated via `defineVerticalPack()` (R3 hub factory). */
+export const VERTICAL_PACKS: Record<BusinessVertical, VerticalPack> = Object.fromEntries(
+  businessVerticalSchema.options.map((vertical) => [
+    vertical,
+    defineVerticalPack(VERTICAL_PACKS_RAW[vertical]),
+  ]),
+) as Record<BusinessVertical, VerticalPack>;
 
 export function resolveVerticalFromCategory(category?: string | null): BusinessVertical {
   const raw = (category ?? "").toLowerCase();

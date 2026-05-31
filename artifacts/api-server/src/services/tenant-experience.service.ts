@@ -1,7 +1,7 @@
 import {
   resolveTenantExperience,
   resolvePresentationPreset,
-  presentationPresetsEnabled,
+  presentationPresetsActive,
   PLATFORM_DEFAULT_PRESET_ID,
   type BusinessVertical,
   type OnboardingState,
@@ -31,7 +31,7 @@ export async function getTenantExperienceForBusiness(businessId: string) {
       label: preset.label,
       tokens: preset.tokens,
       brandAccentHex: biz.brandAccentHex ?? null,
-      presetsEnabled: presentationPresetsEnabled(),
+      presetsEnabled: presentationPresetsActive(),
     },
     publicAppearance: {
       slug: biz.slug,

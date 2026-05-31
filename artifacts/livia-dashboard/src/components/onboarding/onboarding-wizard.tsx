@@ -409,7 +409,17 @@ export function OnboardingWizard({
       ) : null}
 
       {currentAct === "a8_public_link" && publicSlug ? (
-        <OnboardingPublicLinkSplit slug={publicSlug} businessName={businessName} />
+        <OnboardingPublicLinkSplit
+          slug={publicSlug}
+          businessName={businessName}
+          businessId={businessId}
+          onPresentationReviewed={() =>
+            updateChecklist({
+              ...(state?.checklist ?? {}),
+              presentationPresetReviewed: true,
+            })
+          }
+        />
       ) : null}
 
       {businessId && INLINE_FORM_ACTS.includes(currentAct) ? (

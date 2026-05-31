@@ -6,13 +6,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Copy, ExternalLink } from "lucide-react";
 import { MOTION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { OnboardingPresentationPick } from "./onboarding-presentation-pick";
 
 type Props = {
   slug: string;
   businessName?: string;
+  businessId?: string | null;
+  onPresentationReviewed?: () => void;
 };
 
-export function OnboardingPublicLinkSplit({ slug, businessName }: Props) {
+export function OnboardingPublicLinkSplit({
+  slug,
+  businessName,
+  businessId,
+  onPresentationReviewed,
+}: Props) {
   const { toast } = useToast();
   const [frameKey, setFrameKey] = useState(0);
   const path = `/b/${slug}`;
@@ -32,6 +40,9 @@ export function OnboardingPublicLinkSplit({ slug, businessName }: Props) {
 
   return (
     <div className="space-y-4" data-testid="onboarding-public-link-split">
+      {businessId ? (
+        <OnboardingPresentationPick businessId={businessId} onReviewed={onPresentationReviewed} />
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
         <div className="space-y-3 rounded-xl border border-border/50 bg-background/50 p-4">
           <Label className="text-xs text-muted-foreground">Public link</Label>

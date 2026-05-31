@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { OperationalScreen } from "@/components/OperationalScreen";
@@ -42,6 +43,8 @@ import { getPublicBookingLabel } from "@/lib/public-booking-url";
 import { dpaUrl, privacyPolicyUrl, termsOfServiceUrl } from "@/lib/marketing-legal-urls";
 import { LivCapabilitiesCard } from "@/components/LivCapabilitiesCard";
 import { BillingSummaryCard } from "@/components/BillingSummaryCard";
+import { MobilePresentationCard } from "@/components/MobilePresentationCard";
+import { dashboardSettingsUrl } from "@/lib/dashboard-url";
 
 function aiEnabledFromBusiness(v: string | undefined): boolean {
   return v !== "false" && v !== "0";
@@ -102,13 +105,32 @@ export default function SettingsScreen() {
 
   const { mutateAsync: patchBusiness, isPending } = useUpdateBusiness();
   const [aiOn, setAiOn] = useState<boolean | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const canEditShopFields = canEditShop(persona);
 
   const resolvedAi = useMemo(() => {
     if (aiOn !== null) return aiOn;
     return business ? aiEnabledFromBusiness(business.aiEnabled) : true;
   }, [aiOn, business]);
 
+  const resolvedLogo = logoUrl ?? business?.logoUrl ?? "";
   const { timeZone: tzLabel } = useBusinessTimezone();
+
+  const saveLogoUrl = async (next: string) => {
+    if (!bid || !canEditShopFields) return;
+    const trimmed = next.trim();
+    try {
+      await patchBusiness({
+        businessId: bid,
+        data: { logoUrl: trimmed || undefined },
+      });
+      await refetch();
+      setLogoUrl(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
   const pack = verticalPackUi(
     (business as { vertical?: string } | undefined)?.vertical ??
       (currentBusiness as { vertical?: string } | undefined)?.vertical,
@@ -179,7 +201,49 @@ export default function SettingsScreen() {
                   <Feather name="external-link" size={18} color={colors.primary} />
                 </Pressable>
               ) : null}
+              <Text style={[styles.rowMeta, { color: colors.mutedForeground, marginTop: 12 }]}>
+                Logo URL
+              </Text>
+              {canEditShopFields ? (
+                <TextInput
+                  value={resolvedLogo}
+                  onChangeText={(v) => setLogoUrl(v)}
+                  onBlur={() => {
+                    if (logoUrl === null) return;
+                    void saveLogoUrl(logoUrl);
+                  }}
+                  placeholder="https://…"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[
+                    styles.logoInput,
+                    {
+                      color: colors.foreground,
+                      borderColor: colors.border,
+                      backgroundColor: colors.background,
+                    },
+                  ]}
+                />
+              ) : (
+                <Text style={[styles.rowValue, { color: colors.foreground }]}>
+                  {resolvedLogo || "—"}
+                </Text>
+              )}
+              {!canEditShopFields ? (
+                <Pressable
+                  onPress={() => void Linking.openURL(dashboardSettingsUrl("shop", bid))}
+                  style={[styles.navBtn, { borderColor: colors.border }]}
+                >
+                  <Text style={[styles.navBtnText, { color: colors.primary }]}>Edit branding on web</Text>
+                  <Feather name="external-link" size={18} color={colors.primary} />
+                </Pressable>
+              ) : null}
             </View>
+
+            {bid ? (
+              <MobilePresentationCard businessId={bid} canEditOnWeb={canEditShopFields} />
+            ) : null}
 
             {showTeam && (
               <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -313,4 +377,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   navBtnText: { fontFamily: fonts.bodySemi, fontSize: 14 },
+  logoInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 4,
+    fontFamily: fonts.body,
+    fontSize: 14,
+  },
 });

@@ -3,7 +3,7 @@ import {
   resolvePresentationPreset,
   isValidPresentationPreset,
   presetPreservesVerticalGates,
-  presentationPresetsEnabled,
+  presentationPresetsActive,
   PLATFORM_DEFAULT_PRESET_ID,
   type BusinessVertical,
 } from "@workspace/policy";
@@ -21,7 +21,7 @@ export async function getPresentationForBusiness(businessId: string) {
     presetId: preset.id,
     preset,
     brandAccentHex: biz.brandAccentHex ?? null,
-    presetsEnabled: presentationPresetsEnabled(),
+    presetsEnabled: presentationPresetsActive(),
     availablePresets: listPresentationPresets(vertical),
   };
 }
@@ -30,7 +30,7 @@ export async function patchPresentationForBusiness(
   businessId: string,
   input: { presentationPresetId?: string; brandAccentHex?: string | null },
 ) {
-  if (!presentationPresetsEnabled()) {
+  if (!presentationPresetsActive()) {
     throw new Error("PRESENTATION_PRESETS_DISABLED");
   }
   const biz = await getBusinessById(businessId);

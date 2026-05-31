@@ -1,6 +1,15 @@
 import type React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { buttonStyle } from "../styles/ops-ui";
+import {
+  OPS_AMBER,
+  OPS_AMBER_BORDER,
+  OPS_AMBER_SOFT,
+  OPS_BG,
+  OPS_BORDER,
+  OPS_SURFACE,
+  OPS_TEXT,
+} from "../styles/platform-ops-tokens";
 import type { InternalOpsRole } from "../lib/api";
 import { getExecHomePath } from "../lib/exec-path";
 
@@ -41,13 +50,13 @@ export function InternalShell({
         minHeight: "100vh",
         margin: 0,
         fontFamily: "system-ui, sans-serif",
-        background: "#0f172a",
-        color: "#e2e8f0",
+        background: OPS_BG,
+        color: OPS_TEXT,
       }}
     >
       <header
         style={{
-          borderBottom: "1px solid #f59e0b55",
+          borderBottom: `1px solid ${OPS_AMBER_BORDER}`,
           padding: "18px 22px",
           display: "flex",
           justifyContent: "space-between",
@@ -61,8 +70,8 @@ export function InternalShell({
               display: "inline-block",
               padding: "4px 10px",
               borderRadius: 6,
-              background: "#f59e0b22",
-              color: "#fbbf24",
+              background: OPS_AMBER_SOFT,
+              color: OPS_AMBER,
               fontSize: 12,
               letterSpacing: "0.08em",
               fontWeight: 600,
@@ -93,9 +102,9 @@ export function InternalShell({
             position: "sticky",
             top: 14,
             alignSelf: "start",
-            border: "1px solid #334155",
+            border: `1px solid ${OPS_BORDER}`,
             borderRadius: 12,
-            background: "#0b1224",
+            background: OPS_BG,
             padding: 12,
           }}
           aria-label="Internal navigation"
@@ -111,8 +120,8 @@ export function InternalShell({
                   textAlign: "left",
                   padding: "9px 12px",
                   fontSize: 13,
-                  background: isActive ? "#f59e0b" : item.kind === "primary" ? "#1e293b" : "#0f172a",
-                  color: isActive ? "#0f172a" : "#e2e8f0",
+                  background: isActive ? OPS_AMBER : item.kind === "primary" ? OPS_SURFACE : OPS_BG,
+                  color: isActive ? OPS_BG : OPS_TEXT,
                   textDecoration: "none",
                 })}
               >

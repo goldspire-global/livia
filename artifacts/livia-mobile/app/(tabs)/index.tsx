@@ -57,7 +57,8 @@ import { StuckContinuityCard } from "@/components/StuckContinuityCard";
 import { VisitFeedbackCard } from "@/components/VisitFeedbackCard";
 import { ScreenTopBar } from "@/components/ScreenTopBar";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { verticalAccentHex } from "@/lib/vertical-theme";
+import { resolveTenantAccentHex } from "@/lib/vertical-theme";
+import { useTenantExperience } from "@/hooks/useTenantExperience";
 import { useChainRollup } from "@/hooks/useChainRollup";
 import { VerticalTodayInsights } from "@/components/VerticalTodayInsights";
 import { VerticalHomeShortcuts } from "@/components/VerticalHomeShortcuts";
@@ -153,9 +154,11 @@ export default function DashboardScreen() {
     } as any,
   });
 
-  const { data: bizDetail } = useGetBusiness(currentBusiness?.id ?? "", {
-    query: { enabled: !!currentBusiness?.id } as any,
+  const bid = currentBusiness?.id ?? "";
+  const { data: bizDetail } = useGetBusiness(bid, {
+    query: { enabled: !!bid } as any,
   });
+  const { data: tenantExperience } = useTenantExperience(bid || undefined);
   const onboardingPct =
     (bizDetail as { onboardingState?: { percentComplete?: number } } | undefined)?.onboardingState
       ?.percentComplete ?? 100;
@@ -223,9 +226,15 @@ export default function DashboardScreen() {
 
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
   const pack = verticalPackUi(vertical, (bizDetail as { category?: string } | undefined)?.category);
-  const verticalAccent = verticalAccentHex(
+  const tenantAccent =
+    (tenantExperience as { presentation?: { brandAccentHex?: string | null } } | null | undefined)
+      ?.presentation?.brandAccentHex ??
+    (tenantExperience as { publicAppearance?: { brandAccentHex?: string | null } } | null | undefined)
+      ?.publicAppearance?.brandAccentHex;
+  const verticalAccent = resolveTenantAccentHex(
     vertical,
     (bizDetail as { category?: string } | undefined)?.category,
+    tenantAccent,
   );
 
   const { data: pendingData } = useListBookings(

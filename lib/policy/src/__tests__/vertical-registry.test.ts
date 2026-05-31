@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { businessVerticalSchema } from "../types";
+import { defineVerticalPack } from "../vertical-pack-factory";
 import { VERTICAL_PACKS } from "../verticals";
 import { listPresentationPresets, PLATFORM_DEFAULT_PRESET_ID } from "../presentation-presets";
 
@@ -15,6 +16,11 @@ const seedPath = resolve(
 
 for (const vertical of businessVerticalSchema.options) {
   assert.ok(VERTICAL_PACKS[vertical], `VERTICAL_PACKS missing ${vertical}`);
+  assert.equal(
+    VERTICAL_PACKS[vertical],
+    defineVerticalPack(VERTICAL_PACKS[vertical]),
+    `${vertical} pack must pass defineVerticalPack`,
+  );
   const presets = listPresentationPresets(vertical);
   assert.equal(presets.length, 4, `${vertical} must have 4 presentation presets`);
   assert.ok(

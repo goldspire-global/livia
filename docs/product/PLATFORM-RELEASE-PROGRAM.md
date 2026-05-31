@@ -123,6 +123,7 @@ Not a date — **design target** in [`LIVIA-EVOLUTION-SCREENS.md`](../design/LIV
 
 | Date | Change |
 |------|--------|
+| 2026-05-31 | **R3 engineering exit** — preset promotion, vertical factory, r3:exit-verify, mobile parity, v3 tier check |
 | 2026-05-31 | R2 engineering exit — guest tokens CI, hub orchestrator, support tenant context |
 | 2026-05-30 | W6 guest hub; cross-link FINAL-BUILD-PLAN; R2 hub detail |
 | 2026-05-30 | All-vertical R1; surface program cross-links; evolution gallery |

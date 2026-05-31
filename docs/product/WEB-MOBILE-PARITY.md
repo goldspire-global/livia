@@ -3,7 +3,7 @@
 **Updated:** 2026-05-31  
 **Captures:** `pnpm e2e:full-visual-audit` (web + mobile) · `e2e/visual-captures/web/<persona>/` · `e2e/visual-captures/mobile/`
 
-**Status summary:** Core ops surfaces **OK** (2026-05-25). Remaining gaps: settings depth (billing/team web-first), presentation preset morph on mobile, premium motion on Today entry.
+**Status summary:** Core ops surfaces **OK** (2026-05-25). R3 Wave 2: settings logo URL + presentation readout on mobile. Remaining gaps: billing/team web-first depth, full preset morph on mobile, premium motion on Today entry.
 
 This doc tracks **tenant product** surfaces (not marketing site, not internal ops portal).
 
@@ -63,7 +63,7 @@ Web uses sidebar ritual nav; mobile uses bottom tabs + **More** for staff/servic
 | Manager chair preview | Link to `/my-day` | More → My chair preview | **OK** (2026-05-24) |
 | Premises (shared building) | `/premises` | More → Shared premises (read + web CTA) | **OK** (2026-05-24) |
 | Day packages | `/day-packages` | More → Day packages (wellness/medspa) | **OK** (2026-05-24) |
-| Settings — shop | Tab `shop` | Settings scroll | **Partial** — no logo URL on mobile |
+| Settings — shop | Tab `shop` | Settings scroll + logo URL | **OK** (2026-05-31) — full preset edit on web |
 | Settings — Liv toggle | Tab `liv` | Settings Liv switch | **OK** |
 | Settings — comms | Tab `comms` | Read-only comms block | **Partial** |
 | Settings — policy | Tab `policy` | Read-only + edit on web | **Partial** |
@@ -73,7 +73,7 @@ Web uses sidebar ritual nav; mobile uses bottom tabs + **More** for staff/servic
 | Running late | Today + booking detail sheet | Today quick actions + booking (CONFIRMED) | **OK** (2026-05-25) |
 | Leave request | Staff profile → Leave; manager Rota | More → Request leave (`/time-off`) | **OK** (2026-05-25) |
 | Vertical accent (Today) | `vertical-theme.ts` on app shell | Today vertical line uses `verticalAccentHex` | **OK** (2026-05-25) |
-| Presentation preset + surface morph | `data-presentation` + `data-surface` (staging) | Preset accent + phone/tablet layout | **Planned** — [`SURFACE-AND-BREAKPOINTS.md`](../design/SURFACE-AND-BREAKPOINTS.md) |
+| Presentation preset + surface morph | `data-presentation` + `data-surface` (staging) | `MobilePresentationCard` readout + web handoff | **Partial** (2026-05-31) — morph [`SURFACE-AND-BREAKPOINTS.md`](../design/SURFACE-AND-BREAKPOINTS.md) |
 | Public booking theme | `/b/:slug` vertical hero | Same web surface (mobile browser) | **OK** (2026-05-25) |
 | Guest visit link (late, feedback, receipt) | `/b/:slug/visit/:token` | Web only (SMS link) | **OK** (2026-05-25) |
 | Visit feedback on Today | `VisitFeedbackStrip` | `VisitFeedbackCard` on Today | **OK** (2026-05-25) |

@@ -20,3 +20,14 @@ export function verticalAccentHex(
   const key = resolveVerticalKey(vertical, category);
   return VERTICAL_ACCENT_HEX[key];
 }
+
+/** Prefer tenant brand accent from API when valid hex (R3 mobile parity). */
+export function resolveTenantAccentHex(
+  vertical: string | undefined | null,
+  category?: string | null,
+  brandAccentHex?: string | null,
+): string {
+  const trimmed = brandAccentHex?.trim();
+  if (trimmed && /^#[0-9A-Fa-f]{6}$/.test(trimmed)) return trimmed;
+  return verticalAccentHex(vertical, category);
+}
