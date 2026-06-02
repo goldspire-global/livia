@@ -11,8 +11,8 @@
 G1  /demo                    Pick your world (trade card)
       │ click unlocked card (beauty / Lash & Brow in mock)
       ▼
-G2  /demo/wedge/:vertical    Trade story — 3–4 beats (policy copy + UI crops)
-      │ primary CTA
+G2  /demo/wedge/:vertical    Trade story — four beat cards at once (policy copy + UI crops)
+      │ Continue
       ▼
 G3  Enter as role            Owner default; manager / desk / staff when seeded
       │ Clerk demo ticket (no full /sign-in for happy path)
@@ -34,7 +34,7 @@ W4  /dashboard …             Tenant preset + brand — intentional skin handof
 | Aurora / celestial wash | ✅ full bleed | ✅ dimmer, content readable | ✅ + vignette on sheet variant | preset surface |
 | Gold + serif headlines | ✅ card titles | ✅ vertical name + beat titles | ✅ business name | preset typography |
 | Trade photo language | ✅ card hero | ✅ beat crop frames echo card radius | optional logo thumb | real brand |
-| Cyan primary CTA | Enter world → | Continue / Next beat | Enter as owner | preset primary |
+| Cyan primary CTA | Enter world → | Continue → roles | Tap role → demo | preset primary |
 | Demo badge | G1 LOCKED | G2 · Story | G3 · Enter | — |
 
 **Do not** show settings, billing, Liv prompt editor, or full product tour on G2/G3.

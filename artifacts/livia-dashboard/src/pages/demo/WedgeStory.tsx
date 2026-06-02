@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { useSignIn, useClerk } from "@clerk/clerk-react";
 import {
-  GatewayBeatDots,
   GatewayBusyOverlay,
-  GatewayDemoCardStage,
+  GatewayDemoEnterStage,
+  GatewayDemoStoryBeats,
+  GatewaySlideDots,
 } from "@/components/gateway/gateway-demo-card-stage";
 import { GatewayShell } from "@/components/gateway/gateway-shell";
 import {
@@ -23,6 +24,8 @@ import {
 import { completeDemoClerkSignIn } from "@/lib/demo-clerk-sign-in";
 import { useToast } from "@/hooks/use-toast";
 
+type WedgeSlide = "story" | "enter";
+
 export default function DemoWedgeStoryPage() {
   const { vertical = "" } = useParams<{ vertical: string }>();
   const story = getWedgeDemoStory(vertical as WedgeDemoStory["vertical"]);
@@ -33,7 +36,7 @@ export default function DemoWedgeStoryPage() {
   const [devPassword, setDevPassword] = useState<string | undefined>();
   const [provisioned, setProvisioned] = useState(false);
   const [tenant, setTenant] = useState<DemoBusinessTenant | null>(null);
-  const [beatIndex, setBeatIndex] = useState(0);
+  const [slide, setSlide] = useState<WedgeSlide>("story");
 
   useEffect(() => {
     void fetchDemoCatalog()
@@ -123,11 +126,8 @@ export default function DemoWedgeStoryPage() {
     );
   }
 
-  const beatCount = story.beats.length;
-  const enterBeatIndex = beatCount - 1;
-  const enterMode = beatIndex >= enterBeatIndex;
-  const beat = story.beats[Math.min(beatIndex, enterBeatIndex)]!;
   const businessName = tenant?.name ?? "Belle Vue Beauty";
+  const enterMode = slide === "enter";
 
   return (
     <GatewayShell
@@ -135,17 +135,18 @@ export default function DemoWedgeStoryPage() {
       step={enterMode ? "G3 · Enter" : "G2 · Story"}
       backHref="/demo"
       backLabel="← Worlds"
+      className="[&_main]:max-w-4xl"
     >
       {busy ? <GatewayBusyOverlay label="Signing in…" /> : null}
 
       <div className="mb-6 text-center sm:text-left">
         <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
-          {enterMode ? "Ready to walk in" : "See your week in four beats"}
+          {enterMode ? "Walk in as your role" : "See your week in four beats"}
         </h1>
-        <p className="mt-2 text-sm text-aurum-champagne/80 font-serif">
+        <p className="mt-2 text-sm font-serif text-aurum-champagne/80">
           {enterMode
-            ? "Same card — story done — tap a role to walk in."
-            : "The world you picked — now Liv walks you through it."}
+            ? "Same world you picked — choose how you enter the live demo."
+            : "The world you picked — Liv shows the full story on one screen."}
         </p>
       </div>
 
@@ -161,31 +162,26 @@ export default function DemoWedgeStoryPage() {
         </div>
       ) : null}
 
-      <GatewayDemoCardStage
-        tradeLabel={story.label}
-        businessName={businessName}
-        beat={beat}
-        beatIndex={beatIndex}
-        beatCount={beatCount}
-        enterMode={enterMode}
-        roster={roster}
-        busy={busy}
-        disabled={!provisioned}
-        onNextBeat={() => setBeatIndex((i) => Math.min(i + 1, enterBeatIndex))}
-        onSelectRole={(email) => void enterAsRole(email)}
-      />
+      {enterMode ? (
+        <GatewayDemoEnterStage
+          tradeLabel={story.label}
+          businessName={businessName}
+          roster={roster}
+          busy={busy}
+          disabled={!provisioned}
+          onSelectRole={(email) => void enterAsRole(email)}
+          onBack={() => setSlide("story")}
+        />
+      ) : (
+        <GatewayDemoStoryBeats
+          tradeLabel={story.label}
+          beats={story.beats}
+          disabled={!provisioned}
+          onContinue={() => setSlide("enter")}
+        />
+      )}
 
-      <GatewayBeatDots beatIndex={beatIndex} beatCount={beatCount} className="mt-6" />
-
-      {beatIndex > 0 && !enterMode ? (
-        <button
-          type="button"
-          className="mx-auto mt-4 block text-sm text-muted-foreground hover:text-foreground"
-          onClick={() => setBeatIndex((i) => Math.max(0, i - 1))}
-        >
-          ← Previous beat
-        </button>
-      ) : null}
+      <GatewaySlideDots slide={slide} className="mt-6" />
 
       <p className="mt-8 text-center text-[11px] text-muted-foreground/70">
         Then W4 tenant skin — intentional handoff from gateway aurora
