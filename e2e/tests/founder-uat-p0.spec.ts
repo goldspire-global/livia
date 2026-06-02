@@ -16,6 +16,7 @@ import {
 
 const LUXE = process.env.E2E_DEMO_SLUG ?? "luxe-salon-spa";
 const MEDSPA = "clarity-medspa-dublin";
+const BLOOM = "bloom-beauty-dublin";
 
 async function expectNoSeriousAxe(page: import("@playwright/test").Page, label: string) {
   const results = await new AxeBuilder({ page })
@@ -75,6 +76,54 @@ test.describe("Founder UAT P0", () => {
       await expect(page.getByTestId("settings-page")).toBeVisible();
       await expect(page.getByTestId("settings-booking-link-strip")).toBeVisible();
       await expect(page.getByTestId("tab-appearance")).toBeVisible();
+    });
+  });
+
+  test.describe("Beauty owner (Bloom)", () => {
+    test.beforeEach(async ({ page, request }) => {
+      if (!(await demoHasBusiness(request, BLOOM))) {
+        test.skip(true, `${BLOOM} missing`);
+      }
+      if (!(await demoCanSignIn(request, BLOOM))) {
+        test.skip(true, "Clerk sign-in unavailable");
+      }
+      await signInBusiness(page, BLOOM);
+      await dismissPlatformTour(page);
+    });
+
+    test("dashboard ritual — beauty chrome", async ({ page }) => {
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      await assertHealthyPage(page, "/dashboard");
+      await expect(page.getByTestId("owner-home-ritual")).toBeVisible({ timeout: 20_000 });
+      await expectNoSeriousAxe(page, "bloom dashboard");
+    });
+
+    test("customers ambient roster", async ({ page }) => {
+      await page.goto("/customers", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("customers-page")).toBeVisible();
+      await expect(page.locator(".beauty-operational-panel--ambient")).toBeVisible();
+    });
+
+    test("services catalog", async ({ page }) => {
+      await page.goto("/services", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("services-page")).toBeVisible();
+    });
+
+    test("settings appearance — preset + public preview", async ({ page }) => {
+      await page.goto("/settings?tab=appearance", { waitUntil: "domcontentloaded" });
+      const panel = page.getByTestId("public-appearance-panel");
+      if ((await panel.count()) === 0) {
+        test.skip(true, "presentation presets not enabled in this environment");
+      }
+      await expect(panel).toBeVisible();
+      await expect(page.getByTestId("public-b-preview-frame")).toBeVisible();
+    });
+
+    test("public book — bloom slug", async ({ page, request }) => {
+      const res = await request.get(`${process.env.E2E_API_BASE ?? "http://127.0.0.1:3000"}/api/public/b/${BLOOM}`);
+      if (!res.ok()) test.skip(true, `${BLOOM} public surface missing`);
+      await page.goto(`/b/${BLOOM}`, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("body")).not.toContainText(/something went wrong/i);
     });
   });
 

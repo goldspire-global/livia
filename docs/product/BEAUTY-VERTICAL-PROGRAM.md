@@ -125,13 +125,13 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 
 | Surface | Target (single copy) | Implementation | Stg ticket |
 |---------|----------------------|----------------|------------|
-| G1 `/demo` | `g1-wedge-web.target.png` | 🟡 `DemoGuidedExperience` (beauty-only); **not** G1 grid UI yet | **G-DEMO-1** |
-| G2 `/demo/wedge/beauty` | `g2-wedge-story.target.png` | 🟡 Beat list UI; **not** fused card-stage | **G-DEMO-2** |
-| G3 enter (beat 4) | `g3-demo-enter.target.png` | 🟡 Role tap proceeds; layout not card-stage | **G-DEMO-3** |
-| Sign-in web | `gateway-default.target.png` | 🟡 `GatewaySignInStory` + Clerk; close to mock | **G-SIGN-1** |
-| Sign-in mobile | `gateway-default-mobile.target.png` | 🟡 Clerk screen; **not** Liv story layout | **G-SIGN-2** |
+| G1 `/demo` | `g1-wedge-web.target.png` | ✅ `DemoWedgeGrid` primary; advanced paths in `<details>` | **G-DEMO-1** |
+| G2 `/demo/wedge/beauty` | `g2-wedge-story.target.png` | ✅ `GatewayDemoCardStage` fused card + beats | **G-DEMO-2** |
+| G3 enter (beat 4) | `g3-demo-enter.target.png` | ✅ Role grid in card; tap → Clerk (no Enter btn) | **G-DEMO-3** |
+| Sign-in web | `gateway-default.target.png` | ✅ `GatewaySignInStory` + Clerk (`?beta=1` on stg) | **G-SIGN-1** |
+| Sign-in mobile | `gateway-default-mobile.target.png` | ✅ `GatewaySignInStory` + Clerk Expo | **G-SIGN-2** |
 | Sign-in adaptive hint | deferred | ✅ API exists | — |
-| Marketing → demo | CTA `/demo` | ✅ | **MKT-1** copy pass `/verticals/beauty` |
+| Marketing → demo | CTA `/demo/wedge/beauty` | ✅ `dashboardWedgeUrl` + `/verticals/beauty` copy | **MKT-1** |
 | Mobile demo gateway | separate app route | 🟡 persona carousel, not G1/G2/G3 | **G-DEMO-M** (R1.1 optional) |
 
 ### W4 Tenant (web)
@@ -170,7 +170,7 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 
 - [ ] Screen-card PNGs: customers, services, staff on Bloom
 - [ ] `w5.public.visit.mobile` baseline with `bloom-beauty-dublin` token
-- [ ] Marketing `/verticals/beauty` copy audit (no hair-only patch-test bleed)
+- [x] Marketing `/verticals/beauty` copy audit (no hair-only patch-test bleed)
 
 ---
 
@@ -183,7 +183,8 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 | Demo login `owner-bloom@livia.io` | ✅ |
 | `DEMO-LOGINS.md` | ✅ (luxe corrected to **hair**) |
 | Founder UAT **Bloom beauty** section | ✅ checklist |
-| E2E `founder-uat-p0` | 🟡 medspa + luxe only — add bloom project or manual UAT |
+| E2E `founder-uat-p0` | ✅ medspa + luxe + **Bloom** section |
+| E2E `gateway-beauty-wedge` | ✅ G1 → G2/G3 smoke (no auth) |
 
 **Test path (founder):**
 
@@ -285,3 +286,4 @@ Founder can answer **yes** to all:
 | 2026-06-01 | Initial hierarchical program; Bloom UAT path; gap queue |
 | 2026-06-01 | Full beauty build: 4 presets W4/W5, settings swatches, mobile owner + `/b` |
 | 2026-06-02 | W2 gateway targets locked (G1–G3 + sign-in); staging sign-off queue § Engineering |
+| 2026-06-02 | G1–G3 + sign-in shipped; Bloom founder UAT E2E; customers ambient panel; MKT wedge deep-link |

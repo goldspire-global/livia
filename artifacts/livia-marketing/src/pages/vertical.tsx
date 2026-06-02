@@ -17,9 +17,13 @@ const VERTICALS: Record<
   },
   beauty: {
     title: "Beauty & nails",
-    headline: "Treatments scheduled without the back-and-forth.",
-    pains: ["Clients asking the same questions", "Last-minute cancellations", "Spreadsheet client lists"],
-    liv: "Liv handles treatment enquiries, respects duration rules, and keeps your menu accurate.",
+    headline: "Lash, brow, and nail studios — calm ops, link-in-bio booking.",
+    pains: [
+      "DMs asking patch-test and fill dates",
+      "Last-minute gaps in the chair plan",
+      "Client lists split across notes and Instagram",
+    ],
+    liv: "Liv triages inbox, books with your durations and patch-test rules, and keeps Bloom-branded `/b` in sync with your menu.",
   },
   barber: {
     title: "Barbershops",

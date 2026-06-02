@@ -11,9 +11,15 @@ export const dashboardDemoUrl =
   (import.meta.env.VITE_DASHBOARD_DEMO_URL as string | undefined)?.replace(/\/+$/, "") ??
   `${dashboardOrigin}/demo`;
 
-/** Guided demo gateway — trade → business → role (W2). */
+/** W2 demo stories shipped — link straight to card-stage wedge (G2). */
+const DEMO_WEDGE_LIVE = new Set(["beauty"]);
+
+/** Guided demo gateway — trade → wedge story → role tap (W2). */
 export function dashboardWedgeUrl(verticalSlug: string): string {
   const slug = verticalSlug.replace(/^\/+/, "");
+  if (DEMO_WEDGE_LIVE.has(slug)) {
+    return `${dashboardDemoUrl}/wedge/${slug}`;
+  }
   return `${dashboardDemoUrl}?vertical=${encodeURIComponent(slug)}`;
 }
 

@@ -1,6 +1,6 @@
 # Livia — top-level status
 
-**Updated:** 2026-05-31  
+**Updated:** 2026-06-02  
 **Read this first** for “are we finished?” — not the phase checklists in build-plan v2.
 
 ---
@@ -63,7 +63,7 @@
 | Item | Notes |
 |------|-------|
 | **Vertical programs (all 9)** | [`VERTICAL-PROGRAMS-INDEX.md`](product/VERTICAL-PROGRAMS-INDEX.md) · build [`LIVIA-VERTICALS-BUILD-PLAN.md`](product/LIVIA-VERTICALS-BUILD-PLAN.md) |
-| **Execution focus** | Phase V1: **beauty** + **hair** UAT; Phase V2: beta-full parity |
+| **Execution focus** | Phase V1: **beauty** eng queue (G1–G3, sign-in, Bloom W4, MKT wedge) → founder Bucket C sign-off; Phase V2: beta-full parity |
 | **Your UAT** | Medspa + Bloom + Luxe in [`FOUNDER-UAT-CHECKLIST.md`](operations/FOUNDER-UAT-CHECKLIST.md); beta smokes in each program doc |
 | Staging | **`livia-stg`** only — [`VERCEL-DEPLOY-ENVIRONMENTS.md`](operations/VERCEL-DEPLOY-ENVIRONMENTS.md) |
 | Local automation | `pnpm founder:uat-preflight` then `test:founder-uat` |

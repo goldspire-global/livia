@@ -30,7 +30,7 @@ export default function DemoWedgeStoryPage() {
   const { signIn, isLoaded: signInLoaded } = useSignIn();
   const { signOut, session, setActive } = useClerk();
   const [busy, setBusy] = useState<string | null>(null);
-  const [devPassword, setDevPassword] = useState("LiviaDemo2026!");
+  const [devPassword, setDevPassword] = useState<string | undefined>();
   const [provisioned, setProvisioned] = useState(false);
   const [tenant, setTenant] = useState<DemoBusinessTenant | null>(null);
   const [beatIndex, setBeatIndex] = useState(0);
@@ -38,7 +38,9 @@ export default function DemoWedgeStoryPage() {
   useEffect(() => {
     void fetchDemoCatalog()
       .then((c) => {
-        if (c.sharedPassword ?? c.devPassword) setDevPassword(c.sharedPassword ?? c.devPassword ?? "LiviaDemo2026!");
+        if (c.sharedPassword ?? c.devPassword) {
+          setDevPassword(c.sharedPassword ?? c.devPassword);
+        }
       })
       .catch(() => undefined);
     void fetchDemoStatus()

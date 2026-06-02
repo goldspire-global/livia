@@ -66,9 +66,18 @@ const ICONS: Record<Persona["iconName"], LucideIcon> = {
   Heart,
 };
 
+const WEDGE_LIVE = new Set(["beauty"]);
+
 export default function DemoLauncher() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("vertical")?.toLowerCase();
+    if (v && WEDGE_LIVE.has(v)) {
+      navigate(`/demo/wedge/${v}`);
+    }
+  }, [navigate]);
   const { signIn, isLoaded: signInLoaded } = useSignIn();
   const { setActive, signOut, session } = useClerk();
   const [catalog, setCatalog] = useState<DemoCatalogPersona[]>([]);
