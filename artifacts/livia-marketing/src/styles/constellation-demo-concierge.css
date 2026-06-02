@@ -301,6 +301,8 @@
 
 .cst-demo-gate__bar--minimal {
   justify-content: flex-start;
+  min-height: calc(3.25rem + env(safe-area-inset-top));
+  padding-bottom: 0.35rem;
 }
 
 @media (min-width: 640px) {
@@ -313,6 +315,8 @@
 .cst-demo-gate__logo {
   opacity: 0.98;
   filter: drop-shadow(0 0 20px rgba(230, 208, 165, 0.14));
+  transform: scale(1.4);
+  transform-origin: left center;
 }
 
 .cst-demo-gate__live {

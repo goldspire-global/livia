@@ -369,6 +369,87 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
+.cst-back-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+}
+
+.cst-back-nav__sep {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.cst-back-link {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-champagne);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.cst-back-link:hover {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.cst-back-link--muted {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.cst-back-link--muted:hover {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.mkt-locale {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mkt-locale__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: rgba(217, 195, 154, 0.75);
+  flex-shrink: 0;
+}
+
+.mkt-locale__link {
+  color: rgba(255, 255, 255, 0.42);
+  transition: color 0.2s;
+  text-decoration: none;
+}
+
+.mkt-locale__link:hover {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.mkt-locale__link--active {
+  color: var(--c-champagne, #d9c39a);
+}
+
+.mkt-locale__sep {
+  color: rgba(255, 255, 255, 0.22);
+  user-select: none;
+}
+
 /* Inner page layout (inheritance shell below header) */
 .cst-inner-page {
   padding-bottom: 4rem;

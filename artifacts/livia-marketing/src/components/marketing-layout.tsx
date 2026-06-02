@@ -8,6 +8,9 @@ import { MarketingFooter, W1_FOOTER_LINKS } from "@/components/marketing-footer"
 import { marketingDemoPath } from "@/lib/marketing-links";
 import { applyMarketingPlatformTheme } from "@/lib/marketing-platform-theme";
 import { MarketingSkipLink } from "@/components/marketing-skip-link";
+import { MarketingBackLink, shouldShowMarketingBack } from "@/components/marketing-back-link";
+import { MarketingLocaleSwitch } from "@/components/marketing-locale-switch";
+import { useLocation } from "wouter";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -19,7 +22,6 @@ const NAV = [
   { href: "/eu-ai", label: "EU AI" },
   { href: "/for/chair-rental", label: "For hosts" },
   { href: "/contact", label: "Contact" },
-  { href: "/de", label: "Deutsch" },
 ] as const;
 
 export function MarketingLayout({
@@ -32,6 +34,7 @@ export function MarketingLayout({
   shellTone?: "default" | "strong";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [path] = useLocation();
   const homeHref = base || "/";
 
   useEffect(() => {
@@ -62,12 +65,13 @@ export function MarketingLayout({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <Link href={homeHref} className="justify-self-start shrink-0">
-            <LiviaWordmark size="md" />
+            <LiviaWordmark size="nav" />
           </Link>
 
           <div className="hidden xl:flex items-center justify-center gap-x-4 gap-y-1">{NAV.map(navLink)}</div>
 
-          <div className="justify-self-end flex items-center gap-4 sm:gap-5 shrink-0">
+          <div className="justify-self-end flex items-center gap-3 sm:gap-4 shrink-0">
+            <MarketingLocaleSwitch className="hidden sm:flex" />
             <Link
               href={marketingDemoPath}
               className="hidden sm:inline-flex text-sm font-medium text-muted-foreground hover:text-white transition-colors min-h-[44px] items-center"
@@ -97,6 +101,7 @@ export function MarketingLayout({
                 </SheetHeader>
                 <div className="flex flex-col gap-1 mt-8">
                   {NAV.map(navLink)}
+                  <MarketingLocaleSwitch className="mt-2 px-0" />
                   <Link
                     href={marketingDemoPath}
                     className="min-h-[44px] inline-flex items-center text-sm text-muted-foreground hover:text-white"
@@ -118,6 +123,11 @@ export function MarketingLayout({
         </div>
       </nav>
       <main id="main-content" className="pt-[calc(5rem+env(safe-area-inset-top))]">
+        {shouldShowMarketingBack(path) ? (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3 pb-1 relative z-[1]">
+            <MarketingBackLink />
+          </div>
+        ) : null}
         <ConstellationPageShell tone={shellTone}>{children}</ConstellationPageShell>
       </main>
       <MarketingFooter homeHref={homeHref} links={W1_FOOTER_LINKS} />

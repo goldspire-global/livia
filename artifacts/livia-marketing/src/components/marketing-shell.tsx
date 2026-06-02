@@ -8,6 +8,7 @@ import { legalBase, marketingDemoPath } from "@/lib/marketing-links";
 import { editorialCopy, type MarketingLocale } from "@/lib/marketing-editorial-i18n";
 import { applyMarketingPlatformTheme } from "@/lib/marketing-platform-theme";
 import { MarketingSkipLink } from "@/components/marketing-skip-link";
+import { MarketingLocaleSwitch } from "@/components/marketing-locale-switch";
 
 type MarketingShellProps = {
   locale: MarketingLocale;
@@ -24,8 +25,6 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
   }, []);
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const homeHref = locale === "de" ? "/de" : base || "/";
-  const altLocaleHref = locale === "de" ? "/" : "/de";
-  const altLocaleLabel = locale === "de" ? t.nav.english : t.nav.deutsch;
 
   const joinHandler = onJoinBeta ?? ((e: React.MouseEvent) => {
     e.preventDefault();
@@ -56,13 +55,6 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
       >
         {t.nav.howItWorks}
       </Link>
-      <Link
-        href={altLocaleHref}
-        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[44px] inline-flex items-center"
-        onClick={() => setMenuOpen(false)}
-      >
-        {altLocaleLabel}
-      </Link>
       <button
         type="button"
         onClick={(e) => {
@@ -88,12 +80,16 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-4 gap-4">
           <Link href={homeHref}>
-            <LiviaWordmark size="md" />
+            <LiviaWordmark size="nav" />
           </Link>
 
-          <div className="hidden md:flex items-center gap-5">{navLinks}</div>
+          <div className="hidden md:flex items-center gap-5">
+            {navLinks}
+            <MarketingLocaleSwitch />
+          </div>
 
           <div className="flex items-center gap-2 md:hidden ml-auto">
+            <MarketingLocaleSwitch />
             <button
               type="button"
               onClick={joinHandler}
@@ -115,7 +111,10 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
                 <SheetHeader>
                   <SheetTitle className="font-serif text-left">{t.nav.menu}</SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-1 mt-8">{navLinks}</div>
+                <div className="flex flex-col gap-1 mt-8">
+                  {navLinks}
+                  <MarketingLocaleSwitch className="mt-2" />
+                </div>
               </SheetContent>
             </Sheet>
           </div>
@@ -136,7 +135,6 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
             { href: `${legalBase}/tos`, label: "Terms", external: true },
             { href: "/pricing", label: t.nav.pricing },
             { href: "/europe", label: "Europe" },
-            { href: altLocaleHref, label: altLocaleLabel, className: "text-aurora-cyan/90" },
           ] satisfies MarketingFooterLink[]
         }
       />

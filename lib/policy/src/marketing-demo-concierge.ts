@@ -3,13 +3,26 @@ import { getCoverageForCodeVertical } from "./vertical-coverage";
 import { listWedgeDemoVerticalsForDisplay } from "./wedge-demo-stories";
 
 /**
- * W1 /demo concierge — unlock in completion order (append as wedge ships).
+ * W1 /demo concierge — wedges that are live (append one at a time as each ships).
  * Marketing portals + W2 wedge + G1 grid all read this list.
  */
 export const MARKETING_DEMO_WEDGE_UNLOCK_ORDER: readonly BusinessVertical[] = [
   "beauty",
+] as const;
+
+/**
+ * Concierge grid order — beauty first, then the unlock queue left-to-right.
+ */
+export const MARKETING_DEMO_WEDGE_PIPELINE_ORDER: readonly BusinessVertical[] = [
+  "beauty",
   "wellness",
   "hair",
+  "medspa",
+  "body-art",
+  "fitness",
+  "allied-health",
+  "pet-grooming",
+  "automotive-detailing",
 ] as const;
 
 export function isMarketingDemoWedgeUnlocked(vertical: BusinessVertical): boolean {
@@ -47,38 +60,45 @@ const CONCIERGE_COPY: Partial<
   "body-art": {
     title: "Ink Anchor · Galway",
     description: "Design proof, deposits, and session continuity.",
-    imagePath: null,
+    imagePath: "/demo/portal-body-art.jpg",
   },
   medspa: {
     title: "Clarity Medspa · Dublin",
     description: "Consent-first aesthetics and treatment flow.",
-    imagePath: null,
+    imagePath: "/demo/portal-medspa.jpg",
   },
   fitness: {
     title: "Peak Fitness · Dublin",
     description: "Classes, packs, and capacity-aware booking.",
-    imagePath: null,
+    imagePath: "/demo/portal-fitness.jpg",
   },
   "allied-health": {
     title: "Motion Physio · Cork",
     description: "Lite clinic intake — not an EHR.",
-    imagePath: null,
+    imagePath: "/demo/portal-allied-health.jpg",
   },
   "pet-grooming": {
     title: "Paws Parlour · Dublin",
     description: "Pet profiles and parent-friendly reminders.",
-    imagePath: null,
+    imagePath: "/demo/portal-pet-grooming.jpg",
   },
   "automotive-detailing": {
     title: "Shine Studio · Belfast",
     description: "Bay scheduling and vehicle notes.",
-    imagePath: null,
+    imagePath: "/demo/portal-automotive.jpg",
   },
 };
 
-/** Registry order — locked rows stay visible in pipeline position. */
+/** Pipeline order — beauty first, unlock queue stacks left-to-right. */
 export function listMarketingDemoConciergeEntries(): MarketingDemoConciergeEntry[] {
-  return listWedgeDemoVerticalsForDisplay().map((vertical) => {
+  const available = new Set(listWedgeDemoVerticalsForDisplay());
+  const ordered: BusinessVertical[] = MARKETING_DEMO_WEDGE_PIPELINE_ORDER.filter((v) =>
+    available.has(v),
+  );
+  for (const v of listWedgeDemoVerticalsForDisplay()) {
+    if (!ordered.includes(v)) ordered.push(v);
+  }
+  return ordered.map((vertical) => {
     const row = getCoverageForCodeVertical(vertical);
     const copy = CONCIERGE_COPY[vertical];
     const unlocked = isMarketingDemoWedgeUnlocked(vertical);

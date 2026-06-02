@@ -25,15 +25,15 @@ test.describe("Marketing lifecycle", () => {
 
   test("home vertical chip opens demo wedge", async ({ page }) => {
     await page.goto(`${marketingBase}/`, { waitUntil: "domcontentloaded" });
-    const wedge = page.locator('a[href*="/demo/wedge/hair"], a[href*="vertical=hair"]').first();
+    const wedge = page.locator('a[href*="/demo/wedge/beauty"]').first();
     await expect(wedge).toBeVisible();
     await wedge.click();
-    await page.waitForURL(/\/demo(\/wedge\/hair|\?vertical=hair)/, { timeout: 30_000 });
+    await page.waitForURL(/\/demo\/wedge\/beauty/, { timeout: 30_000 });
     await expect(page.locator("body")).not.toContainText(/something went wrong/i);
   });
 
   test("wedge continues to demo launcher", async ({ page }) => {
-    await page.goto(`${dashboardBase}/demo/wedge/hair`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${dashboardBase}/demo/wedge/beauty`, { waitUntil: "domcontentloaded" });
     const enter = page.getByRole("link", { name: /enter demo|open demo|continue/i }).or(
       page.getByRole("button", { name: /enter demo|open demo|continue/i }),
     );

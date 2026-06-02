@@ -1,11 +1,9 @@
 import type { RefObject } from "react";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
 import { MarketingForm } from "@/components/marketing-form";
 import { editorialCopy, type MarketingLocale } from "@/lib/marketing-editorial-i18n";
 import { dashboardWedgeUrl, marketingDemoPath } from "@/lib/marketing-links";
 import { MARKETING_VERTICAL_LINKS } from "@/lib/marketing-verticals";
-import { planMarketingCard } from "@/lib/pricing-catalog";
 import "@/styles/constellation-home-fold.css";
 
 const PHYSICS_KEYS = [0, 2, 4] as const;
@@ -21,8 +19,6 @@ export function ConstellationHomeFold({ locale, formRef }: ConstellationHomeFold
   const t = editorialCopy(locale);
   const os = t.homeOs;
   const fold = t.homeFold;
-  const solo = planMarketingCard("solo");
-  const studio = planMarketingCard("studio");
   const physics = PHYSICS_KEYS.map((i) => os.physics[i]!);
   const verticals = MARKETING_VERTICAL_LINKS.filter((v) =>
     (VERTICAL_SLUGS as readonly string[]).includes(v.slug),
@@ -64,29 +60,6 @@ export function ConstellationHomeFold({ locale, formRef }: ConstellationHomeFold
               {os.howItWorks}
             </Link>
           </div>
-        </div>
-      </section>
-
-      <section className="cst-fold__section" aria-labelledby="cst-fold-pricing">
-        <div className="cst-fold__inner">
-          <p className="cst-fold__eyebrow">{t.pricing.title}</p>
-          <h2 id="cst-fold-pricing" className="cst-fold__title">
-            {t.pricing.subtitle}
-          </h2>
-          <div className="cst-fold__pricing-row">
-            <div className="cst-fold__price-card">
-              <span className="cst-fold__price-name">{solo.name}</span>
-              <span className="cst-fold__price-value">{solo.priceLabel.replace(/\/mo.*$/, "")}/mo</span>
-            </div>
-            <div className="cst-fold__price-card cst-fold__price-card--featured">
-              <span className="cst-fold__price-name">{studio.name}</span>
-              <span className="cst-fold__price-value">{studio.priceLabel.replace(/\/mo.*$/, "")}/mo</span>
-            </div>
-            <Link href="/pricing" className="cst-fold__link">
-              {t.pricing.fullPricing} <ArrowRight className="inline h-3.5 w-3.5 ml-1" />
-            </Link>
-          </div>
-          <p className="cst-fold__pricing-note">{fold.pricingFrom}</p>
         </div>
       </section>
 

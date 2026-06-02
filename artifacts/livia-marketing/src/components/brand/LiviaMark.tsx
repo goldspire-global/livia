@@ -104,14 +104,28 @@ export function LiviaWordmark({
   size = "md",
 }: {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  /** `nav` = md + 20% for top-bar wordmark */
+  size?: "sm" | "md" | "nav" | "lg";
 }) {
   const markSize =
-    size === "lg" ? "h-9 w-9" : size === "sm" ? "h-6 w-6" : "h-7 w-7";
+    size === "lg"
+      ? "h-9 w-9"
+      : size === "nav"
+        ? "h-[2.1rem] w-[2.1rem]"
+        : size === "sm"
+          ? "h-6 w-6"
+          : "h-7 w-7";
   const textSize =
-    size === "lg" ? "text-3xl" : size === "sm" ? "text-xl" : "text-2xl";
+    size === "lg"
+      ? "text-3xl"
+      : size === "nav"
+        ? "text-[1.8rem]"
+        : size === "sm"
+          ? "text-xl"
+          : "text-2xl";
+  const gap = size === "nav" ? "gap-3" : "gap-2.5";
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+    <span className={`inline-flex items-center ${gap} ${className}`}>
       <LiviaMark className={markSize} />
       <span
         className={`font-serif ${textSize} font-normal tracking-tight leading-none`}
