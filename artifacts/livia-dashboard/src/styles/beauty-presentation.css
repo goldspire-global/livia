@@ -64,12 +64,27 @@ html[data-presentation="premium-dark"] {
   --background: 30 8% 7%;
   --foreground: 36 40% 92%;
   --card: 30 10% 11%;
+  --card-foreground: 36 40% 92%;
+  --border: 30 12% 18%;
+  --muted: 30 10% 14%;
+  --muted-foreground: 36 20% 58%;
+  --secondary: 30 10% 16%;
+  --sidebar: 30 8% 6%;
+  --sidebar-foreground: 36 40% 92%;
+  --sidebar-accent: 36 35% 22%;
   --primary: 36 55% 62%;
+  --ring: 36 55% 62%;
+  --primary-foreground: 30 10% 8%;
+}
+
+html[data-presentation="premium-dark"] body,
+html[data-presentation="premium-dark"] #root {
+  background-color: hsl(var(--background));
 }
 
 /* ── Shared beauty tokens (extend base preset blocks in index.css) ── */
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] {
+html[data-vertical="beauty"][data-beauty-native-skin] {
   --border: 228 14% 18%;
   --muted: 228 16% 14%;
   --muted-foreground: 330 12% 62%;
@@ -82,6 +97,21 @@ html[data-vertical="beauty"][data-presentation="noir-dusk"] {
   --beauty-gradient-end: 280 30% 45%;
   --beauty-hairline: 330 40% 72% / 0.14;
   --beauty-hairline-soft: 330 35% 60% / 0.08;
+  --beauty-surface-0: 228 18% 9%;
+  --beauty-surface-1: 228 18% 11%;
+  --beauty-surface-2: 228 17% 8%;
+  --beauty-surface-3: 228 16% 7%;
+  --beauty-surface-4: 228 18% 10%;
+  --beauty-surface-5: 228 20% 7%;
+  --beauty-shadow: 228 25% 4%;
+  --beauty-accent-glow: 330 45% 72%;
+  --beauty-accent-secondary: 280 30% 45%;
+  --beauty-elevated-shadow: 0 0% 0%;
+  --beauty-handoff-surface: 38 40% 14%;
+  --beauty-handoff-border: 38 45% 52%;
+  --beauty-handoff-text: 38 55% 88%;
+  --beauty-handoff-badge-text: 38 70% 78%;
+  --beauty-guest-bubble-end: 330 42% 42%;
 }
 
 html[data-vertical="beauty"][data-presentation="soft-studio"] {
@@ -93,6 +123,23 @@ html[data-vertical="beauty"][data-presentation="soft-studio"] {
   --sidebar-accent: 330 50% 94%;
   --beauty-gradient-start: 330 81% 60%;
   --beauty-gradient-end: 330 70% 75%;
+  --beauty-hairline: 330 81% 60% / 0.12;
+  --beauty-hairline-soft: 330 50% 70% / 0.08;
+  --beauty-surface-0: 330 40% 98%;
+  --beauty-surface-1: 330 38% 96%;
+  --beauty-surface-2: 330 36% 94%;
+  --beauty-surface-3: 330 35% 92%;
+  --beauty-surface-4: 330 40% 97%;
+  --beauty-surface-5: 330 42% 95%;
+  --beauty-shadow: 330 40% 70%;
+  --beauty-accent-glow: 330 81% 60%;
+  --beauty-accent-secondary: 330 70% 75%;
+  --beauty-elevated-shadow: 330 40% 70%;
+  --beauty-handoff-surface: 38 55% 94%;
+  --beauty-handoff-border: 38 45% 75%;
+  --beauty-handoff-text: 38 45% 28%;
+  --beauty-handoff-badge-text: 38 50% 35%;
+  --beauty-guest-bubble-end: 330 65% 48%;
 }
 
 html[data-vertical="beauty"][data-presentation="soft-studio"] .beauty-pending-hero {
@@ -108,6 +155,23 @@ html[data-vertical="beauty"][data-presentation="editorial"] {
   --sidebar-accent: 16 40% 94%;
   --beauty-gradient-start: 16 52% 48%;
   --beauty-gradient-end: 24 40% 38%;
+  --beauty-hairline: 16 52% 48% / 0.14;
+  --beauty-hairline-soft: 40 25% 75% / 0.1;
+  --beauty-surface-0: 40 33% 97%;
+  --beauty-surface-1: 40 33% 95%;
+  --beauty-surface-2: 40 30% 93%;
+  --beauty-surface-3: 40 28% 91%;
+  --beauty-surface-4: 40 32% 96%;
+  --beauty-surface-5: 40 34% 94%;
+  --beauty-shadow: 24 20% 55%;
+  --beauty-accent-glow: 16 52% 48%;
+  --beauty-accent-secondary: 24 40% 38%;
+  --beauty-elevated-shadow: 24 15% 55%;
+  --beauty-handoff-surface: 38 50% 94%;
+  --beauty-handoff-border: 38 40% 72%;
+  --beauty-handoff-text: 38 35% 30%;
+  --beauty-handoff-badge-text: 38 45% 32%;
+  --beauty-guest-bubble-end: 16 48% 40%;
 }
 
 html[data-vertical="beauty"][data-presentation="editorial"] .beauty-briefing-banner {
@@ -127,6 +191,23 @@ html[data-vertical="beauty"][data-presentation="premium-dark"] {
   --primary-foreground: 30 10% 8%;
   --beauty-gradient-start: 36 55% 62%;
   --beauty-gradient-end: 30 45% 42%;
+  --beauty-hairline: 36 55% 62% / 0.14;
+  --beauty-hairline-soft: 36 40% 50% / 0.1;
+  --beauty-surface-0: 30 8% 7%;
+  --beauty-surface-1: 30 10% 11%;
+  --beauty-surface-2: 30 9% 9%;
+  --beauty-surface-3: 30 8% 6%;
+  --beauty-surface-4: 30 10% 10%;
+  --beauty-surface-5: 30 12% 8%;
+  --beauty-shadow: 30 8% 0%;
+  --beauty-accent-glow: 36 55% 62%;
+  --beauty-accent-secondary: 30 45% 42%;
+  --beauty-elevated-shadow: 0 0% 0%;
+  --beauty-handoff-surface: 38 35% 14%;
+  --beauty-handoff-border: 38 40% 45%;
+  --beauty-handoff-text: 38 55% 88%;
+  --beauty-handoff-badge-text: 38 65% 75%;
+  --beauty-guest-bubble-end: 36 48% 38%;
 }
 
 html[data-vertical="beauty"][data-presentation="premium-dark"] .beauty-pending-hero {
@@ -152,30 +233,30 @@ html[data-vertical="beauty"] .app-shell-main .divide-border\/60 > :not([hidden])
   border-color: hsl(var(--beauty-hairline, var(--border) / 0.45));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-nav-item--active {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-nav-item--active {
   background: linear-gradient(
     100deg,
-    hsl(330 36% 38% / 0.62) 0%,
-    hsl(330 42% 52% / 0.22) 38%,
-    hsl(330 45% 72% / 0.06) 72%,
+    hsl(var(--primary) / 0.45) 0%,
+    hsl(var(--primary) / 0.18) 38%,
+    hsl(var(--primary) / 0.06) 72%,
     transparent 100%
   );
-  color: hsl(330 18% 94%);
-  box-shadow: inset 0 1px 0 hsl(330 45% 72% / 0.22);
+  color: hsl(var(--foreground));
+  box-shadow: inset 0 1px 0 hsl(var(--primary) / 0.22);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-nav-item:not(.beauty-nav-item--active):hover {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-nav-item:not(.beauty-nav-item--active):hover {
   background: hsl(var(--primary) / 0.07);
   color: hsl(var(--foreground));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-nav-item--active svg {
-  color: hsl(330 45% 78%);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-nav-item--active svg {
+  color: hsl(var(--primary));
 }
 
 html[data-vertical="beauty"] .beauty-sidebar-nav {
   scrollbar-width: thin;
-  scrollbar-color: hsl(330 45% 72% / 0.2) transparent;
+  scrollbar-color: hsl(var(--beauty-accent-glow) / 0.2) transparent;
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
@@ -247,55 +328,68 @@ html[data-vertical="beauty"] .beauty-operational-page h1 {
   letter-spacing: -0.02em;
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-operational-panel {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-operational-panel {
   border-color: hsl(var(--primary) / 0.18);
   background: linear-gradient(
     165deg,
     hsl(var(--card) / 0.92) 0%,
-    hsl(228 18% 11% / 0.96) 100%
+    hsl(var(--beauty-surface-1) / 0.96) 100%
   );
   box-shadow:
     0 1px 0 hsl(var(--primary) / 0.08),
-    0 20px 48px hsl(228 25% 4% / 0.45);
+    0 20px 48px hsl(var(--beauty-shadow) / 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-operational-panel [data-testid^="row-booking-"] {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-operational-panel [data-testid^="row-booking-"] {
   border-color: hsl(var(--border) / 0.65);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-operational-panel [data-testid^="row-booking-"]:hover {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-operational-panel [data-testid^="row-booking-"]:hover {
   background: hsl(var(--primary) / 0.06);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"]
+html[data-vertical="beauty"][data-beauty-native-skin]
   .beauty-operational-page
   button[data-testid="bookings-need-attention"].bg-primary {
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-op-list-scroll {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-op-list-scroll {
   max-height: min(70vh, 640px);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-html[data-presentation="noir-dusk"] button[role="switch"][data-state="unchecked"],
-html[data-presentation="premium-dark"] button[role="switch"][data-state="unchecked"] {
+html[data-beauty-native-skin][data-presentation="noir-dusk"] button[role="switch"][data-state="unchecked"],
+html[data-beauty-native-skin][data-presentation="premium-dark"] button[role="switch"][data-state="unchecked"] {
   background: hsl(var(--muted) / 0.85);
   border-color: hsl(var(--border) / 0.9);
-  box-shadow: inset 0 1px 2px hsl(228 25% 4% / 0.35);
+  box-shadow: inset 0 1px 2px hsl(var(--beauty-shadow) / 0.35);
 }
 
-html[data-presentation="noir-dusk"] button[role="switch"][data-state="unchecked"] span,
-html[data-presentation="premium-dark"] button[role="switch"][data-state="unchecked"] span {
+html[data-beauty-native-skin][data-presentation="noir-dusk"] button[role="switch"][data-state="unchecked"] span,
+html[data-beauty-native-skin][data-presentation="premium-dark"] button[role="switch"][data-state="unchecked"] span {
   background: hsl(0 0% 78%);
-  box-shadow: 0 1px 2px hsl(228 25% 4% / 0.4);
+  box-shadow: 0 1px 2px hsl(var(--beauty-shadow) / 0.4);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-op-row--attention {
+html[data-beauty-native-skin][data-presentation="soft-studio"] button[role="switch"][data-state="unchecked"],
+html[data-beauty-native-skin][data-presentation="editorial"] button[role="switch"][data-state="unchecked"] {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
+  box-shadow: inset 0 1px 2px hsl(var(--beauty-shadow) / 0.12);
+}
+
+html[data-beauty-native-skin][data-presentation="soft-studio"] button[role="switch"][data-state="unchecked"] span,
+html[data-beauty-native-skin][data-presentation="editorial"] button[role="switch"][data-state="unchecked"] span {
+  background: hsl(0 0% 100%);
+  box-shadow: 0 1px 2px hsl(var(--beauty-shadow) / 0.15);
+}
+
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-op-row--attention {
   border-left: 2px solid hsl(var(--primary) / 0.85);
   background: linear-gradient(
     90deg,
@@ -304,25 +398,25 @@ html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-op-row--atte
   );
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-operational-panel [data-testid^="row-customer-"]:hover,
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-operational-panel [data-testid^="row-staff-"]:hover {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-operational-panel [data-testid^="row-customer-"]:hover,
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-operational-panel [data-testid^="row-staff-"]:hover {
   background: hsl(var(--primary) / 0.06);
 }
 
-/* Inbox — match noir-dusk operational shell (no generic purple/violet chrome) */
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell {
+/* Inbox — native beauty skins (no generic purple/violet chrome) */
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell {
   background: linear-gradient(
     165deg,
     hsl(var(--card) / 0.92) 0%,
-    hsl(228 18% 11% / 0.96) 100%
+    hsl(var(--beauty-surface-1) / 0.96) 100%
   );
   border-color: hsl(var(--primary) / 0.18);
   box-shadow:
     0 1px 0 hsl(var(--primary) / 0.08),
-    0 20px 48px hsl(228 25% 4% / 0.45);
+    0 20px 48px hsl(var(--beauty-shadow) / 0.45);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell .beauty-inbox-thread--active {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell .beauty-inbox-thread--active {
   background: linear-gradient(
     90deg,
     hsl(var(--primary) / 0.12) 0%,
@@ -330,122 +424,122 @@ html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell 
   );
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell .border-t.border-border {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell .border-t.border-border {
   border-color: hsl(var(--border) / 0.65);
   background: hsl(var(--card) / 0.88);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-queue-lens {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-queue-lens {
   border-color: hsl(var(--primary) / 0.14);
-  background: hsl(228 18% 10% / 0.75);
+  background: hsl(var(--beauty-surface-4) / 0.75);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-queue-lens button[data-active="true"] {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-queue-lens button[data-active="true"] {
   background: hsl(var(--primary) / 0.14);
   border: 1px solid hsl(var(--primary) / 0.28);
   color: hsl(var(--foreground));
   box-shadow: 0 1px 0 hsl(var(--primary) / 0.1);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell .beauty-inbox-thread--active {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell .beauty-inbox-thread--active {
   border-right: 2px solid hsl(var(--primary) / 0.55);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell .beauty-inbox-avatar {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell .beauty-inbox-avatar {
   background: hsl(var(--muted) / 0.55);
   border-color: hsl(var(--border) / 0.75);
   color: hsl(var(--muted-foreground));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell [data-inbox-badge="liv"] {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell [data-inbox-badge="liv"] {
   background: hsl(var(--primary) / 0.12);
   color: hsl(var(--primary));
   border-color: hsl(var(--primary) / 0.28);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell [data-inbox-badge="handoff"] {
-  background: hsl(38 55% 48% / 0.14);
-  color: hsl(38 70% 78%);
-  border-color: hsl(38 45% 52% / 0.35);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell [data-inbox-badge="handoff"] {
+  background: hsl(var(--beauty-handoff-surface) / 0.55);
+  color: hsl(var(--beauty-handoff-badge-text));
+  border-color: hsl(var(--beauty-handoff-border) / 0.35);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-shell [data-inbox-badge="needs-you"] {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-shell [data-inbox-badge="needs-you"] {
   background: hsl(var(--primary) / 0.1);
   color: hsl(var(--primary));
   border-color: hsl(var(--primary) / 0.25);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-compose {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-compose {
   border-color: hsl(var(--border) / 0.65);
-  background: hsl(228 18% 9% / 0.95);
+  background: hsl(var(--beauty-surface-0) / 0.95);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-handoff-banner {
-  border-color: hsl(38 45% 52% / 0.35);
-  background: hsl(38 40% 14% / 0.55);
-  color: hsl(38 55% 88%);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-handoff-banner {
+  border-color: hsl(var(--beauty-handoff-border) / 0.35);
+  background: hsl(var(--beauty-handoff-surface) / 0.55);
+  color: hsl(var(--beauty-handoff-text));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-bubble--guest {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-bubble--guest {
   background: linear-gradient(
     135deg,
     hsl(var(--primary) / 0.95) 0%,
-    hsl(330 42% 42% / 0.98) 100%
+    hsl(var(--beauty-guest-bubble-end) / 0.98) 100%
   );
-  color: hsl(0 0% 98%);
+  color: hsl(var(--primary-foreground));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-bubble--liv {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-bubble--liv {
   background: hsl(var(--muted) / 0.55);
   border: 1px solid hsl(var(--border) / 0.55);
   color: hsl(var(--foreground));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-bubble--team {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-bubble--team {
   background: hsl(var(--card) / 0.9);
   border: 1px solid hsl(var(--primary) / 0.2);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-context-rail {
-  background: hsl(228 18% 9% / 0.65);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-context-rail {
+  background: hsl(var(--beauty-surface-0) / 0.65);
   border-color: hsl(var(--border) / 0.55);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-context-rail .beauty-inbox-context-card {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-context-rail .beauty-inbox-context-card {
   border-color: hsl(var(--primary) / 0.22);
   background: hsl(var(--primary) / 0.06);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-thread-pane,
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-conversation-pane {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-thread-pane,
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-conversation-pane {
   border-color: hsl(var(--border) / 0.55);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-inbox-messages {
-  background: hsl(228 20% 7% / 0.45);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-inbox-messages {
+  background: hsl(var(--beauty-surface-5) / 0.45);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .app-shell-main {
-  background-color: hsl(228 18% 9%);
+html[data-vertical="beauty"][data-beauty-native-skin] .app-shell-main {
+  background-color: hsl(var(--beauty-surface-0));
   background-image:
-    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(330 45% 72% / 0.16), transparent 58%),
-    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(280 30% 45% / 0.12), transparent),
-    linear-gradient(180deg, hsl(228 20% 12%) 0%, hsl(var(--background)) 10rem);
+    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(var(--beauty-accent-glow) / 0.16), transparent 58%),
+    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(var(--beauty-accent-secondary) / 0.12), transparent),
+    linear-gradient(180deg, hsl(var(--beauty-surface-1)) 0%, hsl(var(--background)) 10rem);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] aside.app-shell-sidebar,
-html[data-vertical="beauty"][data-presentation="noir-dusk"] aside.w-64 {
+html[data-vertical="beauty"][data-beauty-native-skin] aside.app-shell-sidebar,
+html[data-vertical="beauty"][data-beauty-native-skin] aside.w-64 {
   position: relative;
   background: linear-gradient(
     180deg,
-    hsl(228 18% 11%) 0%,
-    hsl(228 17% 8%) 55%,
-    hsl(228 16% 7%) 100%
+    hsl(var(--beauty-surface-1)) 0%,
+    hsl(var(--beauty-surface-2)) 55%,
+    hsl(var(--beauty-surface-3)) 100%
   );
-  border-right: 1px solid hsl(330 45% 72% / 0.14);
+  border-right: 1px solid hsl(var(--beauty-accent-glow) / 0.14);
   box-shadow:
-    1px 0 0 hsl(330 45% 72% / 0.06),
-    4px 0 32px hsl(228 25% 4% / 0.35);
+    1px 0 0 hsl(var(--beauty-accent-glow) / 0.06),
+    4px 0 32px hsl(var(--beauty-shadow) / 0.35);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -459,24 +553,12 @@ html[data-vertical="beauty"] .beauty-sidebar-nav {
   padding-bottom: 0.25rem;
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] [data-testid="sidebar-nav"] [data-testid^="nav-"] {
+html[data-vertical="beauty"][data-beauty-native-skin] [data-testid="sidebar-nav"] [data-testid^="nav-"] {
   border-radius: 0.625rem;
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-briefing-banner {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-briefing-banner {
   border-bottom-color: hsl(var(--beauty-hairline-soft));
-}
-
-html[data-vertical="beauty"][data-presentation="soft-studio"] .app-shell-main {
-  background-color: hsl(var(--background));
-  background-image:
-    radial-gradient(ellipse 70% 45% at 80% -10%, hsl(330 81% 60% / 0.08), transparent),
-    linear-gradient(180deg, hsl(330 40% 96%) 0%, hsl(var(--background)) 8rem);
-}
-
-html[data-vertical="beauty"][data-presentation="editorial"] .app-shell-main {
-  background-color: hsl(var(--background));
-  background-image: linear-gradient(180deg, hsl(40 33% 95%) 0%, hsl(var(--background)) 10rem);
 }
 
 /* ── W4: owner dashboard ── */
@@ -503,17 +585,17 @@ html[data-vertical="beauty"] .beauty-briefing-banner {
   box-shadow: 0 4px 24px hsl(var(--primary) / 0.06);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-briefing-banner {
-  border-color: hsl(330 45% 72% / 0.28);
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-briefing-banner {
+  border-color: hsl(var(--beauty-accent-glow) / 0.28);
   background: linear-gradient(
     100deg,
-    hsl(330 45% 72% / 0.2) 0%,
-    hsl(228 18% 14% / 0.92) 42%,
+    hsl(var(--beauty-accent-glow) / 0.2) 0%,
+    hsl(var(--beauty-surface-1) / 0.92) 42%,
     hsl(var(--card)) 100%
   );
   box-shadow:
-    0 12px 40px hsl(0 0% 0% / 0.35),
-    inset 0 1px 0 hsl(330 45% 72% / 0.12);
+    0 12px 40px hsl(var(--beauty-elevated-shadow) / 0.22),
+    inset 0 1px 0 hsl(var(--beauty-accent-glow) / 0.12);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -536,10 +618,10 @@ html[data-vertical="beauty"] .beauty-briefing-icon {
   color: hsl(var(--primary));
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] .beauty-briefing-icon {
+html[data-vertical="beauty"][data-beauty-native-skin] .beauty-briefing-icon {
   box-shadow:
-    0 0 28px hsl(330 45% 72% / 0.35),
-    inset 0 0 12px hsl(330 45% 72% / 0.15);
+    0 0 28px hsl(var(--beauty-accent-glow) / 0.35),
+    inset 0 0 12px hsl(var(--beauty-accent-glow) / 0.15);
 }
 
 html[data-vertical="beauty"] .beauty-briefing-banner .beauty-briefing-tip {
@@ -590,8 +672,8 @@ html[data-vertical="beauty"] [data-testid="owner-kpi-row"] .beauty-kpi-card {
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] [data-testid="owner-kpi-row"] .beauty-kpi-card {
-  box-shadow: 0 6px 24px hsl(0 0% 0% / 0.28);
+html[data-vertical="beauty"][data-beauty-native-skin] [data-testid="owner-kpi-row"] .beauty-kpi-card {
+  box-shadow: 0 6px 24px hsl(var(--beauty-elevated-shadow) / 0.22);
 }
 
 html[data-vertical="beauty"] [data-testid="owner-kpi-row"] .beauty-kpi-card:hover {
@@ -599,8 +681,8 @@ html[data-vertical="beauty"] [data-testid="owner-kpi-row"] .beauty-kpi-card:hove
   box-shadow: 0 8px 24px hsl(var(--primary) / 0.08);
 }
 
-html[data-vertical="beauty"][data-presentation="noir-dusk"] [data-testid="owner-kpi-row"] .beauty-kpi-card:hover {
-  box-shadow: 0 10px 32px hsl(330 45% 72% / 0.12);
+html[data-vertical="beauty"][data-beauty-native-skin] [data-testid="owner-kpi-row"] .beauty-kpi-card:hover {
+  box-shadow: 0 10px 32px hsl(var(--beauty-accent-glow) / 0.12);
 }
 
 html[data-vertical="beauty"] .beauty-kpi-view-link {
@@ -662,7 +744,7 @@ html[data-vertical="beauty"] .beauty-skin-surface button.border-primary-border:n
   );
   color: hsl(var(--primary-foreground));
   border: none;
-  box-shadow: 0 2px 14px hsl(330 45% 72% / 0.22);
+  box-shadow: 0 2px 14px hsl(var(--beauty-accent-glow) / 0.22);
 }
 
 html[data-vertical="beauty"] .beauty-skin-surface button.border-primary-border:not(:disabled):not([data-skin="off"]):hover {
@@ -768,24 +850,27 @@ html[data-vertical="beauty"] [data-testid="owner-home-ritual"] > *:nth-child(4) 
   color: hsl(var(--primary) / 0.7);
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell {
-  background-color: hsl(228 18% 9%);
+html[data-beauty-native-skin] .beauty-public-shell {
+  background-color: hsl(var(--beauty-surface-0));
   background-image:
-    radial-gradient(ellipse 90% 60% at 50% -15%, hsl(330 45% 72% / 0.1), transparent 55%),
-    linear-gradient(180deg, hsl(228 22% 11%) 0%, hsl(228 18% 9%) 8rem);
+    radial-gradient(ellipse 90% 60% at 50% -15%, hsl(var(--beauty-accent-glow) / 0.1), transparent 55%),
+    linear-gradient(180deg, hsl(var(--beauty-surface-1)) 0%, hsl(var(--beauty-surface-0)) 8rem);
   min-height: 100dvh;
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell .public-book-storefront {
+html[data-beauty-native-skin][data-presentation="noir-dusk"] .beauty-public-shell .public-book-storefront,
+html[data-beauty-native-skin][data-presentation="premium-dark"] .beauty-public-shell .public-book-storefront {
   margin-left: -1rem;
   margin-right: -1rem;
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell [data-testid="public-storefront-hero"] {
+html[data-beauty-native-skin][data-presentation="noir-dusk"] .beauty-public-shell [data-testid="public-storefront-hero"],
+html[data-beauty-native-skin][data-presentation="premium-dark"] .beauty-public-shell [data-testid="public-storefront-hero"] {
   border-radius: 0;
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell [data-testid="public-storefront-hero"] .relative.h-\[min\(220px\] {
+html[data-beauty-native-skin][data-presentation="noir-dusk"] .beauty-public-shell [data-testid="public-storefront-hero"] .relative.h-\[min\(220px\],
+html[data-beauty-native-skin][data-presentation="premium-dark"] .beauty-public-shell [data-testid="public-storefront-hero"] .relative.h-\[min\(220px\] {
   min-height: 200px;
   height: min(42vh, 280px);
 }
@@ -880,12 +965,12 @@ html[data-presentation="noir-dusk"] .beauty-public-shell [data-testid="public-st
   background: linear-gradient(270deg, hsl(var(--background) / 0.95), transparent);
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell .public-staff-scroll--fade::before {
-  background: linear-gradient(90deg, hsl(228 18% 9% / 0.95), transparent);
+html[data-beauty-native-skin] .beauty-public-shell .public-staff-scroll--fade::before {
+  background: linear-gradient(90deg, hsl(var(--beauty-surface-0) / 0.95), transparent);
 }
 
-html[data-presentation="noir-dusk"] .beauty-public-shell .public-staff-scroll--fade::after {
-  background: linear-gradient(270deg, hsl(228 18% 9% / 0.95), transparent);
+html[data-beauty-native-skin] .beauty-public-shell .public-staff-scroll--fade::after {
+  background: linear-gradient(270deg, hsl(var(--beauty-surface-0) / 0.95), transparent);
 }
 
 .beauty-service-card-title {
@@ -989,18 +1074,13 @@ html[data-presentation="editorial"] .beauty-service-card {
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.4);
 }
 
-/* Sidebar lockup — stable rose gold on every beauty preset */
+/* Sidebar lockup — accent per preset */
 html[data-vertical="beauty"] .beauty-lockup-livia {
-  color: hsl(330 45% 78%);
+  color: hsl(var(--beauty-accent-glow));
 }
 
 html[data-vertical="beauty"] .beauty-lockup-studio {
   color: hsl(var(--muted-foreground));
-}
-
-html[data-vertical="beauty"][data-presentation="soft-studio"] .beauty-lockup-livia,
-html[data-vertical="beauty"][data-presentation="editorial"] .beauty-lockup-livia {
-  color: hsl(330 70% 48%);
 }
 
 /* Store appearance → app preview iframe */
@@ -1009,12 +1089,7 @@ html.appearance-preview-embed body {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
-  background: hsl(228 20% 8%);
-}
-
-html.appearance-preview-embed[data-presentation="noir-dusk"] body,
-html.appearance-preview-embed[data-presentation="premium-dark"] body {
-  background: hsl(228 20% 8%);
+  background: hsl(var(--background));
 }
 
 .appearance-preview-page {
@@ -1072,13 +1147,12 @@ html.appearance-embed-dashboard .app-shell-main {
   height: auto !important;
 }
 
-html.appearance-embed-dashboard[data-vertical="beauty"][data-presentation="noir-dusk"] .app-shell-main,
-html.appearance-embed-dashboard[data-vertical="beauty"][data-presentation="premium-dark"] .app-shell-main {
-  background-color: hsl(228 20% 8%);
+html.appearance-embed-dashboard[data-vertical="beauty"][data-beauty-native-skin] .app-shell-main {
+  background-color: hsl(var(--beauty-surface-0));
   background-image:
-    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(330 45% 72% / 0.14), transparent 58%),
-    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(280 30% 45% / 0.1), transparent),
-    linear-gradient(180deg, hsl(228 22% 11%) 0%, hsl(var(--background)) 10rem);
+    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(var(--beauty-accent-glow) / 0.14), transparent 58%),
+    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(var(--beauty-accent-secondary) / 0.1), transparent),
+    linear-gradient(180deg, hsl(var(--beauty-surface-1)) 0%, hsl(var(--background)) 10rem);
 }
 
 .appearance-preview-today {
@@ -1089,17 +1163,14 @@ html.appearance-preview-embed .appearance-preview-canvas-inner .app-shell-main {
   min-height: 520px;
 }
 
-html.appearance-preview-embed[data-vertical="beauty"][data-presentation="noir-dusk"]
-  .appearance-preview-canvas-inner
-  .app-shell-main,
-html.appearance-preview-embed[data-vertical="beauty"][data-presentation="premium-dark"]
+html.appearance-preview-embed[data-vertical="beauty"][data-beauty-native-skin]
   .appearance-preview-canvas-inner
   .app-shell-main {
-  background-color: hsl(228 20% 8%);
+  background-color: hsl(var(--beauty-surface-0));
   background-image:
-    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(330 45% 72% / 0.14), transparent 58%),
-    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(280 30% 45% / 0.1), transparent),
-    linear-gradient(180deg, hsl(228 22% 11%) 0%, hsl(var(--background)) 10rem);
+    radial-gradient(ellipse 100% 70% at 50% -25%, hsl(var(--beauty-accent-glow) / 0.14), transparent 58%),
+    radial-gradient(ellipse 50% 35% at 100% 20%, hsl(var(--beauty-accent-secondary) / 0.1), transparent),
+    linear-gradient(180deg, hsl(var(--beauty-surface-1)) 0%, hsl(var(--background)) 10rem);
 }
 
 .preview-iframe-scroll-host {

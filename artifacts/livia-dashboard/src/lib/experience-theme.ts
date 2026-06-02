@@ -3,6 +3,7 @@ import { applyVerticalTheme, clearVerticalTheme, VERTICAL_THEMES } from "./verti
 import { applyMarketTheme, clearMarketTheme, MARKET_SKINS } from "./market-theme";
 import { PERSONA_ACCENT, type PersonaKind } from "./persona";
 import { resolveJurisdictionCode, resolveVerticalKey } from "@workspace/policy";
+import { BEAUTY_CSS_PRESETS } from "./presentation-layout";
 
 /** Maps W4/W5 cssPreset → document color scheme (must match policy preset tokens). */
 const PRESENTATION_COLOR_MODE: Record<string, "light" | "dark"> = {
@@ -104,6 +105,14 @@ export function applyPresentationTheme(args: {
     root.dataset.presentation = args.cssPreset;
   } else {
     delete root.dataset.presentation;
+  }
+  if (
+    args.cssPreset &&
+    (BEAUTY_CSS_PRESETS as readonly string[]).includes(args.cssPreset)
+  ) {
+    root.dataset.beautyNativeSkin = "1";
+  } else {
+    delete root.dataset.beautyNativeSkin;
   }
   if (args.brandAccentHex) {
     root.style.setProperty("--brand-accent", args.brandAccentHex);
