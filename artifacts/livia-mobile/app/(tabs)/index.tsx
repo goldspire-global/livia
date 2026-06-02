@@ -4,6 +4,7 @@ import {
   useGetBusiness,
   useGetDashboardSummary,
   useListBookings,
+  useListConversations,
   useUpdateBooking,
 } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
@@ -63,9 +64,11 @@ import { useChainRollup } from "@/hooks/useChainRollup";
 import { VerticalTodayInsights } from "@/components/VerticalTodayInsights";
 import { VerticalHomeShortcuts } from "@/components/VerticalHomeShortcuts";
 import { LivProposalsCard } from "@/components/LivProposalsCard";
+import { BeautyTodayHandoffStrip } from "@/components/beauty/BeautyTodayHandoffStrip";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { isBeautyPublicSurface } from "@/lib/beauty-public";
+import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
 
 function timeOfDayGreeting(nowMs: number, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -241,6 +244,22 @@ export default function DashboardScreen() {
     tenantExperience as { presentation?: { cssPreset?: string; label?: string } } | null | undefined
   )?.presentation;
   const beautyOwner = isBeautyPublicSurface(vertical, beautyPreset?.cssPreset);
+  const { layout: beautyLayout, lightChrome: beautyLight } = useBeautyMobileLayout();
+
+  const { data: convData } = useListConversations(
+    currentBusiness?.id ?? "",
+    undefined,
+    {
+      query: {
+        enabled: !!currentBusiness?.id && beautyLayout === "premium-glow",
+        staleTime: 60_000,
+      } as never,
+    },
+  );
+  const handoffCount = useMemo(() => {
+    const threads = Array.isArray(convData) ? convData : [];
+    return threads.filter((t) => t.status === "OPEN" && !t.aiHandled).length;
+  }, [convData]);
 
   const { data: pendingData } = useListBookings(
     currentBusiness?.id ?? "",
@@ -345,9 +364,11 @@ export default function DashboardScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      <Animated.View pointerEvents="none" style={[styles.glowWrap, refreshHaloStyle]}>
-        <AuroraHalo tone="primary" size={420} style={{ top: -160, left: -100 }} intensity={1} />
-      </Animated.View>
+      {!beautyLight ? (
+        <Animated.View pointerEvents="none" style={[styles.glowWrap, refreshHaloStyle]}>
+          <AuroraHalo tone="primary" size={420} style={{ top: -160, left: -100 }} intensity={1} />
+        </Animated.View>
+      ) : null}
 
       <ActivationWelcome />
 
@@ -408,6 +429,10 @@ export default function DashboardScreen() {
         </Pressable>
       ) : null}
 
+      {beautyLayout === "premium-glow" ? (
+        <BeautyTodayHandoffStrip handoffCount={handoffCount} pendingCount={pendingCount} />
+      ) : null}
+
       {pendingCount > 0 ? (
         <View
           style={[
@@ -415,7 +440,7 @@ export default function DashboardScreen() {
             beautyOwner && {
               borderWidth: 1,
               borderColor: colors.primary + "44",
-              borderRadius: 16,
+              borderRadius: beautyLayout === "editorial-menu" ? 8 : 16,
               padding: 12,
               backgroundColor: colors.card,
             },
@@ -436,34 +461,73 @@ export default function DashboardScreen() {
           <Text style={[styles.pendingLede, { color: colors.mutedForeground }]}>
             Liv only asks when a rule needs you — each item explains why and what to do next.
           </Text>
-          {pendingPreview.map((b, i) => {
-            const reason = (b as { pendingReason?: string | null }).pendingReason;
-            const reasonLine = pendingReasonLabel(reason);
-            const guide = pendingApprovalGuidance(reason);
-            return (
-              <View
-                key={b.id}
-                style={[
-                  styles.pendingCard,
-                  { backgroundColor: colors.card, borderColor: colors.warning + "55" },
-                ]}
-              >
-                <BookingCard
-                  booking={b}
-                  timeZone={currentBusiness?.timezone}
-                  showDate
-                  index={i}
-                  onPress={() => router.push(`/booking/${b.id}`)}
-                />
-                {reasonLine ? (
-                  <Text style={[styles.pendingWhy, { color: colors.warning }]}>{reasonLine}</Text>
-                ) : null}
-                <Text style={[styles.pendingGuide, { color: colors.mutedForeground }]} numberOfLines={2}>
-                  {guide}
-                </Text>
-              </View>
-            );
-          })}
+          {beautyLayout === "premium-glow" ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.pendingScroll}
+            >
+              {pendingPreview.map((b, i) => (
+                <View
+                  key={b.id}
+                  style={[
+                    styles.pendingCardWide,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.primary + "44",
+                    },
+                  ]}
+                >
+                  <BookingCard
+                    booking={b}
+                    timeZone={currentBusiness?.timezone}
+                    showDate
+                    index={i}
+                    onPress={() => router.push(`/booking/${b.id}`)}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            pendingPreview.map((b, i) => {
+              const reason = (b as { pendingReason?: string | null }).pendingReason;
+              const reasonLine = pendingReasonLabel(reason);
+              const guide = pendingApprovalGuidance(reason);
+              return (
+                <View
+                  key={b.id}
+                  style={[
+                    styles.pendingCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor:
+                        beautyLayout === "editorial-menu"
+                          ? colors.border
+                          : colors.warning + "55",
+                    },
+                    beautyLayout === "editorial-menu" && styles.pendingCardEditorial,
+                  ]}
+                >
+                  <BookingCard
+                    booking={b}
+                    timeZone={currentBusiness?.timezone}
+                    showDate
+                    index={i}
+                    onPress={() => router.push(`/booking/${b.id}`)}
+                  />
+                  {reasonLine ? (
+                    <Text style={[styles.pendingWhy, { color: colors.warning }]}>{reasonLine}</Text>
+                  ) : null}
+                  <Text
+                    style={[styles.pendingGuide, { color: colors.mutedForeground }]}
+                    numberOfLines={2}
+                  >
+                    {guide}
+                  </Text>
+                </View>
+              );
+            })
+          )}
           {pendingHidden > 0 ? (
             <Pressable onPress={goPending}>
               <Text style={[styles.pendingLink, { color: colors.primary, marginTop: 4 }]}>
@@ -568,12 +632,21 @@ export default function DashboardScreen() {
               onPress={(summary?.pendingCount ?? 0) > 0 ? goPending : undefined}
               hint={(summary?.pendingCount ?? 0) > 0 ? "Tap to review" : undefined}
             />
-            <StatsCard
-              label="Done"
-              value={summary?.completedTodayCount ?? 0}
-              color={colors.success}
-              index={2}
-            />
+            {beautyLayout !== "premium-glow" ? (
+              <StatsCard
+                label="Done"
+                value={summary?.completedTodayCount ?? 0}
+                color={colors.success}
+                index={2}
+              />
+            ) : (
+              <StatsCard
+                label="Confirmed"
+                value={summary?.confirmedCount ?? 0}
+                color={colors.primary}
+                index={2}
+              />
+            )}
           </>
         )}
       </View>
@@ -765,4 +838,14 @@ const styles = StyleSheet.create({
   pendingHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   pendingTitle: { fontFamily: fonts.bodySemi, fontSize: 16 },
   pendingLink: { fontFamily: fonts.bodySemi, fontSize: 13 },
+  pendingScroll: { gap: 12, paddingVertical: 4, paddingRight: 8 },
+  pendingCardWide: {
+    width: 280,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  pendingCardEditorial: {
+    borderRadius: 8,
+  },
 });

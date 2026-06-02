@@ -1,0 +1,45 @@
+meta:
+  id: w2.gateway.demo.enter.web
+  world: W2
+  route: "/demo/wedge/:vertical"
+  artifact: livia-dashboard
+  persona: [Prospect]
+  release: R1
+  status: designed
+
+job: >
+  After beat 4 — same G2 gold card grows; user taps a role tile and Clerk demo ticket
+  runs immediately (no separate Enter CTA).
+
+visual:
+  canvas:
+    device: responsive
+    viewport: 1440x900
+    background: infused aurora (inherits G2)
+  zones:
+    - id: fused_card_enter
+      content:
+        - inherits g2-wedge-story card shell
+        - beat 4 crop in well (Today)
+        - 2×2 role tiles — tap proceeds
+        - no footer Enter button
+        - hint "Tap a role to enter the live demo"
+    - id: carousel_chrome
+      content:
+        - 4 dots all lit
+        - back "← Back to story"
+  interaction:
+    role_tile_click: immediate demo sign-in (Clerk ticket)
+  northstarRealPath: docs/design/assets/w2-gateway/demo/g3-demo-enter.target.png
+
+acceptance:
+  e2e:
+    - wedge story ends on role grid; click owner lands dashboard
+  visual:
+    - baseline: g3-demo-enter.target.png (locked — G3-A, no enter button)
+
+traceability:
+  surfaceId: gateway.demo.enter
+  figma:
+    frame: W2/w2.gateway.demo.enter.web
+    status: not_started

@@ -1,0 +1,54 @@
+meta:
+  id: w2.gateway.sign-in.mobile
+  world: W2
+  route: "/sign-in"
+  artifact: livia-dashboard
+  persona: [All tenant users]
+  release: R1
+  status: designed
+
+job: >
+  Clerk sign-in on phone — same Liv colleague story as desktop, stacked: story → briefing → auth.
+
+visual:
+  canvas:
+    device: phone
+    viewport: 390x844
+    background: aurora gateway gradient — full bleed
+  zones:
+    - id: header
+      height: 56px
+      content:
+        - Livia wordmark left
+        - join beta or demo launcher link right
+    - id: story_stack
+      content:
+        - eyebrow "Your people-business OS" 11px uppercase tracking accent
+        - headline serif "Tuesday morning," champagne + "handled." foreground
+        - body 2 lines — Livia company / Liv colleague (condensed vs desktop)
+        - Liv briefing glass card — 2 lines + label
+    - id: clerk_panel
+      content:
+        - Clerk SignIn themed cyan primary
+        - email continue flow
+        - link to sign-up below
+      layout: full width card max-w-md centered padding 20px
+  motion:
+    enter: fade 280ms
+  northstarRealPath: docs/design/assets/w2-gateway/sign-in/gateway-default-mobile.target.png
+
+states:
+  error_auth:
+    clerk: inline errors
+
+acceptance:
+  e2e:
+    - demo login flows DEMO-LOGINS.md (viewport 390×844)
+  visual:
+    - baseline: docs/design/assets/w2-gateway/sign-in/gateway-default-mobile.target.png
+
+traceability:
+  surfaceId: gateway.sign-in
+  figma:
+    frame: W2/w2.gateway.sign-in.mobile
+    status: not_started

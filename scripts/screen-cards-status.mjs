@@ -4,7 +4,7 @@
  *
  *   pnpm screen-cards:status
  */
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -25,13 +25,27 @@ const pngIds = readdirSync(pngDir)
 const pngSet = new Set(pngIds);
 const yamlSet = new Set(yamlIds);
 
-const missingPng = yamlIds.filter((id) => !pngSet.has(id));
+function northstarRealPathFromYaml(id) {
+  const text = readFileSync(join(yamlDir, `${id}.yaml`), "utf8");
+  const real = text.match(/^\s*northstarRealPath:\s*(.+)\s*$/m);
+  if (real) return real[1].trim();
+  const legacy = text.match(/^\s*baseline_png:\s*(.+)\s*$/m);
+  return legacy ? legacy[1].trim() : null;
+}
+
+function hasBaseline(id) {
+  if (pngSet.has(id)) return true;
+  const rel = northstarRealPathFromYaml(id);
+  return rel ? existsSync(join(root, rel)) : false;
+}
+
+const missingPng = yamlIds.filter((id) => !hasBaseline(id));
 const orphanPng = pngIds.filter((id) => !yamlSet.has(id));
 
 console.log("\n══ Screen cards status ══\n");
 console.log(`YAML specs:    ${yamlIds.length}`);
 console.log(`PNG baselines: ${pngIds.length}`);
-console.log(`With both:     ${yamlIds.filter((id) => pngSet.has(id)).length}`);
+console.log(`With both:     ${yamlIds.filter((id) => hasBaseline(id)).length}`);
 console.log(`YAML only:     ${missingPng.length} (need capture)`);
 console.log(`PNG only:      ${orphanPng.length}\n`);
 

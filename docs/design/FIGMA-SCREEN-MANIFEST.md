@@ -56,10 +56,12 @@
 | w4m.notifications.mobile | w4m.notifications.mobile | ✅ northstar |
 | w4m.founder.shops.mobile | w4m.founder.shops.mobile | ✅ fallback v1 |
 | w2.gateway.sign-in.web | w2.gateway.sign-in.web | ✅ northstar |
+| w2.gateway.sign-in.mobile | w2.gateway.sign-in.mobile | ✅ northstar |
 | w2.gateway.onboarding.web | w2.gateway.onboarding.web | ✅ Figma export |
 | w2.gateway.legal-accept.web | w2.gateway.legal-accept.web | ✅ Figma export |
-| w2.gateway.demo.launcher.web | w2.gateway.demo.launcher.web | ✅ northstar |
-| w2.gateway.demo.wedge.web | w2.gateway.demo.wedge.web | ✅ northstar |
+| w2.gateway.demo.launcher.web | g1-wedge-web.target.png | ✅ locked (G1) |
+| w2.gateway.demo.wedge.web | g2-wedge-story.target.png | ✅ locked 2026-06-02 |
+| w2.gateway.demo.enter.web | g3-demo-enter.target.png | ✅ locked 2026-06-02 |
 | w1.marketing.home.web | w1.marketing.home.web | ✅ northstar |
 | w1.marketing.pricing.web | w1.marketing.pricing.web | ✅ northstar |
 | w3.support.thread.web | w3.support.thread.web | ✅ northstar |

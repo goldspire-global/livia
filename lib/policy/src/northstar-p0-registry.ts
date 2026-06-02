@@ -1,14 +1,20 @@
 /**
  * P0 visual baselines — evolution northstars + per-screen-card PNGs.
  * Screen-card PNGs *are* the northstar when no separate mock exists.
+ * Locked W2/W1 targets may live under `docs/design/assets/w2-gateway/` etc. — use `northstarRealPath`.
  * @see docs/design/G-VISUAL-NORTHSTAR-MAP.md
  * @see docs/design/screen-cards/README.md
  */
 
+import { resolve } from "node:path";
+
 export type NorthstarP0Entry = {
   screenId: string;
   route: string;
+  /** Filename under SCREEN_CARD_BASELINE_DIR when northstarRealPath is unset. */
   northstarFile: string;
+  /** Repo-relative path to the canonical PNG (not under assets/screen-cards/). */
+  northstarRealPath?: string;
   viewport: { width: number; height: number };
   /** Demo slug override (default luxe-salon-spa). */
   demoSlug?: string;
@@ -54,6 +60,16 @@ export const TENANT_NORTHSTAR_P0: NorthstarP0Entry[] = [
 export const NORTHSTAR_PUBLIC_DIR = "artifacts/livia-dashboard/public/livia-evolution/northstar";
 export const NORTHSTAR_DOCS_DIR = "docs/design/assets/livia-evolution/northstar";
 export const SCREEN_CARD_BASELINE_DIR = "docs/design/assets/screen-cards";
+
+export function resolveNorthstarRealPath(repoRoot: string, entry: NorthstarP0Entry): string {
+  if (entry.northstarRealPath) {
+    return resolve(repoRoot, entry.northstarRealPath);
+  }
+  return resolve(repoRoot, SCREEN_CARD_BASELINE_DIR, entry.northstarFile);
+}
+
+/** @deprecated Use resolveNorthstarRealPath */
+export const resolveNorthstarBaselinePath = resolveNorthstarRealPath;
 
 /**
  * Per-screen PNG baselines under `docs/design/assets/screen-cards/`.
@@ -132,7 +148,8 @@ export const SCREEN_CARD_P0: NorthstarP0Entry[] = [
   {
     screenId: "w2.gateway.sign-in.web",
     route: "/sign-in",
-    northstarFile: "w2.gateway.sign-in.web.png",
+    northstarFile: "gateway-default.target.png",
+    northstarRealPath: "docs/design/assets/w2-gateway/sign-in/gateway-default.target.png",
     viewport: { width: 1280, height: 800 },
     auth: "gateway",
     maxDiffPixelRatio: 0.5,
@@ -140,7 +157,8 @@ export const SCREEN_CARD_P0: NorthstarP0Entry[] = [
   {
     screenId: "w2.gateway.demo.launcher.web",
     route: "/demo",
-    northstarFile: "w2.gateway.demo.launcher.web.png",
+    northstarFile: "g1-wedge-web.target.png",
+    northstarRealPath: "docs/design/assets/w2-gateway/demo/g1-wedge-web.target.png",
     viewport: { width: 1440, height: 900 },
     auth: "gateway",
     maxDiffPixelRatio: 0.55,
@@ -148,7 +166,17 @@ export const SCREEN_CARD_P0: NorthstarP0Entry[] = [
   {
     screenId: "w2.gateway.demo.wedge.web",
     route: "/demo/wedge/beauty",
-    northstarFile: "w2.gateway.demo.wedge.web.png",
+    northstarFile: "g2-wedge-story.target.png",
+    northstarRealPath: "docs/design/assets/w2-gateway/demo/g2-wedge-story.target.png",
+    viewport: { width: 1440, height: 900 },
+    auth: "gateway",
+    maxDiffPixelRatio: 0.55,
+  },
+  {
+    screenId: "w2.gateway.demo.enter.web",
+    route: "/demo/wedge/beauty",
+    northstarFile: "g3-demo-enter.target.png",
+    northstarRealPath: "docs/design/assets/w2-gateway/demo/g3-demo-enter.target.png",
     viewport: { width: 1440, height: 900 },
     auth: "gateway",
     maxDiffPixelRatio: 0.55,

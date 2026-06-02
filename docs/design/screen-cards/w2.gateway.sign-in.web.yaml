@@ -8,20 +8,21 @@ meta:
   status: designed
 
 job: >
-  Clerk sign-in — gateway aurora W2 — calm, premium, routes to correct persona home.
+  Clerk sign-in — gateway aurora W2 — Liv colleague story left, auth right; routes to correct persona home.
 
 visual:
   canvas:
     device: responsive
     viewport: 390x844 minimum
-    background: aurora gateway gradient subtle — split layout desktop
+    background: aurora gateway gradient — split layout desktop
   zones:
     - id: brand_panel
-      visible: desktop left 50%
+      visible: desktop left ~50%
       content:
-        - Livia mark
-        - tagline people-business one line
-        - optional rotating vertical crop screenshot
+        - Livia mark + eyebrow "Your people-business OS"
+        - headline "Tuesday morning, handled."
+        - subcopy one line — continuity / colleague framing (not salon-shaped)
+        - Liv briefing card — calm operator tone, 2–3 lines + soft CTA chip
     - id: clerk_panel
       content:
         - Clerk SignIn component themed cyan primary ADR
@@ -30,6 +31,7 @@ visual:
       max_width: 400px centered
   motion:
     enter: fade 300ms
+  northstarRealPath: docs/design/assets/w2-gateway/sign-in/gateway-default.target.png
 
 states:
   error_auth:
@@ -39,7 +41,7 @@ acceptance:
   e2e:
     - demo login flows DEMO-LOGINS.md
   visual:
-    - baseline: final-gateway-g3-sign-in.png
+    - baseline: docs/design/assets/w2-gateway/sign-in/gateway-default.target.png
 
 traceability:
   surfaceId: gateway.sign-in

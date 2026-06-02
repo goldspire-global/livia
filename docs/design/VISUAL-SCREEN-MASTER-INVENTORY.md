@@ -51,7 +51,7 @@
 | w2.gateway.legal-accept | `/legal-acceptance` | Owner | ✅ | ✅ | — | onboarding |
 | w2.gateway.onboarding | `/onboarding` | Owner | ✅ | ✅ | — | onboarding |
 | w2.gateway.demo.launcher | `/demo` | Prospect | ✅ | ✅ | G1 grid | full-platform-demo |
-| w2.gateway.demo.wedge | `/demo/wedge/:vertical` | Prospect | ✅ | ✅ | G1 tattoo | wedge-smoke |
+| w2.gateway.demo.wedge | `/demo/wedge/:vertical` | Prospect | ✅ | ✅ | g2-wedge-story | wedge-smoke |
 | w2.gateway.demo.persona | `/demo/:persona` | Prospect | | 📋 | — | demo-personas |
 | w2.gateway.guides | `/guides` | Internal QA | | 📋 | — | — |
 
@@ -110,7 +110,7 @@
 | w4m.settings | `/settings` | All | | 📋 | — | — |
 | w4m.onboarding | `/onboarding` | Owner | ✅ | 📋 | — | — |
 | w4m.onboarding.setup | `/onboarding-setup` | Owner | | 📋 | — | — |
-| w4m.sign-in | `/sign-in` | All | | 📋 | — | — |
+| w2.gateway.sign-in.mobile | `/sign-in` | All | ✅ | ✅ | mobile target | auth-smoke |
 | w4m.design-proofs | `/design-proofs` | body-art | | 📋 | — | — |
 | w4m.clinical-hub | `/clinical-hub` | medspa | | 📋 | — | — |
 | w4m.founder.cockpit | `/founder/cockpit` | P1 | | 📋 | — | — |

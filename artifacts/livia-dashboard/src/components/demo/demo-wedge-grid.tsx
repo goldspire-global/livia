@@ -28,11 +28,10 @@ export function DemoWedgeGrid({ className }: { className?: string }) {
         id="demo-wedge-grid-title"
         className="text-xs font-mono uppercase tracking-widest text-white/40 mb-1"
       >
-        1 · Pick your trade
+        G1 · Pick your world
       </h2>
       <p className="text-sm text-white/55 mb-4 max-w-xl">
-        People-business OS for every appointment trade — short story, then enter the live demo.
-        Start with body art, medspa, or wellness — not salon-only.
+        Beauty is live for staging — more trades unlock as their demo stories ship.
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
         {verticals.map((v, i) => {
@@ -41,7 +40,6 @@ export function DemoWedgeGrid({ className }: { className?: string }) {
           const badge = tierBadge(v);
           const featured = i < 3;
           const isUnlocked = unlocked.has(v);
-          const CardTag: "a" | "div" = isUnlocked ? "a" : "div";
           return (
             <Link
               key={v}

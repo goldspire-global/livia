@@ -18,9 +18,11 @@
 | w4.ops.inbox.web | `platform-surfaces/final-tenant-dashboard-inbox.png` | ✅ |
 | w4.ops.design-proofs.web | `livia-evolution/northstar/tenant-proofs-web.png` | ✅ |
 | w4m.notifications.mobile | `livia-evolution/northstar/tenant-inbox-mobile.png` | ✅ |
-| w2.gateway.sign-in.web | `platform-surfaces/final-gateway-g3-sign-in.png` | ✅ |
-| w2.gateway.demo.launcher.web | `platform-surfaces/gateway-demo-a-wedge-story-grid.png` | ✅ |
-| w2.gateway.demo.wedge.web | `platform-surfaces/gateway-demo-a-wedge-story-tattoo.png` | ✅ |
+| w2.gateway.sign-in.web | `w2-gateway/sign-in/gateway-default.target.png` | ✅ locked 2026-06-02 |
+| w2.gateway.sign-in.mobile | `w2-gateway/sign-in/gateway-default-mobile.target.png` | ✅ locked 2026-06-02 |
+| w2.gateway.demo.launcher.web | `w2-gateway/demo/g1-wedge-web.target.png` | ✅ locked (G1) |
+| w2.gateway.demo.wedge.web | `w2-gateway/demo/g2-wedge-story.target.png` | ✅ locked 2026-06-02 |
+| w2.gateway.demo.enter.web | `w2-gateway/demo/g3-demo-enter.target.png` | ✅ locked 2026-06-02 |
 | w1.marketing.home.web | `livia-evolution/northstar/m1-home-web.png` | ✅ |
 | w1.marketing.pricing.web | `platform-surfaces/marketing-pricing-a-aurora-honest.png` | ✅ |
 | w3.support.thread.web | `livia-evolution/northstar/i4-thread-web.png` | ✅ |

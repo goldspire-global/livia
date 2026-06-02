@@ -143,8 +143,27 @@ Re-capture or replace screen-cards when a surface gets a `.target.png` for that 
 
 ---
 
-## 8. Changelog
+## 8. Generating `.sample.png` (reproducibility rule)
+
+**Only mock what we can ship** with the current stack: React surfaces + `data-presentation` CSS tokens + existing shell components — not one-off illustration that has no component home.
+
+| OK in samples | Avoid in samples |
+|---------------|------------------|
+| Layouts mappable to `owner-home-ritual`, `beauty-inbox-shell`, `app-shell-*`, public book modules | Unique chrome per mock with no shared primitive |
+| Color, type, radius, spacing from preset token contract | Photoreal faces, hands, or salon photos as **structure** (use owner logo/cover or neutral placeholders) |
+| Subtle depth: `box-shadow`, `linear-gradient`, `border`, 1px rules, `backdrop-filter` where supported | Heavy 3D, lens flare, AI texture noise, ornate borders we won't tokenize |
+| Motion called out in YAML / [`PREMIUM-MOTION-LAYER.md`](./PREMIUM-MOTION-LAYER.md): CSS `@keyframes`, opacity/transform, `prefers-reduced-motion` | Video-style motion, particles, parallax, Lottie unless explicitly scoped |
+| States we already render: pending, handoff, active nav, channel badges | Extra nav items, tabs, or metrics with no policy/module backing |
+
+**Before generating:** read the surface’s screen-card YAML + nearest code route; list which components/tokens will implement the mock. If the answer is “new bespoke art only,” narrow the brief until it fits the cascade (`policy` → thin renderer → CSS).
+
+**Depth without fantasy pixels:** prefer stronger hierarchy, module order, and token contrast over decorative detail we cannot maintain in code.
+
+---
+
+## 9. Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-06-02 | Reproducibility rule for `.sample.png` generation |
 | 2026-06-01 | Asset folder map, naming convention, adaptive sign-in, demo vs tenant clarity |

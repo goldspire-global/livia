@@ -101,7 +101,7 @@ meta:
 | `figma.frame` | `{world}/{screen-id}` |
 | `figma.status` | not_started \| draft \| locked |
 
-When Figma frame exists, add screenshot to `docs/design/assets/screen-cards/{id}.png`.
+When Figma frame exists, add screenshot to `docs/design/assets/screen-cards/{id}.png` **or** set `visual.northstarRealPath` to an existing `.target.png` (e.g. W2 gateway) — do not duplicate the same PNG in two folders.
 
 ---
 

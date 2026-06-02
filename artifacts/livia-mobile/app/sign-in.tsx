@@ -27,6 +27,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
+import { GatewaySignInStory } from "@/components/gateway/GatewaySignInStory";
 import { aurora, aurum } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
 import { SPRING_GENTLE } from "@/constants/motion";
@@ -284,20 +285,9 @@ export default function SignInScreen() {
             <LiviaWordmark size="lg" color={colors.foreground} />
           </Animated.View>
 
-          <Animated.Text
-            style={[styles.headline, { color: colors.foreground }, headlineStyle]}
-          >
-            Your day,{"\n"}
-            <Text style={[styles.headlineItalic, { color: colors.mutedForeground }]}>
-              already handled.
-            </Text>
-          </Animated.Text>
-
-          <Animated.Text
-            style={[styles.livLine, { color: colors.mutedForeground }, taglineStyle]}
-          >
-            Her name is <Text style={{ color: aurum.champagne, fontFamily: fonts.serifItalic }}>Liv</Text>.
-          </Animated.Text>
+          <Animated.View style={headlineStyle}>
+            <GatewaySignInStory />
+          </Animated.View>
 
           <Animated.Text
             style={[styles.tagline, { color: colors.mutedForeground }, taglineStyle]}

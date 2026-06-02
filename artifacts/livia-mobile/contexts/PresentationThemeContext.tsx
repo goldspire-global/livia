@@ -6,7 +6,15 @@ import {
   type PresentationColorOverrides,
 } from "@/lib/presentation-preset-colors";
 
-const PresentationThemeContext = createContext<PresentationColorOverrides | null>(null);
+type PresentationThemeValue = {
+  overrides: PresentationColorOverrides | null;
+  cssPreset: string | null;
+};
+
+const PresentationThemeContext = createContext<PresentationThemeValue>({
+  overrides: null,
+  cssPreset: null,
+});
 
 export function PresentationThemeProvider({ children }: { children: ReactNode }) {
   const { currentBusiness } = useBusiness();
@@ -30,15 +38,25 @@ export function PresentationThemeProvider({ children }: { children: ReactNode })
     [presentation?.cssPreset, presentation?.brandAccentHex, raw],
   );
 
-  const hasOverrides = Object.keys(overrides).length > 0;
+  const value = useMemo<PresentationThemeValue>(
+    () => ({
+      overrides: Object.keys(overrides).length > 0 ? overrides : null,
+      cssPreset: presentation?.cssPreset ?? null,
+    }),
+    [overrides, presentation?.cssPreset],
+  );
 
   return (
-    <PresentationThemeContext.Provider value={hasOverrides ? overrides : null}>
+    <PresentationThemeContext.Provider value={value}>
       {children}
     </PresentationThemeContext.Provider>
   );
 }
 
 export function usePresentationColorOverrides(): PresentationColorOverrides | null {
-  return useContext(PresentationThemeContext);
+  return useContext(PresentationThemeContext).overrides;
+}
+
+export function usePresentationCssPreset(): string | null {
+  return useContext(PresentationThemeContext).cssPreset;
 }

@@ -35,6 +35,7 @@ visual:
         - "Demo data — not production" 12px
   motion:
     card_hover: lift 2px
+  northstarRealPath: docs/design/assets/w2-gateway/demo/g1-wedge-web.target.png
 
 acceptance:
   e2e:

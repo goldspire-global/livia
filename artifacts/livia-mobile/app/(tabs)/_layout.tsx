@@ -5,7 +5,8 @@ import { PlatformPressable } from "@react-navigation/elements";
 import { Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import React, { useMemo } from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
 import { PresentationThemeProvider } from "@/contexts/PresentationThemeContext";
@@ -70,9 +71,8 @@ export default function TabLayout() {
 
 function TabLayoutInner() {
   const colors = useColors();
-  const colorScheme = useColorScheme();
   const haptics = useHaptics();
-  const isDark = colorScheme !== "light";
+  const isDark = (colors as { colorScheme?: string }).colorScheme !== "light";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
@@ -86,7 +86,9 @@ function TabLayoutInner() {
   const onTabPress = () => haptics.selection();
 
   return (
-    <Tabs
+    <>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
@@ -152,5 +154,6 @@ function TabLayoutInner() {
       );
       })}
     </Tabs>
+    </>
   );
 }

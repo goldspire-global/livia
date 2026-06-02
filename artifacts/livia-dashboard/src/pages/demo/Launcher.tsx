@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { completeDemoClerkSignIn } from "@/lib/demo-clerk-sign-in";
 import { DemoFlowStepper, type DemoFlowStep } from "@/components/demo/demo-flow-stepper";
 import { DemoGuidedExperience } from "@/components/demo/demo-guided-experience";
+import { DemoWedgeGrid } from "@/components/demo/demo-wedge-grid";
 
 const VERTICAL_LABELS: Record<string, string> = {
   hair: "Hair & barber",
@@ -369,10 +370,10 @@ export default function DemoLauncher() {
             className="text-3xl md:text-5xl tracking-tight leading-[1.08] mb-4"
             style={{ fontFamily: "var(--app-font-serif)" }}
           >
-            Explore Livia live
+            Pick your world
           </h1>
           <p className="text-sm md:text-base text-white/60 leading-relaxed">
-            Pick your trade in the guided box — four beats, then enter a live seeded studio.
+            Choose a trade below — four beats on one card, then tap a role to enter the live demo.
             {devPassword ? (
               <>
                 {" "}
@@ -398,6 +399,13 @@ export default function DemoLauncher() {
           </p>
         </header>
 
+        <DemoWedgeGrid />
+
+        <details className="mb-10 group" open={!provisioned} data-testid="demo-advanced-paths">
+          <summary className="cursor-pointer text-xs font-mono uppercase tracking-widest text-white/40 mb-4 list-none">
+            Advanced · setup, guided enter & all tenants
+          </summary>
+
         <DemoGuidedExperience
           provisioned={provisioned}
           devPassword={devPassword}
@@ -406,11 +414,6 @@ export default function DemoLauncher() {
           onProvision={() => void handleSync()}
           onEnterAs={(email, busyKey) => void quickEnterEmail(email, busyKey)}
         />
-
-        <details className="mb-10 group" open={!provisioned} data-testid="demo-advanced-paths">
-          <summary className="cursor-pointer text-xs font-mono uppercase tracking-widest text-white/40 mb-4 list-none">
-            Advanced · setup, scenarios & all tenants
-          </summary>
 
         <DemoFlowStepper
           current={flowStep}

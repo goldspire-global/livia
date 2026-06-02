@@ -10,9 +10,9 @@ import { fileURLToPath } from "node:url";
 import {
   NORTHSTAR_DOCS_DIR,
   NORTHSTAR_PUBLIC_DIR,
-  SCREEN_CARD_BASELINE_DIR,
   SCREEN_CARD_P0,
   TENANT_NORTHSTAR_P0,
+  resolveNorthstarRealPath,
 } from "../northstar-p0-registry";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -32,9 +32,10 @@ for (const file of files) {
 }
 
 for (const entry of SCREEN_CARD_P0) {
-  const cardPath = resolve(root, SCREEN_CARD_BASELINE_DIR, entry.northstarFile);
+  const cardPath = resolveNorthstarRealPath(root, entry);
+  const label = entry.northstarRealPath ?? entry.northstarFile;
   assert.ok(existsSync(cardPath), `missing screen-card baseline: ${cardPath}`);
-  assert.ok(readFileSync(cardPath).length > 8_000, `${entry.northstarFile}: screen-card PNG too small`);
+  assert.ok(readFileSync(cardPath).length > 8_000, `${label}: screen-card PNG too small`);
 }
 
 assert.ok(TENANT_NORTHSTAR_P0.length >= 4, "tenant northstar P0 registry populated");

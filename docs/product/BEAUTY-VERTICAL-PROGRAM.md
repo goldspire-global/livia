@@ -78,8 +78,8 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 |-----------|-------------|----------|------------|----------------|
 | `beauty-noir-dusk` | `noir-dusk` | ✅ | owner solo, settings | `book-mobile.target.png` |
 | `beauty-soft-studio` | `soft-studio` | | owner + manager, settings | ✅ |
-| `beauty-editorial` | `editorial` | | owner + manager, settings | ✅ |
-| `beauty-premium-dark` | `premium-dark` | | owner + manager, settings | ✅ |
+| `beauty-editorial` | `editorial` | | owner (menu-card home), manager, inbox, settings | ✅ |
+| `beauty-premium-dark` | `premium-dark` | | owner (glow-card home), manager cockpit, inbox, settings | ✅ |
 
 | Item | Status |
 |------|--------|
@@ -90,7 +90,7 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 | Dashboard applies `tenant-experience.presentation` | ✅ `app-layout.tsx` |
 | Demo backfill preset on branding | ✅ `demo-public-assets.ts` |
 | Adaptive sign-in preview | ✅ `sign-in-appearance-hint` API + panel |
-| Mobile preset morph (full) | ✅ owner Today + public `/b` per preset; tenant tabs use preset tint |
+| Mobile preset morph (full) | 🟡 W4m targets locked; v1 Expo tint + layout (Today/Inbox/Bookings) for noir/editorial/premium-dark |
 | Production preset flag | ⏳ founder Bucket C + `LIVIA_PRESENTATION_PRESETS` |
 
 **Gaps (L2):**
@@ -121,11 +121,18 @@ Four native presets + Platform Default (signup lock). Policy: `presentation-pres
 
 ### W2 Gateway
 
-| Surface | Beauty | Status |
-|---------|--------|--------|
-| Demo wedge | `/demo/wedge/beauty` | ✅ story + P0 PNG |
-| Sign-in | Adaptive hint for owner emails | ✅ |
-| Onboarding | Vertical pick includes beauty | ✅ |
+**Flow (locked mocks):** [`DEMO-FLOW.md`](../design/assets/w2-gateway/demo/DEMO-FLOW.md) — G1 grid → G2 card-stage story → G3 role tap → W4 Bloom.
+
+| Surface | Target (single copy) | Implementation | Stg ticket |
+|---------|----------------------|----------------|------------|
+| G1 `/demo` | `g1-wedge-web.target.png` | 🟡 `DemoGuidedExperience` (beauty-only); **not** G1 grid UI yet | **G-DEMO-1** |
+| G2 `/demo/wedge/beauty` | `g2-wedge-story.target.png` | 🟡 Beat list UI; **not** fused card-stage | **G-DEMO-2** |
+| G3 enter (beat 4) | `g3-demo-enter.target.png` | 🟡 Role tap proceeds; layout not card-stage | **G-DEMO-3** |
+| Sign-in web | `gateway-default.target.png` | 🟡 `GatewaySignInStory` + Clerk; close to mock | **G-SIGN-1** |
+| Sign-in mobile | `gateway-default-mobile.target.png` | 🟡 Clerk screen; **not** Liv story layout | **G-SIGN-2** |
+| Sign-in adaptive hint | deferred | ✅ API exists | — |
+| Marketing → demo | CTA `/demo` | ✅ | **MKT-1** copy pass `/verticals/beauty` |
+| Mobile demo gateway | separate app route | 🟡 persona carousel, not G1/G2/G3 | **G-DEMO-M** (R1.1 optional) |
 
 ### W4 Tenant (web)
 
@@ -212,16 +219,62 @@ Founder can answer **yes** to all:
 
 ---
 
-## Engineering queue (ordered)
+## Engineering queue — beauty staging sign-off (2026-06-02)
 
-| # | Task | Layer |
-|---|------|-------|
-| 1 | Founder UAT on Bloom (web + mobile) | L5 |
-| 2 | Fix any preset/CSS drift found in UAT | L2 |
-| 3 | Capture screen-card PNGs (customers, services, visit) | L4/L6 |
-| 4 | Mobile preset tint polish if UAT flags mismatch | L4 |
-| 5 | Service-level patch-test metadata (optional R1.1) | L1 |
-| 6 | Tighten `maxDiffPixelRatio` post sign-off | L6 |
+**Goal:** Ticket off **Bucket C** on `livia-stg` for beauty wedge: marketing → demo → sign-in → Bloom W4/W5 (web + mobile operator).
+
+### A — Repo hygiene (do first)
+
+| ID | Task | Owner |
+|----|------|-------|
+| **A1** | Commit uncommitted gateway targets + `northstarRealPath` + sign-in/demo doc cards (large local diff on `main`) | Eng |
+| **A2** | Remove duplicate `assets/screen-cards/w2.gateway.demo.launcher.web.png` once G1 uses `w2-gateway/demo/g1-wedge-web.target.png` only | Eng |
+| **A3** | `pnpm northstar:check` + `pnpm screen-cards:status` green for gateway YAMLs | CI |
+
+### B — Implement locked W2 mocks (web dashboard)
+
+| ID | Task | Acceptance |
+|----|------|------------|
+| **G-DEMO-1** | `/demo` prospect path: G1 “Pick your world” grid (beauty unlocked; others Coming soon) OR wire `DemoWedgeGrid` as primary | Matches `g1-wedge-web.target.png` |
+| **G-DEMO-2** | `/demo/wedge/:vertical`: fused **card-stage** carousel (beats 1–4) | Matches `g2-wedge-story.target.png` |
+| **G-DEMO-3** | Beat 4: role grid **inside** gold card; tap role → Clerk ticket (no Enter button) | Matches `g3-demo-enter.target.png` |
+| **G-SIGN-1** | `/sign-in` production: Liv colleague split + mobile stack | Matches `gateway-default*.target.png` |
+| **G-SIGN-2** | `artifacts/livia-mobile` sign-in: stacked story + Clerk (parity with web mock) | `gateway-default-mobile.target.png` |
+
+### C — Beauty tenant (already strong — verify on stg)
+
+| ID | Task | Acceptance |
+|----|------|------------|
+| **B-W4** | Bloom owner UAT paths 1–8 in [`FOUNDER-UAT-CHECKLIST.md`](../operations/FOUNDER-UAT-CHECKLIST.md) | Dashboard, inbox, services, customers, bookings, settings presets, `/b`, mobile tabs |
+| **B-PRESET** | All four presets: dashboard + `/b` + mobile tint | Targets under `w4-tenant/beauty/presets/*/mobile/` |
+| **B-CAP** | Optional PNG capture queue: customers, services, visit on Bloom | Not blocking stg if density OK |
+
+### D — Marketing + stg gates
+
+| ID | Task | Acceptance |
+|----|------|------------|
+| **MKT-1** | `/verticals/beauty` + home CTAs → `/demo` or `/demo/wedge/beauty` | No hair-only bleed; beauty-first copy |
+| **STG-1** | `node scripts/staging-readiness.mjs --strict` on deploy | Green |
+| **STG-2** | `pnpm founder:uat-preflight` + manual Bloom row + gateway row | Founder signs Bucket C |
+
+### E — Defer (not blocking beauty stg)
+
+| Item | Notes |
+|------|--------|
+| G1 mobile full-bleed | `g1-wedge-mobile.target.png` locked; implement R1.1 |
+| Mobile `/demo` G2/G3 parity | Operator app uses sign-in + tabs; demo gateway is showcase only |
+| Adaptive sign-in crossfade | `preview-beauty-soft-studio.target.png` deferred |
+| Service-level patch-test flag | L1 optional |
+| E2E pixel diff for G2/G3 | Add after UI lands |
+
+### F — Founder UAT path (single script)
+
+1. Marketing home → **Beauty** → demo  
+2. **G1** pick Lash & Brow / beauty → **G2** four beats → **G3** tap Owner  
+3. Bloom dashboard (Noir Dusk) → settings presets → `/b` book with patch-test  
+4. Mobile Bloom: Today / Inbox / accent  
+5. `/sign-in?beta=1` (staging real Clerk) — Liv story + auth  
+6. Sign **Bucket C** when 1–5 feel finished  
 
 ---
 
@@ -231,3 +284,4 @@ Founder can answer **yes** to all:
 |------|--------|
 | 2026-06-01 | Initial hierarchical program; Bloom UAT path; gap queue |
 | 2026-06-01 | Full beauty build: 4 presets W4/W5, settings swatches, mobile owner + `/b` |
+| 2026-06-02 | W2 gateway targets locked (G1–G3 + sign-in); staging sign-off queue § Engineering |

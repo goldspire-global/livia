@@ -28,6 +28,7 @@ import { aurora } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
+import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
 import { useColors } from "@/hooks/useColors";
 import { usePersona } from "@/hooks/usePersona";
 import { asHref } from "@/lib/navigation";
@@ -66,6 +67,7 @@ export default function InboxScreen() {
     (tenantExperience as { publicAppearance?: { brandAccentHex?: string | null } } | null | undefined)
       ?.publicAppearance?.brandAccentHex;
   const accent = resolveTenantAccentHex(bizMeta?.vertical, bizMeta?.category, tenantAccent);
+  const { layout: beautyLayout } = useBeautyMobileLayout();
 
   const showQueue = persona === "manager" || persona === "owner" || persona === "org_admin";
   const canQuickBook =
@@ -170,7 +172,11 @@ export default function InboxScreen() {
             onAction={canQuickBook ? () => router.push(asHref("/booking/new")) : undefined}
           />
         ) : (
-          filtered.map((t) => (
+          filtered.map((t) => {
+            const needsYou = t.status === "OPEN" && !t.aiHandled;
+            const beautyAccent =
+              beautyLayout && needsYou && (showQueue ? queueLens === "needs_you" : true);
+            return (
             <Pressable
               key={t.id}
               onPress={() => router.push(`/conversation/${t.id}` as never)}
@@ -178,10 +184,13 @@ export default function InboxScreen() {
                 styles.row,
                 {
                   backgroundColor: colors.card,
-                  borderColor:
-                    showQueue && queueLens === "needs_you" && t.status === "OPEN" && !t.aiHandled
+                  borderColor: beautyAccent
+                    ? colors.primary + "55"
+                    : showQueue && queueLens === "needs_you" && needsYou
                       ? aurora.violet + "66"
                       : colors.border,
+                  borderLeftWidth: beautyAccent ? 3 : 1,
+                  borderLeftColor: beautyAccent ? colors.primary : undefined,
                   opacity: pressed ? 0.92 : 1,
                 },
                 elevation.resting,
@@ -207,8 +216,22 @@ export default function InboxScreen() {
                     {t.channel}
                   </Text>
                   {t.status === "OPEN" && !t.aiHandled ? (
-                    <View style={[styles.badge, { backgroundColor: aurora.violet + "22" }]}>
-                      <Text style={[styles.badgeText, { color: aurora.violet }]}>Needs you</Text>
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: (beautyLayout ? colors.primary : aurora.violet) + "22",
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          { color: beautyLayout ? colors.primary : aurora.violet },
+                        ]}
+                      >
+                        Needs you
+                      </Text>
                     </View>
                   ) : t.aiHandled && t.status === "OPEN" ? (
                     <View style={[styles.badge, { backgroundColor: aurora.cyan + "22" }]}>
@@ -225,7 +248,8 @@ export default function InboxScreen() {
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </Pressable>
-          ))
+            );
+          })
         )}
       </OperationalScreen>
 

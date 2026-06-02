@@ -4,12 +4,18 @@
 
 ## Approved targets (founder)
 
-| Preset | Dashboard solo | Dashboard manager | Settings (owner) |
-|--------|----------------|-------------------|------------------|
-| **noir-dusk** | `presets/noir-dusk/dashboard-owner-solo.target.png` | — | `presets/noir-dusk/settings-appearance-owner.target.png` |
-| **soft-studio** | `presets/soft-studio/dashboard-owner-solo.target.png` | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
-| **editorial** | `presets/editorial/dashboard-owner-solo.target.png` | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
-| **premium-dark** | `presets/premium-dark/dashboard-owner-solo.target.png` | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
+| Preset | Dashboard solo | Inbox (owner) | Dashboard manager | Settings (owner) |
+|--------|----------------|---------------|-------------------|------------------|
+| **noir-dusk** | `presets/noir-dusk/dashboard-owner-solo.target.png` | — | — | `presets/noir-dusk/settings-appearance-owner.target.png` |
+| **soft-studio** | `presets/soft-studio/dashboard-owner-solo.target.png` | — | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
+| **editorial** | `presets/editorial/dashboard-owner-solo.target.png` | `inbox-owner.target.png` | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
+| **premium-dark** | `presets/premium-dark/dashboard-owner-solo.target.png` | `inbox-owner.target.png` | `dashboard-manager.target.png` | `settings-appearance-owner.target.png` |
+
+**Editorial (founder lock 2026-06-02):** menu-card owner home, handoff-grid manager, editorial inbox; W5 keeps `book-mobile.target.png`.
+
+**Premium-dark (founder lock 2026-06-02):** glow-card owner home, manager cockpit, premium inbox; W5 keeps `book-mobile.target.png`.
+
+**Mobile W4m (founder lock 2026-06-02 — approved):** [`noir-dusk/mobile`](presets/noir-dusk/mobile/README.md) (4) · [`editorial/mobile`](presets/editorial/mobile/README.md) (4) · [`premium-dark/mobile`](presets/premium-dark/mobile/README.md) (7) — all `*.target.png`.
 
 Re-sync from Cursor exports: `node scripts/organize-beauty-target-visuals.mjs`
 

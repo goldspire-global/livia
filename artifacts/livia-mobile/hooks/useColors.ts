@@ -21,14 +21,23 @@ export function useColors() {
   // Future: read a persisted user preference here. For now, always dark.
   void Platform.OS; // keep platform import live for future per-platform tweaks
   const presentation = usePresentationColorOverrides();
-  const base = { ...colors.dark, radius: colors.radius, aurora, aurum };
+  const base =
+    presentation?.colorScheme === "light"
+      ? { ...colors.light, radius: colors.radius, aurora, aurum }
+      : { ...colors.dark, radius: colors.radius, aurora, aurum };
   if (!presentation) return base;
   return {
     ...base,
     ...(presentation.background ? { background: presentation.background } : {}),
     ...(presentation.card ? { card: presentation.card } : {}),
+    ...(presentation.foreground ? { foreground: presentation.foreground, text: presentation.foreground } : {}),
+    ...(presentation.cardForeground ? { cardForeground: presentation.cardForeground } : {}),
     ...(presentation.primary ? { primary: presentation.primary, tint: presentation.primary } : {}),
+    ...(presentation.primaryForeground
+      ? { primaryForeground: presentation.primaryForeground }
+      : {}),
     ...(presentation.border ? { border: presentation.border } : {}),
     ...(presentation.mutedForeground ? { mutedForeground: presentation.mutedForeground } : {}),
+    ...(presentation.colorScheme ? { colorScheme: presentation.colorScheme } : {}),
   };
 }

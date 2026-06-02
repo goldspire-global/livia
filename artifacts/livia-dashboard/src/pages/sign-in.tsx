@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { LiviaWordmark } from "@/components/brand/LiviaMark";
 import { DemoPasswordSignIn } from "@/components/demo-password-sign-in";
+import { GatewaySignInStory } from "@/components/gateway/gateway-sign-in-story";
 import { fetchDemoCatalog } from "@/lib/demo-portal";
 import { isDemoLoginEnabled } from "@/lib/persona";
 import { clerkGatewayAppearance } from "@/lib/clerk-gateway-appearance";
@@ -43,19 +44,22 @@ export default function SignInPage() {
     return <Redirect to="/demo" />;
   }
 
+  const showProductionStory = !isDemoLoginEnabled;
+
   return (
     <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/3 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-aurora-cyan/10 blur-[140px]" />
+        <div className="absolute left-1/2 top-[18%] h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-aurora-cyan/10 blur-[120px] lg:left-[28%] lg:top-1/3 lg:h-[640px] lg:w-[640px] lg:blur-[140px]" />
+        <div className="absolute bottom-0 right-0 h-[280px] w-[280px] translate-x-1/4 translate-y-1/4 rounded-full bg-aurum-champagne/5 blur-[100px] lg:hidden" />
       </div>
 
-      <header className="relative z-10 flex items-center justify-between px-6 py-6">
-        <a href={marketing} className="opacity-90 hover:opacity-100 transition-opacity">
+      <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-5 sm:px-6 sm:py-6">
+        <a href={marketing} className="opacity-90 transition-opacity hover:opacity-100">
           <LiviaWordmark size="md" />
         </a>
         {isDemoLoginEnabled ? (
           <Link href="/demo">
-            <span className="text-xs text-primary hover:text-primary/80 transition-colors min-h-[44px] inline-flex items-center gap-1">
+            <span className="inline-flex min-h-[44px] items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80">
               Demo launcher
               <ArrowRight className="h-3.5 w-3.5" />
             </span>
@@ -63,75 +67,76 @@ export default function SignInPage() {
         ) : (
           <a
             href={`${marketing}/#waitlist`}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors min-h-[44px] inline-flex items-center"
+            className="inline-flex min-h-[44px] items-center text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             Join beta
           </a>
         )}
       </header>
 
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-16">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center sm:text-left">
-            <h1 className="font-serif text-4xl md:text-[2.75rem] font-normal leading-[1.08] tracking-tight">
-              {isDemoLoginEnabled ? "Real beta account" : "Your day,"}
-              {!isDemoLoginEnabled ? (
-                <span className="block mt-1 italic text-muted-foreground/90">already handled.</span>
-              ) : null}
-            </h1>
+      <main className="relative z-10 flex flex-1 flex-col lg:flex-row lg:items-stretch">
+        {showProductionStory ? (
+          <section className="flex shrink-0 flex-col justify-center px-5 pb-2 pt-2 sm:px-8 lg:w-[min(52%,560px)] lg:max-w-none lg:px-12 lg:pb-16 lg:pt-8 xl:px-16">
+            <GatewaySignInStory />
+          </section>
+        ) : null}
+
+        <section className="flex flex-1 flex-col justify-center px-4 pb-10 pt-2 sm:px-6 lg:px-10 lg:pb-16 xl:px-14">
+          <div className="mx-auto w-full max-w-md">
             {isDemoLoginEnabled ? (
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                For internal staging demos, use the{" "}
-                <Link href="/demo" className="text-primary underline underline-offset-2">
-                  demo launcher
-                </Link>{" "}
-                — one-click logins for every role. This page is for real Clerk beta accounts only.
-              </p>
-            ) : (
-              <p className="mt-3 text-sm text-aurum-champagne/80 font-serif italic">Her name is Liv.</p>
-            )}
-          </div>
-
-          {isDemoLoginEnabled ? (
-            <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <p className="text-sm text-foreground mb-3">
-                Staging team? Skip this form.
-              </p>
-              <Button asChild className="w-full">
-                <Link href="/demo">Open demo launcher</Link>
-              </Button>
-            </div>
-          ) : null}
-
-          <SignInTenantPreview hint={appearanceHint} loading={appearanceLoading}>
-            <SignIn
-              appearance={clerkGatewayAppearance(theme)}
-              routing="path"
-              path="/sign-in"
-              signUpUrl="/sign-up"
-              fallbackRedirectUrl="/dashboard"
-            />
-          </SignInTenantPreview>
-
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            New here?{" "}
-            <a href="/sign-up" className="font-medium text-primary underline underline-offset-2">
-              Create an account
-            </a>
-          </p>
-
-          {isDemoLoginEnabled ? (
-            <details className="mt-6 group rounded-xl border border-dashed border-border/70 bg-muted/10 open:bg-muted/20 transition-colors">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
-                <span>Manual demo email + password</span>
-                <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="border-t border-border/40 px-4 pb-4 pt-3">
-                <DemoPasswordSignIn devPasswordHint={devPassword} embedded />
+              <div className="mb-8 text-center sm:text-left">
+                <h1 className="font-serif text-3xl font-normal leading-[1.08] tracking-tight sm:text-4xl">
+                  Real beta account
+                </h1>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  For internal staging demos, use the{" "}
+                  <Link href="/demo" className="text-primary underline underline-offset-2">
+                    demo launcher
+                  </Link>{" "}
+                  — one-click logins for every role. This page is for real Clerk beta accounts only.
+                </p>
               </div>
-            </details>
-          ) : null}
-        </div>
+            ) : null}
+
+            {isDemoLoginEnabled ? (
+              <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <p className="mb-3 text-sm text-foreground">Staging team? Skip this form.</p>
+                <Button asChild className="w-full">
+                  <Link href="/demo">Open demo launcher</Link>
+                </Button>
+              </div>
+            ) : null}
+
+            <SignInTenantPreview hint={appearanceHint} loading={appearanceLoading}>
+              <SignIn
+                appearance={clerkGatewayAppearance(theme)}
+                routing="path"
+                path="/sign-in"
+                signUpUrl="/sign-up"
+                fallbackRedirectUrl="/dashboard"
+              />
+            </SignInTenantPreview>
+
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              New here?{" "}
+              <a href="/sign-up" className="font-medium text-primary underline underline-offset-2">
+                Create an account
+              </a>
+            </p>
+
+            {isDemoLoginEnabled ? (
+              <details className="group mt-6 rounded-xl border border-dashed border-border/70 bg-muted/10 open:bg-muted/20 transition-colors">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                  <span>Manual demo email + password</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="border-t border-border/40 px-4 pb-4 pt-3">
+                  <DemoPasswordSignIn devPasswordHint={devPassword} embedded />
+                </div>
+              </details>
+            ) : null}
+          </div>
+        </section>
       </main>
     </div>
   );

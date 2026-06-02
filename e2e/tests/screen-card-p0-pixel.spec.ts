@@ -4,8 +4,12 @@
  *   pnpm --filter @workspace/e2e run test:screen-card-p0
  *   pnpm screen-cards:update   # refresh baselines after intentional UI change
  */
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
-import { SCREEN_CARD_P0 } from "@workspace/policy";
+import { SCREEN_CARD_P0, resolveNorthstarRealPath } from "@workspace/policy";
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 import {
   demoCanSignIn,
   demoHasBusiness,
@@ -61,7 +65,8 @@ test.describe("Screen-card P0 pixel diff", () => {
       await gotoEntry(page, request, entry);
       await page.waitForTimeout(800);
 
-      await expect(page).toHaveScreenshot(entry.northstarFile, {
+      await expect(page).toHaveScreenshot({
+        path: resolveNorthstarRealPath(repoRoot, entry),
         maxDiffPixelRatio: entry.maxDiffPixelRatio,
         mask: dynamicMasks(page),
         animations: "disabled",

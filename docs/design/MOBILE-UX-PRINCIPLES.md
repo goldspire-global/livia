@@ -66,6 +66,8 @@ Rule: if a screen needs more than two form columns or a data table, prefer **mob
 
 **Canonical surface spec:** [`SURFACE-AND-BREAKPOINTS.md`](./SURFACE-AND-BREAKPOINTS.md).
 
+**Target mocks (W4m):** `docs/design/assets/w4-tenant/{vertical}/presets/{cssPreset}/mobile/*.sample.png` → `.target.png` after founder lock. Same reproducibility rule as web — see [`LIVIA-TARGET-VISUALS.md`](./LIVIA-TARGET-VISUALS.md) §8. Beauty premium-dark first: [`assets/w4-tenant/beauty/presets/premium-dark/mobile/README.md`](./assets/w4-tenant/beauty/presets/premium-dark/mobile/README.md).
+
 ---
 
 ## Persona tabs (canonical)

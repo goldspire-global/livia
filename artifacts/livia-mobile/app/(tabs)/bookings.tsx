@@ -29,6 +29,7 @@ import { elevation } from "@/constants/elevation";
 import { SPRING_QUICK } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
+import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { notifyBookingRunningLate, promptRunningLateMinutes } from "@/lib/running-late";
@@ -70,6 +71,7 @@ export default function BookingsScreen() {
     (currentBusiness as { vertical?: string } | undefined)?.vertical,
     currentBusiness?.category,
   );
+  const { layout: beautyLayout } = useBeautyMobileLayout();
   const params = useLocalSearchParams<{ status?: string }>();
   const [filter, setFilter] = useState<Filter>("day");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -282,16 +284,28 @@ export default function BookingsScreen() {
               }
               leftLabel="Reschedule"
             >
-              <BookingCard
-                booking={item}
-                timeZone={currentBusiness?.timezone}
-                showDate={filter !== "day"}
-                index={index}
-                onPress={() => router.push(`/booking/${item.id}`)}
-                onLongPress={() =>
-                  setActionsFor({ id: item.id, status: item.status, name: customerName })
+              <View
+                style={
+                  beautyLayout
+                    ? {
+                        borderLeftWidth: 3,
+                        borderLeftColor:
+                          item.status === "PENDING" ? colors.primary : colors.border,
+                      }
+                    : undefined
                 }
-              />
+              >
+                <BookingCard
+                  booking={item}
+                  timeZone={currentBusiness?.timezone}
+                  showDate={filter !== "day"}
+                  index={index}
+                  onPress={() => router.push(`/booking/${item.id}`)}
+                  onLongPress={() =>
+                    setActionsFor({ id: item.id, status: item.status, name: customerName })
+                  }
+                />
+              </View>
             </SwipeableRow>
           );
         }}

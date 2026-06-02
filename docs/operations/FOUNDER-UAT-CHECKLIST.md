@@ -47,7 +47,9 @@ pnpm --filter @workspace/e2e run test:founder-uat    # needs Clerk + API + dashb
 | 6 | `/settings?tab=appearance` | | All four beauty presets; iframe `/b` tracks accent |
 | 7 | `/b/bloom-beauty-dublin` | | Mobile 390px — preset matches settings; patch-test guard on book |
 | 8 | Mobile app (Bloom owner) | | Today + Inbox; tab accent matches preset tint |
-| 9 | `/demo/wedge/beauty` | | Gateway story — inbox → book → SMS → today |
+| 9 | `/demo` → beauty wedge | | G1 grid (or guided) → G2 card-stage beats → G3 tap role (no Enter btn) |
+| 10 | `/sign-in?beta=1` | | Liv colleague story web; Clerk completes to dashboard |
+| 11 | `/sign-in` mobile 390px | | Stacked story mock parity (when G-SIGN-2 shipped) |
 
 ---
 
@@ -87,7 +89,7 @@ Use each program doc § **L8 — Completion** for slug + owner login. Index: [`V
 | Item | Founder | Date |
 |------|---------|------|
 | Medspa paths 1–10 feel “finished” for R1 demo | | |
-| Beauty (Bloom) paths 1–9 feel “finished” for R1 demo | | |
+| Beauty (Bloom) paths 1–8 + gateway 9–11 feel “finished” for R1 demo | | |
 | Salon (hair Luxe) paths 1–9 feel “finished” for R1 demo | | |
 | Bucket C → production preset flag OK | | |
 

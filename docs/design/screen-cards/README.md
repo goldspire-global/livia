@@ -14,7 +14,7 @@ Regenerate P1: `node scripts/generate-p1-screen-cards.mjs`
 
 ## Per-screen northstar (PNG)
 
-When there is no separate Figma northstar for a route, the **PNG under** [`assets/screen-cards/`](../assets/screen-cards/) **is** the visual baseline for that screen.
+When there is no separate Figma northstar for a route, the visual baseline is a PNG referenced by the registry (`SCREEN_CARD_P0`) — usually [`assets/screen-cards/{id}.png`](../assets/screen-cards/), or a **`.target.png`** under [`assets/w2-gateway/`](../assets/w2-gateway/) etc. when `visual.northstarRealPath` is set (one file, no duplicate copy).
 
 | Command | Purpose |
 |---------|---------|
