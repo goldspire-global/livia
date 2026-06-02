@@ -112,7 +112,10 @@ await check("Marketing pricing bundle (€79/mo)", async () => {
 });
 
 await check("Marketing home wedge CTAs", async () => {
-  const bundle = await marketingBundleContains("/", ["demo/wedge/"]);
+  // Marketing links into the dashboard "wedge" demo can be implemented as:
+  // - legacy path-based routes: `/demo/wedge/...`
+  // - current query-based gateway: `/demo?vertical=...`
+  const bundle = await marketingBundleContains("/", ["/demo", "vertical="]);
   return bundle;
 });
 
