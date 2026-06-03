@@ -1,18 +1,6 @@
-import {
-  Calendar,
-  ClipboardCheck,
-  ImageIcon,
-  Inbox,
-  Loader2,
-  MessageSquare,
-  Sparkles,
-  ArrowRight,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Calendar, ClipboardCheck, ImageIcon, Inbox, Loader2, MessageSquare, Sparkles, type LucideIcon } from "lucide-react";
 import { Link } from "wouter";
-import type { WedgeDemoBeat } from "@workspace/policy";
 import type { DemoRosterEntry } from "@/lib/demo-portal";
-import { WedgeFeaturePreview } from "@/components/gateway/wedge-feature-preview";
 import { cn } from "@/lib/utils";
 
 export const WEDGE_BEAT_CROP_META: Record<
@@ -56,77 +44,6 @@ export const WEDGE_BEAT_CROP_META: Record<
     ring: "border-sky-500/30",
   },
 };
-
-type StoryProps = {
-  beats: WedgeDemoBeat[];
-  disabled?: boolean;
-  backHref?: string;
-  backLabel?: string;
-  onContinue: () => void;
-};
-
-/** G2 — four platform surfaces on one card (inbox, book, SMS, today, …). */
-export function GatewayDemoStoryBeats({
-  beats,
-  disabled,
-  backHref = "/demo",
-  backLabel = "← Worlds",
-  onContinue,
-}: StoryProps) {
-  return (
-    <article
-      className="rounded-3xl border-2 border-[#d9b97a]/45 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-1 shadow-[0_0_60px_-20px_rgba(217,185,122,0.28)]"
-      data-testid="gateway-demo-card-stage"
-    >
-      <div className="rounded-[1.35rem] border border-primary/25 bg-[#0a0c12]/90 p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <Link
-            href={backHref}
-            className="inline-flex min-h-[44px] items-center rounded-full border border-[#d9b97a]/35 bg-[#d9b97a]/10 px-3.5 text-sm text-[#e6d0a5] transition hover:border-[#d9b97a]/55 hover:bg-[#d9b97a]/15"
-            data-testid="gateway-demo-back-worlds"
-          >
-            {backLabel}
-          </Link>
-          <div
-            className="max-w-[11rem] rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2 text-right sm:max-w-[200px]"
-            data-testid="gateway-sign-in-liv-briefing"
-          >
-            <p className="text-[10px] font-medium text-[#d9b97a]">Liv · briefing</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-foreground/85">Patch test due — Emma, 2pm.</p>
-          </div>
-        </div>
-
-        <div
-          className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"
-          data-testid="gateway-demo-beats-grid"
-        >
-          {beats.map((beat, i) => (
-            <div
-              key={`${beat.cropHint}-${i}`}
-              className="rounded-xl border border-[#d9b97a]/20 bg-white/[0.03] p-3"
-              data-testid={`gateway-demo-beat-${beat.cropHint}`}
-            >
-              <WedgeFeaturePreview beat={beat} />
-              <p className="mt-2.5 text-sm font-medium leading-snug text-foreground">{beat.headline}</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{beat.detail}</p>
-            </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={onContinue}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
-          data-testid="gateway-demo-continue"
-        >
-          Continue
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
-    </article>
-  );
-}
 
 type EnterProps = {
   tradeLabel: string;
@@ -209,14 +126,14 @@ export function GatewayDemoEnterStage({
           className="mx-auto mt-4 block text-sm text-muted-foreground hover:text-foreground"
           onClick={onBack}
         >
-          ← Back to story
+          ← Back to brief
         </button>
       </div>
     </article>
   );
 }
 
-/** Two-step progress: story → enter. */
+/** Two-step progress: brief → enter. */
 export function GatewaySlideDots({
   slide,
   className,
@@ -228,7 +145,7 @@ export function GatewaySlideDots({
   return (
     <div
       className={cn("flex justify-center gap-2", className)}
-      aria-label={slide === "story" ? "Story" : "Choose role"}
+      aria-label={slide === "story" ? "Studio brief" : "Choose role"}
     >
       {(["story", "enter"] as const).map((s, i) => (
         <span

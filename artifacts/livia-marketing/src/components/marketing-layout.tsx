@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Menu } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { ConstellationPageShell } from "@/components/constellation/constellation-page-shell";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MarketingFooter, W1_FOOTER_LINKS } from "@/components/marketing-footer";
@@ -64,9 +64,7 @@ export function MarketingLayout({
         aria-label="Site"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <Link href={homeHref} className="justify-self-start shrink-0">
-            <LiviaWordmark size="nav" />
-          </Link>
+          <LiviaLogoLink size="nav" href={homeHref} />
 
           <div className="hidden xl:flex items-center justify-center gap-x-4 gap-y-1">{NAV.map(navLink)}</div>
 

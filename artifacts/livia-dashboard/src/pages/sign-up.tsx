@@ -1,6 +1,6 @@
 import { SignUp } from "@clerk/clerk-react";
 import { useTheme } from "next-themes";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { clerkGatewayAppearance } from "@/lib/clerk-gateway-appearance";
 import { getMarketingOrigin } from "@/lib/surface-urls";
 
@@ -17,9 +17,7 @@ export default function SignUpPage() {
       </div>
 
       <header className="relative z-10 flex items-center justify-between px-6 py-6">
-        <a href={marketing} className="opacity-90 hover:opacity-100 transition-opacity">
-          <LiviaWordmark size="md" />
-        </a>
+        <LiviaLogoLink size="md" home="marketing" />
         <a
           href="/sign-in"
           className="text-xs text-muted-foreground hover:text-foreground transition-colors min-h-[44px] inline-flex items-center"

@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { getMarketingOrigin } from "@/lib/surface-urls";
 
 /** Shared loading / error chrome for B2C public surfaces (/b, /visit, /p). */
@@ -33,9 +33,7 @@ export function PublicSurfaceNotFound({
     <div className="relative min-h-screen bg-background flex flex-col px-4 sm:px-6 py-10">
       <PublicSurfaceHalo />
       <header className="relative z-10 mb-12">
-        <a href={getMarketingOrigin()} className="inline-block opacity-80 hover:opacity-100">
-          <LiviaWordmark size="sm" />
-        </a>
+        <LiviaLogoLink size="sm" home="marketing" />
       </header>
       <main className="relative z-10 flex-1 flex flex-col justify-center max-w-md pb-16">
         <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-3">
@@ -55,9 +53,7 @@ export function PublicSurfaceFooter() {
   return (
     <footer className="mt-16 pt-8 border-t border-border/40 pb-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <a href={getMarketingOrigin()} className="opacity-70 hover:opacity-100 transition-opacity">
-          <LiviaWordmark size="sm" />
-        </a>
+        <LiviaLogoLink size="sm" home="marketing" className="opacity-70 hover:opacity-100" />
         <p className="text-[11px] text-muted-foreground font-mono">
           Bookings powered by{" "}
           <a

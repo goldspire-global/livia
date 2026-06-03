@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { SIGN_IN_AFTER_SIGN_OUT } from "@/lib/auth-routes";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { dark } from "@clerk/themes";
 import { ThemeProvider, useTheme } from "next-themes";
@@ -300,6 +301,7 @@ function ClerkProviderWithTheme({ children }: { children: React.ReactNode }) {
       {...(CLERK_PROXY_URL ? { proxyUrl: CLERK_PROXY_URL } : {})}
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/legal-acceptance"
+      afterSignOutUrl={SIGN_IN_AFTER_SIGN_OUT}
       appearance={{
         baseTheme: currentTheme === "dark" ? dark : undefined,
         variables: {

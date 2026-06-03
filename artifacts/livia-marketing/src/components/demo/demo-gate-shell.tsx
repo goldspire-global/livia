@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Link } from "wouter";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { applyMarketingPlatformTheme } from "@/lib/marketing-platform-theme";
 import "@/styles/constellation-w1-gold.css";
 import "@/styles/constellation-demo-gate-stars.css";
@@ -38,9 +38,7 @@ export function DemoGateShell({ children }: { children: ReactNode }) {
       </div>
 
       <header className="cst-demo-gate__bar cst-demo-gate__bar--minimal">
-        <Link href={homeHref} className="cst-demo-gate__logo">
-          <LiviaWordmark size="md" />
-        </Link>
+        <LiviaLogoLink size="md" href={homeHref} className="cst-demo-gate__logo" />
       </header>
 
       <main className="cst-demo-gate__main">{children}</main>

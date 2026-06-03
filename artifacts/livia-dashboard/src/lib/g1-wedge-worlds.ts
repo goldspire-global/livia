@@ -82,3 +82,12 @@ export function listG1WedgeWorldsForDisplay(): G1WedgeWorld[] {
 export function isG1WedgeWorldUnlocked(vertical: BusinessVertical): boolean {
   return isMarketingDemoWedgeUnlocked(vertical);
 }
+
+/** G1 card tagline carried into G2 — no bait-and-switch from the world they picked. */
+export function g1TaglineForVertical(vertical: BusinessVertical): string | null {
+  return G1_WEDGE_WORLDS.find((w) => w.vertical === vertical)?.tagline ?? null;
+}
+
+export function g1TitleForVertical(vertical: BusinessVertical): string | null {
+  return G1_WEDGE_WORLDS.find((w) => w.vertical === vertical)?.title ?? null;
+}

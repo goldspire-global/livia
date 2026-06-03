@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { OnboardingPortalAmbient } from "@/components/onboarding/onboarding-portal-ambient";
 import { OnboardingWelcomePanel } from "@/components/onboarding-welcome-panel";
 import { MOTION } from "@/lib/motion";
@@ -24,7 +24,7 @@ export function OnboardingArrivalOverlay({ onEnter }: Props) {
           MOTION.enterPage,
         )}
       >
-        <LiviaWordmark size="md" />
+        <LiviaLogoLink size="md" home="marketing" />
         <div className="max-w-md text-center space-y-2">
           <h1 className="font-serif text-3xl md:text-4xl font-normal tracking-tight leading-[1.1]">
             Your day,

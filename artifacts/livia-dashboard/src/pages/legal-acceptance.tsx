@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { apiFetch } from "@/lib/api-fetch";
 import { legalUrl } from "@/lib/surface-urls";
 import { Loader2 } from "lucide-react";
@@ -62,7 +62,7 @@ export default function LegalAcceptancePage() {
         <div className="absolute left-1/2 top-1/3 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-aurora-cyan/10 blur-[140px]" />
       </div>
       <header className="relative z-10 px-6 py-6">
-        <LiviaWordmark size="md" />
+        <LiviaLogoLink size="md" home="marketing" />
       </header>
       <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-16">
         <Card className="w-full max-w-lg border-primary/10">

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { ConstellationPageShell } from "@/components/constellation/constellation-page-shell";
 
 import { MarketingSkipLink } from "@/components/marketing-skip-link";
@@ -11,9 +11,7 @@ export default function NotFound() {
       <MarketingSkipLink />
       <nav className="marketing-w1-nav fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-md pt-[env(safe-area-inset-top)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <Link href="/">
-            <LiviaWordmark size="md" />
-          </Link>
+          <LiviaLogoLink size="md" />
         </div>
       </nav>
       <main id="main-content" className="pt-[calc(5rem+env(safe-area-inset-top))] min-h-[80vh] flex flex-col">

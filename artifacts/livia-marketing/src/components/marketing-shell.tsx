@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Menu } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { MarketingFooter, type MarketingFooterLink } from "@/components/marketing-footer";
 import { legalBase, marketingDemoPath } from "@/lib/marketing-links";
@@ -79,9 +79,7 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
         aria-label="Site"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-4 gap-4">
-          <Link href={homeHref}>
-            <LiviaWordmark size="nav" />
-          </Link>
+          <LiviaLogoLink size="nav" href={homeHref} />
 
           <div className="hidden md:flex items-center gap-5">
             {navLinks}

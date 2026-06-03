@@ -1,5 +1,5 @@
 import { View, StyleSheet } from "react-native";
-import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
+import { LiviaLogoLink } from "@/components/brand/LiviaLogoLink";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useColors } from "@/hooks/useColors";
 
@@ -8,7 +8,7 @@ export function ScreenTopBar() {
   const colors = useColors();
   return (
     <View style={styles.row}>
-      <LiviaWordmark size="sm" color={colors.foreground} />
+      <LiviaLogoLink size="sm" color={colors.foreground} />
       <NotificationBell />
     </View>
   );

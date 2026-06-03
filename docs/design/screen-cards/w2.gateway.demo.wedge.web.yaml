@@ -9,8 +9,8 @@ meta:
   status: designed
 
 job: >
-  Prospect sees their picked world become the story — G2 beats then G3 role enter.
-  Inherits W1 /demo concierge gate ambient (gold nebula, LIVE, navy) — not G1 aurora.
+  Beauty G2 is a vertical thread story — Inbox → /b → Today on Platform Default skin.
+  No card boxes; Liv bridges between full-bleed product crops. Then G3 role enter.
 
 visual:
   canvas:
@@ -22,25 +22,22 @@ visual:
     shell: artifacts/livia-dashboard/src/components/gateway/demo-flow-shell.tsx
     css: artifacts/livia-dashboard/src/styles/gateway-demo-flow.css
   zones:
-    - id: fused_card_stage
-      layout: centered
+    - id: beauty_thread
+      layout: editorial vertical rail
       content:
-        - serif headline "See your week in four beats"
-        - champagne subline — world you picked, Liv walks you through
-        - G1 gold-framed trade card — photo well shows current beat UI crop
-        - beat headline + detail inside card shell
-        - Liv briefing chip overlays card corner (sign-in DNA)
-        - primary "Next beat" inside card footer (beat 4 → Enter demo)
-    - id: carousel_chrome
+        - G1 tagline from trade card
+        - arc headline "From DM to chair"
+        - Liv intro — Platform Default constellation
+        - three chapters with numbered rail + full screenshots
+        - crops: platform-default inbox, /b mobile, today dashboard
+    - id: enter_chrome
       content:
-        - 4 progress dots below card
-        - back link "← Worlds" gold outline
+        - G3 role grid unchanged
   beats_by_vertical:
     beauty:
-      - { headline: "Inquiry in Inbox", crop: inbox }
-      - { headline: "Book + intake note", crop: public-book }
-      - { headline: "Reminder SMS", crop: sms }
-      - { headline: "Today — stations clear", crop: today }
+      - { headline: "Inbox catches the inquiry", crop: inbox }
+      - { headline: "Guest books on `/b`", crop: public-book }
+      - { headline: "Today keeps the floor calm", crop: today }
   motion:
     beat_transition: card well crossfade 300ms
     frame: gold border persists — only inner crop + copy change

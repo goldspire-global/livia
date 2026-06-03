@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -11,7 +11,7 @@ export default function NotFound() {
       </div>
 
       <header className="relative z-10 py-6">
-        <LiviaWordmark size="md" />
+        <LiviaLogoLink size="md" home="dashboard" />
       </header>
 
       <main className="relative z-10 flex flex-1 flex-col justify-center max-w-md pb-16">

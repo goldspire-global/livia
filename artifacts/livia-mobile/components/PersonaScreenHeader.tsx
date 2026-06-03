@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
+import { LiviaLogoLink } from "@/components/brand/LiviaLogoLink";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { PERSONA_ACCENT, usePersona } from "@/hooks/usePersona";
@@ -21,7 +21,7 @@ export function PersonaScreenHeader({
   return (
     <View style={styles.wrap}>
       <View style={[styles.accent, { backgroundColor: accent }]} />
-      <LiviaWordmark size="sm" color={colors.foreground} />
+      <LiviaLogoLink size="sm" color={colors.foreground} />
       {eyebrow ? (
         <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{eyebrow}</Text>
       ) : null}

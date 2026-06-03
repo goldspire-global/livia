@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,7 +88,7 @@ export function GuestHubSignIn({
     >
       <div className="max-w-md mx-auto px-4 py-12 space-y-6">
         <div className="text-center space-y-3">
-          <LiviaWordmark size="md" className="mx-auto opacity-90" />
+          <LiviaLogoLink size="md" className="mx-auto opacity-90" home="marketing" />
           <p className="text-[10px] uppercase tracking-widest font-mono text-primary">
             {GUEST_HUB_COPY.productName}
           </p>

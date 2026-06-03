@@ -3,11 +3,12 @@ import { Link, Redirect } from "wouter";
 import { SignIn } from "@clerk/clerk-react";
 import { useTheme } from "next-themes";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { DemoPasswordSignIn } from "@/components/demo-password-sign-in";
 import { GatewaySignInStory } from "@/components/gateway/gateway-sign-in-story";
 import { fetchDemoCatalog } from "@/lib/demo-portal";
 import { isDemoLoginEnabled } from "@/lib/persona";
+import { isSignedOutLanding } from "@/lib/auth-routes";
 import { clerkGatewayAppearance } from "@/lib/clerk-gateway-appearance";
 import { getMarketingOrigin } from "@/lib/surface-urls";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ export default function SignInPage() {
       .catch(() => undefined);
   }, []);
 
-  if (isDemoLoginEnabled && !betaMode) {
+  if (isDemoLoginEnabled && !betaMode && !isSignedOutLanding()) {
     return <Redirect to="/demo" />;
   }
 
@@ -54,9 +55,7 @@ export default function SignInPage() {
       </div>
 
       <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-5 sm:px-6 sm:py-6">
-        <a href={marketing} className="opacity-90 transition-opacity hover:opacity-100">
-          <LiviaWordmark size="md" />
-        </a>
+        <LiviaLogoLink size="md" home="marketing" />
         {isDemoLoginEnabled ? (
           <Link href="/demo">
             <span className="inline-flex min-h-[44px] items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80">
@@ -83,6 +82,13 @@ export default function SignInPage() {
 
         <section className="flex flex-1 flex-col justify-center px-4 pb-10 pt-2 sm:px-6 lg:px-10 lg:pb-16 xl:px-14">
           <div className="mx-auto w-full max-w-md">
+            {isSignedOutLanding() ? (
+              <p className="mb-6 rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                You&apos;re signed out. Use the demo launcher to explore another world, or sign in with
+                your beta account below.
+              </p>
+            ) : null}
+
             {isDemoLoginEnabled ? (
               <div className="mb-8 text-center sm:text-left">
                 <h1 className="font-serif text-3xl font-normal leading-[1.08] tracking-tight sm:text-4xl">

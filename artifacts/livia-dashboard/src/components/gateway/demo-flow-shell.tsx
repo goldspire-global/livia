@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { applyGatewaySurfaceTheme } from "@/lib/gateway-surface-theme";
 import { cn } from "@/lib/utils";
 import "@/styles/gateway-demo-flow.css";
@@ -41,7 +41,7 @@ export function DemoFlowShell({ children, className }: Props) {
       </div>
 
       <header className="w2-demo-flow__bar w2-demo-flow__bar--minimal">
-        <LiviaWordmark size="md" />
+        <LiviaLogoLink size="md" />
       </header>
 
       <main className="w2-demo-flow__main">{children}</main>

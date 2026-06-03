@@ -9,6 +9,7 @@ import { useBusiness } from "@/lib/business-context";
 import { useBeautyChrome } from "@/lib/presentation-layout";
 import { beautyOutlineButton, beautyPanel, beautyPrimaryButton } from "@/lib/beauty-operational-ui";
 import { cn } from "@/lib/utils";
+import { SIGN_IN_AFTER_SIGN_OUT } from "@/lib/auth-routes";
 import { ProfileSecurityLink } from "@/components/settings/profile-security-link";
 import { applyGatewaySurfaceTheme } from "@/lib/gateway-surface-theme";
 
@@ -100,7 +101,7 @@ export function AccountSettingsPanel() {
           <CardDescription>End this session on this device.</CardDescription>
         </CardHeader>
         <CardContent>
-          <SignOutButton redirectUrl="/sign-in">
+          <SignOutButton redirectUrl={SIGN_IN_AFTER_SIGN_OUT}>
             <Button
               variant="outline"
               className={beautyOutlineButton(beautyChrome)}

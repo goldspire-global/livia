@@ -5,9 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   GatewayBusyOverlay,
   GatewayDemoEnterStage,
-  GatewayDemoStoryBeats,
   GatewaySlideDots,
 } from "@/components/gateway/gateway-demo-card-stage";
+import { WedgeBeautyThread } from "@/components/gateway/wedge-beauty-thread";
+import { WedgeStudioBrief } from "@/components/gateway/wedge-studio-brief";
+import { isBeautyWedgeThread } from "@/lib/wedge-beat-visuals";
 import { DemoFlowShell } from "@/components/gateway/demo-flow-shell";
 import {
   getWedgeDemoStory,
@@ -161,9 +163,11 @@ export default function DemoWedgeStoryPage() {
     <DemoFlowShell>
       {busy ? <GatewayBusyOverlay label="Signing in…" /> : null}
 
-      <p className="mb-6 text-center font-serif text-xl tracking-tight text-[#e6d0a5]/90 sm:text-2xl">
-        {enterMode ? "Walk in as your role" : "Your world — in one screen"}
-      </p>
+      {enterMode ? (
+        <p className="mb-6 text-center font-serif text-xl tracking-tight text-[#e6d0a5]/90 sm:text-2xl">
+          Walk in as your role
+        </p>
+      ) : null}
 
       {!provisioned ? (
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
@@ -189,9 +193,20 @@ export default function DemoWedgeStoryPage() {
           onSelectRole={(email) => void enterAsRole(email)}
           onBack={() => setSlide("story")}
         />
-      ) : (
-        <GatewayDemoStoryBeats
+      ) : isBeautyWedgeThread(story.vertical) ? (
+        <WedgeBeautyThread
           beats={story.beats}
+          tradeLabel={story.label}
+          disabled={!provisioned}
+          backHref="/demo"
+          backLabel="← Worlds"
+          onContinue={() => setSlide("enter")}
+        />
+      ) : (
+        <WedgeStudioBrief
+          beats={story.beats}
+          tradeLabel={story.label}
+          vertical={story.vertical}
           disabled={!provisioned}
           backHref="/demo"
           backLabel="← Worlds"

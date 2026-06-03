@@ -11,7 +11,7 @@ import { PERSONA_ACCENT, isDemoLoginEnabled, usePersona } from "@/lib/persona";
 import { getRitualNav } from "@/lib/persona-rituals";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import {
   applyExperienceTheme,
   applyTenantPresentationSurface,
@@ -23,6 +23,7 @@ import {
   readAppearancePreviewParams,
 } from "@/lib/appearance-preview-mode";
 import { PlatformDefaultAmbient } from "@/components/layout/platform-default-ambient";
+import { SIGN_IN_AFTER_SIGN_OUT } from "@/lib/auth-routes";
 import { isBeautyPresentationPreset, isBeautyVertical } from "@/lib/presentation-layout";
 import { applyBeautyAmbient } from "@/lib/beauty-ambient";
 import { applyGatewaySurfaceTheme } from "@/lib/gateway-surface-theme";
@@ -307,7 +308,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         ) : (
           <>
             <div className="beauty-skin-hairline shrink-0 border-b px-3 py-3.5 space-y-1.5">
-              <LiviaWordmark size="sm" className="opacity-90" />
+              <LiviaLogoLink size="sm" home="dashboard" className="opacity-90" />
               <p className="font-medium text-[11px] truncate text-muted-foreground leading-tight">
                 {business?.name || "Your shop"}
               </p>
@@ -356,7 +357,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-1">
             <NotificationCenter />
             <UserButton
-              afterSignOutUrl="/sign-in"
+              afterSignOutUrl={SIGN_IN_AFTER_SIGN_OUT}
               userProfileUrl="/settings?tab=account"
               appearance={accountMenuAppearance}
             />
@@ -380,7 +381,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <HelpSupportDialog />
           <NotificationCenter />
           <UserButton
-            afterSignOutUrl="/sign-in"
+            afterSignOutUrl={SIGN_IN_AFTER_SIGN_OUT}
             userProfileUrl="/settings?tab=account"
             appearance={accountMenuAppearance}
           />

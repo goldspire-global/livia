@@ -10,7 +10,9 @@ import {
   User,
   Vault,
 } from "lucide-react";
-import { LiviaMark, LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
+import { getMarketingOrigin } from "@/lib/surface-urls";
+import { LiviaMark } from "@/components/brand/LiviaMark";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -52,7 +54,13 @@ export function GatewayDemoLauncherShell({ children, advanced }: Props) {
           className="gateway-g1-rail hidden w-[72px] shrink-0 flex-col items-center border-r border-white/10 bg-black/35 py-6 backdrop-blur-md lg:flex xl:w-[88px]"
           aria-label="Gateway navigation"
         >
-          <LiviaMark className="mb-8 h-8 w-8 text-aurum-champagne" />
+          <a
+            href={getMarketingOrigin()}
+            className="mb-8 inline-flex opacity-90 transition-opacity hover:opacity-100"
+            aria-label="Livia home"
+          >
+            <LiviaMark className="h-8 w-8 text-aurum-champagne" />
+          </a>
           <nav className="flex flex-1 flex-col items-center gap-2">
             {RAIL.map((item) => {
               const Icon = item.icon;
@@ -90,7 +98,7 @@ export function GatewayDemoLauncherShell({ children, advanced }: Props) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-start justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10">
-            <LiviaWordmark size="lg" className="text-white" />
+            <LiviaLogoLink size="lg" className="text-white" home="marketing" />
             <div className="flex shrink-0 flex-col items-end gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-primary">
                 <Lock className="h-3 w-3" aria-hidden />

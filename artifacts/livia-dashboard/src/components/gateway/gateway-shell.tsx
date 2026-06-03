@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { applyGatewaySurfaceTheme } from "@/lib/gateway-surface-theme";
 import { Link } from "wouter";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -41,7 +41,7 @@ export function GatewayShell({
 
       <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-5 sm:px-8">
         <div className="min-w-0">
-          <LiviaWordmark size="md" />
+          <LiviaLogoLink size="md" home="marketing" />
           <p className="mt-1 truncate text-xs text-muted-foreground">{breadcrumb}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

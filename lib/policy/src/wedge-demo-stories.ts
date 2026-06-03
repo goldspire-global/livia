@@ -32,10 +32,21 @@ const WEDGE_BEATS: Record<BusinessVertical, WedgeDemoBeat[]> = {
     { headline: "Today — who's next", detail: "The whole shop on one calm screen.", cropHint: "today" },
   ],
   beauty: [
-    { headline: "Inquiry in Inbox", detail: "Patch tests, lash styles — context stays with the thread.", cropHint: "inbox" },
-    { headline: "Book + intake note", detail: "Vertical-smart booking guards on `/b`.", cropHint: "public-book" },
-    { headline: "Reminder SMS", detail: "Fewer no-shows. Link-first continuity.", cropHint: "sms" },
-    { headline: "Today — stations clear", detail: "Who's in, who's next, who needs you.", cropHint: "today" },
+    {
+      headline: "Inbox catches the inquiry",
+      detail: "DMs, texts, and patch-test threads — one queue with full context before you reply.",
+      cropHint: "inbox",
+    },
+    {
+      headline: "Guest books on `/b`",
+      detail: "Your menu, durations, and intake guards on a link-in-bio page — no account required.",
+      cropHint: "public-book",
+    },
+    {
+      headline: "Today keeps the floor calm",
+      detail: "Liv briefing, schedule, and what needs you — one Constellation dashboard.",
+      cropHint: "today",
+    },
   ],
   medspa: [
     { headline: "Consult request captured", detail: "Liv triages before clinical time is spent.", cropHint: "inbox" },

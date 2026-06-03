@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import { GUEST_HUB_COPY } from "@workspace/policy";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { PublicSurfaceFooter } from "@/components/public/public-surface-chrome";
 import { GuestHubLivChat } from "@/components/guest/guest-hub-liv-chat";
 import {
@@ -32,7 +32,7 @@ export function GuestHubShell({
     >
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
         <header className="text-center space-y-2">
-          <LiviaWordmark size="md" className="mx-auto opacity-90" />
+          <LiviaLogoLink size="md" className="mx-auto opacity-90" home="marketing" />
           <p className="text-[10px] uppercase tracking-widest font-mono text-primary">
             {GUEST_HUB_COPY.productName}
           </p>

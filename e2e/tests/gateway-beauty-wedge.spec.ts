@@ -17,11 +17,13 @@ test.describe("Beauty demo gateway", () => {
     await expect(page.getByTestId("gateway-demo-card-stage")).toBeVisible();
   });
 
-  test("G2 shows all beats then G3 role grid", async ({ page }) => {
+  test("G2 thread shows Inbox, /b, Today then G3 role grid", async ({ page }) => {
     await page.goto(`${dashboardBase}/demo/wedge/beauty`, { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("gateway-demo-beats-grid")).toBeVisible();
-    await expect(page.getByText("Inquiry in Inbox")).toBeVisible();
-    await expect(page.getByText("Today — stations clear")).toBeVisible();
+    await expect(page.getByText("Inbox catches the inquiry")).toBeVisible();
+    await expect(page.getByText("Guest books on `/b`")).toBeVisible();
+    await expect(page.getByText("Today keeps the floor calm")).toBeVisible();
+    await expect(page.getByText("Platform Default")).toBeVisible();
     await page.getByTestId("gateway-demo-continue").click();
     await expect(page.getByTestId("gateway-demo-enter-roles")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: /owner/i }).first()).toBeVisible();

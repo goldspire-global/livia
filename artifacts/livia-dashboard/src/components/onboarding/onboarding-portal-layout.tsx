@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LiviaWordmark } from "@/components/brand/LiviaMark";
+import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { OnboardingPortalChapterSpine } from "@/components/onboarding/onboarding-portal-chapter-spine";
 import type { PortalChapterId } from "@/lib/onboarding-portal-chapters";
 import { OnboardingLivHost } from "@/components/onboarding/onboarding-liv-host";
@@ -46,7 +46,7 @@ export function OnboardingPortalLayout({
       <OnboardingPortalAmbient />
 
       <header className="relative z-10 flex items-center justify-between gap-4 px-4 pt-6 md:px-8">
-        <LiviaWordmark size="md" />
+        <LiviaLogoLink size="md" home="marketing" />
         {packLabel ? (
           <span className="text-xs text-muted-foreground border border-border/60 rounded-full px-3 py-1 bg-background/50 backdrop-blur-sm">
             {packLabel}
