@@ -105,9 +105,9 @@ pnpm demo:clerk-prune              # dry-run — lists keep vs delete
 pnpm demo:clerk-prune -- --execute
 ```
 
-Optional: `--keep-globals` also keeps `manager@demo.livia-hq.com`, `org-admin@…`, and other cross-shop persona emails.
+By default, prune **also keeps** pooled globals (`manager@demo`, `staff-lara`, `org-admin`, …). Use `--owners-only` for aggressive cleanup, then rebuild.
 
-After prune (especially without `--keep-globals`): recreate globals and roster pool:
+After aggressive prune:
 
 ```bash
 pnpm demo:clerk-rebuild

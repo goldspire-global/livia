@@ -6,14 +6,15 @@
  *
  *   pnpm demo:clerk-prune              # dry-run (default)
  *   pnpm demo:clerk-prune -- --execute
- *   pnpm demo:clerk-prune -- --execute --keep-globals  # also keep manager@demo, org-admin, …
+ *   pnpm demo:clerk-prune -- --execute --owners-only  # aggressive — then pnpm demo:clerk-rebuild
  */
 import { createClerkClient } from "@clerk/express";
 import { DEMO_ROLE_EMAILS, demoOwnerEmailForSlug, isDemoLiviaEmail } from "@workspace/demo-logins";
 import { DEMO_WORLD_SLUGS } from "../src/lib/demo-portal-config";
 
 const execute = process.argv.includes("--execute");
-const keepGlobals = process.argv.includes("--keep-globals");
+/** Default: keep pooled manager/staff/org-admin Clerk users (roster sign-in depends on them). */
+const keepGlobals = !process.argv.includes("--owners-only");
 
 const secretKey = process.env.CLERK_SECRET_KEY?.trim();
 if (!secretKey) {
@@ -67,7 +68,7 @@ async function listAllUsers() {
 async function main() {
   console.log(execute ? "EXECUTE — deleting users" : "DRY RUN — pass --execute to delete");
   console.log(`Shop owners kept: ${keepEmails.size} slugs from DEMO_WORLD_SLUGS`);
-  if (keepGlobals) console.log("Also keeping global DEMO_ROLE_EMAILS (--keep-globals)");
+  if (keepGlobals) console.log("Keeping global DEMO_ROLE_EMAILS (default; pass --owners-only to skip)");
 
   const users = await listAllUsers();
   const toDelete: Array<{ id: string; email: string; reason: string }> = [];
