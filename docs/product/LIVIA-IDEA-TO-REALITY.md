@@ -286,7 +286,7 @@ Gate **Platform-Ready** (declare before public launch; can parallel last-mile go
 - [ ] CRUD **web + mobile**: customers (edit on detail), bookings (wizard), services, staff (profile + services)
 - [ ] Customers list: pagination/virtualisation; search; no unbounded load
 - [ ] New booking: stepped, beautiful enough for public demo; staff filtered by service
-- [ ] Settings: owner can configure shop + Liv + comms + billing path in one session
+- [ ] Settings: owner can configure shop + Liv + comms + billing path in one session (R2 adds optional **Liv setup copilot** for skin/persona/onboarding — [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md))
 - [ ] Persona homes correct (founder/owner/manager/staff/reception); copy plain English
 - [ ] Theme: tokens only; contrast pass on critical routes; responsive rules met
 

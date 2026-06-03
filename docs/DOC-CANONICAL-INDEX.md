@@ -87,6 +87,7 @@
 | Personas | `personas.md` | `product/PERSONA-UX.md`, journeys/ |
 | Verticals | `verticals.md` | `lib/policy` |
 | Liv OS | `product/LIV-OPERATING-SYSTEM.md` | `LIV-OS-ALPHABET.md` |
+| Liv setup copilot | `product/LIV-SETUP-COPILOT.md` | LIV-OPERATING-SYSTEM §6.5, PLATFORM-EVOLUTION Track I |
 | Business rules | `product/BUSINESS-RULES-REGISTRY.md` | — |
 | Scope / gates | `product/SCOPE-MORATORIUM.md` | `launch-plan.md`, `TARGET-STATE-VS-SHIP-SCOPE.md` |
 | Beta / showcase | `product/BETA-SHOWCASE-PROGRAM.md` | `BETA-ONBOARDING-FLOW.md` |

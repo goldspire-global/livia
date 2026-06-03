@@ -275,6 +275,8 @@ Internal Liv **never** auto-writes tenant data without human confirm in v1. It *
 **Liv:** Weekly narrative, deposit capture rate, Liv conversion vs human, policy change impact simulation (v2).  
 **Tools:** Policy edit (with confirm), billing, integrations.
 
+**Setup copilot (R2):** Same character configures the shop — presentation preset, brand, Liv persona, hours, blocking onboarding acts — via registered configure tools and preview→confirm→apply. Ops tools (book, inbox) stay in **ops** mode. Full spec: [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) · program Track I.
+
 ### 6.6 Founder (multi-shop)
 
 **Job:** Portfolio, not single chair.  

@@ -47,6 +47,10 @@ Hard-fail (returning a 500) is forbidden for any Liv-touching surface that custo
 
 Tracked weekly; reviewed monthly. Busts trigger an RFC.
 
+## Setup vs ops modes (R2)
+
+Per-tenant runtime serves **ops** tools (booking, inbox) today. **Setup copilot** (configure preset, brand, Liv persona, onboarding) uses the same instance with a filtered tool catalog and `livMode: "setup"`. Spec: [`LIV-SETUP-COPILOT.md`](../product/LIV-SETUP-COPILOT.md) · Track I.
+
 ## What this earns us
 
 A runtime that can deliver Rung 5 *for the cells that need it*, without paying Rung-5 cost *for the cells that don't*. The category commitment ("operator-as-a-service") sits on this choice.

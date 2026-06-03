@@ -27,6 +27,21 @@
 | **Global search (tenant)** | GLOBAL-SEARCH-SPEC | — | Dashboard ⌘K | 📋 R2 |
 | **Exec hat work log** | INTERNAL-EXEC-COCKPIT §4.2b | `exec-work-events` | Cockpit Hats River | ✅ R2 |
 
+### 1b. Setup copilot (configure via Liv) — Track I, R2
+
+**Spec:** [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) · **Program:** [`PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md`](./PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md) §7f
+
+| Tool / capability | Policy / spec | API / service | UI surface | Status |
+|-------------------|---------------|---------------|------------|--------|
+| **Get tenant experience** | TENANT-EXPERIENCE-CONTRACT | `tenant-experience` | Setup thread | 📋 I-A |
+| **List / preview / apply presentation preset** | presentation-presets | business PATCH + preview | Settings Appearance, onboarding | 📋 I-A |
+| **Patch brand assets** | SKIN-BRAND-INHERITANCE | business PATCH | Appearance | 📋 I-A |
+| **Patch Liv persona** | liv-mandate, aiTone fields | business PATCH | Settings Liv, `a6_liv` | 📋 I-A |
+| **Explain / propose operational policy** | operational-policy | policies service | Settings Policy | 📋 I-B |
+| **Patch hours / confirm public link** | onboarding-program | onboarding + business | Onboarding portal | 📋 I-B |
+| **Invite staff / assign service** | RBAC | staff routes | Setup thread | 📋 I-C |
+| **Start channel connect** | CHANNELS-EU | OAuth handoff | Settings Comms | 📋 I-C |
+
 **Legend:** ✅ shipped · 🔨 partial / demo · 📋 spec only
 
 ---
@@ -62,3 +77,4 @@ Guest surfaces use prefix `w5.{type}` from [`guest-surfaces.ts`](../../lib/polic
 | Date | Change |
 |------|--------|
 | 2026-05-31 | Initial tool registry matrix |
+| 2026-06-02 | §1b setup copilot planned tools (Track I) |

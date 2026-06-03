@@ -220,6 +220,8 @@ POST /api/businesses
 | **a6_liv** | Tone, booking rules acknowledgment | Owner voice |
 | **a8_public_link** | Confirm slug / public URL | Go-live consent |
 
+**R2 target:** blocking acts may complete via **Liv setup copilot** conversation (optional “Talk to Liv”) or existing Settings/onboarding forms — same APIs, same audit. Today `a6_liv` deep-links to `/settings?tab=liv`. Spec: [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md).
+
 After blocking acts: **`isOnboardingAppUnlocked()`** → full dashboard/mobile.
 
 ### 3.4 Activation (recommended, not app-lock)
@@ -247,7 +249,7 @@ After login, the owner configures **how they run the business inside Livia**:
 | **Liv** | Onboarding A6, Settings → Liv | ✅ greeting | Vocabulary from vertical pack |
 | **Channels** | Onboarding A7, Settings → Comms | ❌ (wizard started) | Jurisdiction channel priority |
 | **Policy** | Settings → Policy | ✅ jurisdiction defaults | Deposits, cancel windows |
-| **Appearance** | Settings → Appearance (Track D) | ✅ Platform Default | 4 presets per vertical |
+| **Appearance** | Settings → Appearance (Track D); **R2:** Liv setup copilot | ✅ Platform Default | 4 presets per vertical |
 | **Brand** | Settings → Brand | ❌ | Logo/accent → flows to W5 |
 | **Public link** | Onboarding A8 | Slug from create | Copy/share `/b/{slug}` |
 | **Vertical modules** | Dashboard home | ✅ playbook modules | proofs, classes, medspa hub, … |

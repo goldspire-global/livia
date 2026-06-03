@@ -9,7 +9,7 @@
 |---------|------|
 | **[`LIVIA-FINAL-BUILD-PLAN.md`](./LIVIA-FINAL-BUILD-PLAN.md)** | **Master scope — LOCKED for heavy build** |
 | [`OPERATION-SOLIDIFY.md`](./OPERATION-SOLIDIFY.md) | Kernel / mobile / channels track detail |
-| [`PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md`](./PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md) | Master tracks A–H |
+| [`PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md`](./PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md) | Master tracks A–I |
 | [`PLATFORM-RELEASE-PROGRAM.md`](./PLATFORM-RELEASE-PROGRAM.md) | R1 / R2 / R3 platform releases |
 | [`operations/PLATFORM-BACKLOG.md`](../operations/PLATFORM-BACKLOG.md) | Current todo checklist |
 
@@ -46,6 +46,7 @@ Lifecycle + flows: [`LIVIA-PLATFORM-LIFECYCLE.md`](./LIVIA-PLATFORM-LIFECYCLE.md
 | Commercial | `LIVIA-MASTER-PLAN.md` + `../launch-plan.md` |
 | Engineering phases | `LIVIA-MASTER-BUILD-PLAN.md` |
 | Liv OS | `LIV-OPERATING-SYSTEM.md` |
+| Liv setup copilot | `LIV-SETUP-COPILOT.md` |
 | v3 UX | `V3-EXPERIENCE-SPEC.md`, `V3-SURFACE-MATRIX.md` |
 | Beta | `BETA-SHOWCASE-PROGRAM.md`, `BETA-ONBOARDING-FLOW.md` |
 

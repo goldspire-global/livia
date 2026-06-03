@@ -17,6 +17,7 @@
 | Self-evolving / hub-and-spoke product rules | [`../engineering/COMPOSABLE-EVOLUTION.md`](../engineering/COMPOSABLE-EVOLUTION.md) |
 | Support points, surfaceId, investigation | [`../operations/SUPPORT-POINTS-AND-INVESTIGATION.md`](../operations/SUPPORT-POINTS-AND-INVESTIGATION.md) |
 | Tenant experience bundle | [`TENANT-EXPERIENCE-CONTRACT.md`](./TENANT-EXPERIENCE-CONTRACT.md) |
+| Liv setup copilot (configure shop via chat) | [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) · Track I §7f |
 | Internal exec cockpit + workforce | [`INTERNAL-EXEC-COCKPIT-SPEC.md`](./INTERNAL-EXEC-COCKPIT-SPEC.md) §4.2b · Track H §7e |
 
 ---
@@ -36,6 +37,8 @@ Two capabilities make Livia **modular and operable at scale**:
 5. **Platform flows (nested, thick/thin, vertical toolkits)** — [`LIVIA-PLATFORM-FLOWS.md`](./LIVIA-PLATFORM-FLOWS.md).
 
 6. **Exec company workforce (Track H)** — programmatic **employed hats**: role catalog, work-event ledger, Cursor/agent bridge into Hats River — [`INTERNAL-EXEC-COCKPIT-SPEC.md`](./INTERNAL-EXEC-COCKPIT-SPEC.md) §4.2b.
+
+7. **Liv setup copilot (Track I)** — owners configure presentation, brand, Liv persona, and blocking onboarding through conversation (preview→confirm→apply), not a parallel settings stack — [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md).
 
 This program sequences **documentation**, **registry + wiring**, **CI guards**, **internal portal UX**, and **staging-only presentation preset rollout** without blocking Operation Solidify’s v1 ship criteria. Work proceeds in **tracks** that can run in parallel after Track 0.
 
@@ -574,6 +577,48 @@ No code in Track E. Track D implements Track E specs.
 
 ---
 
+## 7f. Track I — Liv setup copilot (configure the shop via Liv)
+
+**Owner:** product + engineering  
+**Spec:** [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md)  
+**Depends on:** Track D2 (preset PATCH + resolver); liv-runtime registry + mandate gating; Appearance preview UI (dashboard)  
+**Release:** R2 (Phase I-A may start after D2 lands; not R1 exit criteria)
+
+**Problem:** Owners configure skin, Liv voice, and go-live essentials through Settings forms and onboarding deep-links while Liv already runs ops (inbox, booking). That splits “the OS colleague” into operator vs settings clerk.
+
+**Rule:** Configure writes use the same tool registry and policy hub as ops tools; `livMode: "setup"` filters capabilities; vertical change is never a Liv toggle.
+
+### Phase I-A — Skin + Liv persona
+
+| ID | Task | Done when |
+|----|------|-----------|
+| I-A.1 | Register `get_tenant_experience`, `list_presentation_presets`, `preview_presentation`, `apply_presentation_preset`, `patch_brand_assets`, `patch_liv_persona` | `lib/liv-runtime` + matrix doc rows |
+| I-A.2 | `surfaceId` `tenant.owner.setup` + dashboard entry (Appearance / Settings) | Support registry row |
+| I-A.3 | Preview dashboard + `/b` before apply; audit on apply | E2E + audit test |
+| I-A.4 | Onboarding `a6_liv` optional “Talk to Liv” path | Form escape hatch remains |
+
+### Phase I-B — Onboarding + policy
+
+| ID | Task | Done when |
+|----|------|-----------|
+| I-B.1 | `explain_operational_policy`, `propose_policy_patch` (typed patches) | No free-text-only policy writes |
+| I-B.2 | `patch_business_hours`, `confirm_public_link` complete blocking acts | `onboarding.act.completed` → coach next |
+| I-B.3 | Event handler: coach next act in setup thread | Idempotent with workflows |
+
+### Phase I-C — Team + channels
+
+| ID | Task | Done when |
+|----|------|-----------|
+| I-C.1 | `invite_staff`, `assign_service` with confirm cards | RBAC + audit |
+| I-C.2 | `start_channel_connect` OAuth handoff | No tokens in chat |
+| I-C.3 | Mobile slim setup surface or honest web handoff | WEB-MOBILE-PARITY |
+
+**Track I exit:** Owner changes preset via Liv with preview + confirm; `/b` matches dashboard skin; matrix §1b rows ✅ for I-A minimum.
+
+**Estimate:** ~8–12 eng-days (I-A–I-C).
+
+---
+
 ## 8. Master todo matrix (consolidated)
 
 Use this section as the **single checklist** for the program. Mirror in PLATFORM-BACKLOG; when items complete, check both.
@@ -774,6 +819,17 @@ Use this section as the **single checklist** for the program. Mirror in PLATFORM
 - [ ] H3.2–H3.4 Cursor skill + AGENTS.md + hook stub
 - [ ] H4.1–H4.3 Enrichers (optional R3)
 
+### 8.10 Track I — Liv setup copilot
+
+**Spec:** [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md)
+
+- [ ] I-A.1 Configure tools in liv-runtime + `liv-tool-matrix.ts`
+- [ ] I-A.2 `surfaceId` `tenant.owner.setup` + dashboard entry
+- [ ] I-A.3 Preview + apply preset/brand with audit + E2E
+- [ ] I-A.4 Onboarding `a6_liv` “Talk to Liv” optional path
+- [ ] I-B.1–I-B.3 Policy explain/propose + hours + coach next act
+- [ ] I-C.1–I-C.3 Team invite + channel handoff + mobile parity
+
 ### 8.9 Cross-program (existing PLATFORM-BACKLOG — keep in sync)
 
 - [ ] P0 rotate Supabase DB password if exposed
@@ -802,6 +858,8 @@ Use this section as the **single checklist** for the program. Mirror in PLATFORM
 | F5 can parallel F2 | Exec vs marketing different artifacts |
 | F5.2 before H0 | Hats River shell before workforce ledger |
 | H2 before H3 | API + UI before Cursor bridge |
+| D2 before I-A | Preset PATCH + resolver before configure-via-Liv skin tools |
+| I-A before I-B | Skin/persona before onboarding/policy thread |
 | Do not block Solidify G2–G6 on C | Internal investigate is ops maturity, not wedge |
 
 **Merge with Operation Solidify:** Solidify criterion 7 (“Internal ops — Support 3-column workspace + runbooks”) absorbs Track C when complete.
@@ -865,3 +923,4 @@ The program closes when:
 |------|--------|
 | 2026-05-29 | Initial program — composable evolution + support points from architecture session |
 | 2026-05-29 | Expanded Track D/E — full UX design session map, granular D0–D8 todos, G7–G8, §8.1b experience docs checklist |
+| 2026-06-02 | Track I — Liv setup copilot (configure shop via conversation); §7f, §8.10, LIV-SETUP-COPILOT.md |

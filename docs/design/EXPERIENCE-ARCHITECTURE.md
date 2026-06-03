@@ -328,6 +328,7 @@ From [`PRESENTATION-PRESETS-AND-ROLLOUT.md` Appendix B](./PRESENTATION-PRESETS-A
 5. **Onboarding order** — vertical → default preset → optional picker (staging) → brand logo.
 6. **Performance** — degrade blur/glass on low-end Android.
 7. **Support** — ticket metadata includes `presetId`, `surfaceClass`, `vertical` (Track B).
+8. **Configure via Liv (R2)** — presentation and brand changes go through setup copilot tools (preview → confirm) calling the same hub as Settings → Appearance; vertical capability is never changed in chat. [`LIV-SETUP-COPILOT.md`](../product/LIV-SETUP-COPILOT.md).
 
 ---
 

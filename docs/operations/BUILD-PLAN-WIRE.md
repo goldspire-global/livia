@@ -39,6 +39,7 @@ MASTER: LIVIA-FINAL-BUILD-PLAN.md
 │
 ├── R2 (~6 mo post-R1)
 │   ├── W6 guest hub complete (Liv orchestrator, favorites, book-again)
+│   ├── Track I — Liv setup copilot (configure skin / persona / onboarding via chat)
 │   ├── I4 support Context pane + Investigate
 │   ├── surfaceId registry full
 │   └── Mobile parity push

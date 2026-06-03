@@ -146,6 +146,19 @@ Set on Railway staging API: `LIVIA_DEPLOY_ENV=staging`
 
 ---
 
+## P2 — Liv setup copilot (Track I, R2)
+
+**Spec:** [`product/LIV-SETUP-COPILOT.md`](../product/LIV-SETUP-COPILOT.md) · **Program:** [`PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md`](../product/PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md) §7f · **Matrix:** [`LIV-TOOL-REGISTRY-MATRIX.md`](../product/LIV-TOOL-REGISTRY-MATRIX.md) §1b
+
+- [ ] **I-A** Configure tools + `tenant.owner.setup` + preset preview/apply + audit E2E
+- [ ] **I-A** Onboarding `a6_liv` optional “Talk to Liv” (forms remain)
+- [ ] **I-B** Policy explain/propose + hours + coach next onboarding act
+- [ ] **I-C** Team invite + channel handoff + mobile parity
+
+**Depends on:** Track D2 preset PATCH · liv-runtime registry.
+
+---
+
 ## P1 — Presentation presets (staging only)
 
 **Spec:** [`design/PRESENTATION-PRESETS-AND-ROLLOUT.md`](../design/PRESENTATION-PRESETS-AND-ROLLOUT.md) · **Architecture:** [`design/EXPERIENCE-ARCHITECTURE.md`](../design/EXPERIENCE-ARCHITECTURE.md) · **Master checklist:** [`product/PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md`](../product/PLATFORM-EVOLUTION-AND-OPS-PROGRAM.md) §8.5 · **Catalog:** `lib/policy/src/presentation-presets.ts`

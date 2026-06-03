@@ -77,6 +77,7 @@
 - WhatsApp Liv Personal pilot
 - Custom domain on `/b`
 - Gate 2 field evidence (`pnpm smoke:gate2`)
+- Liv setup copilot — configure skin, brand, persona, onboarding via chat (Track I, R2) — [`product/LIV-SETUP-COPILOT.md`](product/LIV-SETUP-COPILOT.md)
 
 ---
 
@@ -107,6 +108,7 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 
 | Date | Change |
 |------|--------|
+| 2026-06-02 | R∞: Liv setup copilot spec + Track I in evolution program |
 | 2026-06-01 | All nine vertical program docs + VERTICALS build plan + `vertical:doc-check` for every enum |
 | 2026-06-01 | Beauty program + Bloom UAT; mobile preset tint; doc propagation cascade |
 | 2026-05-31 | Screen-card P0 registry + `screen-cards:status` / `screen-cards:update` (PNG = per-screen northstar) |

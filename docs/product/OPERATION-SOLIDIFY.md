@@ -145,6 +145,7 @@ flowchart TB
 | T2.5 | Morning briefing on **mobile** (read + push hook) |
 | T2.6 | Peer insights, rota, time-off on mobile (not web-only) |
 | T2.7 | “Liv was wrong” + incident cards web + mobile |
+| T2.8 | **Deferred R2** — Liv setup copilot (configure skin/persona/onboarding via chat) | [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) Track I |
 
 ---
 

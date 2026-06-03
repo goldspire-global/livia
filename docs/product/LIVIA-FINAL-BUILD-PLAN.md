@@ -250,6 +250,14 @@ Tracks cross-reference [`OPERATION-SOLIDIFY.md`](./OPERATION-SOLIDIFY.md) · [`P
 | H2 | Hats River v2 · `pnpm exec:hat-work` | R2 |
 | H3 | Cursor session → work event | R2 |
 
+#### Track I — Liv setup copilot (R2)
+
+| ID | Deliverable | Spec |
+|----|-------------|------|
+| I-A | Configure tools: preset preview/apply, brand, Liv persona | [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) |
+| I-B | Onboarding thread + typed policy propose | same |
+| I-C | Team invite + channel handoff | same |
+
 #### Policy / API modules to land R1
 
 ```
@@ -277,6 +285,7 @@ scripts/headless-lifecycle-r1.mjs        (new — target)
 | **W4** | Ritual homes per vertical · proofs desk wired |
 | **Mobile** | Today v2 · guest deep links · offline queue |
 | **Product** | Owner Liv **guardrails UX** (approval mode) | MULTI-HAT G6 |
+| **Product** | **Liv setup copilot** — configure skin, brand, persona, onboarding via chat | Track I · [`LIV-SETUP-COPILOT.md`](./LIV-SETUP-COPILOT.md) |
 | **Ops** | Stuck onboarding · 14d zero-booking monitors → Radar |
 | **Verify** | CI guest-token suite · support opens tenant from thread |
 
@@ -313,6 +322,7 @@ From [`MULTI-HAT-GAP-REVIEW.md`](./MULTI-HAT-GAP-REVIEW.md) — all tracked in [
 | G4 | surfaceId registry | R2 |
 | G5 | Preset parade vs Platform Default | R1 polish / R3 parade |
 | G6 | Owner Liv guardrails UX | R2 |
+| G16 | Liv setup copilot (configure shop via Liv) | R2 Track I |
 | G7 | Guest continuity per-shop timeline | R2 PUBLIC-B |
 | G8 | Import / Phorest switching | RFC + business |
 | G9 | `/b` perf budgets · mobile offline | R2–R3 |

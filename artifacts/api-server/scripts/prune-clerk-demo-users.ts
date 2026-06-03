@@ -116,7 +116,9 @@ async function main() {
     console.log(`Deleted ${row.email}`);
     await new Promise((r) => setTimeout(r, 120));
   }
-  console.log(`\nDeleted ${deleted} Clerk user(s). Run Sync logins on /demo to recreate pooled roles.`);
+  console.log(
+    `\nDeleted ${deleted} Clerk user(s). Run pnpm demo:clerk-rebuild or Sync logins on /demo if pooled roles were removed.`,
+  );
 }
 
 main().catch((err) => {
