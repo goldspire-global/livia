@@ -17,15 +17,9 @@ import { BookingCreateDialog } from "@/components/booking/booking-create-dialog"
 import { pendingReasonLabel } from "@/lib/booking-pending";
 import { BookingRowActions } from "@/components/booking/booking-row-actions";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { useBeautyChrome } from "@/lib/presentation-layout";
+import { bookingExperienceCopy, verticalOperationalCopy } from "@workspace/policy";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import { cn } from "@/lib/utils";
-import {
-  beautyListScroll,
-  beautyOutlineButton,
-  beautyPanel,
-  beautyPrimaryButton,
-  beautyRow,
-} from "@/lib/beauty-operational-ui";
 import { onContainedScrollWheel } from "@/lib/use-contained-scroll";
 
 const PAGE_SIZE = 40;
@@ -51,7 +45,11 @@ export default function BookingsPage() {
   const [accumulated, setAccumulated] = useState<any[]>([]);
 
   const bid = business?.id ?? "";
-  const beautyChrome = useBeautyChrome((business as { vertical?: string } | null)?.vertical);
+  const businessVertical = (business as { vertical?: string } | null)?.vertical;
+  const businessCategory = (business as { category?: string } | null)?.category;
+  const op = useOperationalChrome(businessVertical);
+  const opCopy = verticalOperationalCopy(businessVertical, businessCategory);
+  const bookingCopy = bookingExperienceCopy(businessVertical, businessCategory);
   const statusParam = statusFilter !== "ALL" ? (statusFilter as any) : undefined;
 
   useEffect(() => {
@@ -163,32 +161,28 @@ export default function BookingsPage() {
         showRitual
           ? persona === "receptionist"
             ? "The floor"
-            : `Bookings · ${business?.name ?? "this shop"}`
-          : "Bookings"
+            : `${opCopy.bookingsPageTitle} · ${business?.name ?? "this shop"}`
+          : opCopy.bookingsPageTitle
       }
-      subtitle={
-        showRitual
-          ? "Calendar and walk-ins — add a booking without leaving the list."
-          : "Manage appointments and reservations"
-      }
+      subtitle={showRitual ? opCopy.bookingsPageSubtitle : opCopy.bookingsPageSubtitle}
       width="full"
       actions={
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className={beautyOutlineButton(beautyChrome)}
+            className={op.outlineButton()}
             data-testid="button-new-booking-quick"
             onClick={() => setBookingDialogOpen(true)}
           >
             <CalendarPlus className="h-4 w-4 mr-2" />
-            Quick add
+            {bookingCopy.listQuickAddLabel}
           </Button>
           <Button
             data-testid="button-new-booking-guided"
-            className={beautyPrimaryButton(beautyChrome)}
+            className={op.primaryButton()}
             onClick={() => setGuidedDialogOpen(true)}
           >
-            Guided booking
+            {bookingCopy.listGuidedBookingTitle}
           </Button>
         </div>
       }
@@ -209,7 +203,7 @@ export default function BookingsPage() {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search customer or service..."
+            placeholder={opCopy.searchBookingsPlaceholder}
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -225,13 +219,13 @@ export default function BookingsPage() {
             <SelectItem value="CONFIRMED">Confirmed</SelectItem>
             <SelectItem value="COMPLETED">Completed</SelectItem>
             <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            <SelectItem value="NO_SHOW">No Show</SelectItem>
+            <SelectItem value="NO_SHOW">{bookingCopy.statusFilterNoShow}</SelectItem>
             <SelectItem value="ALL">All statuses</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <Card className={beautyPanel(beautyChrome)}>
+      <Card className={op.panel()}>
         <CardContent className="p-0">
           {listLoading ? (
             <div className="divide-y divide-border">
@@ -249,29 +243,33 @@ export default function BookingsPage() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Calendar className="h-9 w-9 text-muted-foreground mb-3 opacity-40" />
-              <p className="font-medium">No bookings found</p>
+              <p className="font-medium">{bookingCopy.listEmptyTitle}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {search || statusFilter !== "PENDING"
                   ? "Try adjusting your filters"
                   : "Create your first booking to get started"}
               </p>
               {!search && statusFilter === "PENDING" && (
-                <Button className="mt-4" variant="outline" onClick={() => setBookingDialogOpen(true)}>
+                <Button
+                  className={cn("mt-4", op.outlineButton())}
+                  variant="outline"
+                  onClick={() => setBookingDialogOpen(true)}
+                >
                   <CalendarPlus className="h-4 w-4 mr-2" />
-                  New booking
+                  {bookingCopy.listEmptyPendingCta}
                 </Button>
               )}
             </div>
           ) : (
             <>
-            <div className={beautyListScroll()} onWheel={onContainedScrollWheel}>
+            <div className={op.listScroll()} onWheel={onContainedScrollWheel}>
               {filtered.map((booking: any) => (
                 <Link key={booking.id} href={`/bookings/${booking.id}`}>
                   <div
                     data-testid={`row-booking-${booking.id}`}
-                    className={beautyRow(beautyChrome, booking.status === "PENDING")}
+                    className={op.row(booking.status === "PENDING")}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
+                    <div className={op.avatarRing()}>
                       {booking.customer?.firstName?.charAt(0) ?? "?"}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -287,18 +285,36 @@ export default function BookingsPage() {
                       <span className="text-sm font-medium">{formatDateTime(booking.startAt)}</span>
                       <div className="flex flex-col items-end gap-0.5">
                         <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                            STATUS_COLORS[booking.status] ?? ""
-                          }`}
+                          className={cn(
+                            "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                            op.bookingStatus(
+                              booking.status,
+                              STATUS_COLORS[booking.status] ?? "",
+                            ),
+                          )}
                         >
                           {booking.status}
                         </span>
                         {booking.status === "PENDING" ? (
                           <span
-                            className="text-[9px] text-amber-700 dark:text-amber-300 max-w-[160px] truncate text-right"
+                            className={cn(
+                              "text-[9px] max-w-[200px] line-clamp-2 text-right leading-snug",
+                              op.wellness
+                                ? "text-[hsl(var(--wellness-pending-fg))]"
+                                : "text-amber-700 dark:text-amber-300",
+                            )}
                             data-testid={`pending-reason-${booking.id}`}
+                            title={pendingReasonLabel(
+                              booking.pendingReason,
+                              businessVertical,
+                              businessCategory,
+                            )}
                           >
-                            {pendingReasonLabel(booking.pendingReason)}
+                            {pendingReasonLabel(
+                              booking.pendingReason,
+                              businessVertical,
+                              businessCategory,
+                            )}
                           </span>
                         ) : booking.status === "CANCELLED" && booking.cancellationReason ? (
                           <span className="text-[9px] text-muted-foreground max-w-[160px] truncate text-right">

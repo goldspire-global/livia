@@ -62,23 +62,6 @@ export function initialOnboardingState(): OnboardingState {
   };
 }
 
-/** @deprecated Use `afterBusinessCreatedStateWithSeed` from `./onboarding-program`. */
-export function afterBusinessCreatedState(): OnboardingState {
-  const completed: OnboardingActId[] = [
-    "a1_create_business",
-    "a3_service_menu",
-    "a4_team",
-  ];
-  return {
-    currentAct: "a2_shop_profile",
-    completedActs: completed,
-    percentComplete: percentFromCompletedActs(completed),
-    checklist: onboardingChecklistSchema.parse({
-      servicesConfirmed: true,
-    }),
-    updatedAt: new Date().toISOString(),
-  };
-}
 
 export function mergeOnboardingState(
   existing: unknown,

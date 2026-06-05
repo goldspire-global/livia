@@ -1,9 +1,12 @@
-import { db, bookingsTable, customersTable, conversationsTable, eventsTable } from "@workspace/db";
+import { db, bookingsTable, customersTable, conversationsTable, eventsTable, businessesTable } from "@workspace/db";
 import { eq, and, gte, lte, sql, inArray } from "drizzle-orm";
 import { enrichBookingsBatch } from "./bookings.service";
 import { desc } from "drizzle-orm";
 import { getVoiceDigestForBusiness } from "./voice-call.service";
 import { resolveBillingState } from "./billing.service";
+import { listBookingResources } from "./booking-resources.service";
+import { getPackageCreditSummary } from "./package-credits.service";
+import { ensureWellnessShowcaseDepth } from "./wellness-demo-depth";
 
 export async function getDashboardSummary(businessId: string) {
   const now = new Date();
@@ -12,6 +15,20 @@ export async function getDashboardSummary(businessId: string) {
   const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
   const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const [biz] = await db
+    .select({ vertical: businessesTable.vertical })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+
+  const isWellness = biz?.vertical === "wellness";
+  if (isWellness) {
+    const existingRooms = await listBookingResources(businessId, true);
+    if (!existingRooms.some((r) => r.resourceType === "room")) {
+      await ensureWellnessShowcaseDepth(businessId);
+    }
+  }
 
   const [todayCount] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -106,12 +123,20 @@ export async function getDashboardSummary(businessId: string) {
     .orderBy(bookingsTable.startAt)
     .limit(40);
 
-  const upcomingBookings = await enrichBookingsBatch(upcomingRaw);
+  const upcomingBookings = await enrichBookingsBatch(upcomingRaw, { businessId });
 
-  const [voiceDigest, billing] = await Promise.all([
-    getVoiceDigestForBusiness(businessId),
-    resolveBillingState(businessId).catch(() => null),
-  ]);
+  const [voiceDigest, billing, bookingResources, packageCreditSummary, wellnessReports] =
+    await Promise.all([
+      getVoiceDigestForBusiness(businessId),
+      resolveBillingState(businessId).catch(() => null),
+      isWellness ? listBookingResources(businessId, true) : Promise.resolve([]),
+      isWellness ? getPackageCreditSummary(businessId) : Promise.resolve(null),
+      isWellness
+        ? import("./wellness-reports.service").then((m) =>
+            m.getWellnessReportsBundle(businessId).catch(() => null),
+          )
+        : Promise.resolve(null),
+    ]);
 
   return {
     todayBookings: todayCount?.count ?? 0,
@@ -123,6 +148,11 @@ export async function getDashboardSummary(businessId: string) {
     noShowTodayCount: noShowToday?.count ?? 0,
     totalCustomers: totalCustomers?.count ?? 0,
     upcomingBookings,
+    bookingResources: isWellness ? bookingResources : undefined,
+    packageCreditSummary: isWellness ? packageCreditSummary : undefined,
+    wellnessTomorrowStress: isWellness
+      ? (wellnessReports?.tomorrowStress ?? null)
+      : undefined,
     voiceBookingsThisWeek: voiceDigest.voiceBookingsThisWeek,
     voiceRecoveredValueEurCents: voiceDigest.voiceRecoveredValueEurCents,
     voiceOutcomeShareEurCents: billing?.voiceOutcomeShareEurCents ?? 0,

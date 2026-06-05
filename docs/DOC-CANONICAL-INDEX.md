@@ -19,6 +19,8 @@
 | **UI/UX authority** | [`design/UI-UX-MASTER-PROGRAM.md`](./design/UI-UX-MASTER-PROGRAM.md) |
 | **Skin / `/b` inheritance** | [`design/SKIN-BRAND-INHERITANCE-SPEC.md`](./design/SKIN-BRAND-INHERITANCE-SPEC.md) |
 | **All vertical programs** | [`product/VERTICAL-PROGRAMS-INDEX.md`](./product/VERTICAL-PROGRAMS-INDEX.md) |
+| **Wellness north star (V4)** | [`product/WELLNESS-NORTHSTAR-PROGRAM.md`](./product/WELLNESS-NORTHSTAR-PROGRAM.md) |
+| **Wellness master backlog (full inventory)** | [`product/WELLNESS-MASTER-BACKLOG.md`](./product/WELLNESS-MASTER-BACKLOG.md) |
 | **Verticals build plan** | [`product/LIVIA-VERTICALS-BUILD-PLAN.md`](./product/LIVIA-VERTICALS-BUILD-PLAN.md) |
 | **Partner / defer verticals** | [`product/PARTNER-AND-ADJACENT-VERTICALS.md`](./product/PARTNER-AND-ADJACENT-VERTICALS.md) |
 | **Doc propagation (vertical/platform)** | [`engineering/DOC-PROPAGATION-CASCADE.md`](./engineering/DOC-PROPAGATION-CASCADE.md) · `pnpm vertical:doc-check` |

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Star, CheckCircle2, Loader2, MapPin } from "lucide-react";
 import { formatVisitHeroTime, visitDateChip } from "@/lib/format";
-import { publicCareNotes } from "@/lib/public-booking-helpers";
+import { guestPublicExperience, guestPublicVisitPrep } from "@workspace/policy";
 import { PublicSurfaceNotFound } from "@/components/public/public-surface-chrome";
 import { PublicVisitLoading } from "@/components/public/public-visit-loading";
 import { usePublicGuestPwa } from "@/lib/public-guest-pwa";
@@ -127,7 +127,8 @@ export default function PublicVisitPage() {
   const canRunLate = data.status === "CONFIRMED" || data.status === "PENDING";
   const canFeedback = data.status === "COMPLETED" && !data.feedbackSubmitted;
   const isCancelled = data.status === "CANCELLED";
-  const prepNotes = publicCareNotes(data.vertical);
+  const guestPublic = guestPublicExperience(data.vertical, null);
+  const prepNotes = guestPublicVisitPrep(data.vertical, null);
   const bookUrl = `/b/${data.slug}`;
 
   return (
@@ -182,11 +183,9 @@ export default function PublicVisitPage() {
               <MapPin className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
               See you at the studio
             </p>
-            {data.customerFirstName ? (
-              <p className="text-xs text-muted-foreground mt-3">
-                Hi {data.customerFirstName} — here's your visit summary.
-              </p>
-            ) : null}
+            <p className="text-xs text-muted-foreground mt-3">
+              {guestPublic.visitGreeting(data.customerFirstName)}
+            </p>
           </section>
         )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { usePathId } from "@/lib/detail-route-params";
 import { useBusiness } from "@/lib/business-context";
@@ -20,7 +20,7 @@ import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import { useMembership } from "@/lib/membership-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { EntityDetailStates } from "@/components/entity-detail-states";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
 import { invalidateOperationalState } from "@/lib/operational-cache";
@@ -286,6 +286,8 @@ function StaffProfileTab({
 function StaffServicesTab({ businessId, staffId }: { businessId: string; staffId: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [listFilter, setListFilter] = useState<"all" | "assigned">("all");
 
   const { data: allServices } = useListServices(
     businessId,
@@ -300,16 +302,25 @@ function StaffServicesTab({ businessId, staffId }: { businessId: string; staffId
   );
 
   const setStaffServices = useSetStaffServices();
-  const assigned = (assignedServices as any[]) ?? [];
-  const assignedIds = new Set(assigned.map((s: any) => s.id));
+  const assignedIdList = useMemo(
+    () => ((assignedServices as { id: string }[] | undefined) ?? []).map((s) => s.id),
+    [assignedServices],
+  );
+  const assignedIds = useMemo(() => new Set(assignedIdList), [assignedIdList]);
+  const services = (allServices as any[]) ?? [];
 
-  function toggleService(serviceId: string) {
-    const next = assignedIds.has(serviceId)
-      ? [...assignedIds].filter((id) => id !== serviceId)
-      : [...assignedIds, serviceId];
+  const filteredServices = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return services.filter((svc: { id: string; name?: string }) => {
+      if (listFilter === "assigned" && !assignedIds.has(svc.id)) return false;
+      if (!q) return true;
+      return (svc.name ?? "").toLowerCase().includes(q);
+    });
+  }, [services, query, listFilter, assignedIds]);
 
+  function persistServiceIds(serviceIds: string[]) {
     setStaffServices.mutate(
-      { businessId, staffId, data: { serviceIds: next } },
+      { businessId, staffId, data: { serviceIds } },
       {
         onSuccess: () => {
           invalidateOperationalState(qc, businessId);
@@ -321,35 +332,135 @@ function StaffServicesTab({ businessId, staffId }: { businessId: string; staffId
     );
   }
 
+  function toggleService(serviceId: string) {
+    const next = assignedIds.has(serviceId)
+      ? [...assignedIds].filter((id) => id !== serviceId)
+      : [...assignedIds, serviceId];
+    persistServiceIds(next);
+  }
+
+  function assignVisible() {
+    const next = new Set(assignedIds);
+    filteredServices.forEach((svc: { id: string }) => next.add(svc.id));
+    persistServiceIds([...next]);
+  }
+
+  function clearVisible() {
+    const visible = new Set(filteredServices.map((svc: { id: string }) => svc.id));
+    persistServiceIds([...assignedIds].filter((id) => !visible.has(id)));
+  }
+
   if (isLoading) {
     return <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>;
   }
 
-  const services = (allServices as any[]) ?? [];
+  const assignedCount = assignedIds.size;
+  const showBulk = services.length > 8;
 
   return (
-    <Card>
+    <Card data-testid="staff-services-panel">
       <CardHeader>
-        <CardTitle className="text-base">Assigned Services</CardTitle>
+        <CardTitle className="text-base">Services they can perform</CardTitle>
+        <CardDescription>
+          {services.length === 0
+            ? "Create services under Services before assigning them to this team member."
+            : `${assignedCount} of ${services.length} assigned — only checked services appear when booking with this person.`}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {services.length === 0 ? (
           <p className="text-sm text-muted-foreground">No services available. Create services first.</p>
         ) : (
-          services.map((svc: any) => (
-            <div key={svc.id} className="flex items-center gap-3">
-              <Checkbox
-                id={svc.id}
-                checked={assignedIds.has(svc.id)}
-                onCheckedChange={() => toggleService(svc.id)}
-                data-testid={`checkbox-service-${svc.id}`}
-              />
-              <label htmlFor={svc.id} className="flex-1 cursor-pointer">
-                <p className="font-medium">{svc.name}</p>
-                <p className="text-xs text-muted-foreground">{svc.durationMinutes} min</p>
-              </label>
+          <>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative flex-1 min-w-[12rem]">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search services…"
+                  className="pl-8"
+                  data-testid="staff-services-search"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={listFilter === "all" ? "default" : "outline"}
+                  onClick={() => setListFilter("all")}
+                >
+                  All ({services.length})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={listFilter === "assigned" ? "default" : "outline"}
+                  onClick={() => setListFilter("assigned")}
+                >
+                  Assigned ({assignedCount})
+                </Button>
+              </div>
+              {showBulk ? (
+                <div className="flex flex-wrap gap-1.5 sm:ml-auto">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={filteredServices.length === 0 || setStaffServices.isPending}
+                    onClick={() => assignVisible()}
+                  >
+                    Assign visible
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={filteredServices.length === 0 || setStaffServices.isPending}
+                    onClick={() => clearVisible()}
+                  >
+                    Clear visible
+                  </Button>
+                </div>
+              ) : null}
             </div>
-          ))
+
+            <div
+              className="max-h-[min(50vh,420px)] overflow-y-auto overscroll-contain rounded-md border divide-y divide-border"
+              data-testid="staff-services-list"
+            >
+              {filteredServices.length === 0 ? (
+                <p className="px-3 py-6 text-sm text-center text-muted-foreground">
+                  {query.trim()
+                    ? "No services match your search."
+                    : listFilter === "assigned"
+                      ? "Nothing assigned yet — switch to All or search to add services."
+                      : "No services to show."}
+                </p>
+              ) : (
+                filteredServices.map((svc: any) => (
+                  <div key={svc.id} className="flex items-center gap-3 px-3 py-2.5">
+                    <Checkbox
+                      id={`staff-svc-${svc.id}`}
+                      checked={assignedIds.has(svc.id)}
+                      disabled={setStaffServices.isPending}
+                      onCheckedChange={() => toggleService(svc.id)}
+                      data-testid={`checkbox-service-${svc.id}`}
+                    />
+                    <label htmlFor={`staff-svc-${svc.id}`} className="flex-1 cursor-pointer min-w-0">
+                      <p className="font-medium text-sm truncate">{svc.name}</p>
+                      <p className="text-xs text-muted-foreground">{svc.durationMinutes} min</p>
+                    </label>
+                  </div>
+                ))
+              )}
+            </div>
+            {filteredServices.length > 0 && filteredServices.length < services.length ? (
+              <p className="text-xs text-muted-foreground">
+                Showing {filteredServices.length} of {services.length} services
+              </p>
+            ) : null}
+          </>
         )}
       </CardContent>
     </Card>

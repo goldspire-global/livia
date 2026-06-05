@@ -2,7 +2,7 @@
 
 **Status:** canonical (2026-05-30)  
 **Audience:** engineering, product, founder  
-**Reads with:** [`COMPOSABLE-EVOLUTION.md`](./COMPOSABLE-EVOLUTION.md) §5.3 · [`PLATFORM-LIFECYCLE-REGISTRY.md`](./PLATFORM-LIFECYCLE-REGISTRY.md) · [`LIVIA-PLATFORM-LIFECYCLE.md`](../product/LIVIA-PLATFORM-LIFECYCLE.md) · [`vertical-coverage.ts`](../../lib/policy/src/vertical-coverage.ts)
+**Reads with:** [`VERTICAL-COMES-TOGETHER.md`](./VERTICAL-COMES-TOGETHER.md) · [`VERTICAL-ANNOUNCEMENT.md`](./VERTICAL-ANNOUNCEMENT.md) · [`COMPOSABLE-EVOLUTION.md`](./COMPOSABLE-EVOLUTION.md) §5.3 · [`PLATFORM-LIFECYCLE-REGISTRY.md`](./PLATFORM-LIFECYCLE-REGISTRY.md) · [`LIVIA-PLATFORM-LIFECYCLE.md`](../product/LIVIA-PLATFORM-LIFECYCLE.md) · [`vertical-coverage.ts`](../../lib/policy/src/vertical-coverage.ts)
 
 ---
 
@@ -53,6 +53,8 @@ If Livia is **programmatic**, adding vertical #10 should feel like **blocks shuf
 | `tenant-experience.ts` | accent/shell/display maps | ✅ |
 | `wedge-demo-stories.ts` | G1-A interstitial beats | ⚠️ file may not exist yet |
 | `guest-surfaces.ts` | P7 surface types | ⚠️ Track G |
+| `guest-public-experience.ts` | W5 `/b` + visit copy | ✅ |
+| `vertical-announcement.ts` | announce + welcome handshake | ✅ |
 
 **Action:** `pnpm run typecheck` — fix every error in `lib/policy` before touching UI.
 

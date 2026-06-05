@@ -18,6 +18,7 @@ import { createCustomer } from "./customers.service";
 import { createPet } from "./pets.service";
 import { seedExpandedBookings, seedDemoInbox } from "./demo-inbox.seed";
 import { ensureLiveDayForBusiness } from "./demo-live-day.service";
+import { ensureWellnessShowcaseDepth } from "./wellness-demo-depth";
 import { ensureDemoOperationalCases } from "./demo-operational-cases.seed";
 import { applyDemoPublicBranding } from "../lib/demo-public-assets";
 import { backfillDemoServiceImages } from "../lib/demo-service-images";
@@ -267,6 +268,10 @@ export async function refreshVerticalShowcaseShop(
     serviceIds,
     seedInbox: (inboxCount?.count ?? 0) === 0,
   });
+
+  if (d.vertical === "wellness") {
+    await ensureWellnessShowcaseDepth(businessId);
+  }
 }
 
 export async function getDemoGuestProofToken(slug: string): Promise<string | null> {

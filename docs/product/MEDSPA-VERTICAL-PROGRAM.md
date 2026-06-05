@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2 (founder UAT active)  
 **Registry:** V6 · **beta-full** · demo `clarity-medspa-dublin`  
-**Reads with:** [`vertical-playbooks/medspa.md`](./vertical-playbooks/medspa.md)
+**Reads with:** [`vertical-playbooks/medspa.md`](./vertical-playbooks/medspa.md) · **excellence:** [`vertical-excellence/medspa.md`](./vertical-excellence/medspa.md)
 
 ---
 

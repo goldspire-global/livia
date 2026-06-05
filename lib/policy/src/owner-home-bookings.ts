@@ -6,6 +6,8 @@ export type OwnerHomeBookingRow = {
   status: string;
   serviceId: string;
   staffId?: string | null;
+  /** Machine reason while PENDING — API may infer when legacy rows omit it. */
+  pendingReason?: string | null;
   service: { name: string };
   customer: {
     firstName?: string | null;

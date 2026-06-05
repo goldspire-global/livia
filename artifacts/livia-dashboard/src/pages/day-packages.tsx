@@ -227,6 +227,151 @@ export default function DayPackagesPage() {
           </Card>
         ))
       )}
+
+      {vertical === "wellness" ? (
+        <WellnessPackageCreditsPanel businessId={bid} />
+      ) : null}
     </PageFrame>
+  );
+}
+
+type PackageCreditRow = {
+  id: string;
+  customerId: string;
+  packageName: string;
+  creditsTotal: number;
+  creditsRemaining: number;
+  expiresAt?: string | null;
+};
+
+function WellnessPackageCreditsPanel({ businessId }: { businessId: string }) {
+  const { toast } = useToast();
+  const [rows, setRows] = useState<PackageCreditRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [customerId, setCustomerId] = useState("");
+  const [packageName, setPackageName] = useState("");
+  const [creditsTotal, setCreditsTotal] = useState("6");
+  const [customers, setCustomers] = useState<Array<{ id: string; displayName?: string | null; firstName?: string | null; lastName?: string | null }>>([]);
+
+  async function reload() {
+    if (!businessId) return;
+    setLoading(true);
+    try {
+      const [credits, cust] = await Promise.all([
+        customFetch<PackageCreditRow[]>(`/api/businesses/${businessId}/package-credits`),
+        customFetch<{ data: typeof customers }>(`/api/businesses/${businessId}/customers?limit=50`),
+      ]);
+      setRows(credits);
+      setCustomers(Array.isArray(cust) ? cust : (cust as { data?: typeof customers }).data ?? []);
+    } catch {
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void reload();
+  }, [businessId]);
+
+  async function handleGrant() {
+    if (!businessId || !customerId || !packageName.trim()) return;
+    try {
+      await customFetch(`/api/businesses/${businessId}/package-credits`, {
+        method: "POST",
+        body: JSON.stringify({
+          customerId,
+          packageName: packageName.trim(),
+          creditsTotal: Number.parseInt(creditsTotal, 10) || 1,
+        }),
+      });
+      toast({ title: "Prepaid balance recorded", description: "Guest can use sessions until the balance runs out." });
+      setPackageName("");
+      void reload();
+    } catch {
+      toast({ title: "Grant failed", variant: "destructive" });
+    }
+  }
+
+  function customerLabel(c: (typeof customers)[0]) {
+    return (
+      c.displayName ||
+      [c.firstName, c.lastName].filter(Boolean).join(" ").trim() ||
+      c.id.slice(0, 8)
+    );
+  }
+
+  return (
+    <Card className="mt-8 border-primary/20" data-testid="wellness-package-credits">
+      <CardHeader>
+        <CardTitle className="text-base">Prepaid sessions & gift vouchers</CardTitle>
+        <CardDescription className="max-w-2xl space-y-2">
+          <span className="block">
+            Not the same as <strong className="font-medium text-foreground">day itineraries</strong> above —
+            this is what guests <em>already paid for</em> (a six-session series, a 90‑min gift voucher, a couples
+            bundle).
+          </span>
+          <span className="block text-muted-foreground">
+            Record a sale here so front desk and Today can see how many sessions are still owed. Summary totals
+            also appear on Today when you use the evening-ledger home layout.
+          </span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <Skeleton className="h-20 w-full" />
+        ) : rows.length ? (
+          <ul className="space-y-2 text-sm" aria-label="Active prepaid balances">
+            {rows.map((r) => (
+              <li key={r.id} className="flex justify-between border rounded-md px-3 py-2">
+                <span>
+                  {r.packageName}{" "}
+                  <span className="text-muted-foreground">
+                    · {r.creditsRemaining} of {r.creditsTotal} sessions remaining
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No prepaid balances yet — record a series or voucher sale below (demo tenants may already have seeded
+            examples).
+          </p>
+        )}
+        <div className="grid gap-3 sm:grid-cols-3 border-t pt-4">
+          <div className="space-y-2 sm:col-span-1">
+            <Label>Guest</Label>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select guest" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {customerLabel(c)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>What they bought</Label>
+            <Input
+              value={packageName}
+              onChange={(e) => setPackageName(e.target.value)}
+              placeholder="e.g. Six-session massage series"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Sessions included</Label>
+            <Input type="number" min={1} value={creditsTotal} onChange={(e) => setCreditsTotal(e.target.value)} />
+          </div>
+        </div>
+        <Button size="sm" onClick={() => void handleGrant()} disabled={!customerId || !packageName.trim()}>
+          Record sale
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

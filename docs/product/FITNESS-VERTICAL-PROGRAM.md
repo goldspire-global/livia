@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2  
 **Registry:** V5 · **beta-full** · demo `peak-fitness-dublin`  
-**Reads with:** [`vertical-playbooks/fitness.md`](./vertical-playbooks/fitness.md)
+**Reads with:** [`vertical-playbooks/fitness.md`](./vertical-playbooks/fitness.md) · **excellence:** [`vertical-excellence/fitness.md`](./vertical-excellence/fitness.md)
 
 ---
 

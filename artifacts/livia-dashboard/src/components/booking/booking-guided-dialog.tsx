@@ -1,4 +1,6 @@
 import { BookingWizard } from "@/components/booking/booking-wizard";
+import { useBusiness } from "@/lib/business-context";
+import { bookingExperienceCopy } from "@workspace/policy";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +16,17 @@ type Props = {
 };
 
 export function BookingGuidedDialog({ open, onOpenChange, onCreated }: Props) {
+  const { business } = useBusiness();
+  const exp = bookingExperienceCopy(
+    (business as { vertical?: string } | null)?.vertical,
+    (business as { category?: string } | null)?.category,
+  );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Guided booking</DialogTitle>
-          <DialogDescription>
-            Full flow with team, notes, and review — stays on this page.
-          </DialogDescription>
+          <DialogTitle>{exp.listGuidedBookingTitle}</DialogTitle>
+          <DialogDescription>{exp.listGuidedBookingDescription}</DialogDescription>
         </DialogHeader>
         <BookingWizard
           mode="dialog"

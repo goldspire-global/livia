@@ -24,12 +24,22 @@ import {
 } from "@/lib/appearance-preview-mode";
 import { PlatformDefaultAmbient } from "@/components/layout/platform-default-ambient";
 import { SIGN_IN_AFTER_SIGN_OUT } from "@/lib/auth-routes";
-import { isBeautyPresentationPreset, isBeautyVertical } from "@/lib/presentation-layout";
+import {
+  isBeautyPresentationPreset,
+  isBeautyVertical,
+  wellnessNativeMorphForVertical,
+} from "@/lib/presentation-layout";
+import { WellnessShellNav } from "@/components/wellness/wellness-shell-nav";
 import { applyBeautyAmbient } from "@/lib/beauty-ambient";
+import { applyWellnessAmbient } from "@/lib/wellness-ambient";
+import { useSurfaceClass } from "@/hooks/use-surface-class";
+import { WellnessAtmosphere } from "@/components/wellness/wellness-atmosphere";
+import { isWellnessCssPreset } from "@workspace/policy";
 import { applyGatewaySurfaceTheme } from "@/lib/gateway-surface-theme";
 import { useTheme } from "next-themes";
 import { fetchUserLifecycle } from "@/lib/lifecycle-api";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
+import { verticalPackUi } from "@/lib/vertical-pack-ui";
 
 import { UserButton } from "@clerk/clerk-react";
 
@@ -271,6 +281,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const effectiveCssPreset =
     appearanceDraft.cssPreset ?? tenantExperience?.presentation?.cssPreset ?? "platform-default";
   const isPlatformDefault = effectiveCssPreset === "platform-default";
+  const layoutMorph =
+    typeof document !== "undefined"
+      ? document.documentElement.dataset.layoutMorph
+      : undefined;
+  const wellnessNativeMorph = wellnessNativeMorphForVertical(vertical, layoutMorph);
+  const wellnessTopNav =
+    wellnessNativeMorph === "atrium" || wellnessNativeMorph === "ledger";
+  const wellnessTimelineRail = wellnessNativeMorph === "timeline-rail";
+  const wellnessVocab = verticalPackUi(vertical, (business as { category?: string } | null)?.category);
+  const surfaceClass = useSurfaceClass();
+
+  useEffect(() => {
+    applyWellnessAmbient({
+      vertical,
+      cssPreset: isWellnessCssPreset(effectiveCssPreset) ? effectiveCssPreset : null,
+      surface: surfaceClass,
+    });
+  }, [vertical, effectiveCssPreset, surfaceClass]);
 
   return (
 
@@ -278,6 +306,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       className={cn(
         "flex w-full flex-col bg-background md:flex-row",
         appearanceEmbed ? "min-h-0 h-auto overflow-visible" : "h-[100dvh] overflow-hidden",
+        wellnessNativeMorph && "wellness-native-shell",
       )}
     >
 
@@ -285,6 +314,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         data-testid="app-shell-sidebar"
         className={cn(
           "app-shell-sidebar hidden w-[13.5rem] max-w-[13.5rem] shrink-0 flex-col border-r border-border/40 bg-card/50 md:flex relative overflow-hidden",
+          wellnessNativeMorph && "!hidden",
         )}
       >
         {showBeautyFlower ? (
@@ -321,17 +351,62 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
 
 
+      {wellnessTimelineRail && !appearanceEmbed ? (
+        <WellnessShellNav
+          morph="timeline-rail"
+          businessName={business?.name ?? undefined}
+          businessSlug={business?.slug ?? undefined}
+          teamNoun={wellnessVocab.teamNoun}
+          serviceNoun={wellnessVocab.serviceNoun === "Session" ? "Sessions" : wellnessVocab.serviceNoun}
+          persona={persona}
+        />
+      ) : null}
+
       <main
         className={cn(
-          "app-shell-main flex flex-1 min-h-0 flex-col",
+          "app-shell-main relative flex flex-1 min-h-0 flex-col",
           appearanceEmbed
             ? "h-auto overflow-visible pb-0"
-            : "pb-16 md:pb-0 overflow-y-auto overscroll-y-contain",
+            : wellnessNativeMorph
+              ? "pb-4 md:pb-0 overflow-y-auto overscroll-y-contain"
+              : "pb-16 md:pb-0 overflow-y-auto overscroll-y-contain",
         )}
       >
         {isPlatformDefault && !appearanceEmbed ? <PlatformDefaultAmbient /> : null}
+        {wellnessNativeMorph && isWellnessCssPreset(effectiveCssPreset) && !appearanceEmbed ? (
+          <div className="wellness-atmosphere-wrap pointer-events-none absolute inset-0 z-0 overflow-hidden">
+            <WellnessAtmosphere cssPreset={effectiveCssPreset} />
+          </div>
+        ) : null}
 
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card/50 px-4 md:hidden sticky top-0 z-10">
+        {wellnessTopNav && !appearanceEmbed ? (
+          <WellnessShellNav
+            morph={wellnessNativeMorph!}
+            businessName={business?.name ?? undefined}
+            businessSlug={business?.slug ?? undefined}
+            teamNoun={wellnessVocab.teamNoun}
+            serviceNoun={wellnessVocab.serviceNoun === "Session" ? "Sessions" : wellnessVocab.serviceNoun}
+            persona={persona}
+            utilityActions={
+              <>
+                <HelpSupportDialog />
+                <NotificationCenter />
+                <UserButton
+                  afterSignOutUrl={SIGN_IN_AFTER_SIGN_OUT}
+                  userProfileUrl="/settings?tab=account"
+                  appearance={accountMenuAppearance}
+                />
+              </>
+            }
+          />
+        ) : null}
+
+        <header
+          className={cn(
+            "flex h-14 items-center justify-between border-b border-border bg-card/50 px-4 md:hidden sticky top-0 z-10",
+            wellnessNativeMorph && "hidden",
+          )}
+        >
 
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {showBeautyFlower ? (
@@ -367,7 +442,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
 
 
-        {!appearanceEmbed ? (
+        {!appearanceEmbed && !wellnessNativeMorph ? (
         <div className="hidden md:flex h-12 shrink-0 items-center justify-between gap-3 sticky top-0 z-20 bg-background/90 backdrop-blur-sm -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 mb-2 border-b border-border/60">
           {showBeautyFlower ? (
             <StudioHeaderBrand
@@ -391,12 +466,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <div
           className={cn(
-            "p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto min-w-0",
+            "relative z-10 p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto min-w-0",
             showBeautyFlower && isBeautyPresentationPreset() && "beauty-skin-surface",
           )}
         >
           {!appearanceEmbed ? <OnboardingProgressBanner /> : null}
-          {!appearanceEmbed ? <OperatorMaturityBanner /> : null}
+          {!appearanceEmbed && !wellnessNativeMorph ? <OperatorMaturityBanner /> : null}
           {!appearanceEmbed ? <PlatformTour /> : null}
           <ErrorBoundary>{children}</ErrorBoundary>
         </div>
@@ -406,7 +481,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
 
 
-      {!appearanceEmbed ? (
+      {!appearanceEmbed && !wellnessNativeMorph ? (
         <MobileBottomNav items={items} accent={accent} badges={navBadges} />
       ) : null}
 

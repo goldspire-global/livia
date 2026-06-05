@@ -150,7 +150,7 @@ export async function createBusiness(
       logoUrl: data.logoUrl,
       presentationPresetId: resolvePresentationPreset(vertical).id,
       instagramHandle: data.instagramHandle,
-      onboardingState: afterBusinessCreatedState() as unknown as Record<string, unknown>,
+      onboardingState: afterBusinessCreatedState(vertical) as unknown as Record<string, unknown>,
       tenantAttestation: data.tenantAttestation as unknown as Record<string, unknown> | undefined,
       operationalPolicy: {
         livMandate: mandateDefaultsForVertical(vertical),

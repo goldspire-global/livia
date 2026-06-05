@@ -372,7 +372,13 @@ export default function CustomerDetailPage() {
             vertical={(business as { vertical?: string } | undefined)?.vertical}
           />
 
-          <LivMemoryPanel businessId={bid} customerId={cid} canEdit={canEdit} />
+          <LivMemoryPanel
+            businessId={bid}
+            customerId={cid}
+            canEdit={canEdit}
+            vertical={(business as { vertical?: string } | null)?.vertical}
+            category={(business as { category?: string } | null)?.category}
+          />
           <CustomerTimeline businessId={bid} customerId={cid} />
 
           <Card>

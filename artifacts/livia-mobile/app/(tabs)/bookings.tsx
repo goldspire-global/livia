@@ -29,6 +29,8 @@ import { elevation } from "@/constants/elevation";
 import { SPRING_QUICK } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
+import { useTenantExperience } from "@/hooks/useTenantExperience";
+import { verticalOperationalCopy } from "@workspace/policy";
 import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -67,10 +69,10 @@ export default function BookingsScreen() {
   const haptics = useHaptics();
   const qc = useQueryClient();
   const { currentBusiness } = useBusiness();
-  const pack = verticalPackUi(
-    (currentBusiness as { vertical?: string } | undefined)?.vertical,
-    currentBusiness?.category,
-  );
+  const bizVertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
+  const pack = verticalPackUi(bizVertical, currentBusiness?.category);
+  const opCopy = verticalOperationalCopy(bizVertical, currentBusiness?.category);
+  const roomsTitle = opCopy.bookingsPageTitle;
   const { layout: beautyLayout } = useBeautyMobileLayout();
   const params = useLocalSearchParams<{ status?: string }>();
   const [filter, setFilter] = useState<Filter>("day");
@@ -173,10 +175,10 @@ export default function BookingsScreen() {
   return (
     <OperationalScreen
       scroll={false}
-      title="Bookings"
+      title={roomsTitle}
       subtitle={
         statusFilter === "PENDING"
-          ? "Showing bookings that need confirmation"
+          ? `Sessions that need confirmation — ${opCopy.bookingsPageSubtitle}`
           : "Swipe right to advance status · left to reschedule"
       }
       actions={

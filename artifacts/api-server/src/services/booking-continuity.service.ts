@@ -8,7 +8,12 @@ import {
   servicesTable,
   staffTable,
 } from "@workspace/db";
-import { getContinuityTemplate, type ContinuityMode } from "@workspace/policy";
+import {
+  getContinuityTemplate,
+  publicAwaitingContinuityHoldLines,
+  publicPendingReasonLine,
+  type ContinuityMode,
+} from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { createConversation, attachCustomer } from "./conversations.service";
 import { sendAiSms, sendAiEmail } from "./ai-outbound.service";
@@ -233,26 +238,26 @@ export function buildPublicNextSteps(args: {
   };
 
   if (args.status === "PENDING" && args.pendingReason === "awaiting_continuity") {
-    return [
-      "Almost there — we've sent a message to the phone or email you provided.",
-      "Reply once with any photos or notes your team asked for, or to confirm you're all set.",
-      "Your appointment is held until the salon confirms (usually within a few hours).",
-      "Add the appointment to your calendar below.",
-    ];
+    return publicAwaitingContinuityHoldLines(args.vertical);
   }
   if (args.status === "PENDING") {
-    const reason =
-      args.pendingReason === "awaiting_staff_confirm"
-        ? `${args.businessName} will confirm your slot shortly.`
-        : args.pendingReason === "awaiting_deposit"
-          ? "Complete the deposit link we'll send to lock in your time."
-          : `${args.businessName} is reviewing your booking.`;
+    const reason = publicPendingReasonLine(
+      args.pendingReason ?? null,
+      args.businessName,
+      args.vertical,
+    );
     return [reason, ...template.publicNextSteps(messageArgs).slice(-1)];
   }
 
   const steps = template.publicNextSteps(messageArgs);
+  const confirmedLead =
+    args.vertical === "wellness" ? "Your session is confirmed." : "You're confirmed.";
+  const receivedLead =
+    args.vertical === "wellness"
+      ? "We've received your session request."
+      : "We've received your booking.";
   if (args.status === "CONFIRMED") {
-    return ["You're confirmed.", ...steps.slice(1)];
+    return [confirmedLead, ...steps.slice(1)];
   }
-  return ["We've received your booking.", ...steps];
+  return [receivedLead, ...steps];
 }

@@ -50,6 +50,8 @@ import { socialProofForVertical } from "../lib/public-social-proof";
 import { inferDemoServiceImageUrl, publicExperienceSkin } from "../lib/experience-skin";
 import { resolvePublicServiceImageUrl } from "@workspace/policy";
 import { getSignInAppearanceHintForEmail } from "../services/sign-in-appearance-hint.service";
+import { purchaseWellnessGiftPackage } from "../services/wellness-gift.service";
+import { isWellnessGiftPublicBookEnabled } from "@workspace/policy";
 
 const router: IRouter = Router();
 
@@ -287,6 +289,71 @@ router.get("/public/b/:slug/slots", async (req, res): Promise<void> => {
   res.json({ date, serviceId, slots });
 });
 
+router.post("/public/b/:slug/gift-package", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  if (!isWellnessGiftPublicBookEnabled(biz.vertical, biz.category)) {
+    sendError(res, req, 400, "Gift packages are not enabled for this studio");
+    return;
+  }
+  const {
+    presetId,
+    purchaserFirstName,
+    purchaserLastName,
+    purchaserEmail,
+    purchaserPhone,
+    recipientFirstName,
+    recipientLastName,
+    recipientEmail,
+    recipientPhone,
+  } = req.body ?? {};
+  if (!presetId || !purchaserFirstName || !recipientFirstName) {
+    sendError(res, req, 400, "presetId, purchaserFirstName, and recipientFirstName are required");
+    return;
+  }
+  try {
+    const result = await purchaseWellnessGiftPackage(biz.id, {
+      presetId: String(presetId),
+      purchaser: {
+        firstName: String(purchaserFirstName),
+        lastName: purchaserLastName ? String(purchaserLastName) : undefined,
+        email: purchaserEmail ? String(purchaserEmail) : undefined,
+        phone: purchaserPhone ? String(purchaserPhone) : undefined,
+      },
+      recipient: {
+        firstName: String(recipientFirstName),
+        lastName: recipientLastName ? String(recipientLastName) : undefined,
+        email: recipientEmail ? String(recipientEmail) : undefined,
+        phone: recipientPhone ? String(recipientPhone) : undefined,
+      },
+    });
+    if (recipientPhone) {
+      void ensureGuestVaultLinkFromBook(
+        String(recipientPhone),
+        biz.id,
+        new Date(),
+        biz.country?.slice(0, 2) ?? "IE",
+      ).catch(() => undefined);
+    }
+    res.status(201).json({
+      ...result,
+      bookUrl: `/b/${biz.slug}`,
+    });
+  } catch (e) {
+    if (e instanceof Error && e.message === "INVALID_PRESET") {
+      sendError(res, req, 400, "Invalid gift package");
+      return;
+    }
+    logRouteError(req, e, "public gift package");
+    sendError(res, req, 500, safeClientMessage(e));
+  }
+});
+
 router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
   if (!(await enforcePublicBookingRateLimit(req, res))) return;
   const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
@@ -318,6 +385,8 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
         : "";
     const mergedNotes = [notes, guardNote].filter(Boolean).join("\n\n") || undefined;
 
+    const usePackage =
+      biz.vertical === "wellness" && req.body?.usePackageCredit === true;
     const booking = await createBooking(biz.id, {
       serviceId,
       customerId: customer.id,
@@ -326,6 +395,7 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       channelType: channelType ?? "WEB",
       source: "web",
       notes: mergedNotes,
+      usePackageCredit: usePackage,
     });
 
     await logEvent({

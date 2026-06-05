@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2  
 **Registry:** V4 · **beta-full** · demo `ink-anchor-galway`  
-**Reads with:** [`vertical-playbooks/body-art.md`](./vertical-playbooks/body-art.md)
+**Reads with:** [`vertical-playbooks/body-art.md`](./vertical-playbooks/body-art.md) · **excellence:** [`vertical-excellence/body-art.md`](./vertical-excellence/body-art.md)
 
 ---
 

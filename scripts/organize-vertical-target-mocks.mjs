@@ -20,7 +20,11 @@ const VERTICALS = {
     w4Extra: ["design-proofs"],
     w5Extra: ["proof-mobile"],
   },
-  wellness: { default: "spa-calm", presets: ["spa-calm", "zen-light", "retreat-dark"], w5Extra: ["visit-mobile"] },
+  wellness: {
+    default: "harbour-light",
+    presets: ["platform-default", "harbour-light", "session-rail", "evening-ledger"],
+    w5Extra: ["visit-mobile"],
+  },
   fitness: { default: "gym-bold", presets: ["gym-bold", "studio-clean", "coach-compact"], w4Extra: ["classes"] },
   medspa: {
     default: "clinical-calm",

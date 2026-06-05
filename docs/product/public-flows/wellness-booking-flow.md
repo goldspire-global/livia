@@ -1,6 +1,7 @@
 # Wellness — public booking flow (W5)
 
-**Demo:** `serenity-wellness-cork` · **Playbook:** [`vertical-playbooks/wellness.md`](../vertical-playbooks/wellness.md)
+**Demo:** `harbour-wellness-cork` · **Playbook:** [`vertical-playbooks/wellness.md`](../vertical-playbooks/wellness.md)  
+**Copy hub:** `lib/policy/src/guest-public-experience.ts`
 
 ---
 

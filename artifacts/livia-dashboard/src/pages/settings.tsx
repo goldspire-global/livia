@@ -42,6 +42,7 @@ import PeerInsightsControls from "@/components/peer-insights-controls";
 import IntegrationsControls from "@/components/integrations-controls";
 import OperationalPolicyControls from "@/components/operational-policy-controls";
 import { BookingResourcesPanel } from "@/components/settings/booking-resources-panel";
+import { WellnessIntegrationsPanel } from "@/components/settings/wellness-integrations-panel";
 import { MessageSquare, CreditCard, Plug, Shield } from "lucide-react";
 import { useMembership } from "@/lib/membership-context";
 import { usePersona } from "@/lib/persona";
@@ -353,6 +354,7 @@ export default function SettingsPage() {
                 <div className="space-y-4 pt-1">
                   <OperationalPolicyControls />
                   {showBookingResources ? <BookingResourcesPanel /> : null}
+                  {businessVertical === "wellness" ? <WellnessIntegrationsPanel /> : null}
                 </div>
               </SettingsDisclosure>
             )}

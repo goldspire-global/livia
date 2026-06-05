@@ -32,10 +32,7 @@ import { useColors } from "@/hooks/useColors";
 import { formatTimeInZone, resolveBusinessTimeZone } from "@/lib/datetime";
 import { getApiBaseUrl } from "@/lib/api-base";
 import { useMembership } from "@/hooks/useMembership";
-import {
-  STAFF_LIV_HANDOFF_SUGGESTIONS,
-  STAFF_LIV_INBOX_SUGGESTIONS,
-} from "@/lib/liv-inbox-suggestions";
+import { inboxLivSuggestions } from "@/lib/liv-inbox-suggestions";
 
 function roleLabel(role: ConversationMessage["role"]): string {
   switch (role) {
@@ -87,6 +84,16 @@ export default function ConversationScreen() {
   const convStatus = detail?.conversation?.status ?? summary?.status;
   const aiHandled = detail?.conversation?.aiHandled ?? summary?.aiHandled ?? true;
   const messages: ConversationMessage[] = detail?.messages ?? [];
+  const businessVertical = (currentBusiness as { vertical?: string } | null)?.vertical;
+  const livSuggestionChips = useMemo(
+    () =>
+      inboxLivSuggestions(
+        businessVertical,
+        (currentBusiness as { category?: string | null } | null)?.category,
+        convStatus === "HANDED_OFF" ? "handoff" : "open",
+      ).slice(0, 2),
+    [businessVertical, currentBusiness, convStatus],
+  );
 
   const invalidate = async () => {
     const { invalidateOperationalState } = await import("@/lib/operational-cache");
@@ -229,9 +236,7 @@ export default function ConversationScreen() {
         </View>
         {(convStatus === "OPEN" || convStatus === "HANDED_OFF") && canAskLiv ? (
           <View style={styles.chipRow}>
-            {(convStatus === "HANDED_OFF" ? STAFF_LIV_HANDOFF_SUGGESTIONS : STAFF_LIV_INBOX_SUGGESTIONS)
-              .slice(0, 2)
-              .map((s) => (
+            {livSuggestionChips.map((s) => (
                 <Pressable
                   key={s}
                   disabled={livAssisting}

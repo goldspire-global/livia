@@ -1,5 +1,6 @@
 import type { BusinessVertical, VerticalPack } from "./types";
 import { businessVerticalSchema } from "./types";
+import { validateVerticalPresentationPack } from "./presentation-surface";
 
 /**
  * Register a vertical capability pack (R3 hub factory).
@@ -15,6 +16,10 @@ export function defineVerticalPack(pack: VerticalPack): VerticalPack {
   }
   if (!pack.defaultServices?.length) {
     throw new Error(`defineVerticalPack: defaultServices required for ${vertical}`);
+  }
+  const handshake = validateVerticalPresentationPack(vertical);
+  if (!handshake.ok) {
+    throw new Error(`defineVerticalPack: presentation handshake failed for ${vertical}: ${handshake.errors.join("; ")}`);
   }
   return pack;
 }

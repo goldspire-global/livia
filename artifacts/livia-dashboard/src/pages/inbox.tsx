@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { useBeautyChrome } from "@/lib/presentation-layout";
+import { useBeautyChrome, useWellnessChrome, wellnessNativeMorphForVertical } from "@/lib/presentation-layout";
 import { cn } from "@/lib/utils";
 import { beautyOutlineButton, beautyPrimaryButton } from "@/lib/beauty-operational-ui";
 import { LivInboxAssist } from "@/components/inbox/liv-inbox-assist";
@@ -28,6 +28,8 @@ import {
   INBOX_QUEUE_LENS_LABELS,
   matchesInboxQueueLens,
   shouldShowInboxContextRail,
+  buildWellnessPostSessionInboxDraft,
+  wellnessRetailSkuById,
   type InboxQueueLens,
 } from "@workspace/policy";
 import { InboxThreadList } from "@/components/inbox/inbox-thread-list";
@@ -124,7 +126,12 @@ export default function InboxPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const businessId = business?.id ?? "";
-  const beautyChrome = useBeautyChrome((business as { vertical?: string } | null)?.vertical);
+  const tenantVertical = (business as { vertical?: string } | null)?.vertical ?? null;
+  const beautyChrome = useBeautyChrome(tenantVertical);
+  const wellnessChrome = useWellnessChrome(tenantVertical);
+  const layoutMorph =
+    typeof document !== "undefined" ? document.documentElement.dataset.layoutMorph : undefined;
+  const wellnessInboxMorph = wellnessNativeMorphForVertical(tenantVertical, layoutMorph);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"OPEN" | "HANDED_OFF" | "CLOSED" | "ALL">("OPEN");
@@ -132,6 +139,10 @@ export default function InboxPage() {
   const [replyDraft, setReplyDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [livAssisting, setLivAssisting] = useState(false);
+  const [postSessionFlow, setPostSessionFlow] = useState<{
+    skuName?: string;
+    steps: string[];
+  } | null>(null);
 
   const showRitual = persona === "manager" || persona === "owner" || persona === "org_admin";
 
@@ -153,7 +164,17 @@ export default function InboxPage() {
     ) {
       setQueueLens(lens);
     }
-  }, []);
+
+    if (params.get("flow") === "post_session" && tenantVertical === "wellness") {
+      const skuId = params.get("sku") ?? undefined;
+      const sku = skuId ? wellnessRetailSkuById(skuId) : undefined;
+      const draft = buildWellnessPostSessionInboxDraft({ skuName: sku?.name });
+      setReplyDraft(draft.body);
+      setPostSessionFlow({ skuName: sku?.name, steps: draft.steps });
+      setStatusFilter("ALL");
+      setQueueLens("all");
+    }
+  }, [tenantVertical]);
 
   const { data: convos, isLoading: isLoadingConvos } = useListConversations(
     businessId,
@@ -296,13 +317,30 @@ export default function InboxPage() {
       : INBOX_QUEUE_LENS_LABELS[queueLens].description
     : "When customers message Liv on your booking page or SMS line, conversations appear here.";
 
-  const showContextRail = shouldShowInboxContextRail(!!selectedConversation);
-  const paneGrid = showContextRail
+  let showContextRail = shouldShowInboxContextRail(!!selectedConversation);
+  let paneGrid = showContextRail
     ? "lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)_minmax(0,260px)]"
     : "lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]";
 
+  if (wellnessInboxMorph === "timeline-rail") {
+    showContextRail = false;
+    paneGrid = "lg:grid-cols-1 max-w-3xl mx-auto w-full";
+  } else if (wellnessInboxMorph === "ledger") {
+    showContextRail = false;
+    paneGrid = "lg:grid-cols-1 max-w-4xl mx-auto w-full";
+  } else if (wellnessInboxMorph === "atrium") {
+    showContextRail = false;
+    paneGrid = "lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]";
+  }
+
+  const inboxShellClass = wellnessInboxMorph ? "wellness-inbox-page" : undefined;
+  const inboxGridMinH = wellnessInboxMorph
+    ? "min-h-[min(720px,calc(100dvh-11rem))] max-h-[calc(100dvh-7.5rem)]"
+    : "min-h-[min(560px,calc(100vh-220px))] max-h-[calc(100vh-160px)]";
+
   return (
     <OperationalPageShell
+      className={inboxShellClass}
       title={showRitual ? ritualTitle : "Inbox"}
       subtitle={
         showRitual
@@ -355,11 +393,32 @@ export default function InboxPage() {
         </div>
       }
     >
+      {postSessionFlow ? (
+        <div
+          className="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm"
+          data-testid="inbox-post-session-flow"
+        >
+          <p className="font-medium text-foreground">Post-session continuity (WB-402)</p>
+          <ol className="mt-1 list-decimal pl-5 text-xs text-muted-foreground space-y-0.5">
+            {postSessionFlow.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+          {postSessionFlow.skuName ? (
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Product mention: <span className="text-foreground">{postSessionFlow.skuName}</span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <div
         className={cn(
-          "grid grid-cols-1 gap-0 border border-border/80 rounded-xl overflow-hidden min-h-[min(560px,calc(100vh-220px))] max-h-[calc(100vh-160px)]",
+          "grid grid-cols-1 gap-0 border border-border/80 rounded-xl overflow-hidden",
+          inboxGridMinH,
           paneGrid,
           beautyChrome ? "beauty-operational-panel beauty-inbox-shell" : "bg-card",
+          wellnessChrome && "wellness-list-shell",
+          wellnessInboxMorph && `wellness-inbox-grid wellness-inbox--${wellnessInboxMorph}`,
         )}
         data-testid="inbox-three-pane"
       >
@@ -384,8 +443,9 @@ export default function InboxPage() {
         {/* Conversation */}
         <div
           className={cn(
-            "flex flex-col min-h-0 min-w-0 border-b lg:border-b-0 lg:border-r border-border/80",
+            "flex flex-col min-h-0 min-w-0 h-full border-b lg:border-b-0 lg:border-r border-border/80",
             beautyChrome && "beauty-inbox-conversation-pane",
+            wellnessInboxMorph && "wellness-inbox-conversation-col",
           )}
         >
           {!selectedId ? (
@@ -403,9 +463,14 @@ export default function InboxPage() {
               ))}
             </div>
           ) : (
-            <>
+            <div className="flex flex-col flex-1 min-h-0">
               {selectedConversation && (
-                <div className="border-b border-border px-4 py-3 flex flex-col gap-3">
+                <div
+                  className={cn(
+                    "border-b border-border px-4 flex flex-col gap-3 shrink-0",
+                    wellnessInboxMorph ? "py-2" : "py-3",
+                  )}
+                >
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
                     <div className="font-semibold truncate flex items-center gap-2">
@@ -555,8 +620,9 @@ export default function InboxPage() {
 
               <div
                 className={cn(
-                  "flex-1 overflow-y-auto p-4 space-y-3 motion-wizard-enter",
+                  "flex-1 min-h-0 overflow-y-auto p-4 space-y-3 motion-wizard-enter",
                   beautyChrome ? "beauty-inbox-messages" : "bg-background/30",
+                  wellnessInboxMorph && "wellness-inbox-messages-scroll",
                 )}
               >
                 {detailData?.messages
@@ -645,7 +711,8 @@ export default function InboxPage() {
               {selectedId && selectedConversation?.status !== "CLOSED" ? (
                 <div
                   className={cn(
-                    "sticky bottom-0 border-t p-3 space-y-2 backdrop-blur-sm mt-auto z-10",
+                    "shrink-0 border-t backdrop-blur-sm mt-auto z-10",
+                    wellnessInboxMorph ? "wellness-inbox-compose p-2 space-y-1.5" : "sticky bottom-0 p-3 space-y-2",
                     beautyChrome ? "beauty-inbox-compose" : "border-border bg-card/95",
                   )}
                 >
@@ -656,7 +723,10 @@ export default function InboxPage() {
                     selectedConversation?.summary?.toLowerCase().includes("refund")
                   ) ? (
                     <LivInboxAssist
+                      vertical={tenantVertical}
+                      category={(business as { category?: string } | null)?.category}
                       beautyChrome={beautyChrome}
+                      compact={wellnessChrome}
                       mode={
                         selectedConversation?.status === "HANDED_OFF" ? "handoff" : "open"
                       }
@@ -709,7 +779,7 @@ export default function InboxPage() {
                     placeholder="Reply to customer…"
                     value={replyDraft}
                     onChange={(e) => setReplyDraft(e.target.value)}
-                    rows={2}
+                    rows={wellnessInboxMorph ? 1 : 2}
                     className={cn(
                       "resize-none text-sm bg-background/80",
                       beautyChrome
@@ -800,7 +870,7 @@ export default function InboxPage() {
                   </div>
                 </div>
               ) : null}
-            </>
+            </div>
           )}
         </div>
 

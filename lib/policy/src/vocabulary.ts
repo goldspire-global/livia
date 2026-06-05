@@ -19,6 +19,19 @@ const VOCAB: Record<
     runningLateLabel: string;
     /** Public /b — catalog section title (plural, guest-facing). */
     publicBookCatalogTitle: string;
+    /** W4 /bookings page title (align with shell nav, e.g. wellness "Rooms"). */
+    bookingsPageTitle?: string;
+    bookingsPageSubtitle?: string;
+    /** W4 /staff roster page subtitle (no ownership/legal asides — those live in Settings). */
+    teamPageSubtitle?: string;
+    /** Singular provider on calendar rows (wellness: Therapist). */
+    providerNoun?: string;
+    /** Membership role labels on roster + invites. */
+    membershipRoleStaff?: string;
+    membershipRoleAdmin?: string;
+    teamInviteRoleStaff?: string;
+    teamInviteRoleAdmin?: string;
+    teamInviteCta?: string;
   }
 > = {
   hair: {
@@ -36,7 +49,7 @@ const VOCAB: Record<
   beauty: {
     clientNoun: "Client",
     serviceNoun: "Treatment",
-    publicBookCatalogTitle: "Services",
+    publicBookCatalogTitle: "Treatments",
     locationNoun: "Studio",
     teamNoun: "Team",
     hint: "Treatments and tech assignments — patch tests where required.",
@@ -44,6 +57,15 @@ const VOCAB: Record<
     ownerTodayScheduleTitle: "Today's schedule",
     ownerTodayScheduleCalendarCta: "Full day calendar",
     runningLateLabel: "Running late",
+    bookingsPageTitle: "Schedule",
+    bookingsPageSubtitle: "Today's stations and appointments — confirm fills and new sets.",
+    teamPageSubtitle: "Artists and techs on your floor calendar.",
+    providerNoun: "Artist",
+    membershipRoleStaff: "Artist",
+    membershipRoleAdmin: "Studio lead",
+    teamInviteRoleStaff: "Artist — own calendar",
+    teamInviteRoleAdmin: "Studio lead — full access except billing",
+    teamInviteCta: "Invite artist",
   },
   "body-art": {
     clientNoun: "Client",
@@ -66,8 +88,17 @@ const VOCAB: Record<
     hint: "Calmer tone; policy-heavy reschedules.",
     ownerTodayLine: "Today's sessions and handoffs — steady rhythm.",
     ownerTodayScheduleTitle: "Today's sessions",
-    ownerTodayScheduleCalendarCta: "Full day calendar",
+    ownerTodayScheduleCalendarCta: "Room calendar",
     runningLateLabel: "Running behind",
+    bookingsPageTitle: "Rooms",
+    bookingsPageSubtitle: "Room calendar — sessions by slot and therapist.",
+    teamPageSubtitle: "Therapists and front desk on your room calendar.",
+    providerNoun: "Therapist",
+    membershipRoleStaff: "Practitioner",
+    membershipRoleAdmin: "Studio lead",
+    teamInviteRoleStaff: "Practitioner — own calendar",
+    teamInviteRoleAdmin: "Studio lead — full access except billing",
+    teamInviteCta: "Invite practitioner",
   },
   fitness: {
     clientNoun: "Member",
@@ -149,4 +180,43 @@ export function businessVocabulary(vertical?: string | null, category?: string |
     livVocabularyHint: pack.livVocabularyHint,
     ...v,
   };
+}
+
+/** W4 operational pages — titles and role nouns (web + mobile). */
+export function verticalOperationalCopy(vertical?: string | null, category?: string | null) {
+  const v = businessVocabulary(vertical, category);
+  return {
+    bookingsPageTitle: v.bookingsPageTitle ?? "Bookings",
+    bookingsPageSubtitle:
+      v.bookingsPageSubtitle ?? "Calendar and reservations for your studio.",
+    teamPageTitle: v.teamNoun,
+    teamPageSubtitle:
+      v.teamPageSubtitle ?? `Your ${v.teamNoun.toLowerCase()} and who can sign in to Livia.`,
+    providerNoun: v.providerNoun ?? "Provider",
+    membershipRoleStaff: v.membershipRoleStaff ?? "Staff",
+    membershipRoleAdmin: v.membershipRoleAdmin ?? "Manager",
+    teamInviteRoleStaff:
+      v.teamInviteRoleStaff ?? "Staff — own calendar only",
+    teamInviteRoleAdmin:
+      v.teamInviteRoleAdmin ?? "Admin — full access except billing & ownership",
+    addTeamMemberCta: `Add ${v.providerNoun?.toLowerCase() ?? "team member"}`,
+    emptyTeamTitle: `No ${v.teamNoun.toLowerCase()} yet`,
+    emptyTeamBody: `Add ${v.teamNoun.toLowerCase()} to fill your room calendar.`,
+    searchBookingsPlaceholder: `Search guest or ${v.serviceNoun.toLowerCase()}…`,
+    teamInviteCta: v.teamInviteCta ?? "Invite team member",
+  };
+}
+
+/** Roster row subtitle — calendar staff, not membership enum. */
+export function rosterMemberRoleLabel(
+  role: string | null | undefined,
+  vertical?: string | null,
+  category?: string | null,
+): string {
+  const op = verticalOperationalCopy(vertical, category);
+  const r = String(role ?? "").toUpperCase();
+  if (r === "ADMIN") return op.membershipRoleAdmin;
+  if (r === "STAFF") return op.membershipRoleStaff;
+  if (role?.trim()) return role.trim();
+  return op.providerNoun;
 }

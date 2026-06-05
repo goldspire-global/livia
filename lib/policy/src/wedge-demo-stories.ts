@@ -55,10 +55,21 @@ const WEDGE_BEATS: Record<BusinessVertical, WedgeDemoBeat[]> = {
     { headline: "Today — treatment flow", detail: "Sessions, consent status, one glance.", cropHint: "today" },
   ],
   wellness: [
-    { headline: "Guest message → Inbox", detail: "Calm tone, gift vouchers, multi-service requests.", cropHint: "inbox" },
-    { headline: "Book a treatment", detail: "Spa-appropriate `/b` — not a salon form.", cropHint: "public-book" },
-    { headline: "Gentle reminder", detail: "SMS link back to their visit token.", cropHint: "sms" },
-    { headline: "Today — rooms & therapists", detail: "Floor calm, not chaos.", cropHint: "today" },
+    {
+      headline: "Concierge thread ready",
+      detail: "Gift vouchers, calm SMS, and room-fit requests — Liv triages before you reply.",
+      cropHint: "inbox",
+    },
+    {
+      headline: "Guest books on `/b`",
+      detail: "Treatment grid, gift-ready copy, and session lengths — spa-native storefront.",
+      cropHint: "public-book",
+    },
+    {
+      headline: "Room board stays calm",
+      detail: "Swimlanes per room, voucher liability, and turnover Liv already respected.",
+      cropHint: "today",
+    },
   ],
   fitness: [
     { headline: "Class inquiry", detail: "Waitlist and packages in one thread.", cropHint: "inbox" },

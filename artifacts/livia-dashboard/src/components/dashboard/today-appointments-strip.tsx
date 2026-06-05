@@ -4,6 +4,7 @@ import type { OwnerHomeBookingRow } from "@workspace/policy";
 import { sliceOwnerHomeSchedulePreview } from "@workspace/policy";
 import { RunningLateSheet } from "@/components/ops/running-late-sheet";
 import { PendingBookingActions } from "@/components/booking/pending-booking-actions";
+import { PendingWhyLine } from "@/components/booking/pending-why-line";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -28,6 +29,8 @@ type Props = {
   updatePending: boolean;
   onConfirmBooking: (id: string) => void;
   onDeclineBooking: (id: string) => void;
+  vertical?: string | null;
+  category?: string | null;
   /** Beauty hero already shows the first pending — skip duplicate in list */
   skipPendingId?: string | null;
 };
@@ -43,6 +46,8 @@ export function TodayAppointmentsStrip({
   updatePending,
   onConfirmBooking,
   onDeclineBooking,
+  vertical,
+  category,
   skipPendingId,
 }: Props) {
   const pendingRows = pendingToday.filter((b) => b.id !== skipPendingId);
@@ -89,10 +94,20 @@ export function TodayAppointmentsStrip({
                       </p>
                       <p className="text-xs text-muted-foreground font-mono">
                         {formatTime(b.startAt)} · {b.service.name}
-                        <span className="ml-2 uppercase text-[10px] tracking-wide">
-                          {b.kind === "pending" ? "· needs confirm" : "· confirmed"}
-                        </span>
+                        {b.kind === "confirmed" ? (
+                          <span className="ml-2 uppercase text-[10px] tracking-wide">
+                            · confirmed
+                          </span>
+                        ) : null}
                       </p>
+                      {b.kind === "pending" ? (
+                        <PendingWhyLine
+                          reason={b.pendingReason}
+                          vertical={vertical}
+                          category={category}
+                          className="mt-1"
+                        />
+                      ) : null}
                     </Link>
                     {b.kind === "confirmed" ? (
                       <div className="mt-0.5">

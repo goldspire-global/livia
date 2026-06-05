@@ -690,10 +690,29 @@ export interface Staff {
   updatedAt: string;
 }
 
+export type BookingResourceResourceType =
+  (typeof BookingResourceResourceType)[keyof typeof BookingResourceResourceType];
+
+export const BookingResourceResourceType = {
+  room: "room",
+  equipment: "equipment",
+  thermal: "thermal",
+} as const;
+
+export interface BookingResource {
+  id: string;
+  name: string;
+  resourceType: BookingResourceResourceType;
+  capacity: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
 export type BookingDetail = Booking & {
   service: Service;
   customer: Customer;
   staff?: Staff | null;
+  resource?: BookingResource | null;
 };
 
 export interface MyDay {
@@ -878,6 +897,11 @@ export interface UpdateBookingBody {
   internalNotes?: string;
   cancellationReason?: string;
   staffId?: string;
+  /**
+   * Assign or clear room/resource
+   * @nullable
+   */
+  resourceId?: string | null;
 }
 
 export interface AvailabilityRule {
@@ -950,6 +974,14 @@ export interface SlotListResponse {
   slots: Slot[];
 }
 
+export interface PackageCreditSummary {
+  ledgerCount: number;
+  activePackages: number;
+  creditsSold: number;
+  creditsRedeemed: number;
+  creditsRemaining: number;
+}
+
 export interface DashboardSummary {
   todayBookings: number;
   weekBookings: number;
@@ -965,6 +997,9 @@ export interface DashboardSummary {
   voiceRecoveredValueEurCents: number;
   /** Estimated voice outcome share this billing period (from meters) */
   voiceOutcomeShareEurCents: number;
+  /** Active bookable resources (wellness room board) */
+  bookingResources?: BookingResource[];
+  packageCreditSummary?: PackageCreditSummary;
 }
 
 export type ActivityItemLevel =
@@ -1377,6 +1412,23 @@ export type SearchAuditLogParams = {
   to?: string;
   limit?: number;
   offset?: number;
+};
+
+export type GetWellnessGuestVaultParams = {
+  phone: string;
+};
+
+export type LookupWellnessRedeemCodeBody = {
+  code: string;
+};
+
+export type WellnessDutySolverBody = {
+  resourceName?: string;
+  hour?: number;
+};
+
+export type WellnessTerminalCheckoutBody = {
+  bookingId: string;
 };
 
 export type ListStaffParams = {

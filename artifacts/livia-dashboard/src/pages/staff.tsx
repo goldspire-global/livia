@@ -24,19 +24,16 @@ import {
 import { UsersRound, UserPlus, ChevronRight, Mail } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useMembership } from "@/lib/membership-context";
-import { OWNERSHIP_SUCCESSION } from "@workspace/policy";
+import {
+  OWNERSHIP_SUCCESSION,
+  rosterMemberRoleLabel,
+  verticalOperationalCopy,
+} from "@workspace/policy";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import { apiFetch, ApiFetchError } from "@/lib/api-fetch";
 import { useMutation } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { useBeautyChrome } from "@/lib/presentation-layout";
-import {
-  beautyListScroll,
-  beautyOutlineButton,
-  beautyPanel,
-  beautyPrimaryButton,
-  beautyRow,
-} from "@/lib/beauty-operational-ui";
 import { cn } from "@/lib/utils";
 import { onContainedScrollWheel } from "@/lib/use-contained-scroll";
 import {
@@ -62,10 +59,16 @@ interface InviteForm {
 
 function InviteDialog({
   businessId,
-  beautyChrome,
+  outlineButton,
+  roleStaffLabel,
+  roleAdminLabel,
+  inviteCta,
 }: {
   businessId: string;
-  beautyChrome?: boolean;
+  outlineButton: (extra?: string) => string;
+  roleStaffLabel: string;
+  roleAdminLabel: string;
+  inviteCta: string;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -99,11 +102,11 @@ function InviteDialog({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={beautyOutlineButton(beautyChrome)}
+          className={outlineButton()}
           data-testid="button-invite-teammate"
         >
           <Mail className="h-4 w-4 mr-2" />
-          Invite team member
+          {inviteCta}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -132,8 +135,8 @@ function InviteDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="STAFF">{OWNERSHIP_SUCCESSION.teamInvite.roleStaff}</SelectItem>
-                    <SelectItem value="ADMIN">{OWNERSHIP_SUCCESSION.teamInvite.roleAdmin}</SelectItem>
+                    <SelectItem value="STAFF">{roleStaffLabel}</SelectItem>
+                    <SelectItem value="ADMIN">{roleAdminLabel}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -160,7 +163,10 @@ export default function StaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const bid = business?.id ?? "";
-  const beautyChrome = useBeautyChrome((business as { vertical?: string } | null)?.vertical);
+  const businessVertical = (business as { vertical?: string } | null)?.vertical;
+  const businessCategory = (business as { category?: string } | null)?.category;
+  const op = useOperationalChrome(businessVertical);
+  const opCopy = verticalOperationalCopy(businessVertical, businessCategory);
 
   const { data: staff, isLoading } = useListStaff(
     bid,
@@ -194,17 +200,25 @@ export default function StaffPage() {
 
   const headerActions = canManage ? (
     <>
-      {bid ? <InviteDialog businessId={bid} beautyChrome={beautyChrome} /> : null}
+      {bid ? (
+        <InviteDialog
+          businessId={bid}
+          outlineButton={op.outlineButton}
+          roleStaffLabel={opCopy.teamInviteRoleStaff}
+          roleAdminLabel={opCopy.teamInviteRoleAdmin}
+          inviteCta={opCopy.teamInviteCta}
+        />
+      ) : null}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button data-testid="button-add-staff" className={beautyPrimaryButton(beautyChrome)}>
+          <Button data-testid="button-add-staff" className={op.primaryButton()}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Staff
+            {opCopy.addTeamMemberCta}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Staff Member</DialogTitle>
+            <DialogTitle>{opCopy.addTeamMemberCta}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -238,7 +252,7 @@ export default function StaffPage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={createStaff.isPending} data-testid="button-submit-staff">
-                {createStaff.isPending ? "Adding..." : "Add Staff"}
+                {createStaff.isPending ? "Adding…" : opCopy.addTeamMemberCta}
               </Button>
             </div>
           </form>
@@ -250,12 +264,12 @@ export default function StaffPage() {
   return (
     <OperationalPageShell
       data-testid="staff-page"
-      title="Staff"
-      subtitle="Calendar roster and day-to-day team sign-in — not for passing studio ownership (use Settings → Ownership)."
+      title={opCopy.teamPageTitle}
+      subtitle={opCopy.teamPageSubtitle}
       width="full"
       actions={headerActions}
     >
-      <Card className={beautyPanel(beautyChrome)}>
+      <Card className={op.panel()}>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="divide-y divide-border">
@@ -272,24 +286,24 @@ export default function StaffPage() {
           ) : members.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <UsersRound className="h-9 w-9 text-muted-foreground mb-3 opacity-40" />
-              <p className="font-medium">No staff members yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Add your team to start scheduling</p>
+              <p className="font-medium">{opCopy.emptyTeamTitle}</p>
+              <p className="text-sm text-muted-foreground mt-1">{opCopy.emptyTeamBody}</p>
             </div>
           ) : (
-            <div className={beautyListScroll()} onWheel={onContainedScrollWheel}>
+            <div className={op.listScroll()} onWheel={onContainedScrollWheel}>
               {members.map((member: any) => (
                 <Link key={member.id} href={`/staff/${member.id}`}>
                   <div
                     data-testid={`row-staff-${member.id}`}
-                    className={beautyRow(beautyChrome)}
+                    className={op.row()}
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold shrink-0">
                       {member.displayName?.charAt(0) ?? "?"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{member.displayName}</p>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {member.role?.toLowerCase?.() ?? "staff"}
+                      <p className="text-sm text-muted-foreground">
+                        {rosterMemberRoleLabel(member.role, businessVertical, businessCategory)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

@@ -21,6 +21,8 @@ tags:
     description: Customer management
   - name: bookings
     description: Booking management
+  - name: wellness
+    description: Wellness vertical — reports, reception, vault, brokers
   - name: availability
     description: Availability rules and time off
   - name: slots
@@ -506,6 +508,131 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+
+  /businesses/{businessId}/wellness/reports:
+    get:
+      operationId: getWellnessReports
+      tags: [wellness]
+      summary: Wellness reports bundle (room heatmap, packages, stress score)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Reports bundle
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/wellness/eod-close:
+    get:
+      operationId: getWellnessEodClose
+      tags: [wellness]
+      summary: End-of-day close narrative for wellness operators
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: EOD close lines and stats
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/wellness/audit-diary:
+    get:
+      operationId: getWellnessAuditDiary
+      tags: [wellness]
+      summary: Wellness audit diary (bookings, Liv memory, audit events)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Diary lines
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/wellness/guest-vault:
+    get:
+      operationId: getWellnessGuestVault
+      tags: [wellness]
+      summary: Guest vault profile by phone
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: phone
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Vault profile
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /businesses/{businessId}/wellness/redeem-code:
+    post:
+      operationId: lookupWellnessRedeemCode
+      tags: [wellness]
+      summary: Look up gift or package redemption code
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        "200":
+          description: Ledger lookup
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/wellness/duty-solver:
+    post:
+      operationId: wellnessDutySolver
+      tags: [wellness]
+      summary: Find free therapists in a room at an hour
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resourceName: { type: string }
+                hour: { type: number }
+      responses:
+        "200":
+          description: Solver matches
+
+  /businesses/{businessId}/wellness/terminal/checkout:
+    post:
+      operationId: wellnessTerminalCheckout
+      tags: [wellness]
+      summary: Stripe Terminal checkout hook for desk payment
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId: { type: string }
+      responses:
+        "200":
+          description: Checkout initiated
 
   /businesses/{businessId}:
     get:
@@ -3262,6 +3389,10 @@ components:
               oneOf:
                 - $ref: "#/components/schemas/Staff"
                 - type: "null"
+            resource:
+              oneOf:
+                - $ref: "#/components/schemas/BookingResource"
+                - type: "null"
           required: [service, customer]
 
     BookingListResponse:
@@ -3311,6 +3442,9 @@ components:
           type: string
         staffId:
           type: string
+        resourceId:
+          type: ["string", "null"]
+          description: Assign or clear room/resource
 
     # ── Availability ──
     AvailabilityRule:
@@ -3466,7 +3600,47 @@ components:
         voiceOutcomeShareEurCents:
           type: integer
           description: Estimated voice outcome share this billing period (from meters)
+        bookingResources:
+          type: array
+          description: Active bookable resources (wellness room board)
+          items:
+            $ref: "#/components/schemas/BookingResource"
+        packageCreditSummary:
+          $ref: "#/components/schemas/PackageCreditSummary"
       required: [todayBookings, weekBookings, pendingCount, confirmedCount, completedTodayCount, noShowTodayCount, totalCustomers, upcomingBookings, voiceBookingsThisWeek, voiceRecoveredValueEurCents, voiceOutcomeShareEurCents]
+
+    PackageCreditSummary:
+      type: object
+      properties:
+        ledgerCount:
+          type: integer
+        activePackages:
+          type: integer
+        creditsSold:
+          type: integer
+        creditsRedeemed:
+          type: integer
+        creditsRemaining:
+          type: integer
+      required: [ledgerCount, activePackages, creditsSold, creditsRedeemed, creditsRemaining]
+
+    BookingResource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        resourceType:
+          type: string
+          enum: [room, equipment, thermal]
+        capacity:
+          type: integer
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+      required: [id, name, resourceType, capacity, isActive, sortOrder]
 
     ActivityItem:
       type: object

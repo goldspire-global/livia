@@ -1,4 +1,4 @@
-import { getAnthropic } from "@workspace/integrations-anthropic-ai";
+import { getAnthropic, isAnthropicConfigured } from "@workspace/integrations-anthropic-ai";
 import type Anthropic from "@anthropic-ai/sdk";
 import { type Business } from "@workspace/db";
 import {
@@ -198,6 +198,23 @@ export async function handlePublicChat(args: {
       conversation.status === "CLOSED"
         ? "This conversation is closed. Please start a new chat or contact the shop directly."
         : "Thanks — a team member will get back to you shortly.";
+    return {
+      conversationId: conversation.id,
+      reply,
+      status: conversation.status,
+    };
+  }
+
+  if (!isAnthropicConfigured()) {
+    const reply =
+      "Our booking assistant is not available right now. Please use the booking steps on this page or contact the studio directly.";
+    if (!args.skipPersistence) {
+      await appendMessage({
+        conversationId: conversation.id,
+        role: "ASSISTANT",
+        content: reply,
+      });
+    }
     return {
       conversationId: conversation.id,
       reply,

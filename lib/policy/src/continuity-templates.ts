@@ -71,6 +71,24 @@ const PET: ContinuityTemplate = {
   ],
 };
 
+const WELLNESS: ContinuityTemplate = {
+  smsBody: (a) =>
+    BASE_SMS(
+      a,
+      "Reply if you have health questions, accessibility needs, or to confirm your arrival time.",
+    ),
+  emailSubject: (a) => `Your session at ${a.businessName}`,
+  emailBody: (a) =>
+    `${BASE_SMS(a, "We'll confirm your room slot once any intake questions are answered.")}`,
+  publicNextSteps: (a) => [
+    a.visitUrl
+      ? `Watch for a message from ${a.businessName} — reply with health or arrival notes (ref ${a.bookingRef}).`
+      : `Watch for a message from ${a.businessName} — reply with any intake or arrival questions (ref ${a.bookingRef}).`,
+    a.visitUrl ? `Visit prep: ${a.visitUrl}` : "Your studio may ask light intake questions before confirming the room.",
+    "Add the session to your calendar below.",
+  ],
+};
+
 const MEDSPA_CALM: ContinuityTemplate = {
   smsBody: (a) =>
     BASE_SMS(
@@ -102,11 +120,7 @@ export const CONTINUITY_TEMPLATES: Record<BusinessVertical, ContinuityTemplate> 
       `Booking ref ${a.bookingRef}`,
     ],
   },
-  wellness: {
-    ...HAIR,
-    smsBody: (a) => BASE_SMS(a, "Reply if you have health questions before your session."),
-    publicNextSteps: () => ["Check your messages for any intake questions from the studio."],
-  },
+  wellness: WELLNESS,
   fitness: {
     ...HAIR,
     smsBody: (a) => BASE_SMS(a, "Reply if you need to change session type or share PAR-Q updates."),

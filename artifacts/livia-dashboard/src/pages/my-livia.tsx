@@ -52,11 +52,23 @@ type UpcomingBooking = {
   visitUrl: string;
 };
 
+type PackageCreditRow = {
+  ledgerId: string;
+  businessName: string;
+  slug: string;
+  packageName: string;
+  creditsRemaining: number;
+  creditsTotal: number;
+  expiresAt: string | null;
+  redemptionCode: string | null;
+};
+
 type HubView = {
   guestId: string;
   phoneE164: string;
   shops: HubShop[];
   upcomingBookings: UpcomingBooking[];
+  packageCredits?: PackageCreditRow[];
 };
 
 type SurfaceConfig = {
@@ -297,6 +309,36 @@ export default function MyLiviaPage() {
         <h1 className="text-2xl font-serif">{GUEST_HUB_COPY.vaultTitle}</h1>
         <p className="text-xs text-muted-foreground mt-1">{GUEST_HUB_COPY.vaultSubtitle}</p>
       </div>
+
+      {view.packageCredits && view.packageCredits.length > 0 ? (
+        <section className="space-y-2" data-testid="guest-hub-package-credits">
+          <h2 className="text-sm font-medium">{GUEST_HUB_COPY.packageCreditsSection}</h2>
+          {view.packageCredits.map((p) => (
+            <Card key={p.ledgerId}>
+              <CardContent className="py-3 text-sm">
+                <p className="font-medium">{p.businessName}</p>
+                <p className="text-muted-foreground">{p.packageName}</p>
+                <p className="mt-1 tabular-nums">
+                  {p.creditsRemaining} of {p.creditsTotal} sessions left
+                  {p.expiresAt ? (
+                    <span className="text-xs text-muted-foreground block">
+                      Expires {formatDateTime(p.expiresAt)}
+                    </span>
+                  ) : null}
+                </p>
+                {p.redemptionCode ? (
+                  <p className="font-mono text-xs mt-2 tracking-wider">{p.redemptionCode}</p>
+                ) : null}
+                <Link href={`/b/${p.slug}`} className="text-primary text-xs mt-2 inline-block">
+                  Book a session
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      ) : (
+        <p className="text-xs text-muted-foreground text-center">{GUEST_HUB_COPY.packageCreditsEmpty}</p>
+      )}
 
       {heroBooking ? (
         <section className="space-y-3" data-testid="guest-hub-upcoming">

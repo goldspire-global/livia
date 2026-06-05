@@ -8,6 +8,7 @@ import { listWedgeDemoVerticalsForDisplay } from "./wedge-demo-stories";
  */
 export const MARKETING_DEMO_WEDGE_UNLOCK_ORDER: readonly BusinessVertical[] = [
   "beauty",
+  "wellness",
 ] as const;
 
 /**
@@ -48,8 +49,8 @@ const CONCIERGE_COPY: Partial<
     imagePath: "/demo/portal-beauty.jpg",
   },
   wellness: {
-    title: "Calm Wellness · Cork",
-    description: "A modern wellness space for mind and body.",
+    title: "Harbour Wellness · Cork",
+    description: "Rooms, vouchers, and calm concierge — spa-native, not salon-shaped.",
     imagePath: "/demo/portal-wellness.jpg",
   },
   hair: {

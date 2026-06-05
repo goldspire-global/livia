@@ -14,6 +14,9 @@ export function verticalToneClass(vertical?: string | null): string {
       return "tone-warm";
     case "body-art":
       return "tone-studio";
+    case "wellness":
+    case "fitness":
+      return "tone-wellness";
     default:
       return "tone-celebrate";
   }

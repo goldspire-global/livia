@@ -52,7 +52,7 @@ export async function getPublicIntakeFeed(businessId: string) {
     .orderBy(desc(bookingsTable.createdAt))
     .limit(8);
 
-  const recent = await enrichBookingsBatch(recentRaw);
+  const recent = await enrichBookingsBatch(recentRaw, { businessId });
 
   const dashboardBase = getDashboardUrl();
 

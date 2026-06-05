@@ -20,6 +20,10 @@ export const GUEST_HUB_COPY = {
   livStripTitle: "Liv",
   livStripBody:
     "Your bookings across studios live here. Book again in one tap — changes to an appointment open that studio's page.",
+  packageCreditsSection: "Session packs",
+  packageCreditsEmpty: "No active session credits — book a pack at your studio or redeem a gift code.",
+  redeemCodeLabel: "Gift or pack code",
+  redeemCodeCta: "Redeem",
   stagingBannerTitle: "Staging QA",
   stagingBannerBody: "Loose phone validation and a fixed test code for demos.",
 } as const;

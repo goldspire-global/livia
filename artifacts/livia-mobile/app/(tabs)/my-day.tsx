@@ -1,7 +1,12 @@
 // STAFF-first landing on mobile — w4.staff.my-day.mobile
 
 import { Feather } from "@expo/vector-icons";
-import { useGetMyDay } from "@workspace/api-client-react";
+import { useGetMyDay, useUpdateBooking } from "@workspace/api-client-react";
+import { WELLNESS_ROOM_TURNOVER_MINUTES } from "@workspace/policy";
+import { useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
+import { invalidateOperationalState } from "@/lib/operational-cache";
+import { WellnessBreathField } from "@/components/wellness/WellnessBreathField";
 import { useRouter } from "expo-router";
 import { usePreviewStaffId } from "@/hooks/usePreviewStaffId";
 import React, { useEffect, useMemo, useState } from "react";
@@ -56,15 +61,28 @@ function QuickActionsBar({
   businessId,
   colors,
   bottomInset,
+  vertical,
+  onSessionComplete,
+  turnoverEndsAt,
 }: {
   booking: MyDayBooking;
   businessId: string;
   colors: ReturnType<typeof useColors>;
   bottomInset: number;
+  vertical: string | null;
+  onSessionComplete?: () => void;
+  turnoverEndsAt?: number | null;
 }) {
   const router = useRouter();
   const haptics = useHaptics();
   const canRunLate = booking.status === "CONFIRMED" || booking.status === "PENDING";
+  const isWellness = vertical === "wellness";
+  const canComplete = isWellness && booking.status === "CONFIRMED";
+  const turnoverActive = turnoverEndsAt != null && turnoverEndsAt > Date.now();
+  const turnoverMinsLeft =
+    turnoverActive && turnoverEndsAt
+      ? Math.max(1, Math.ceil((turnoverEndsAt - Date.now()) / 60_000))
+      : 0;
 
   return (
     <View
@@ -108,16 +126,39 @@ function QuickActionsBar({
         <Feather name="clock" size={18} color={colors.foreground} />
         <Text style={[styles.actionLabel, { color: colors.foreground }]}>Running late</Text>
       </Pressable>
-      <Pressable
-        style={[styles.actionBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
-        onPress={() => {
-          haptics.tap();
-          router.push(`/booking/${booking.id}`);
-        }}
-      >
-        <Feather name="file-text" size={18} color={colors.foreground} />
-        <Text style={[styles.actionLabel, { color: colors.foreground }]}>View detail</Text>
-      </Pressable>
+      {canComplete ? (
+        <Pressable
+          style={[
+            styles.actionBtn,
+            {
+              borderColor: colors.primary + "66",
+              backgroundColor: colors.primary + "18",
+              opacity: turnoverActive ? 0.5 : 1,
+            },
+          ]}
+          disabled={turnoverActive}
+          onPress={() => {
+            haptics.tap();
+            onSessionComplete?.();
+          }}
+        >
+          <Feather name="check-circle" size={18} color={colors.primary} />
+          <Text style={[styles.actionLabel, { color: colors.primary }]}>
+            {turnoverActive ? `Turnover ${turnoverMinsLeft}m` : "Complete"}
+          </Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={[styles.actionBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+          onPress={() => {
+            haptics.tap();
+            router.push(`/booking/${booking.id}`);
+          }}
+        >
+          <Feather name="file-text" size={18} color={colors.foreground} />
+          <Text style={[styles.actionLabel, { color: colors.foreground }]}>View detail</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -140,6 +181,10 @@ export default function MyDayScreen() {
   const { staffId: previewStaffId, staffName, isPreview, loading: previewLoading } =
     usePreviewStaffId();
 
+  const qc = useQueryClient();
+  const { mutateAsync: patchBooking } = useUpdateBooking();
+  const [turnoverEndsAt, setTurnoverEndsAt] = useState<number | null>(null);
+
   const { data, isLoading, refetch, isRefetching } = useGetMyDay(
     bid,
     previewStaffId ? { staffId: previewStaffId } : undefined,
@@ -151,6 +196,33 @@ export default function MyDayScreen() {
   const next = (data?.next ?? null) as MyDayBooking | null;
   const nextRelative = useRelativeTime(next?.startAt);
   const today = (data?.today ?? []) as MyDayBooking[];
+
+  useEffect(() => {
+    if (!turnoverEndsAt) return;
+    const t = setInterval(() => {
+      if (Date.now() >= turnoverEndsAt) setTurnoverEndsAt(null);
+    }, 15_000);
+    return () => clearInterval(t);
+  }, [turnoverEndsAt]);
+
+  const completeSession = async () => {
+    if (!bid || !next || next.status !== "CONFIRMED") return;
+    try {
+      await patchBooking({
+        businessId: bid,
+        bookingId: next.id,
+        data: { status: "COMPLETED" },
+      });
+      haptics.success();
+      invalidateOperationalState(qc, bid);
+      setTurnoverEndsAt(Date.now() + WELLNESS_ROOM_TURNOVER_MINUTES * 60_000);
+      refetch();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      haptics.warning();
+      Alert.alert("Could not complete", e?.message ?? "Try again from session detail.");
+    }
+  };
 
   const restOfToday = useMemo(
     () => today.filter((b) => b.id !== next?.id).slice(0, 6),
@@ -169,6 +241,14 @@ export default function MyDayScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {vertical === "wellness" ? (
+        <WellnessBreathField
+          cssPreset={
+            (currentBusiness as { experienceSkin?: { presentation?: string } } | null)?.experienceSkin
+              ?.presentation ?? "harbour-light"
+          }
+        />
+      ) : null}
       <OperationalScreen
         eyebrow={formatLongDateNow(clock)}
         title="My chair"
@@ -308,6 +388,9 @@ export default function MyDayScreen() {
           businessId={bid}
           colors={colors}
           bottomInset={insets.bottom}
+          vertical={vertical}
+          turnoverEndsAt={turnoverEndsAt}
+          onSessionComplete={() => void completeSession()}
         />
       ) : null}
     </View>

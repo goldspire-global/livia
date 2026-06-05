@@ -1,10 +1,23 @@
-import type { BusinessVertical } from "@workspace/policy";
+import {
+  resolveJurisdictionCode,
+  resolveVerticalKey,
+  resolvePresentationLayoutMorph,
+  resolveWellnessOperatorCssPreset,
+  type BusinessVertical,
+  type PresentationLayoutMorph,
+} from "@workspace/policy";
 import { applyVerticalTheme, clearVerticalTheme, VERTICAL_THEMES } from "./vertical-theme";
 import { applyMarketTheme, clearMarketTheme, MARKET_SKINS } from "./market-theme";
 import { PERSONA_ACCENT, type PersonaKind } from "./persona";
-import { resolveJurisdictionCode, resolveVerticalKey } from "@workspace/policy";
 import { applyBeautyAmbient } from "./beauty-ambient";
-import { BEAUTY_CSS_PRESETS, isBeautyPresentationPreset, isBeautyVertical } from "./presentation-layout";
+import {
+  BEAUTY_CSS_PRESETS,
+  isBeautyPresentationPreset,
+  isBeautyVertical,
+  WELLNESS_CSS_PRESETS,
+  isWellnessPresentationPreset,
+  isWellnessVertical,
+} from "./presentation-layout";
 
 /** Maps W4/W5 cssPreset → document color scheme (must match policy preset tokens). */
 const PRESENTATION_COLOR_MODE: Record<string, "light" | "dark"> = {
@@ -16,6 +29,9 @@ const PRESENTATION_COLOR_MODE: Record<string, "light" | "dark"> = {
   "warm-chair": "light",
   "clean-salon": "light",
   "barber-bold": "dark",
+  "harbour-light": "light",
+  "session-rail": "light",
+  "evening-ledger": "dark",
 };
 
 export function resolvePresentationColorMode(
@@ -94,10 +110,24 @@ export function marketRibbon(
   return MARKET_SKINS[code]?.ribbon ?? MARKET_SKINS.IE?.ribbon;
 }
 
+export function applyPresentationLayoutMorph(
+  morph: PresentationLayoutMorph | null,
+  root?: HTMLElement | null,
+) {
+  const el = root ?? document.documentElement;
+  if (morph) {
+    el.dataset.layoutMorph = morph;
+  } else {
+    delete el.dataset.layoutMorph;
+  }
+}
+
 export function applyPresentationTheme(args: {
   cssPreset?: string | null;
   brandAccentHex?: string | null;
   colorMode?: "light" | "dark" | null;
+  vertical?: string | null;
+  layoutMorph?: PresentationLayoutMorph | null;
   /** Scope tokens to a panel (e.g. sign-in preview) instead of the full document. */
   root?: HTMLElement | null;
 }) {
@@ -107,6 +137,29 @@ export function applyPresentationTheme(args: {
   } else {
     delete root.dataset.presentation;
   }
+  const morph =
+    args.layoutMorph ??
+    (args.vertical && args.cssPreset
+      ? resolvePresentationLayoutMorph(args.vertical as BusinessVertical, args.cssPreset)
+      : null);
+  applyPresentationLayoutMorph(morph, root);
+  if (args.cssPreset) {
+    const layoutToken =
+      morph === "atrium"
+        ? "spatial"
+        : morph === "timeline-rail"
+          ? "timeline"
+          : morph === "ledger"
+            ? "cards"
+            : morph === "menu-card"
+              ? "list"
+              : morph === "cockpit" || morph === "split-inbox"
+                ? "cards"
+                : "cards";
+    root.dataset.presentationLayout = layoutToken;
+  } else {
+    delete root.dataset.presentationLayout;
+  }
   if (
     args.cssPreset &&
     (BEAUTY_CSS_PRESETS as readonly string[]).includes(args.cssPreset)
@@ -114,6 +167,14 @@ export function applyPresentationTheme(args: {
     root.dataset.beautyNativeSkin = "1";
   } else {
     delete root.dataset.beautyNativeSkin;
+  }
+  if (
+    args.cssPreset &&
+    (WELLNESS_CSS_PRESETS as readonly string[]).includes(args.cssPreset)
+  ) {
+    root.dataset.wellnessNativeSkin = "1";
+  } else {
+    delete root.dataset.wellnessNativeSkin;
   }
   if (args.brandAccentHex) {
     root.style.setProperty("--brand-accent", args.brandAccentHex);
@@ -151,12 +212,17 @@ export function applyTenantPresentationSurface(args: {
       persona: args.persona ?? null,
     });
   }
-  if (args.cssPreset) {
-    const mode = args.colorMode ?? resolvePresentationColorMode(args.cssPreset);
+  const cssPreset =
+    args.vertical === "wellness"
+      ? resolveWellnessOperatorCssPreset(args.cssPreset)
+      : args.cssPreset;
+  if (cssPreset) {
+    const mode = args.colorMode ?? resolvePresentationColorMode(cssPreset);
     applyPresentationTheme({
-      cssPreset: args.cssPreset,
+      cssPreset,
       brandAccentHex: args.brandAccentHex,
       colorMode: mode,
+      vertical: args.vertical,
       root: args.root,
     });
     if (!args.root && isBeautyVertical(args.vertical) && isBeautyPresentationPreset(args.cssPreset)) {

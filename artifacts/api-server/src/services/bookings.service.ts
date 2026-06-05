@@ -14,13 +14,16 @@ import {
   sendBookingConfirmationEmail,
   sendBookingCancellationEmail,
 } from "./booking-emails.service";
-import { derivePendingReason } from "../lib/booking-pending";
+import { derivePendingReason, resolvePendingReasonForBooking } from "../lib/booking-pending";
+import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { getPoliciesForBusinessId, policiesFromBusiness } from "./policies.service";
 import { businessesTable } from "@workspace/db";
 import {
   resolveResourceForService,
   resourceCapacityAvailable,
+  resolveResourceTurnoverMinutes,
 } from "./booking-resources.service";
+import { bookingResourcesTable } from "@workspace/db";
 
 export async function listBookings(
   businessId: string,
@@ -60,41 +63,119 @@ export async function listBookings(
     .limit(limit)
     .offset(offset);
 
-  const enriched = await enrichBookingsBatch(bookings);
+  const enriched = await enrichBookingsBatch(bookings, { businessId });
 
   return { data: enriched, total: countResult?.count ?? 0, limit, offset };
+}
+
+type PendingResolveCtx = {
+  aiCanBookDirectly: boolean;
+  depositRequired: boolean;
+  autoConfirmWhenNoDeposit: boolean;
+  bookingContinuityEnabled: boolean;
+  requireDepositAfterStrikes: boolean;
+  noShowStrikeThreshold: number;
+};
+
+async function pendingResolveCtxForBusiness(
+  businessId: string,
+): Promise<PendingResolveCtx | null> {
+  const cached = await getCachedTenantRuntime(businessId);
+  const policies = policiesFromBusiness(cached.business);
+  const op = policies.operational;
+  return {
+    aiCanBookDirectly: (cached.business.aiCanBookDirectly ?? "true") === "true",
+    depositRequired: op.depositRequired,
+    autoConfirmWhenNoDeposit: op.autoConfirmWhenNoDeposit,
+    bookingContinuityEnabled: op.bookingContinuityEnabled,
+    requireDepositAfterStrikes: op.requireDepositAfterStrikes,
+    noShowStrikeThreshold: op.noShowStrikeThreshold,
+  };
+}
+
+function customerTrustedForDeposit(
+  ctx: PendingResolveCtx,
+  cust: {
+    trustedClient?: boolean | null;
+    strikeCount?: number | null;
+  } | null | undefined,
+): boolean {
+  if (!ctx.depositRequired || !ctx.requireDepositAfterStrikes || !cust) return false;
+  return !!cust.trustedClient || (cust.strikeCount ?? 0) < ctx.noShowStrikeThreshold;
 }
 
 /** Batched enrichment — one query per related table instead of 3×N. */
 export async function enrichBookingsBatch(
   bookings: Array<typeof bookingsTable.$inferSelect>,
+  opts?: { businessId?: string },
 ) {
   if (!bookings.length) return [];
+
+  const needsPendingResolve = bookings.some((b) => b.status === "PENDING");
+  const pendingCtx =
+    opts?.businessId && needsPendingResolve
+      ? await pendingResolveCtxForBusiness(opts.businessId)
+      : null;
 
   const serviceIds = [...new Set(bookings.map((b) => b.serviceId))];
   const customerIds = [...new Set(bookings.map((b) => b.customerId))];
   const staffIds = [
     ...new Set(bookings.map((b) => b.staffId).filter((id): id is string => !!id)),
   ];
+  const resourceIds = [
+    ...new Set(bookings.map((b) => b.resourceId).filter((id): id is string => !!id)),
+  ];
 
-  const [services, customers, staffRows] = await Promise.all([
+  const [services, customers, staffRows, resourceRows] = await Promise.all([
     db.select().from(servicesTable).where(inArray(servicesTable.id, serviceIds)),
     db.select().from(customersTable).where(inArray(customersTable.id, customerIds)),
     staffIds.length
       ? db.select().from(staffTable).where(inArray(staffTable.id, staffIds))
+      : Promise.resolve([]),
+    resourceIds.length
+      ? db
+          .select()
+          .from(bookingResourcesTable)
+          .where(inArray(bookingResourcesTable.id, resourceIds))
       : Promise.resolve([]),
   ]);
 
   const serviceMap = new Map(services.map((s) => [s.id, s]));
   const customerMap = new Map(customers.map((c) => [c.id, c]));
   const staffMap = new Map(staffRows.map((s) => [s.id, s]));
+  const resourceMap = new Map(resourceRows.map((r) => [r.id, r]));
 
-  return bookings.map((b) => ({
-    ...b,
-    service: serviceMap.get(b.serviceId) ?? null,
-    customer: customerMap.get(b.customerId) ?? null,
-    staff: b.staffId ? (staffMap.get(b.staffId) ?? null) : null,
-  }));
+  return bookings.map((b) => {
+    const customer = customerMap.get(b.customerId) ?? null;
+    let pendingReason = b.pendingReason;
+    if (b.status === "PENDING" && pendingCtx) {
+      const trusted = customerTrustedForDeposit(pendingCtx, customer);
+      pendingReason =
+        resolvePendingReasonForBooking(
+          {
+            status: b.status,
+            pendingReason: b.pendingReason,
+            source: b.source,
+            depositPaidEurCents: b.depositPaidEurCents,
+          },
+          {
+            ...pendingCtx,
+            depositRequired: pendingCtx.depositRequired && !trusted,
+            customerTrusted: trusted,
+            customerHasPhone: !!customer?.phone?.trim(),
+            customerHasEmail: !!customer?.email?.trim(),
+          },
+        ) ?? b.pendingReason;
+    }
+    return {
+      ...b,
+      pendingReason,
+      service: serviceMap.get(b.serviceId) ?? null,
+      customer,
+      staff: b.staffId ? (staffMap.get(b.staffId) ?? null) : null,
+      resource: b.resourceId ? (resourceMap.get(b.resourceId) ?? null) : null,
+    };
+  });
 }
 
 export async function enrichBooking(booking: typeof bookingsTable.$inferSelect) {
@@ -278,11 +359,18 @@ export async function createBooking(
   }
 
   if (resolvedResourceId) {
+    const [resource] = await db
+      .select({ resourceType: bookingResourcesTable.resourceType })
+      .from(bookingResourcesTable)
+      .where(eq(bookingResourcesTable.id, resolvedResourceId));
     const ok = await resourceCapacityAvailable({
       businessId,
       resourceId: resolvedResourceId,
       startAt,
       endAt,
+      turnoverMinutes: resource
+        ? resolveResourceTurnoverMinutes(resource.resourceType)
+        : 0,
     });
     if (!ok) throw new Error("RESOURCE_AT_CAPACITY");
   }
@@ -306,11 +394,18 @@ export async function createBooking(
     if (conflicts.length > 0) throw new Error("SLOT_CONFLICT");
 
     if (resolvedResourceId) {
+      const [resource] = await db
+        .select({ resourceType: bookingResourcesTable.resourceType })
+        .from(bookingResourcesTable)
+        .where(eq(bookingResourcesTable.id, resolvedResourceId));
       const ok = await resourceCapacityAvailable({
         businessId,
         resourceId: resolvedResourceId,
         startAt,
         endAt,
+        turnoverMinutes: resource
+          ? resolveResourceTurnoverMinutes(resource.resourceType)
+          : 0,
       });
       if (!ok) throw new Error("RESOURCE_AT_CAPACITY");
     }
@@ -380,6 +475,7 @@ export async function updateBookingStatus(
     internalNotes?: string;
     cancellationReason?: string;
     staffId?: string;
+    resourceId?: string | null;
   },
 ) {
   const [existing] = await db
@@ -388,6 +484,31 @@ export async function updateBookingStatus(
     .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)));
 
   if (!existing) return null;
+
+  if (updates.resourceId !== undefined) {
+    const nextResourceId = updates.resourceId;
+    if (nextResourceId) {
+      const [resource] = await db
+        .select({ resourceType: bookingResourcesTable.resourceType })
+        .from(bookingResourcesTable)
+        .where(
+          and(
+            eq(bookingResourcesTable.id, nextResourceId),
+            eq(bookingResourcesTable.businessId, businessId),
+          ),
+        );
+      if (!resource) throw new Error("RESOURCE_NOT_FOUND");
+      const ok = await resourceCapacityAvailable({
+        businessId,
+        resourceId: nextResourceId,
+        startAt: existing.startAt,
+        endAt: existing.endAt,
+        excludeBookingId: bookingId,
+        turnoverMinutes: resolveResourceTurnoverMinutes(resource.resourceType),
+      });
+      if (!ok) throw new Error("RESOURCE_AT_CAPACITY");
+    }
+  }
 
   if (updates.status && updates.status !== existing.status) {
     if (!isValidTransition(existing.status, updates.status)) {
@@ -412,6 +533,7 @@ export async function updateBookingStatus(
         ? { cancellationReason: updates.cancellationReason }
         : {}),
       ...(updates.staffId !== undefined ? { staffId: updates.staffId } : {}),
+      ...(updates.resourceId !== undefined ? { resourceId: updates.resourceId } : {}),
       updatedAt: new Date(),
     })
     .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)))

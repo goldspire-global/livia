@@ -11,6 +11,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   CalendarDays,
+  Sparkles,
   Users,
   UsersRound,
   Settings,
@@ -28,7 +29,7 @@ import {
   Stethoscope,
   ClipboardList,
 } from "lucide-react";
-import { businessVocabulary } from "@workspace/policy";
+import { businessVocabulary, resolveWellnessPersonaHome } from "@workspace/policy";
 import type { PersonaKind } from "./persona";
 import type { Role } from "./membership-context";
 
@@ -144,6 +145,13 @@ const NAV_POOL: RitualNavItem[] = [
   { ritualName: "Today", href: "/dashboard", icon: LayoutDashboard, min: "ADMIN", personas: ["org_admin", "owner", "manager"] },
   { ritualName: "Queue", href: "/inbox", icon: Inbox, min: "ADMIN", personas: ["org_admin", "owner", "manager", "receptionist"] },
   { ritualName: "The floor", href: "/bookings", icon: CalendarDays, min: "STAFF" },
+  {
+    ritualName: "Menu",
+    href: "/services",
+    icon: Sparkles,
+    min: "ADMIN",
+    personas: ["org_admin", "owner", "manager"],
+  },
   { ritualName: "Customers", href: "/customers", icon: Users, min: "STAFF" },
   { ritualName: "Team", href: "/staff", icon: UsersRound, min: "ADMIN", personas: ["org_admin", "owner", "manager"] },
   { ritualName: "Lifecycle", href: "/lifecycle", icon: BookOpen, min: "OWNER", personas: ["org_admin", "owner"] },
@@ -193,12 +201,43 @@ const NAV_POOL: RitualNavItem[] = [
 ];
 
 const PERSONA_NAV_ORDER: Record<PersonaKind, string[]> = {
-  org_admin: ["/chain", "/brands", "/host", "/dashboard", "/inbox", "/bookings", "/customers", "/staff", "/rota", "/lifecycle", "/toolkit", "/settings"],
-  owner: ["/host", "/brands", "/dashboard", "/inbox", "/bookings", "/customers", "/day-packages", "/staff", "/rota", "/lifecycle", "/toolkit", "/settings"],
-  manager: ["/inbox", "/dashboard", "/bookings", "/customers", "/staff", "/rota", "/settings"],
+  org_admin: ["/chain", "/brands", "/host", "/dashboard", "/inbox", "/bookings", "/services", "/customers", "/staff", "/rota", "/lifecycle", "/toolkit", "/settings"],
+  owner: ["/host", "/brands", "/dashboard", "/inbox", "/bookings", "/services", "/customers", "/day-packages", "/staff", "/rota", "/lifecycle", "/toolkit", "/settings"],
+  manager: ["/inbox", "/dashboard", "/bookings", "/services", "/customers", "/staff", "/rota", "/settings"],
   staff: ["/my-day", "/bookings", "/customers", "/settings"],
   receptionist: ["/bookings", "/inbox", "/customers", "/settings"],
 };
+
+/** Merge wellness ritual homes when vertical=wellness */
+export function resolvePersonaRitual(
+  persona: PersonaKind,
+  businessVertical?: string | null,
+): PersonaRitual {
+  const base = PERSONA_RITUALS[persona];
+  const wellness = resolveWellnessPersonaHome(persona, businessVertical ?? null);
+  if (!wellness) return base;
+  return {
+    ...base,
+    homePath: wellness.homePath,
+    homeTitle: wellness.homeTitle,
+    homeSubtitle: wellness.homeSubtitle,
+    primaryAction: wellness.primaryAction ?? base.primaryAction,
+    secondaryAction: wellness.secondaryAction ?? base.secondaryAction,
+  };
+}
+
+export function personaNavOrder(
+  persona: PersonaKind,
+  businessVertical?: string | null,
+): string[] {
+  if (businessVertical === "wellness" && persona === "receptionist") {
+    return ["/wellness-reception", "/bookings", "/inbox", "/customers", "/settings"];
+  }
+  if (businessVertical === "wellness" && persona === "manager") {
+    return ["/wellness-reception", "/inbox", "/dashboard", "/bookings", "/wellness-reports", "/settings"];
+  }
+  return PERSONA_NAV_ORDER[persona];
+}
 
 export function timeGreeting(): "morning" | "afternoon" | "evening" {
   const h = new Date().getHours();
@@ -231,6 +270,16 @@ export function ownerHomeSubtitle(vertical?: string | null, category?: string | 
 }
 
 const VERTICAL_NAV_LABELS: Record<string, Partial<Record<string, string>>> = {
+  beauty: {
+    "/services": "Treatments",
+    "/customers": "Clients",
+    "/bookings": "Schedule",
+    "/inbox": "Inbox",
+  },
+  hair: {
+    "/services": "Services",
+    "/customers": "Clients",
+  },
   "allied-health": {
     "/customers": "Patients",
     "/staff": "Clinicians",
@@ -250,6 +299,14 @@ const VERTICAL_NAV_LABELS: Record<string, Partial<Record<string, string>>> = {
     "/bookings": "Sessions",
     "/staff": "Coaches",
   },
+  wellness: {
+    "/bookings": "Rooms",
+    "/customers": "Guests",
+    "/staff": "Practitioners",
+    "/services": "Sessions",
+    "/inbox": "Inbox",
+    "/dashboard": "Today",
+  },
 };
 
 export function getRitualNav(
@@ -264,7 +321,7 @@ export function getRitualNav(
 ): RitualNavItem[] {
   if (!effectiveRole) return [];
 
-  const order = PERSONA_NAV_ORDER[persona];
+  const order = personaNavOrder(persona, businessVertical ?? null);
   const tier = businessTier ?? "solo";
   const items = NAV_POOL.filter((item) => {
     if (item.demoOnly && !includeDemoLinks) return false;

@@ -491,8 +491,16 @@ export default function DashboardScreen() {
           ) : (
             pendingPreview.map((b, i) => {
               const reason = (b as { pendingReason?: string | null }).pendingReason;
-              const reasonLine = pendingReasonLabel(reason);
-              const guide = pendingApprovalGuidance(reason);
+              const reasonLine = pendingReasonLabel(
+                reason,
+                (currentBusiness as { vertical?: string } | null)?.vertical,
+                (currentBusiness as { category?: string } | null)?.category,
+              );
+              const guide = pendingApprovalGuidance(
+                reason,
+                (currentBusiness as { vertical?: string } | null)?.vertical,
+                (currentBusiness as { category?: string } | null)?.category,
+              );
               return (
                 <View
                   key={b.id}

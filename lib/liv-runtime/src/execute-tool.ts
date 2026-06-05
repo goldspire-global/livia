@@ -13,6 +13,9 @@ import {
   LIV_TOOL_SEARCH_TENANTS,
   LIV_TOOL_SEND_MESSAGE,
   LIV_TOOL_TENANT_SNAPSHOT,
+  LIV_TOOL_WELLNESS_DUTY_SOLVER,
+  LIV_TOOL_WELLNESS_EOD_CLOSE,
+  LIV_TOOL_WELLNESS_REROOM,
 } from "./registry";
 
 export type LivSlot = {
@@ -71,6 +74,12 @@ export type LivToolDeps = {
   morningBriefing?: () => Promise<Record<string, unknown>>;
   searchTenants?: (input: { q: string; limit?: number }) => Promise<Record<string, unknown>>;
   tenantSnapshot?: (input: { businessId: string }) => Promise<Record<string, unknown>>;
+  wellnessEodClose?: () => Promise<Record<string, unknown>>;
+  wellnessDutySolver?: (input: {
+    resourceName: string;
+    hour: number;
+  }) => Promise<Record<string, unknown>>;
+  wellnessReroom?: () => Promise<Record<string, unknown>>;
 };
 
 export type LivToolResult = {
@@ -300,6 +309,34 @@ export async function executeLivTool(args: {
     }
     const out = await deps.tenantSnapshot({ businessId: String(toolInput.businessId) });
     return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_WELLNESS_EOD_CLOSE) {
+    if (!deps.wellnessEodClose) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.wellnessEodClose();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_WELLNESS_DUTY_SOLVER) {
+    if (!deps.wellnessDutySolver) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const hour = Number(toolInput.hour);
+    const out = await deps.wellnessDutySolver({
+      resourceName: String(toolInput.resourceName ?? ""),
+      hour: Number.isFinite(hour) ? hour : 12,
+    });
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_WELLNESS_REROOM) {
+    if (!deps.wellnessReroom) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.wellnessReroom();
+    return { result: { ok: true, ...out } };
   }
 
   return { result: { ok: false, error: "UNKNOWN_TOOL" } };

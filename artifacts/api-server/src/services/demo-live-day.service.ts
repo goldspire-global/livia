@@ -103,6 +103,7 @@ export async function ensureLiveDayForBusiness(
         ),
       )
       .limit(3),
+    { businessId },
   );
 
   for (const b of enriched) {

@@ -214,7 +214,11 @@ export default function BookingDetailScreen() {
           <StatusBadge status={booking.status} />
           {booking.status === "PENDING" && (booking as { pendingReason?: string }).pendingReason ? (
             <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 6 }]}>
-              {pendingReasonLabel((booking as { pendingReason?: string }).pendingReason)}
+              {pendingReasonLabel(
+                (booking as { pendingReason?: string }).pendingReason,
+                (currentBusiness as { vertical?: string } | null)?.vertical,
+                (currentBusiness as { category?: string } | null)?.category,
+              )}
             </Text>
           ) : null}
           <Text style={[styles.time, { color: colors.mutedForeground }]}>

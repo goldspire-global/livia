@@ -102,6 +102,38 @@ const ALLIED_HEALTH_GUARDS: BookingGuardField[] = [
   },
 ];
 
+const WELLNESS_GUARDS: BookingGuardField[] = [
+  {
+    id: "health_notes",
+    label: "Health or allergy notes (optional)",
+    type: "text",
+    helpText: "Pregnancy, injuries, oils, pressure preference — not a medical diagnosis.",
+  },
+  {
+    id: "therapist_preference",
+    label: "Therapist preference",
+    type: "select",
+    required: false,
+    options: [
+      { value: "no_preference", label: "No preference" },
+      { value: "same_as_last", label: "Same therapist as last visit" },
+      { value: "female", label: "Female therapist if available" },
+      { value: "male", label: "Male therapist if available" },
+    ],
+  },
+  {
+    id: "couples_or_shared",
+    label: "Booking type",
+    type: "select",
+    options: [
+      { value: "solo", label: "Solo session" },
+      { value: "couples", label: "Couples / shared room" },
+      { value: "gift", label: "Gift for someone else" },
+    ],
+    helpText: "Helps reception assign the right room layout.",
+  },
+];
+
 const FITNESS_GUARDS: BookingGuardField[] = [
   {
     id: "fitness_goal",
@@ -130,6 +162,7 @@ export const BOOKING_GUARDS: Partial<Record<BusinessVertical, BookingGuardField[
   medspa: MEDSPA_GUARDS,
   "allied-health": ALLIED_HEALTH_GUARDS,
   fitness: FITNESS_GUARDS,
+  wellness: WELLNESS_GUARDS,
 };
 
 export function getBookingGuardsForVertical(vertical: BusinessVertical): BookingGuardField[] {

@@ -1,8 +1,14 @@
 import { Sparkles } from "lucide-react";
 import { publicCareNotes } from "@/lib/public-booking-helpers";
 
-export function PublicCareNotes({ vertical }: { vertical?: string | null }) {
-  const notes = publicCareNotes(vertical);
+export function PublicCareNotes({
+  vertical,
+  category,
+}: {
+  vertical?: string | null;
+  category?: string | null;
+}) {
+  const notes = publicCareNotes(vertical, category);
   if (!notes.length) return null;
 
   return (

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { publicChatRateLimitOk } from "../lib/public-chat-rate-limit";
 import { logRouteError, safeClientMessage, sendError } from "../lib/http-errors";
+import { isAnthropicConfigured } from "@workspace/integrations-anthropic-ai";
 import { handlePublicChat } from "../services/ai-chat.service";
 
 const router: IRouter = Router();
@@ -23,6 +24,16 @@ router.post("/public/b/:slug/chat", async (req, res): Promise<void> => {
   if (!limit.ok) {
     res.setHeader("Retry-After", String(limit.retryAfter ?? 60));
     sendError(res, req, 429, "Too many messages. Please wait a moment.");
+    return;
+  }
+
+  if (!isAnthropicConfigured()) {
+    sendError(
+      res,
+      req,
+      503,
+      "Liv is not configured on this server (set ANTHROPIC_API_KEY). Use the booking form or contact the studio.",
+    );
     return;
   }
 

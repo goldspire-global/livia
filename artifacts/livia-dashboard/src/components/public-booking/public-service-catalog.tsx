@@ -59,7 +59,7 @@ export function PublicServiceCatalog({
 
   bookCta?: string;
 
-  layout?: "list" | "beauty-grid";
+  layout?: "list" | "beauty-grid" | "wellness-grid";
 
   selectedServiceId?: string | null;
 
@@ -96,6 +96,78 @@ export function PublicServiceCatalog({
   }
 
 
+
+  if (layout === "wellness-grid") {
+    const { featured, rest } = pickFeaturedPublicServices(services, featuredServiceIds);
+    const hint = featuredServicesHint(featured.length, rest.length, services.length, catalogTitle);
+    return (
+      <div data-testid="public-service-catalog">
+        <div className="flex items-baseline justify-between gap-2 mb-3">
+          <h3 className="text-sm font-medium" style={{ fontFamily: "var(--app-font-serif)" }}>
+            {catalogTitle}
+          </h3>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground tabular-nums">
+            {publicBookCatalogCountLabel(services.length, catalogTitle)}
+          </span>
+        </div>
+        <div className="wellness-service-grid">
+          {featured.map((svc) => (
+            <button
+              key={svc.id}
+              type="button"
+              className={cn(
+                "wellness-service-card",
+                selectedServiceId === svc.id && "wellness-service-card--selected",
+              )}
+              data-testid={`button-service-${svc.id}`}
+              onClick={() => onSelect(svc)}
+            >
+              <PublicServiceThumb
+                serviceName={svc.name}
+                vertical={vertical}
+                imageUrl={svc.imageUrl}
+                className="wellness-service-card-thumb"
+              />
+              <div className="wellness-service-card-body">
+                <p
+                  className="wellness-service-card-title"
+                  style={{ fontFamily: "var(--app-font-serif)" }}
+                >
+                  {svc.name}
+                </p>
+                <p className="wellness-service-card-meta">
+                  {svc.durationMinutes} min
+                  {svc.priceMinor > 0
+                    ? ` · ${formatCurrency(svc.priceMinor, svc.currency)}`
+                    : " · Enquire"}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+        {hint ? (
+          <p className="text-xs text-center text-muted-foreground mt-4">{hint}</p>
+        ) : null}
+        {rest.length > 0 ? (
+          <div className="mt-5 space-y-2" data-testid="public-service-overflow-section">
+            {rest.map((svc) => (
+              <button
+                key={svc.id}
+                type="button"
+                className="w-full text-left rounded-lg border px-3 py-2 hover:border-primary/40"
+                onClick={() => onSelect(svc)}
+              >
+                <span className="font-medium text-sm">{svc.name}</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  {svc.durationMinutes} min
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   if (layout === "beauty-grid") {
     const { featured, rest } = pickFeaturedPublicServices(services, featuredServiceIds);

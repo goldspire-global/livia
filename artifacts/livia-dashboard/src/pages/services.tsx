@@ -23,15 +23,28 @@ import { useForm } from "react-hook-form";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
 import { ServiceImageField } from "@/components/services/service-image-field";
-import { businessVocabulary } from "@workspace/policy";
+import {
+  BEAUTY_SERVICE_CATEGORIES,
+  BEAUTY_SERVICE_TEMPLATES,
+  businessVocabulary,
+  resolveVerticalKey,
+} from "@workspace/policy";
 
 interface ServiceForm {
   name: string;
   description: string;
+  category: string;
   durationMinutes: number;
   priceMinor: number;
   currency: string;
   imageUrl?: string;
+}
+
+function serviceNamePlaceholder(vertical: string): string {
+  if (vertical === "beauty") return "e.g. Lash fill";
+  if (vertical === "hair") return "e.g. Cut & finish";
+  if (vertical === "wellness") return "e.g. 60 min massage";
+  return "e.g. Service name";
 }
 
 export default function ServicesPage() {
@@ -70,7 +83,7 @@ export default function ServicesPage() {
   const createService = useCreateService();
   const updateService = useUpdateService();
   const { register, handleSubmit, reset, watch, setValue } = useForm<ServiceForm>({
-    defaultValues: { currency: "USD", durationMinutes: 60, imageUrl: "" },
+    defaultValues: { currency: "EUR", durationMinutes: 60, imageUrl: "", category: "" },
   });
   const draftImageUrl = watch("imageUrl");
 
@@ -86,16 +99,24 @@ export default function ServicesPage() {
       imageUrl?: string | null;
     }[]) ?? [];
 
+  const verticalKey = resolveVerticalKey(
+    (business as { vertical?: string } | null)?.vertical,
+    (business as { category?: string } | null)?.category,
+  );
   const vocab = businessVocabulary(
     (business as { vertical?: string } | null)?.vertical,
     (business as { category?: string } | null)?.category,
   );
+  const isBeauty = verticalKey === "beauty";
+  const serviceLabel = vocab.serviceNoun;
+  const newItemLabel = isBeauty ? `New ${serviceLabel.toLowerCase()}` : "New service";
 
   function openEdit(svc: (typeof svcList)[number]) {
     setEditId(svc.id);
     reset({
       name: svc.name,
       description: svc.description ?? "",
+      category: (svc as { category?: string }).category ?? "",
       durationMinutes: svc.durationMinutes,
       priceMinor: svc.priceMinor,
       currency: svc.currency || "EUR",
@@ -112,6 +133,7 @@ export default function ServicesPage() {
         data: {
           name: vals.name,
           description: vals.description || undefined,
+          category: vals.category?.trim() || undefined,
           durationMinutes: Number(vals.durationMinutes),
           priceMinor: Number(vals.priceMinor),
           currency: vals.currency || "EUR",
@@ -122,7 +144,7 @@ export default function ServicesPage() {
         onSuccess: () => {
           invalidateOperationalState(qc, bid);
           qc.invalidateQueries({ queryKey: getListServicesQueryKey(bid) });
-          toast({ title: "Service updated" });
+          toast({ title: `${serviceLabel} updated` });
           setEditId(null);
         },
         onError: () => toast({ title: "Failed to update service", variant: "destructive" }),
@@ -138,9 +160,10 @@ export default function ServicesPage() {
         data: {
           name: vals.name,
           description: vals.description || undefined,
+          category: vals.category?.trim() || undefined,
           durationMinutes: Number(vals.durationMinutes),
           priceMinor: Number(vals.priceMinor),
-          currency: vals.currency || "USD",
+          currency: vals.currency || "EUR",
           imageUrl: vals.imageUrl?.trim() || undefined,
         },
       },
@@ -148,11 +171,12 @@ export default function ServicesPage() {
         onSuccess: () => {
           invalidateOperationalState(qc, bid);
           qc.invalidateQueries({ queryKey: getListServicesQueryKey(bid) });
-          toast({ title: "Service created" });
-          reset();
+          toast({ title: `${serviceLabel} created` });
+          reset({ currency: "EUR", durationMinutes: 60, imageUrl: "", category: "" });
           setDialogOpen(false);
         },
-        onError: () => toast({ title: "Failed to create service", variant: "destructive" }),
+        onError: () =>
+          toast({ title: `Failed to create ${serviceLabel.toLowerCase()}`, variant: "destructive" }),
       }
     );
   }
@@ -215,22 +239,61 @@ export default function ServicesPage() {
             <DialogTrigger asChild>
               <Button data-testid="button-add-service">
                 <Plus className="h-4 w-4 mr-2" />
-                New Service
+                {newItemLabel}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create Service</DialogTitle>
+                <DialogTitle>Create {serviceLabel.toLowerCase()}</DialogTitle>
               </DialogHeader>
+              {isBeauty ? (
+                <div className="flex flex-wrap gap-2 pb-1" data-testid="beauty-service-templates">
+                  {BEAUTY_SERVICE_TEMPLATES.map((t) => (
+                    <Button
+                      key={t.name}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setValue("name", t.name);
+                        setValue("category", t.category);
+                        setValue("durationMinutes", t.durationMinutes);
+                        setValue("priceMinor", t.priceMinor);
+                        if (t.description) setValue("description", t.description);
+                      }}
+                    >
+                      {t.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Service Name *</Label>
+                  <Label>{serviceLabel} name *</Label>
                   <Input
                     {...register("name", { required: true })}
-                    placeholder="e.g. Haircut"
+                    placeholder={serviceNamePlaceholder(verticalKey)}
                     data-testid="input-service-name"
                   />
                 </div>
+                {isBeauty ? (
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                      {...register("category")}
+                      data-testid="input-service-category"
+                    >
+                      <option value="">Select category</option>
+                      {BEAUTY_SERVICE_CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
@@ -288,7 +351,7 @@ export default function ServicesPage() {
                     disabled={createService.isPending}
                     data-testid="button-submit-service"
                   >
-                    {createService.isPending ? "Creating..." : "Create Service"}
+                    {createService.isPending ? "Creating..." : `Create ${serviceLabel.toLowerCase()}`}
                   </Button>
                 </div>
               </form>
@@ -300,7 +363,7 @@ export default function ServicesPage() {
       <Dialog open={!!editId} onOpenChange={(o) => !o && setEditId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit service</DialogTitle>
+            <DialogTitle>Edit {serviceLabel.toLowerCase()}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(saveEdit)} className="space-y-4">
             <div className="space-y-2">

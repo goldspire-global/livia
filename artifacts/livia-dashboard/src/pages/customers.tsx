@@ -22,13 +22,11 @@ import { MergeSuggestionsPanel } from "@/components/merge-suggestions-panel";
 import { useForm } from "react-hook-form";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { useBeautyChrome } from "@/lib/presentation-layout";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import {
   beautyAmbientPanel,
   beautyCustomerListScroll,
   beautyPanel,
-  beautyPrimaryButton,
-  beautyRow,
 } from "@/lib/beauty-operational-ui";
 import { cn } from "@/lib/utils";
 import { onContainedScrollWheel } from "@/lib/use-contained-scroll";
@@ -62,12 +60,20 @@ export default function CustomersPage() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
   const bid = business?.id ?? "";
-  const beautyChrome = useBeautyChrome((business as { vertical?: string } | null)?.vertical);
+  const businessVertical = (business as { vertical?: string } | null)?.vertical;
+  const op = useOperationalChrome(businessVertical);
+  const beautyChrome = op.beauty;
   const clientNoun = businessVocabulary(
     (business as { vertical?: string } | null)?.vertical,
     business?.category,
   ).clientNoun.toLowerCase();
   const clientNounPlural = clientNoun.endsWith("s") ? `${clientNoun}es` : `${clientNoun}s`;
+  const isWellness = businessVertical === "wellness";
+
+  function exportGuests() {
+    if (!bid) return;
+    window.open(`/api/businesses/${bid}/wellness/guest-export.csv`, "_blank");
+  }
 
   useEffect(() => {
     setOffset(0);
@@ -151,11 +157,17 @@ export default function CustomersPage() {
       }
       width="full"
       actions={
+        <div className="flex gap-2">
+          {isWellness ? (
+            <Button variant="outline" size="default" onClick={exportGuests} data-testid="export-guests-csv">
+              Export guests
+            </Button>
+          ) : null}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button
               data-testid="button-add-customer"
-              className={beautyPrimaryButton(beautyChrome)}
+              className={op.primaryButton()}
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Add client
@@ -195,11 +207,12 @@ export default function CustomersPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       }
     >
       {total !== undefined ? (
         <div className="grid grid-cols-2 gap-3 max-w-md">
-          <Card className={beautyPanel(beautyChrome)}>
+          <Card className={cn(beautyPanel(beautyChrome), op.wellness && op.panel())}>
             <CardContent className="py-4">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Total {clientNounPlural}</p>
               <p
@@ -213,7 +226,7 @@ export default function CustomersPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className={beautyPanel(beautyChrome)}>
+          <Card className={cn(beautyPanel(beautyChrome), op.wellness && op.panel())}>
             <CardContent className="py-4">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">In directory</p>
               <p
@@ -246,7 +259,7 @@ export default function CustomersPage() {
         />
       </div>
 
-      <Card className={beautyAmbientPanel(beautyChrome)}>
+      <Card className={cn(beautyAmbientPanel(beautyChrome), op.wellness && op.panel())}>
         <CardContent className="p-0">
           {listLoading ? (
             <div className="divide-y divide-border">
@@ -271,7 +284,9 @@ export default function CustomersPage() {
           ) : (
             <>
               <div
-                className={beautyCustomerListScroll(beautyChrome)}
+                className={cn(
+                  beautyChrome ? beautyCustomerListScroll(beautyChrome) : op.listScroll(),
+                )}
                 onWheel={onContainedScrollWheel}
               >
                 {accumulated.map((customer) => {
@@ -282,14 +297,16 @@ export default function CustomersPage() {
                   <Link key={customer.id} href={`/customers/${customer.id}`}>
                     <div
                       data-testid={`row-customer-${customer.id}`}
-                      className={beautyRow(beautyChrome)}
+                      className={op.row()}
                     >
                       <div
                         className={cn(
                           "flex h-10 w-10 items-center justify-center rounded-full text-sm shrink-0",
                           beautyChrome
                             ? "beauty-customer-avatar"
-                            : "bg-muted font-semibold",
+                            : op.wellness
+                              ? op.avatarRing()
+                              : "bg-muted font-semibold",
                         )}
                       >
                         {initials}

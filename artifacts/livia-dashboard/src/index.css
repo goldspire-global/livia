@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./styles/beauty-presentation.css";
+@import "./styles/wellness-presentation.css";
 @import "./styles/beauty-ambient-signal.css";
 @import "./styles/gateway-g1.css";
 @import "./styles/gateway-handoff.css";
@@ -644,6 +645,11 @@
   }
   .tone-studio {
     --primary: 24 90% 48%;
+  }
+  /* Harbour / spa — sea-glass teal (only when native preset skin is off) */
+  .tone-wellness {
+    --primary: 174 80% 26%;
+    --ring: 174 80% 26%;
   }
 
   /* Public B2C booking — vertical hero wash (tokens from vertical-theme.ts) */

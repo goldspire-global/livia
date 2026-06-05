@@ -54,6 +54,7 @@ import bookingResourcesRouter from "./booking-resources";
 import dayPackagesRouter from "./day-packages";
 import careSeriesRouter from "./care-series";
 import franchisePolicyRouter from "./franchise";
+import wellnessRouter from "./wellness";
 
 const router: IRouter = Router();
 
@@ -110,6 +111,7 @@ router.use(bookingResourcesRouter);
 router.use(dayPackagesRouter);
 router.use(careSeriesRouter);
 router.use(franchisePolicyRouter);
+router.use(wellnessRouter);
 router.use(partnerApiRouter);
 router.use(devRouter);
 

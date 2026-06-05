@@ -220,12 +220,22 @@ router.post(
       sendError(res, req, 400, "content is required");
       return;
     }
+    const { getCachedTenantRuntime } = await import("../lib/tenant-runtime-pool");
+    const { isAllowedLivMemoryKind } = await import("@workspace/policy");
+    const runtime = await getCachedTenantRuntime(businessId);
+    const memoryKind = isAllowedLivMemoryKind(
+      kind,
+      runtime.business.vertical,
+      runtime.business.category,
+    )
+      ? kind
+      : "note";
     const { appendLivMemory } = await import("../services/liv-memory.service");
     const row = await appendLivMemory({
       businessId,
       entityType: "customer",
       entityId: customerId,
-      kind: kind === "preference" || kind === "ritual" ? kind : "note",
+      kind: memoryKind as "note" | "preference" | "ritual" | "pressure" | "therapist_pref" | "health_light",
       content,
       createdBy: "staff",
     });

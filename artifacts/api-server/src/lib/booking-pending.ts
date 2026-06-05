@@ -1,34 +1,21 @@
-/**
- * Machine-readable reasons for PENDING bookings — surfaced in UI and Liv copy.
- */
-export const PENDING_REASONS = {
-  AWAITING_STAFF_CONFIRM: "awaiting_staff_confirm",
-  AWAITING_DEPOSIT: "awaiting_deposit",
-  AWAITING_POLICY_REVIEW: "awaiting_policy_review",
-  CREATED_BY_LIV: "created_by_liv",
-  OWNER_MANUAL: "owner_manual",
-  AWAITING_CONTINUITY: "awaiting_continuity",
-} as const;
+import {
+  PENDING_REASON_CODES,
+  pendingReasonLabel as pendingReasonLabelFromPolicy,
+  resolvePendingReasonCode as resolvePendingReasonCodeFromPolicy,
+  type PendingReasonCode,
+} from "@workspace/policy";
+
+/** Machine-readable reasons for PENDING bookings — surfaced in UI and Liv copy. */
+export const PENDING_REASONS = PENDING_REASON_CODES;
 
 export type PendingReason = (typeof PENDING_REASONS)[keyof typeof PENDING_REASONS];
 
-export function pendingReasonLabel(reason: string | null | undefined): string {
-  switch (reason) {
-    case PENDING_REASONS.AWAITING_STAFF_CONFIRM:
-      return "Waiting for staff to confirm";
-    case PENDING_REASONS.AWAITING_DEPOSIT:
-      return "Waiting for deposit";
-    case PENDING_REASONS.AWAITING_POLICY_REVIEW:
-      return "Policy review required";
-    case PENDING_REASONS.CREATED_BY_LIV:
-      return "Liv created — confirm to finalize";
-    case PENDING_REASONS.OWNER_MANUAL:
-      return "Manual booking — confirm when ready";
-    case PENDING_REASONS.AWAITING_CONTINUITY:
-      return "Waiting for guest reply (photos or confirmation)";
-    default:
-      return "Pending — needs your confirmation";
-  }
+export function pendingReasonLabel(
+  reason: string | null | undefined,
+  vertical?: string | null,
+  category?: string | null,
+): string {
+  return pendingReasonLabelFromPolicy(reason, vertical, category);
 }
 
 export function derivePendingReason(args: {
@@ -42,35 +29,45 @@ export function derivePendingReason(args: {
   customerHasPhone?: boolean;
   customerHasEmail?: boolean;
 }): PendingReason | null {
-  if (args.source === "owner-manual" || args.source === "walk-in") {
-    return PENDING_REASONS.OWNER_MANUAL;
-  }
-  if (
-    args.bookingContinuityEnabled !== false &&
-    args.source === "web" &&
-    (args.customerHasPhone || args.customerHasEmail)
-  ) {
-    return PENDING_REASONS.AWAITING_CONTINUITY;
-  }
   if (args.customerTrusted && args.autoConfirmWhenNoDeposit !== false) {
     return null;
   }
-  if (args.depositRequired && args.depositPaidEurCents <= 0) {
-    return PENDING_REASONS.AWAITING_DEPOSIT;
-  }
-  if (!args.aiCanBookDirectly) {
-    return PENDING_REASONS.AWAITING_STAFF_CONFIRM;
-  }
-  if (args.autoConfirmWhenNoDeposit === false) {
-    return PENDING_REASONS.AWAITING_STAFF_CONFIRM;
-  }
-  if (
-    args.source === "voice" ||
-    args.source === "whatsapp" ||
-    args.source === "sms" ||
-    args.source === "web"
-  ) {
-    return PENDING_REASONS.CREATED_BY_LIV;
-  }
-  return null;
+  return resolvePendingReasonCodeFromPolicy({
+    status: "PENDING",
+    source: args.source,
+    aiCanBookDirectly: args.aiCanBookDirectly,
+    depositRequired: args.depositRequired,
+    depositPaidEurCents: args.depositPaidEurCents,
+    autoConfirmWhenNoDeposit: args.autoConfirmWhenNoDeposit,
+    customerTrusted: args.customerTrusted,
+    bookingContinuityEnabled: args.bookingContinuityEnabled,
+    customerHasPhone: args.customerHasPhone,
+    customerHasEmail: args.customerHasEmail,
+  });
+}
+
+export function resolvePendingReasonForBooking(
+  booking: {
+    status: string;
+    pendingReason?: string | null;
+    source?: string | null;
+    depositPaidEurCents?: number | null;
+  },
+  ctx: {
+    aiCanBookDirectly: boolean;
+    depositRequired: boolean;
+    autoConfirmWhenNoDeposit?: boolean;
+    bookingContinuityEnabled?: boolean;
+    customerTrusted?: boolean;
+    customerHasPhone?: boolean;
+    customerHasEmail?: boolean;
+  },
+): PendingReasonCode | null {
+  return resolvePendingReasonCodeFromPolicy({
+    status: booking.status,
+    pendingReason: booking.pendingReason,
+    source: booking.source,
+    depositPaidEurCents: booking.depositPaidEurCents ?? 0,
+    ...ctx,
+  });
 }

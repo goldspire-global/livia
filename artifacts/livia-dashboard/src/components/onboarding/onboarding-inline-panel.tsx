@@ -42,7 +42,9 @@ export function OnboardingInlinePanel({
     if (loading) return <Skeleton className="h-24 w-full" />;
     return (
       <div className="rounded-lg border bg-muted/30 p-4 space-y-2" data-testid="onboarding-services-preview">
-        <p className="text-sm font-medium">Seeded services ({services?.length ?? 0})</p>
+        <p className="text-sm font-medium">
+          {services?.length ? `Services (${services.length})` : "Add your first treatments"}
+        </p>
         <ul className="text-sm text-muted-foreground space-y-1">
           {(services ?? []).slice(0, 5).map((s) => (
             <li key={s.id} className="flex items-center gap-2">

@@ -8,7 +8,13 @@ export type WedgeBeatVisual = {
   aspect?: "wide" | "phone";
 };
 
-/** G2 beauty thread — founder Bloom screenshots (bookings, /b, Today). */
+/** G2 product thread chapter order (Inbox → /b → Today). */
+export const WEDGE_CHAPTER_ORDER: WedgeDemoBeat["cropHint"][] = [
+  "inbox",
+  "public-book",
+  "today",
+];
+
 const BEAUTY_PLATFORM_DEFAULT_VISUALS: Partial<Record<WedgeDemoBeat["cropHint"], WedgeBeatVisual>> = {
   inbox: {
     src: "/w2-gateway/platform-default/inbox.png",
@@ -30,51 +36,94 @@ const BEAUTY_PLATFORM_DEFAULT_VISUALS: Partial<Record<WedgeDemoBeat["cropHint"],
   },
 };
 
+/** Wellness G2 — Harbour demo preset (vertical default). */
+const WELLNESS_HARBOUR_VISUALS: Partial<Record<WedgeDemoBeat["cropHint"], WedgeBeatVisual>> = {
+  inbox: {
+    src: "/w2-gateway/beats/wellness/harbour-light/inbox.png",
+    alt: "Harbour Wellness Cork — concierge priority inbox",
+    objectPosition: "left top",
+    aspect: "wide",
+  },
+  "public-book": {
+    src: "/w2-gateway/beats/wellness/harbour-light/book-mobile.png",
+    alt: "Harbour Wellness Cork — gift-ready treatment grid on /b",
+    objectPosition: "center top",
+    aspect: "phone",
+  },
+  today: {
+    src: "/w2-gateway/beats/wellness/harbour-light/today.png",
+    alt: "Harbour Wellness Cork — room swimlanes Today",
+    objectPosition: "left top",
+    aspect: "wide",
+  },
+};
+
 const BEAUTY_THREAD_BRIDGES: Partial<Record<WedgeDemoBeat["cropHint"], string>> = {
   inbox: "Pending visits line up — confirm or guide without leaving the list.",
   "public-book": "Same guest, same brand. They book from your link without an account.",
   today: "You open Today — the chair plan, revenue, and what Liv already handled.",
 };
 
+const WELLNESS_THREAD_BRIDGES: Partial<Record<WedgeDemoBeat["cropHint"], string>> = {
+  inbox: "Gift vouchers and calm SMS land in concierge — Liv holds the room fit.",
+  "public-book": "Guests pick treatments on a spa-native /b — gift-ready, not salon chrome.",
+  today: "Room swimlanes show turnover, vouchers, and who's in Serenity next.",
+};
+
 const BEAUTY_LIV_INTRO =
   "Three surfaces, one thread — bookings, your /b link, and Today at Bloom Beauty Dublin.";
 
-/** Beauty G2 story chapters (Inbox → /b → Today). */
-export const BEAUTY_WEDGE_CHAPTER_ORDER: WedgeDemoBeat["cropHint"][] = [
-  "inbox",
-  "public-book",
-  "today",
-];
+const WELLNESS_LIV_INTRO =
+  "Three surfaces, one thread — concierge, your /b link, and the room board at Harbour Wellness Cork.";
 
-export function isBeautyWedgeThread(vertical: BusinessVertical): boolean {
-  return vertical === "beauty";
+const WEDGE_THREAD_VERTICALS = new Set<BusinessVertical>(["beauty", "wellness"]);
+
+export function isPresetWedgeThread(vertical: BusinessVertical): boolean {
+  return WEDGE_THREAD_VERTICALS.has(vertical);
 }
 
-export function filterBeautyWedgeChapters(beats: WedgeDemoBeat[]): WedgeDemoBeat[] {
+/** @deprecated use isPresetWedgeThread */
+export function isBeautyWedgeThread(vertical: BusinessVertical): boolean {
+  return isPresetWedgeThread(vertical);
+}
+
+export function filterWedgeChapters(beats: WedgeDemoBeat[]): WedgeDemoBeat[] {
   const byHint = new Map(beats.map((b) => [b.cropHint, b]));
-  return BEAUTY_WEDGE_CHAPTER_ORDER.map((hint) => byHint.get(hint)).filter(
+  return WEDGE_CHAPTER_ORDER.map((hint) => byHint.get(hint)).filter(
     (b): b is WedgeDemoBeat => Boolean(b),
   );
+}
+
+/** @deprecated use filterWedgeChapters */
+export function filterBeautyWedgeChapters(beats: WedgeDemoBeat[]): WedgeDemoBeat[] {
+  return filterWedgeChapters(beats);
 }
 
 export function resolveWedgeBeatVisual(
   vertical: BusinessVertical,
   beat: WedgeDemoBeat,
 ): WedgeBeatVisual | null {
-  if (vertical !== "beauty") return null;
-  return BEAUTY_PLATFORM_DEFAULT_VISUALS[beat.cropHint] ?? null;
+  if (vertical === "beauty") {
+    return BEAUTY_PLATFORM_DEFAULT_VISUALS[beat.cropHint] ?? null;
+  }
+  if (vertical === "wellness") {
+    return WELLNESS_HARBOUR_VISUALS[beat.cropHint] ?? null;
+  }
+  return null;
 }
 
 export function resolveWedgeThreadBridge(
   vertical: BusinessVertical,
   beat: WedgeDemoBeat,
 ): string | null {
-  if (vertical !== "beauty") return null;
-  return BEAUTY_THREAD_BRIDGES[beat.cropHint] ?? null;
+  if (vertical === "beauty") return BEAUTY_THREAD_BRIDGES[beat.cropHint] ?? null;
+  if (vertical === "wellness") return WELLNESS_THREAD_BRIDGES[beat.cropHint] ?? null;
+  return null;
 }
 
 export function resolveWedgeLivIntro(vertical: BusinessVertical): string {
   if (vertical === "beauty") return BEAUTY_LIV_INTRO;
+  if (vertical === "wellness") return WELLNESS_LIV_INTRO;
   return "Inbox, booking, and Today — then walk into the live demo.";
 }
 

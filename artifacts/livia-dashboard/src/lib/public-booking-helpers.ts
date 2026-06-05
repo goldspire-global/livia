@@ -1,6 +1,11 @@
 /** B2C public booking — vertical copy, grouping, and medspa/consult helpers. */
 
-import { getVerticalPlaybook, type BusinessVertical } from "@workspace/policy";
+import {
+  getVerticalPlaybook,
+  guestPublicCareNotes as guestPublicCareNotesFromPolicy,
+  guestPublicGuardSectionTitle,
+  type BusinessVertical,
+} from "@workspace/policy";
 
 export type PublicServiceRow = {
   id: string;
@@ -105,7 +110,13 @@ export function inferServiceCategory(name: string, vertical?: string | null): st
     if (n.includes("tattoo") || n.includes("session") || n.includes("pierc")) return "Sessions";
     return "Sessions";
   }
-  if (vertical === "wellness" || vertical === "fitness") return "Sessions";
+  if (vertical === "wellness") {
+    if (n.includes("couple")) return "Couples";
+    if (n.includes("float") || n.includes("90")) return "Long sessions";
+    if (n.includes("massage") || n.includes("min")) return "Massage";
+    return "Sessions";
+  }
+  if (vertical === "fitness") return "Sessions";
   return CATEGORY_FALLBACK;
 }
 
@@ -128,56 +139,13 @@ export function groupServicesByCategory(
   return [...map.entries()].map(([category, items]) => ({ category, services: items }));
 }
 
-/** Short “before you book” copy — Acuity-style care blocks per vertical. */
-export function publicCareNotes(vertical?: string | null): string[] {
-  switch (vertical) {
-    case "beauty":
-      return [
-        "Patch tests may be required 24–48h before lash or tint services — we'll confirm by message.",
-        "Arrive with clean lashes/nails and no heavy oils on the treatment area.",
-      ];
-    case "hair":
-      return [
-        "For colour appointments, bring reference photos if you have them.",
-        "Running late? Use your visit link to let the team know — we'll do our best to fit you in.",
-      ];
-    case "medspa":
-      return [
-        "Consultations are required for first-time injectable treatments.",
-        "Avoid blood thinners and alcohol 24h before certain procedures unless your clinician advises otherwise.",
-      ];
-    case "pet-grooming":
-      return [
-        "Tell us about temperament, matting, or medical needs in the notes step.",
-        "Puppies and seniors may need shorter sessions — we'll confirm timing after you book.",
-      ];
-    case "body-art":
-      return [
-        "Consultations are free — session work may require a deposit to hold long slots.",
-        "Come rested, fed, and hydrated; avoid alcohol before your session.",
-      ];
-    default:
-      return [
-        "You'll get a confirmation by email or SMS with everything you need for your visit.",
-      ];
-  }
+/** Short “before you book” copy — policy hub `guest-public-experience.ts`. */
+export function publicCareNotes(vertical?: string | null, category?: string | null): string[] {
+  return guestPublicCareNotesFromPolicy(vertical, category);
 }
 
-export function guardSectionTitle(vertical?: string | null): string {
-  switch (vertical) {
-    case "pet-grooming":
-      return "About your pet";
-    case "allied-health":
-      return "Clinical intake";
-    case "automotive-detailing":
-      return "Your vehicle";
-    case "medspa":
-      return "Treatment intake";
-    case "fitness":
-      return "Before your session";
-    default:
-      return "A few quick details";
-  }
+export function guardSectionTitle(vertical?: string | null, category?: string | null): string {
+  return guestPublicGuardSectionTitle(vertical, category);
 }
 
 export function formatPublicAddress(b: {

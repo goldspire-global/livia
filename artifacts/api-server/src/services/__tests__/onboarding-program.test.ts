@@ -3,6 +3,7 @@
  */
 import assert from "node:assert/strict";
 import {
+  afterBusinessCreatedStateForVertical,
   afterBusinessCreatedStateWithSeed,
   blockingOnboardingPercent,
   isOnboardingAppUnlocked,
@@ -12,6 +13,11 @@ const seeded = afterBusinessCreatedStateWithSeed();
 assert.ok(seeded.completedActs.includes("a3_service_menu"));
 assert.ok(seeded.completedActs.includes("a4_team"));
 assert.equal(seeded.currentAct, "a2_shop_profile");
+
+const bloom = afterBusinessCreatedStateForVertical("beauty");
+assert.equal(bloom.currentAct, "a3_service_menu");
+assert.ok(!bloom.completedActs.includes("a3_service_menu"));
+assert.equal(bloom.checklist.servicesConfirmed, false);
 
 const partial = {
   ...seeded,

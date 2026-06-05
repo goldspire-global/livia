@@ -3,7 +3,7 @@ import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
 import { cn } from "@/lib/utils";
 import { verticalToneClass } from "@/lib/motion";
 import { useBusiness } from "@/lib/business-context";
-import { useBeautyChrome } from "@/lib/presentation-layout";
+import { useBeautyChrome, useWellnessChrome } from "@/lib/presentation-layout";
 
 type Props = {
   title: string;
@@ -34,13 +34,21 @@ export function OperationalPageShell({
 }: Props) {
   const { business } = useBusiness();
   const vertical = (business as { vertical?: string } | null)?.vertical;
-  const toneClass = tone && vertical ? verticalToneClass(vertical) : undefined;
   const beautyChrome = useBeautyChrome(vertical);
+  const wellnessChrome = useWellnessChrome(vertical);
+  /** Native presentation presets own --primary; v3 tone-* classes would override with purple. */
+  const applyVerticalTone =
+    tone && vertical && !beautyChrome && !wellnessChrome ? verticalToneClass(vertical) : undefined;
 
   return (
     <PageFrame
       width={width}
-      className={cn(toneClass, beautyChrome && "beauty-operational-page", className)}
+      className={cn(
+        applyVerticalTone,
+        beautyChrome && "beauty-operational-page",
+        wellnessChrome && "wellness-operational-page",
+        className,
+      )}
       data-testid={testId}
     >
       <PersonaRitualHeader variant="page" title={title} subtitle={subtitle}>

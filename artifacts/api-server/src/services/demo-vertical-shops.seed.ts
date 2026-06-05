@@ -10,8 +10,28 @@ import {
   ensureShowcasePets,
   refreshVerticalShowcaseShop,
 } from "./demo-showcase-depth";
-import type { BusinessVertical } from "@workspace/policy";
+import {
+  PLATFORM_DEFAULT_PRESET_ID,
+  type BusinessVertical,
+} from "@workspace/policy";
 import { inferDemoServiceImageUrl } from "../lib/experience-skin";
+import { ensureWellnessShowcaseDepth } from "./wellness-demo-depth";
+
+/** Showcase wellness shops ship on Harbour Light so W4 shell is visible without a Settings visit. */
+export async function ensureWellnessDemoPresentationPreset(businessId: string): Promise<void> {
+  const [row] = await db
+    .select({ presentationPresetId: businessesTable.presentationPresetId })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  const id = row?.presentationPresetId;
+  if (!id || id === PLATFORM_DEFAULT_PRESET_ID) {
+    await db
+      .update(businessesTable)
+      .set({ presentationPresetId: "wellness-harbour-light" })
+      .where(eq(businessesTable.id, businessId));
+  }
+}
 
 type ShowcaseServiceDef = {
   name: string;
@@ -422,6 +442,10 @@ export async function seedVerticalShowcaseShops(
 
     if (existing) {
       await refreshVerticalShowcaseShop(existing.id, d);
+      if (d.vertical === "wellness") {
+        await ensureWellnessDemoPresentationPreset(existing.id);
+        await ensureWellnessShowcaseDepth(existing.id);
+      }
       created.push({
         slug: existing.slug,
         id: existing.id,
@@ -468,6 +492,10 @@ export async function seedVerticalShowcaseShops(
       staffIds: core.staffRows.map((s) => s.id),
       serviceIds: core.serviceRows.map((s) => s.id),
     });
+    if (d.vertical === "wellness") {
+      await ensureWellnessDemoPresentationPreset(biz.id);
+      await ensureWellnessShowcaseDepth(biz.id);
+    }
     created.push({ slug: biz.slug, id: biz.id, name: biz.name, vertical: d.vertical });
   }
 

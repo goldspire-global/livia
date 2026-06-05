@@ -16,10 +16,17 @@ export const packageCreditLedgerTable = pgTable(
     creditsTotal: integer("credits_total").notNull(),
     creditsRemaining: integer("credits_remaining").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
+    redemptionCode: text("redemption_code"),
+    giftedByCustomerId: text("gifted_by_customer_id").references(() => customersTable.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("package_credit_ledger_customer_idx").on(t.businessId, t.customerId)],
+  (t) => [
+    index("package_credit_ledger_customer_idx").on(t.businessId, t.customerId),
+    index("package_credit_ledger_redemption_idx").on(t.businessId, t.redemptionCode),
+  ],
 );
 
 export type PackageCreditLedger = typeof packageCreditLedgerTable.$inferSelect;

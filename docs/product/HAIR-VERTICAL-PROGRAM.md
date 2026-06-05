@@ -3,7 +3,7 @@
 **Status:** program complete · **execution:** Phase V1 heartland  
 **Registry:** V1 · **heartland** · demo `luxe-salon-spa` (`owner-luxe@livia.io`)  
 **Also:** `aurora-studio`, `conors-cut-co`, chain scenarios  
-**Reads with:** [`vertical-playbooks/hair.md`](./vertical-playbooks/hair.md) · [`DOC-PROPAGATION-CASCADE.md`](../engineering/DOC-PROPAGATION-CASCADE.md)
+**Reads with:** [`vertical-playbooks/hair.md`](./vertical-playbooks/hair.md) · [`DOC-PROPAGATION-CASCADE.md`](../engineering/DOC-PROPAGATION-CASCADE.md) · **excellence:** [`vertical-excellence/hair.md`](./vertical-excellence/hair.md)
 
 ---
 

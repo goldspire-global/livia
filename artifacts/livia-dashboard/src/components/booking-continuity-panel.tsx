@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Clock } from "lucide-react";
 import { pendingReasonLabel } from "@/lib/booking-pending";
+import { bookingExperienceCopy, resolveVerticalKey, type BookingExperienceCopy } from "@workspace/policy";
+import { cn } from "@/lib/utils";
 
 type TimelineEntry = { id: string; type: string; label: string; at: string };
 
@@ -15,12 +17,20 @@ export function BookingContinuityPanel({
   bookingId,
   pendingReason,
   continuityConversationId,
+  vertical,
+  category,
+  copy: copyProp,
 }: {
   businessId: string;
   bookingId: string;
   pendingReason?: string | null;
   continuityConversationId?: string | null;
+  vertical?: string | null;
+  category?: string | null;
+  copy?: BookingExperienceCopy;
 }) {
+  const exp = copyProp ?? bookingExperienceCopy(vertical, category);
+  const wellnessSkin = resolveVerticalKey(vertical, category) === "wellness";
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [media, setMedia] = useState<MediaRow[]>([]);
 
@@ -44,21 +54,26 @@ export function BookingContinuityPanel({
   if (!show) return null;
 
   return (
-    <Card className="border-primary/20" data-testid="booking-continuity-panel">
+    <Card
+      className={cn("border-primary/20", wellnessSkin && "wellness-list-shell border-0 shadow-sm")}
+      data-testid="booking-continuity-panel"
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-primary" />
-          Booking continuity
+          {exp.continuityPanelTitle}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {pendingReason ? (
-          <p className="text-muted-foreground">{pendingReasonLabel(pendingReason)}</p>
+          <p className="text-muted-foreground">
+            {pendingReasonLabel(pendingReason, vertical, category)}
+          </p>
         ) : null}
         {continuityConversationId ? (
           <Button size="sm" variant="outline" asChild>
             <Link href={`/inbox?conversation=${continuityConversationId}`}>
-              Open thread
+              {exp.continuityOpenThread}
             </Link>
           </Button>
         ) : null}

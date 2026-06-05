@@ -120,6 +120,41 @@ export const LIV_TOOL_MATRIX: LivToolMatrixRow[] = [
     profiles: [],
     surfaceIds: ["public.deposit-pay"],
   },
+  {
+    toolId: "wellness_propose_room",
+    label: "Propose room for booking",
+    status: "live",
+    profiles: ["tenant_staff"],
+    surfaceIds: ["tenant.bookings"],
+  },
+  {
+    toolId: "wellness_propose_package_book",
+    label: "Book using package credits",
+    status: "partial",
+    profiles: ["tenant_staff"],
+    surfaceIds: ["tenant.bookings"],
+  },
+  {
+    toolId: "wellness_eod_close",
+    label: "End-of-day close narrative",
+    status: "live",
+    profiles: ["tenant_staff"],
+    surfaceIds: ["tenant.owner.dashboard", "tenant.wellness.reports"],
+  },
+  {
+    toolId: "wellness_duty_solver",
+    label: "Find free therapist in room",
+    status: "live",
+    profiles: ["tenant_staff"],
+    surfaceIds: ["tenant.wellness.reception"],
+  },
+  {
+    toolId: "wellness_reroom",
+    label: "Propose rerooming after cancel",
+    status: "live",
+    profiles: ["tenant_staff"],
+    surfaceIds: ["tenant.bookings"],
+  },
 ];
 
 export function listLivToolMatrixRows(): LivToolMatrixRow[] {

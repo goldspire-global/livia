@@ -265,9 +265,9 @@ Preset ids and labels are canonical in `lib/policy/src/presentation-presets.ts`.
 | Id | Label | Best for |
 |----|-------|----------|
 | `platform-default` | Platform Default | Aurora Livia |
-| `wellness-spa-calm` *(vertical default)* | Spa Calm | Serif, teal, generous spacing |
-| `wellness-zen-light` | Zen Light | Near-white, minimal borders |
-| `wellness-retreat-dark` | Retreat Dark | Evening spa, dark default |
+| `wellness-harbour-light` *(vertical default)* | Harbour Light | Atrium top nav · room swimlanes · concierge inbox · 2×2 `/b` grid |
+| `wellness-session-rail` | Session Rail | Icon rail · practitioner timeline · channel-stripe inbox · slot grid `/b` |
+| `wellness-evening-ledger` | Evening Ledger | Segmented nav · voucher ledger · guest panels · ritual wizard `/b` |
 
 **Persona ritual homes**
 
@@ -751,7 +751,7 @@ Every vertical includes **`platform-default`** (Platform Default / Aurora) plus 
 | hair | ✓ Aurora | Warm Chair | Clean Salon | Barber Bold |
 | beauty | ✓ Aurora | Noir Dusk | Soft Studio | Editorial | Premium Dark |
 | body-art | ✓ Aurora | Studio Dark | Flash Light | Minimal Mono |
-| wellness | ✓ Aurora | Spa Calm | Zen Light | Retreat Dark |
+| wellness | ✓ locked | harbour-light | session-rail | evening-ledger |
 | fitness | ✓ Aurora | Gym Bold | Studio Clean | Coach Compact |
 | medspa | ✓ Aurora | Clinical Calm | Luxury Serif | Minimal Consent |
 | allied-health | ✓ Aurora | Clinic Standard | Practice Warm | Compact Desk |

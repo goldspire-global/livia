@@ -13,7 +13,7 @@ assert.equal(entries[1].vertical, "wellness", "next wedge stacks beside beauty")
 const unlocked = entries.filter((e) => e.unlocked);
 assert.equal(unlocked.length, MARKETING_DEMO_WEDGE_UNLOCK_ORDER.length);
 assert.ok(isMarketingDemoWedgeUnlocked("beauty"));
-assert.ok(!isMarketingDemoWedgeUnlocked("wellness"));
+assert.ok(isMarketingDemoWedgeUnlocked("wellness"));
 assert.ok(!isMarketingDemoWedgeUnlocked("medspa"));
 
 console.log("marketing-demo-concierge.test.ts: ok");

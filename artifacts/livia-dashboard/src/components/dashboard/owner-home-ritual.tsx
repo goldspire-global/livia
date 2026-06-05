@@ -14,9 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { usePersonaBriefing } from "@/hooks/use-persona-briefing";
 import { timeGreeting } from "@/lib/persona-rituals";
-import { useListConversations } from "@workspace/api-client-react";
+import { useListConversations, useUpdateBooking, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "@/lib/business-context";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
+import { useCallback, useState } from "react";
 import { InboxPreviewPanel } from "@/components/dashboard/inbox-preview-panel";
 import { OwnerLivGuardrails } from "@/components/dashboard/owner-liv-guardrails";
 import { VerticalHomeModules } from "@/components/dashboard/vertical-home-modules";
@@ -26,7 +28,10 @@ import {
   resolveOwnerHomeModuleLayout,
 } from "@workspace/policy";
 import { cn } from "@/lib/utils";
-import { useBeautyChrome } from "@/lib/presentation-layout";
+import { beautyNativeMorphForVertical, useBeautyChrome } from "@/lib/presentation-layout";
+import { resolvePresentationLayoutMorph } from "@workspace/policy";
+import { BeautyMorphTodayHome } from "@/components/beauty/beauty-morph-today";
+import { WellnessMorphTodayHome } from "@/components/wellness/wellness-morph-today";
 import { resolvePublicServiceImageUrl } from "@/lib/public-service-image";
 import {
   PENDING_BOOKINGS_LIST_HREF,
@@ -38,8 +43,12 @@ import {
   PendingBookingActions,
   type PendingBookingActionBooking,
 } from "@/components/booking/pending-booking-actions";
+import { PendingWhyLine } from "@/components/booking/pending-why-line";
 
-type PendingBooking = PendingBookingActionBooking & { status: string };
+type PendingBooking = PendingBookingActionBooking & {
+  status: string;
+  pendingReason?: string | null;
+};
 
 function ownerGreeting(firstName: string | null | undefined): string {
   const t = timeGreeting();
@@ -190,6 +199,7 @@ function BeautyPendingHero({
           <p className="text-sm text-muted-foreground">
             {formatTime(booking.startAt)} · {booking.service.name}
           </p>
+          <PendingWhyLine reason={booking.pendingReason} vertical={vertical} className="pt-0.5" />
           <div className="flex flex-wrap gap-1.5">
             {tags.map((t) => (
               <span key={t} className="beauty-tag-pill">
@@ -218,6 +228,8 @@ function PendingPanel({
   updatePending,
   onConfirmBooking,
   onDeclineBooking,
+  vertical,
+  category,
   compact,
 }: {
   pendingBookings: PendingBooking[];
@@ -227,6 +239,8 @@ function PendingPanel({
   updatePending: boolean;
   onConfirmBooking: (id: string) => void;
   onDeclineBooking: (id: string) => void;
+  vertical?: string | null;
+  category?: string | null;
   compact?: boolean;
 }) {
   return (
@@ -262,6 +276,12 @@ function PendingPanel({
                 <p className="text-xs text-muted-foreground font-mono truncate">
                   {formatTime(b.startAt)} · {b.service.name}
                 </p>
+                <PendingWhyLine
+                  reason={b.pendingReason}
+                  vertical={vertical}
+                  category={category}
+                  className="mt-1"
+                />
               </Link>
               <PendingBookingActions
                 booking={b}
@@ -306,6 +326,19 @@ export function OwnerHomeRitual({
     weekBookings?: number;
     totalCustomers?: number;
     upcomingBookings?: PendingBooking[];
+    bookingResources?: Array<{
+      id: string;
+      name: string;
+      resourceType: string;
+      capacity: number;
+    }>;
+    packageCreditSummary?: {
+      ledgerCount: number;
+      activePackages: number;
+      creditsSold: number;
+      creditsRedeemed: number;
+      creditsRemaining: number;
+    };
   } | null;
   isLoadingSummary: boolean;
   pendingBookings: PendingBooking[];
@@ -318,6 +351,9 @@ export function OwnerHomeRitual({
 }) {
   const { business } = useBusiness();
   const bid = business?.id ?? "";
+  const queryClient = useQueryClient();
+  const [assigningBookingId, setAssigningBookingId] = useState<string | null>(null);
+  const updateBooking = useUpdateBooking();
   const { data: tenantXp } = useTenantExperience(bid || undefined);
   const tenantVertical =
     (tenantXp as { vertical?: string } | undefined)?.vertical ?? business?.category ?? null;
@@ -379,6 +415,17 @@ export function OwnerHomeRitual({
   const oneThingHref = briefingCta.href;
   const oneThingLabel = briefingCta.label;
   const beauty = useBeautyChrome(tenantVertical);
+  const beautyMorph =
+    tenantVertical === "beauty" && tenantXp?.presentation
+      ? resolvePresentationLayoutMorph("beauty", tenantXp.presentation.presetId)
+      : null;
+  const beautyNativeMorph = beautyNativeMorphForVertical(tenantVertical, beautyMorph);
+  const wellnessMorph =
+    tenantVertical === "wellness" && tenantXp?.presentation
+      ? resolvePresentationLayoutMorph("wellness", tenantXp.presentation.presetId)
+      : null;
+  const wellnessNativeMorph =
+    wellnessMorph && wellnessMorph !== "constellation" ? wellnessMorph : null;
   const vocab = verticalPackUi(tenantVertical, business?.category);
   const bookingSlices = resolveOwnerHomeBookingSlices(summary?.upcomingBookings, now);
   const heroPending = bookingSlices.pendingToday[0] ?? pendingBookings[0] ?? null;
@@ -387,6 +434,88 @@ export function OwnerHomeRitual({
 
   const briefingNeedsAttention =
     briefingLoading || pendingCount > 0 || handoffCount > 0 || livPulse === "act";
+
+  const morphBookings = [...bookingSlices.pendingToday, ...bookingSlices.confirmedToday];
+
+  const onAssignBookingToResource = useCallback(
+    async (bookingId: string, resourceId: string | null) => {
+      if (!bid) return false;
+      setAssigningBookingId(bookingId);
+      try {
+        await updateBooking.mutateAsync({
+          businessId: bid,
+          bookingId,
+          data: { resourceId },
+        });
+        await queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey(bid) });
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setAssigningBookingId(null);
+      }
+    },
+    [bid, updateBooking, queryClient],
+  );
+
+  if (beautyNativeMorph) {
+    return (
+      <BeautyMorphTodayHome
+        morph={beautyNativeMorph}
+        firstName={firstName}
+        headerDate={formatHeaderDate(now)}
+        livLine={livLine}
+        oneThingHref={oneThingHref}
+        oneThingLabel={oneThingLabel}
+        pendingCount={pendingCount}
+        handoffCount={handoffCount}
+        bookings={morphBookings}
+        businessName={business?.name ?? undefined}
+        todayTotal={todayTotal}
+        completedToday={summary?.completedTodayCount ?? 0}
+        vertical={tenantVertical}
+        previewThreads={previewThreads.map((t) => ({
+          ...t,
+          updatedAt: t.updatedAt ?? undefined,
+        }))}
+        convosLoading={convosLoading}
+        bookingResources={summary?.bookingResources}
+        onAssignBookingToResource={
+          summary?.bookingResources?.length ? onAssignBookingToResource : undefined
+        }
+        assigningBookingId={assigningBookingId}
+      />
+    );
+  }
+
+  if (wellnessNativeMorph) {
+    const ann = tenantXp?.announcement;
+    return (
+      <WellnessMorphTodayHome
+        morph={wellnessNativeMorph}
+        firstName={firstName}
+        headerDate={formatHeaderDate(now)}
+        livLine={livLine}
+        oneThingHref={oneThingHref}
+        oneThingLabel={oneThingLabel}
+        pendingCount={pendingCount}
+        handoffCount={handoffCount}
+        bookings={morphBookings}
+        businessName={business?.name ?? undefined}
+        roomBoardFootnote={ann?.roomBoard?.footnote}
+        bookingResources={summary?.bookingResources}
+        onAssignBookingToResource={onAssignBookingToResource}
+        assigningBookingId={assigningBookingId}
+        packageCreditSummary={summary?.packageCreditSummary ?? null}
+        tomorrowStress={
+          (summary as { wellnessTomorrowStress?: { score: number; pendingBookings: number; roomConflicts: number } | null })
+            ?.wellnessTomorrowStress ?? null
+        }
+        vertical={tenantVertical}
+        category={(business as { category?: string } | null)?.category}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-5xl" data-testid="owner-home-ritual">
@@ -535,18 +664,20 @@ export function OwnerHomeRitual({
       ) : null}
 
       <TodayAppointmentsStrip
-        pendingToday={bookingSlices.pendingToday}
-        confirmedToday={bookingSlices.confirmedToday}
-        formatTime={formatTime}
-        loading={isLoadingSummary}
-        scheduleTitle={vocab.ownerTodayScheduleTitle}
-        calendarCta={vocab.ownerTodayScheduleCalendarCta}
-        runningLateLabel={vocab.runningLateLabel}
-        updatePending={updatePending}
-        onConfirmBooking={onConfirmBooking}
-        onDeclineBooking={onDeclineBooking}
-        skipPendingId={beauty && heroPending ? heroPending.id : null}
-      />
+          pendingToday={bookingSlices.pendingToday}
+          confirmedToday={bookingSlices.confirmedToday}
+          formatTime={formatTime}
+          loading={isLoadingSummary}
+          scheduleTitle={vocab.ownerTodayScheduleTitle}
+          calendarCta={vocab.ownerTodayScheduleCalendarCta}
+          runningLateLabel={vocab.runningLateLabel}
+          updatePending={updatePending}
+          onConfirmBooking={onConfirmBooking}
+          onDeclineBooking={onDeclineBooking}
+          vertical={tenantVertical}
+          category={(business as { category?: string } | null)?.category}
+          skipPendingId={beauty && heroPending ? heroPending.id : null}
+        />
 
       {moduleLayout.mode === "all_clear" ? (
         <div
@@ -576,6 +707,8 @@ export function OwnerHomeRitual({
             updatePending={updatePending}
             onConfirmBooking={onConfirmBooking}
             onDeclineBooking={onDeclineBooking}
+            vertical={tenantVertical}
+            category={(business as { category?: string } | null)?.category}
           />
         )
       ) : (
@@ -605,6 +738,8 @@ export function OwnerHomeRitual({
               updatePending={updatePending}
               onConfirmBooking={onConfirmBooking}
               onDeclineBooking={onDeclineBooking}
+              vertical={tenantVertical}
+              category={(business as { category?: string } | null)?.category}
               compact
             />
           )}

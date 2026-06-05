@@ -1,6 +1,6 @@
 # Vertical playbook — Beauty (V2)
 
-**Status:** L2+L3 (2026-05-31) · **program (L0–L8):** [`BEAUTY-VERTICAL-PROGRAM.md`](../BEAUTY-VERTICAL-PROGRAM.md)  
+**Status:** L2+L3 (2026-05-31) · **program (L0–L8):** [`BEAUTY-VERTICAL-PROGRAM.md`](../BEAUTY-VERTICAL-PROGRAM.md) · **excellence:** [`vertical-excellence/beauty.md`](../vertical-excellence/beauty.md) · **inspiration:** [`BEAUTY-VERTICAL-INSPIRATION.md`](../BEAUTY-VERTICAL-INSPIRATION.md)  
 **Registry:** `VERTICAL_COVERAGE_REGISTRY` V2 · demo `bloom-beauty-dublin`  
 **Category:** People-business — lash cycles, patch tests, retail attach
 

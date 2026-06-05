@@ -24,6 +24,13 @@ import {
   LazyCustomerDetailPage,
   LazyCustomersPage,
   LazyDayPackagesPage,
+  LazyWellnessReportsPage,
+  LazyWellnessReceptionPage,
+  LazyWellnessChainPage,
+  LazyWellnessTvPage,
+  LazyWellnessAuditDiaryPage,
+  LazyWellnessGuestVaultPage,
+  LazyWellnessRetailPage,
   LazyDesignProofsPage,
   LazyDemoShowcase,
   LazyExperiencePage,
@@ -62,6 +69,7 @@ import PublicIntakePage from "@/pages/public-intake";
 import PublicWaitlistPage from "@/pages/public-waitlist";
 import PublicPayPage from "@/pages/public-pay";
 import MyLiviaPage from "@/pages/my-livia";
+import WellnessCorporatePage from "@/pages/wellness-corporate";
 import PublicPremisesPage from "@/pages/public-premises";
 import DemoLauncher from "@/pages/demo/Launcher";
 import DemoWedgeStoryPage from "@/pages/demo/WedgeStory";
@@ -150,6 +158,31 @@ function AuthenticatedRoutes() {
               </WedgeRouteGuard>
             )}
           </Route>
+          <Route path="/wellness-reports">
+            {() => <LazyRoute page={LazyWellnessReportsPage} />}
+          </Route>
+          <Route path="/wellness-reception">
+            {() => <LazyRoute page={LazyWellnessReceptionPage} />}
+          </Route>
+          <Route path="/wellness-chain">
+            {() => <LazyRoute page={LazyWellnessChainPage} />}
+          </Route>
+          <Route path="/wellness-tv">
+            {() => <LazyRoute page={LazyWellnessTvPage} />}
+          </Route>
+          <Route path="/wellness-audit-diary">
+            {() => <LazyRoute page={LazyWellnessAuditDiaryPage} />}
+          </Route>
+          <Route path="/wellness-guest-vault">
+            {() => <LazyRoute page={LazyWellnessGuestVaultPage} />}
+          </Route>
+          <Route path="/wellness-retail">
+            {() => <LazyRoute page={LazyWellnessRetailPage} />}
+          </Route>
+          <Route path="/wellness-corporate">
+            {() => <Redirect to="/corporate-wellness" />}
+          </Route>
+          <Route path="/corporate-wellness" component={WellnessCorporatePage} />
           <Route path="/host">
             {() => (
               <WedgeRouteGuard path="/host">

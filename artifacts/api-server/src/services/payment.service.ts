@@ -304,6 +304,8 @@ export async function upsertPaymentFromStripeIntent(
         updatedAt: new Date(),
       })
       .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)));
+    const { confirmBookingAfterStripePayment } = await import("./wellness-ops.service");
+    void confirmBookingAfterStripePayment(businessId, bookingId).catch(() => undefined);
   }
 
   await logEvent({

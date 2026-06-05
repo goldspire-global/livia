@@ -19,6 +19,8 @@
 
 **Rule:** Change policy/registry → update program doc + spokes → `pnpm vertical:doc-check`.
 
+**Excellence (what “complete” means):** [`vertical-excellence/README.md`](./vertical-excellence/README.md) — market research + honest gap audit + P0–P3 per vertical (wellness excluded from 2026-06-03 pass).
+
 ---
 
 ## Code verticals (ship in product today)
@@ -27,7 +29,7 @@
 |-----|----------|------|-----------|---------|--------------|-----------|
 | V1 | Hair & barbering | heartland | `luxe-salon-spa` | [HAIR](./HAIR-VERTICAL-PROGRAM.md) | Colour-day flight plan; deposit-backed calendar; chair-rental privacy | Book favourite stylist at 11pm; one-tap reschedule; visit page with name + time |
 | V2 | Beauty & nails | heartland | `bloom-beauty-dublin` | [BEAUTY](./BEAUTY-VERTICAL-PROGRAM.md) | Inbox-first lash/DM triage; patch-test discipline without spreadsheets | Studio-branded `/b`; fill-cycle reminders; no account wall |
-| V3 | Wellness & spa | beta-full | `harbour-wellness-cork` | [WELLNESS](./WELLNESS-VERTICAL-PROGRAM.md) | Room utilisation + voucher liability in one calm home | Gift-ready packages; quiet booking; visit prep for couples rooms |
+| V3 | Wellness & spa | beta-full | `harbour-wellness-cork` | [WELLNESS](./WELLNESS-VERTICAL-PROGRAM.md) · [North star](./WELLNESS-NORTHSTAR-PROGRAM.md) · [Backlog](./WELLNESS-MASTER-BACKLOG.md) | **Live room board** + package ledger | Waves 1–7: gift/wallet, reports, brokers, desk, Liv ops — see `WB-###` |
 | V4 | Body art | beta-full | `ink-anchor-galway` | [BODY-ART](./BODY-ART-VERTICAL-PROGRAM.md) | Proof approve desk; deposit binds slot; consult→session pipeline | Approve design on phone; pay deposit once; healing SMS link |
 | V5 | Fitness | beta-full | `peak-fitness-dublin` | [FITNESS](./FITNESS-VERTICAL-PROGRAM.md) | Class fill + waitlist auto-notify; PT block utilisation | Join waitlist in two taps; clear class vs PT path |
 | V6 | Medspa | beta-full | `clarity-medspa-dublin` | [MEDSPA](./MEDSPA-VERTICAL-PROGRAM.md) | Consent queue before clinical time; mandate hub | Consent on book; deposit; calm clinic brand |
@@ -66,3 +68,4 @@ See [`PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./PEOPLE-BUSINESS-CATEGORY-MANIFES
 | Date | Change |
 |------|--------|
 | 2026-06-01 | Full vertical program set + build plan |
+| 2026-06-03 | Vertical excellence specs (all code verticals except wellness) |

@@ -35,6 +35,12 @@ export const LIV_TOOL_MORNING_BRIEFING = "morning_briefing";
 export const LIV_TOOL_SEARCH_TENANTS = "search_tenants";
 export const LIV_TOOL_TENANT_SNAPSHOT = "tenant_snapshot";
 
+export const LIV_TOOL_WELLNESS_PROPOSE_ROOM = "wellness_propose_room";
+export const LIV_TOOL_WELLNESS_PACKAGE_BOOK = "wellness_propose_package_book";
+export const LIV_TOOL_WELLNESS_EOD_CLOSE = "wellness_eod_close";
+export const LIV_TOOL_WELLNESS_DUTY_SOLVER = "wellness_duty_solver";
+export const LIV_TOOL_WELLNESS_REROOM = "wellness_reroom";
+
 const CATALOG: RegisteredLivTool[] = [
   {
     id: LIV_TOOL_FIND_SLOTS,
@@ -252,6 +258,68 @@ const CATALOG: RegisteredLivTool[] = [
       required: ["businessId"],
     },
   },
+  {
+    id: LIV_TOOL_WELLNESS_PROPOSE_ROOM,
+    name: LIV_TOOL_WELLNESS_PROPOSE_ROOM,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    description: "Propose an open room for a booking respecting turnover buffer.",
+    input_schema: {
+      type: "object",
+      properties: {
+        bookingId: { type: "string" },
+        resourceId: { type: "string", description: "Optional target room id." },
+      },
+      required: ["bookingId"],
+    },
+  },
+  {
+    id: LIV_TOOL_WELLNESS_PACKAGE_BOOK,
+    name: LIV_TOOL_WELLNESS_PACKAGE_BOOK,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    description: "Book a session using the guest's active package credits.",
+    input_schema: {
+      type: "object",
+      properties: {
+        customerId: { type: "string" },
+        serviceId: { type: "string" },
+        startAt: { type: "string" },
+      },
+      required: ["customerId", "serviceId", "startAt"],
+    },
+  },
+  {
+    id: LIV_TOOL_WELLNESS_EOD_CLOSE,
+    name: LIV_TOOL_WELLNESS_EOD_CLOSE,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    description: "End-of-day close narrative: today's completions, pending, tomorrow load.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_WELLNESS_DUTY_SOLVER,
+    name: LIV_TOOL_WELLNESS_DUTY_SOLVER,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    description: "Find therapists free in a named room at a given hour.",
+    input_schema: {
+      type: "object",
+      properties: {
+        resourceName: { type: "string" },
+        hour: { type: "number", description: "Hour 0-23 in business timezone." },
+      },
+      required: ["resourceName", "hour"],
+    },
+  },
+  {
+    id: LIV_TOOL_WELLNESS_REROOM,
+    name: LIV_TOOL_WELLNESS_REROOM,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    description: "Propose rerooming after a cancellation with turnover-aware open lanes.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
 ];
 
 export type ResolveLivToolsInput = {
@@ -267,11 +335,13 @@ export function listRegisteredTools(): RegisteredLivTool[] {
 
 export function resolveLivTools(input: ResolveLivToolsInput): LivToolDefinition[] {
   const entitlements = new Set(input.entitlements ?? []);
+  const extraIds = new Set(input.extraToolIds ?? []);
 
   return CATALOG.filter((t) => {
     if (!t.profiles.includes(input.profile)) return false;
     if (t.requiresDirectBooking && !input.canBookDirectly) return false;
     if (t.entitlements?.length && !t.entitlements.every((e) => entitlements.has(e))) return false;
+    if (t.id.startsWith("wellness_") && !extraIds.has(t.id)) return false;
     return true;
   }).map(({ name, description, input_schema }) => ({
     name,

@@ -13,6 +13,9 @@ import { PresentationThemeProvider } from "@/contexts/PresentationThemeContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { usePersona, type PersonaKind } from "@/hooks/usePersona";
+import { useBusiness } from "@/contexts/BusinessContext";
+import { useTenantExperience } from "@/hooks/useTenantExperience";
+import { verticalOperationalCopy } from "@workspace/policy";
 
 type TabKey =
   | "index"
@@ -77,6 +80,15 @@ function TabLayoutInner() {
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
   const { kind, isLoading } = usePersona();
+  const { currentBusiness } = useBusiness();
+  const { data: tenantXp } = useTenantExperience(currentBusiness?.id);
+  const wellnessOp =
+    tenantXp?.vertical === "wellness"
+      ? verticalOperationalCopy(
+          (currentBusiness as { vertical?: string } | undefined)?.vertical,
+          currentBusiness?.category,
+        )
+      : null;
 
   const visible = useMemo(
     () => new Set<TabKey>(isLoading ? DEFAULT_VISIBLE : TAB_VISIBILITY[kind]),
@@ -135,7 +147,11 @@ function TabLayoutInner() {
       }}
     >
       {ALL_TABS.map((t) => {
-        const ritualTitle = TAB_RITUAL_TITLE[kind]?.[t.name] ?? t.title;
+        let ritualTitle = TAB_RITUAL_TITLE[kind]?.[t.name] ?? t.title;
+        if (wellnessOp) {
+          if (t.name === "bookings") ritualTitle = wellnessOp.bookingsPageTitle;
+          if (t.name === "customers") ritualTitle = "Guests";
+        }
         return (
         <Tabs.Screen
           key={t.name}

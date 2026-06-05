@@ -14,11 +14,16 @@ import { applyTenantPresentationSurface, resolvePresentationColorMode } from "@/
 import { accentMeetsWcagAa } from "@/lib/brand-contrast";
 import { cn } from "@/lib/utils";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
+import { resolvePresentationLayoutMorph, type BusinessVertical } from "@workspace/policy";
 import {
   BEAUTY_PRESET_SWATCH,
+  WELLNESS_PRESET_SWATCH,
   type BeautyCssPreset,
+  type WellnessCssPreset,
   isBeautyVertical,
+  isWellnessVertical,
 } from "@/lib/presentation-layout";
+import { layoutMorphLabel } from "@/lib/presentation-surface";
 import { appearancePreviewDashboardPath } from "@/lib/appearance-preview-mode";
 
 type PresentationPreset = {
@@ -191,6 +196,7 @@ export function PublicAppearancePanel({
   );
 
   const beautyAppearance = isBeautyVertical(tenantVertical);
+  const wellnessAppearance = isWellnessVertical(tenantVertical);
 
   const draftPresetMeta = data?.availablePresets.find((p) => p.id === draftPresetId);
 
@@ -427,7 +433,15 @@ export function PublicAppearancePanel({
               <Label>Preset</Label>
               <div className="grid gap-2 grid-cols-2 xl:grid-cols-4">
                 {data.availablePresets.map((p) => {
-                  const swatch = BEAUTY_PRESET_SWATCH[p.cssPreset as BeautyCssPreset];
+                  const swatch = beautyAppearance
+                    ? BEAUTY_PRESET_SWATCH[p.cssPreset as BeautyCssPreset]
+                    : wellnessAppearance
+                      ? WELLNESS_PRESET_SWATCH[p.cssPreset as WellnessCssPreset]
+                      : undefined;
+                  const morph =
+                    tenantVertical && isWellnessVertical(tenantVertical)
+                      ? resolvePresentationLayoutMorph(tenantVertical as BusinessVertical, p.id)
+                      : null;
                   return (
                   <button
                     key={p.id}
@@ -443,9 +457,12 @@ export function PublicAppearancePanel({
                         : "border-border hover:border-primary/40",
                     )}
                   >
-                    {beautyAppearance && swatch ? (
+                    {swatch ? (
                       <div
-                        className="beauty-preset-swatch"
+                        className={cn(
+                          beautyAppearance && "beauty-preset-swatch",
+                          wellnessAppearance && "wellness-preset-swatch h-8 rounded-md mb-2",
+                        )}
                         style={{
                           background: `linear-gradient(135deg, hsl(${swatch.a}) 0%, hsl(${swatch.b}) 100%)`,
                         }}
@@ -453,6 +470,11 @@ export function PublicAppearancePanel({
                       />
                     ) : null}
                     <p className="text-sm font-medium">{p.label}</p>
+                    {morph ? (
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary mt-1">
+                        {layoutMorphLabel(morph)}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   </button>
                 );

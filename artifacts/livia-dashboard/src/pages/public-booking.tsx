@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import {
   applyExperienceTheme,
@@ -6,7 +6,6 @@ import {
   clearExperienceTheme,
   clearPresentationTheme,
   publicExperienceClassNames,
-  marketRibbon,
   resolvePresentationColorMode,
 } from "@/lib/experience-theme";
 import { applyAppearancePreviewFromSearch } from "@/lib/appearance-preview-mode";
@@ -71,7 +70,11 @@ import {
   beautyPublicHeroTitle,
   isBeautyPresentationPreset,
   isBeautyVertical,
+  isWellnessPresentationPreset,
+  isWellnessVertical,
   resolveBeautyPublicCatalogLayout,
+  wellnessPublicHeroTagline,
+  wellnessPublicCatalogLayout,
 } from "@/lib/presentation-layout";
 import {
   guardSectionTitle,
@@ -82,7 +85,8 @@ import {
   type PublicServiceRow,
 } from "@/lib/public-booking-helpers";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { businessVocabulary } from "@workspace/policy";
+import { businessVocabulary, guestPublicExperience, isWellnessGiftPublicBookEnabled, resolveWellnessExperience } from "@workspace/policy";
+import { PublicWellnessGiftPanel } from "@/components/public/public-wellness-gift-panel";
 import { cn } from "@/lib/utils";
 
 type Step = "services" | "slots" | "details" | "consent" | "confirmed";
@@ -376,12 +380,21 @@ export default function PublicBookingPage() {
   const layout = publicBookingLayout(b?.vertical);
   const heroCta = verticalHeroCta(b?.vertical, b?.publicCta);
   const staffForward = layout === "staff-forward";
-  const beautyCssPreset = b?.experienceSkin?.presentation ?? null;
+  const presentationPreset = b?.experienceSkin?.presentation ?? null;
+  const beautyCssPreset = presentationPreset;
   const beautyPublic =
     isBeautyVertical(b?.vertical) && isBeautyPresentationPreset(beautyCssPreset);
+  const wellnessPublic =
+    isWellnessVertical(b?.vertical) && isWellnessPresentationPreset(presentationPreset);
+  const wellnessExperience = wellnessPublic
+    ? resolveWellnessExperience(presentationPreset)
+    : null;
+  const guestPublic = guestPublicExperience(b?.vertical, b?.category);
   const beautyCatalogLayout = beautyPublic
     ? resolveBeautyPublicCatalogLayout(beautyCssPreset)
-    : "list";
+    : wellnessPublic
+      ? wellnessPublicCatalogLayout(presentationPreset)
+      : "list";
 
   const requestChatOpen = () => setChatOpenRequest((n) => n + 1);
 
@@ -538,6 +551,7 @@ export default function PublicBookingPage() {
             step === "services" &&
             beautyCssPreset === "editorial" &&
             "beauty-public-shell--editorial",
+          wellnessPublic && step === "services" && "wellness-public-shell",
         )}
       >
         {step === "services" ? (
@@ -551,8 +565,20 @@ export default function PublicBookingPage() {
               heroCta={heroCta}
               layout={beautyPublic ? "beauty" : "default"}
               tagline={b.description}
-              heroTagline={beautyPublic ? beautyPublicHeroTagline(beautyCssPreset) : undefined}
-              heroTitle={beautyPublic ? beautyPublicHeroTitle(vocab.serviceNoun) : undefined}
+              heroTagline={
+                beautyPublic
+                  ? beautyPublicHeroTagline(beautyCssPreset)
+                  : wellnessPublic
+                    ? wellnessPublicHeroTagline(presentationPreset)
+                    : undefined
+              }
+              heroTitle={
+                beautyPublic
+                  ? beautyPublicHeroTitle(vocab.serviceNoun)
+                  : wellnessPublic
+                    ? guestPublic.heroTitle
+                    : undefined
+              }
               onHeroCta={() =>
                 document.getElementById("public-service-menu")?.scrollIntoView({ behavior: "smooth" })
               }
@@ -560,7 +586,7 @@ export default function PublicBookingPage() {
               showMessage={aiOn && !beautyPublic}
             />
             <div ref={heroSentinelRef} className="h-px w-full" aria-hidden />
-            {!beautyPublic ? (
+            {!beautyPublic && !wellnessPublic ? (
               <div className="mt-4 mb-5">
                 <PublicBookingStepper
                   step={step as PublicRitualStep}
@@ -593,19 +619,6 @@ export default function PublicBookingPage() {
               depositPolicySummary={b.depositPolicySummary}
               policyTrust={b.policyTrust}
             />
-            {(b.countryPack?.countryShowcaseNote ||
-              (b.countryPack?.upcomingHolidays && b.countryPack.upcomingHolidays.length > 0)) && (
-              <p className="text-[10px] text-muted-foreground/70 mb-4 -mt-1">
-                {[
-                  b.countryPack?.countryShowcaseNote,
-                  b.countryPack?.upcomingHolidays?.[0]
-                    ? `Closed ${b.countryPack.upcomingHolidays[0].name} (${b.countryPack.upcomingHolidays[0].date})`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            )}
           </>
         ) : null}
 
@@ -626,11 +639,6 @@ export default function PublicBookingPage() {
                 teamNoun={vocab.teamNoun}
               />
             ) : null}
-            {!beautyPublic && marketRibbon(b.country, b.experienceSkin) ? (
-              <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/80 -mt-1">
-                {marketRibbon(b.country, b.experienceSkin)}
-              </p>
-            ) : null}
             <PublicServiceCatalog
               services={b.services}
               vertical={b.vertical}
@@ -640,6 +648,11 @@ export default function PublicBookingPage() {
               selectedServiceId={beautyPublic ? selectedService?.id : undefined}
               onSelect={selectPublicService}
             />
+            {wellnessPublic && isWellnessGiftPublicBookEnabled(b.vertical, b.category) ? (
+              <div className="mt-6">
+                <PublicWellnessGiftPanel slug={sl} />
+              </div>
+            ) : null}
             {beautyPublic ? (
               <>
                 <PublicBookBeautyDualCta
@@ -666,7 +679,17 @@ export default function PublicBookingPage() {
                 <PublicBookBeautyTrustFooter cancelWindowHours={b.policyTrust?.cancelWindowHours} />
               </>
             ) : (
-              <PublicCareNotes vertical={b.vertical} />
+              <>
+                {guestPublic.giftComingSoonNote ? (
+                  <p
+                    className="text-xs text-muted-foreground rounded-lg border border-dashed px-3 py-2 mb-3"
+                    data-testid="public-wellness-gift-soon"
+                  >
+                    {guestPublic.giftComingSoonNote}
+                  </p>
+                ) : null}
+                <PublicCareNotes vertical={b.vertical} category={b.category} />
+              </>
             )}
           </div>
         )}
@@ -689,7 +712,9 @@ export default function PublicBookingPage() {
 
             {b.staff.length > 1 && (
               <div className="space-y-2">
-                <Label htmlFor="public-staff">{vocab.teamNoun} member</Label>
+                <Label htmlFor="public-staff">
+                  {wellnessPublic ? guestPublic.staffSelectLabel : `${vocab.teamNoun} member`}
+                </Label>
                 <Select
                   value={selectedStaff || "any"}
                   onValueChange={(v) => setSelectedStaff(v === "any" ? "" : v)}
@@ -901,7 +926,7 @@ export default function PublicBookingPage() {
                   className="space-y-3 rounded-lg border border-primary/20 p-4 bg-primary/5"
                   data-testid="public-booking-guards"
                 >
-                  <p className="text-sm font-medium">{guardSectionTitle(b.vertical)}</p>
+                  <p className="text-sm font-medium">{guardSectionTitle(b.vertical, b.category)}</p>
                   {b!.bookingGuards!.map((g) => (
                     <div key={g.id} className="space-y-1.5">
                       <Label>
@@ -1109,21 +1134,29 @@ export default function PublicBookingPage() {
         {/* Step: Confirmed */}
         {step === "confirmed" && confirmation && (
           <div
-            className={`text-center space-y-6 animate-in fade-in zoom-in-95 duration-500 rounded-2xl p-2 motion-glow-success ${
-              celebrationEnabled() ? "celebrate-shimmer" : ""
-            }`}
+            className={`text-center space-y-6 animate-in fade-in zoom-in-95 duration-500 rounded-2xl p-2 ${
+              wellnessPublic ? "wellness-success-glow motion-glow-success" : "motion-glow-success"
+            } ${celebrationEnabled() ? "celebrate-shimmer" : ""}`}
+            style={
+              wellnessExperience
+                ? ({ "--wellness-breath-ms": `${wellnessExperience.motion.successGlowMs}ms` } as CSSProperties)
+                : undefined
+            }
           >
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[hsl(var(--chart-3))]/10 mx-auto">
               <CheckCircle2 className="h-10 w-10 text-[hsl(var(--chart-3))]" />
             </div>
             <div>
               <h2 className="text-2xl font-bold" data-testid="text-confirmed">
-                {confirmation.status === "PENDING" ? "Booking received" : "You're booked"}
+                {confirmation.status === "PENDING"
+                  ? guestPublic.confirmPendingTitle
+                  : guestPublic.confirmBookedTitle}
               </h2>
               <p className="text-muted-foreground mt-2">
                 {confirmation.status === "PENDING"
-                  ? pendingReasonLabel(confirmation.pendingReason)
-                  : "Your appointment is confirmed — details below."}
+                  ? pendingReasonLabel(confirmation.pendingReason, b?.vertical, b?.category)
+                  : wellnessExperience?.ritualCopy.arrivalCalm ??
+                    guestPublic.confirmBookedTitle + " — details below."}
               </p>
             </div>
             {confirmation.instagramDeepLink && b?.instagramHandle ? (
@@ -1169,7 +1202,7 @@ export default function PublicBookingPage() {
                   <span className="text-muted-foreground shrink-0">Status</span>
                   <span className="text-right text-sm font-medium">
                     {confirmation.status === "PENDING"
-                      ? pendingReasonLabel(confirmation.pendingReason)
+                      ? pendingReasonLabel(confirmation.pendingReason, b?.vertical, b?.category)
                       : "Confirmed"}
                   </span>
                 </div>
@@ -1289,6 +1322,8 @@ export default function PublicBookingPage() {
           <ChatWidget
             slug={sl}
             businessName={b.name}
+            vertical={b.vertical}
+            category={b.category}
             greeting={b.aiGreeting ?? undefined}
             disclosureFirstMessage={b.aiDisclosureChatFirstMessage}
             disclosureFooterLine={b.aiDisclosureFooterLine}

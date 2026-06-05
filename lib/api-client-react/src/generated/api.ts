@@ -62,6 +62,7 @@ import type {
   GetMyNotificationUnreadCountParams,
   GetPublicSlotsParams,
   GetVoiceStatus200,
+  GetWellnessGuestVaultParams,
   HealthStatus,
   InAppNotificationList,
   InternalSupportContext,
@@ -80,6 +81,7 @@ import type {
   ListStaffParams,
   ListSupportTicketsParams,
   ListTimeOffParams,
+  LookupWellnessRedeemCodeBody,
   MarkAllMyNotificationsRead200,
   MarkAllMyNotificationsReadBody,
   MarkMyNotificationRead200,
@@ -132,6 +134,8 @@ import type {
   UpdateStaffBody,
   User,
   VerifyMarketingDemoGateParams,
+  WellnessDutySolverBody,
+  WellnessTerminalCheckoutBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1883,6 +1887,657 @@ export function useSearchAuditLog<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Wellness reports bundle (room heatmap, packages, stress score)
+ */
+export const getGetWellnessReportsUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/reports`;
+};
+
+export const getWellnessReports = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getGetWellnessReportsUrl(businessId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWellnessReportsQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/wellness/reports`] as const;
+};
+
+export const getGetWellnessReportsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWellnessReports>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessReports>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetWellnessReportsQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWellnessReports>>
+  > = ({ signal }) =>
+    getWellnessReports(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWellnessReports>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWellnessReportsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWellnessReports>>
+>;
+export type GetWellnessReportsQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Wellness reports bundle (room heatmap, packages, stress score)
+ */
+
+export function useGetWellnessReports<
+  TData = Awaited<ReturnType<typeof getWellnessReports>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessReports>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWellnessReportsQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary End-of-day close narrative for wellness operators
+ */
+export const getGetWellnessEodCloseUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/eod-close`;
+};
+
+export const getWellnessEodClose = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getGetWellnessEodCloseUrl(businessId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWellnessEodCloseQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/wellness/eod-close`] as const;
+};
+
+export const getGetWellnessEodCloseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWellnessEodClose>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessEodClose>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetWellnessEodCloseQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWellnessEodClose>>
+  > = ({ signal }) =>
+    getWellnessEodClose(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWellnessEodClose>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWellnessEodCloseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWellnessEodClose>>
+>;
+export type GetWellnessEodCloseQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary End-of-day close narrative for wellness operators
+ */
+
+export function useGetWellnessEodClose<
+  TData = Awaited<ReturnType<typeof getWellnessEodClose>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessEodClose>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWellnessEodCloseQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Wellness audit diary (bookings, Liv memory, audit events)
+ */
+export const getGetWellnessAuditDiaryUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/audit-diary`;
+};
+
+export const getWellnessAuditDiary = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getGetWellnessAuditDiaryUrl(businessId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWellnessAuditDiaryQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/wellness/audit-diary`] as const;
+};
+
+export const getGetWellnessAuditDiaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWellnessAuditDiary>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessAuditDiary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetWellnessAuditDiaryQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWellnessAuditDiary>>
+  > = ({ signal }) =>
+    getWellnessAuditDiary(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWellnessAuditDiary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWellnessAuditDiaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWellnessAuditDiary>>
+>;
+export type GetWellnessAuditDiaryQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Wellness audit diary (bookings, Liv memory, audit events)
+ */
+
+export function useGetWellnessAuditDiary<
+  TData = Awaited<ReturnType<typeof getWellnessAuditDiary>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessAuditDiary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWellnessAuditDiaryQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Guest vault profile by phone
+ */
+export const getGetWellnessGuestVaultUrl = (
+  businessId: string,
+  params: GetWellnessGuestVaultParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/businesses/${businessId}/wellness/guest-vault?${stringifiedParams}`
+    : `/api/businesses/${businessId}/wellness/guest-vault`;
+};
+
+export const getWellnessGuestVault = async (
+  businessId: string,
+  params: GetWellnessGuestVaultParams,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getGetWellnessGuestVaultUrl(businessId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWellnessGuestVaultQueryKey = (
+  businessId: string,
+  params?: GetWellnessGuestVaultParams,
+) => {
+  return [
+    `/api/businesses/${businessId}/wellness/guest-vault`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetWellnessGuestVaultQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWellnessGuestVault>>,
+  TError = ErrorType<BadRequestResponse>,
+>(
+  businessId: string,
+  params: GetWellnessGuestVaultParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessGuestVault>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetWellnessGuestVaultQueryKey(businessId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWellnessGuestVault>>
+  > = ({ signal }) =>
+    getWellnessGuestVault(businessId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWellnessGuestVault>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWellnessGuestVaultQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWellnessGuestVault>>
+>;
+export type GetWellnessGuestVaultQueryError = ErrorType<BadRequestResponse>;
+
+/**
+ * @summary Guest vault profile by phone
+ */
+
+export function useGetWellnessGuestVault<
+  TData = Awaited<ReturnType<typeof getWellnessGuestVault>>,
+  TError = ErrorType<BadRequestResponse>,
+>(
+  businessId: string,
+  params: GetWellnessGuestVaultParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWellnessGuestVault>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWellnessGuestVaultQueryOptions(
+    businessId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Look up gift or package redemption code
+ */
+export const getLookupWellnessRedeemCodeUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/redeem-code`;
+};
+
+export const lookupWellnessRedeemCode = async (
+  businessId: string,
+  lookupWellnessRedeemCodeBody: LookupWellnessRedeemCodeBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getLookupWellnessRedeemCodeUrl(businessId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(lookupWellnessRedeemCodeBody),
+  });
+};
+
+export const getLookupWellnessRedeemCodeMutationOptions = <
+  TError = ErrorType<NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof lookupWellnessRedeemCode>>,
+    TError,
+    { businessId: string; data: BodyType<LookupWellnessRedeemCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof lookupWellnessRedeemCode>>,
+  TError,
+  { businessId: string; data: BodyType<LookupWellnessRedeemCodeBody> },
+  TContext
+> => {
+  const mutationKey = ["lookupWellnessRedeemCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof lookupWellnessRedeemCode>>,
+    { businessId: string; data: BodyType<LookupWellnessRedeemCodeBody> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return lookupWellnessRedeemCode(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LookupWellnessRedeemCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof lookupWellnessRedeemCode>>
+>;
+export type LookupWellnessRedeemCodeMutationBody =
+  BodyType<LookupWellnessRedeemCodeBody>;
+export type LookupWellnessRedeemCodeMutationError = ErrorType<NotFoundResponse>;
+
+/**
+ * @summary Look up gift or package redemption code
+ */
+export const useLookupWellnessRedeemCode = <
+  TError = ErrorType<NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof lookupWellnessRedeemCode>>,
+    TError,
+    { businessId: string; data: BodyType<LookupWellnessRedeemCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof lookupWellnessRedeemCode>>,
+  TError,
+  { businessId: string; data: BodyType<LookupWellnessRedeemCodeBody> },
+  TContext
+> => {
+  return useMutation(getLookupWellnessRedeemCodeMutationOptions(options));
+};
+
+/**
+ * @summary Find free therapists in a room at an hour
+ */
+export const getWellnessDutySolverUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/duty-solver`;
+};
+
+export const wellnessDutySolver = async (
+  businessId: string,
+  wellnessDutySolverBody: WellnessDutySolverBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getWellnessDutySolverUrl(businessId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(wellnessDutySolverBody),
+  });
+};
+
+export const getWellnessDutySolverMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof wellnessDutySolver>>,
+    TError,
+    { businessId: string; data: BodyType<WellnessDutySolverBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof wellnessDutySolver>>,
+  TError,
+  { businessId: string; data: BodyType<WellnessDutySolverBody> },
+  TContext
+> => {
+  const mutationKey = ["wellnessDutySolver"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof wellnessDutySolver>>,
+    { businessId: string; data: BodyType<WellnessDutySolverBody> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return wellnessDutySolver(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type WellnessDutySolverMutationResult = NonNullable<
+  Awaited<ReturnType<typeof wellnessDutySolver>>
+>;
+export type WellnessDutySolverMutationBody = BodyType<WellnessDutySolverBody>;
+export type WellnessDutySolverMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Find free therapists in a room at an hour
+ */
+export const useWellnessDutySolver = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof wellnessDutySolver>>,
+    TError,
+    { businessId: string; data: BodyType<WellnessDutySolverBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof wellnessDutySolver>>,
+  TError,
+  { businessId: string; data: BodyType<WellnessDutySolverBody> },
+  TContext
+> => {
+  return useMutation(getWellnessDutySolverMutationOptions(options));
+};
+
+/**
+ * @summary Stripe Terminal checkout hook for desk payment
+ */
+export const getWellnessTerminalCheckoutUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/wellness/terminal/checkout`;
+};
+
+export const wellnessTerminalCheckout = async (
+  businessId: string,
+  wellnessTerminalCheckoutBody: WellnessTerminalCheckoutBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getWellnessTerminalCheckoutUrl(businessId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(wellnessTerminalCheckoutBody),
+  });
+};
+
+export const getWellnessTerminalCheckoutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof wellnessTerminalCheckout>>,
+    TError,
+    { businessId: string; data: BodyType<WellnessTerminalCheckoutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof wellnessTerminalCheckout>>,
+  TError,
+  { businessId: string; data: BodyType<WellnessTerminalCheckoutBody> },
+  TContext
+> => {
+  const mutationKey = ["wellnessTerminalCheckout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof wellnessTerminalCheckout>>,
+    { businessId: string; data: BodyType<WellnessTerminalCheckoutBody> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return wellnessTerminalCheckout(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type WellnessTerminalCheckoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof wellnessTerminalCheckout>>
+>;
+export type WellnessTerminalCheckoutMutationBody =
+  BodyType<WellnessTerminalCheckoutBody>;
+export type WellnessTerminalCheckoutMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Stripe Terminal checkout hook for desk payment
+ */
+export const useWellnessTerminalCheckout = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof wellnessTerminalCheckout>>,
+    TError,
+    { businessId: string; data: BodyType<WellnessTerminalCheckoutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof wellnessTerminalCheckout>>,
+  TError,
+  { businessId: string; data: BodyType<WellnessTerminalCheckoutBody> },
+  TContext
+> => {
+  return useMutation(getWellnessTerminalCheckoutMutationOptions(options));
+};
 
 /**
  * @summary Get a business by ID

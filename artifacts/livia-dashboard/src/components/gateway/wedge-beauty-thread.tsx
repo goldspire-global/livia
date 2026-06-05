@@ -2,8 +2,9 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import type { WedgeDemoBeat } from "@workspace/policy";
 import { g1TaglineForVertical, g1TitleForVertical } from "@/lib/g1-wedge-worlds";
+import type { BusinessVertical } from "@workspace/policy";
 import {
-  filterBeautyWedgeChapters,
+  filterWedgeChapters,
   resolveWedgeBeatVisual,
   resolveWedgeLivIntro,
   resolveWedgeThreadBridge,
@@ -12,6 +13,7 @@ import { WEDGE_BEAT_CROP_META } from "@/components/gateway/gateway-demo-card-sta
 import { cn } from "@/lib/utils";
 
 type Props = {
+  vertical: BusinessVertical;
   beats: WedgeDemoBeat[];
   tradeLabel: string;
   disabled?: boolean;
@@ -27,17 +29,19 @@ const CHAPTER_LABEL: Record<string, string> = {
 };
 
 function ThreadChapter({
+  vertical,
   beat,
   index,
   isLast,
 }: {
+  vertical: BusinessVertical;
   beat: WedgeDemoBeat;
   index: number;
   isLast: boolean;
 }) {
   const meta = WEDGE_BEAT_CROP_META[beat.cropHint] ?? WEDGE_BEAT_CROP_META.inbox;
-  const visual = resolveWedgeBeatVisual("beauty", beat);
-  const bridge = resolveWedgeThreadBridge("beauty", beat);
+  const visual = resolveWedgeBeatVisual(vertical, beat);
+  const bridge = resolveWedgeThreadBridge(vertical, beat);
   const label = CHAPTER_LABEL[beat.cropHint] ?? meta.label;
 
   return (
@@ -94,6 +98,7 @@ function ThreadChapter({
  * No card boxes; inherits DemoFlowShell nebula only.
  */
 export function WedgeBeautyThread({
+  vertical,
   beats,
   tradeLabel,
   disabled,
@@ -101,10 +106,11 @@ export function WedgeBeautyThread({
   backLabel = "← Worlds",
   onContinue,
 }: Props) {
-  const chapters = filterBeautyWedgeChapters(beats);
-  const g1Title = g1TitleForVertical("beauty");
-  const g1Tagline = g1TaglineForVertical("beauty");
-  const livIntro = resolveWedgeLivIntro("beauty");
+  const chapters = filterWedgeChapters(beats);
+  const g1Title = g1TitleForVertical(vertical);
+  const g1Tagline = g1TaglineForVertical(vertical);
+  const livIntro = resolveWedgeLivIntro(vertical);
+  const arc = vertical === "wellness" ? "From message to room" : "From DM to chair";
 
   return (
     <div className="wedge-thread" data-testid="gateway-demo-beats-grid">
@@ -121,7 +127,7 @@ export function WedgeBeautyThread({
         <h1 className="wedge-thread__title">{g1Title ?? tradeLabel}</h1>
         {g1Tagline ? <p className="wedge-thread__tagline">{g1Tagline}</p> : null}
 
-        <p className="wedge-thread__arc">From DM to chair</p>
+        <p className="wedge-thread__arc">{arc}</p>
 
         <blockquote className="wedge-thread__liv" data-testid="gateway-sign-in-liv-briefing">
           <span className="wedge-thread__liv-mark" aria-hidden>
@@ -135,6 +141,7 @@ export function WedgeBeautyThread({
         {chapters.map((beat, i) => (
           <ThreadChapter
             key={beat.cropHint}
+            vertical={vertical}
             beat={beat}
             index={i}
             isLast={i === chapters.length - 1}

@@ -45,6 +45,9 @@ import { invalidateOperationalState } from "@/lib/operational-cache";
 import { ActivationWelcome } from "@/components/activation/activation-welcome";
 import { shouldShowRunningLateAffordance } from "@workspace/policy";
 import { isAppearanceEmbed } from "@/lib/appearance-preview-mode";
+import { useTenantExperience } from "@/lib/tenant-experience-api";
+import { resolvePresentationLayoutMorph } from "@workspace/policy";
+import { wellnessNativeMorphForVertical } from "@/lib/presentation-layout";
 
 // ------------ helpers ------------
 
@@ -288,6 +291,14 @@ export default function DashboardPage() {
   // empty state instead of a sea of zeros.
   const isOperatorHome = persona === "owner" || persona === "manager";
   const appearanceEmbed = isAppearanceEmbed();
+  const { data: tenantXp } = useTenantExperience(businessId || undefined);
+  const tenantVertical = (business as { vertical?: string } | null)?.vertical;
+  const wellnessMorphShell = wellnessNativeMorphForVertical(
+    tenantVertical,
+    tenantVertical === "wellness" && tenantXp?.presentation
+      ? resolvePresentationLayoutMorph("wellness", tenantXp.presentation.presetId)
+      : null,
+  );
   const showTenantOpsPanels =
     persona === "owner" || persona === "manager" || persona === "org_admin";
 
@@ -430,9 +441,9 @@ export default function DashboardPage() {
 
   return (
     <div
-      className={`flex w-full min-w-0 max-w-5xl flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${
-        showWelcomeSweep ? "welcome-sweep" : ""
-      }`}
+      className={`flex w-full min-w-0 flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${
+        wellnessMorphShell ? "max-w-none" : "max-w-5xl"
+      } ${showWelcomeSweep ? "welcome-sweep" : ""}`}
       style={{ fontFamily: "var(--app-font-sans)" }}
     >
       {isOperatorHome ? (
@@ -462,7 +473,7 @@ export default function DashboardPage() {
       ) : null}
 
       {!isOperatorHome ? <ActivationWelcome /> : null}
-      <OperatorMaturityBanner />
+      {!wellnessMorphShell ? <OperatorMaturityBanner /> : null}
 
       {!isOperatorHome && persona === "org_admin" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

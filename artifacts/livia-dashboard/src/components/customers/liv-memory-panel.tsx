@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { livMemoryKindOptions, livMemoryPlaceholder } from "@workspace/policy";
 
 type MemoryRow = {
   id: string;
@@ -19,11 +20,17 @@ export function LivMemoryPanel({
   businessId,
   customerId,
   canEdit,
+  vertical,
+  category,
 }: {
   businessId: string;
   customerId: string;
   canEdit: boolean;
+  vertical?: string | null;
+  category?: string | null;
 }) {
+  const kindOptions = livMemoryKindOptions(vertical, category);
+  const [kind, setKind] = useState(kindOptions[0]?.value ?? "note");
   const { toast } = useToast();
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
@@ -43,9 +50,9 @@ export function LivMemoryPanel({
     const content = draft.trim();
     if (!content) return;
     try {
-      await apiFetch(`/businesses/${businessId}/customers/${customerId}/liv-memory`, {
+      await apiFetch(`/api/businesses/${businessId}/customers/${customerId}/liv-memory`, {
         method: "POST",
-        body: JSON.stringify({ content, kind: "note" }),
+        body: JSON.stringify({ content, kind }),
       });
       setDraft("");
       await qc.invalidateQueries({ queryKey: ["liv-memory", businessId, customerId] });
@@ -81,8 +88,20 @@ export function LivMemoryPanel({
         ) : null}
         {canEdit ? (
           <div className="space-y-2">
+            <select
+              className="w-full text-sm border rounded-md px-2 py-1.5 bg-background"
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+              aria-label="Memory kind"
+            >
+              {kindOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
             <Textarea
-              placeholder="e.g. Prefers Lara for colour · patch test due every 6 months"
+              placeholder={livMemoryPlaceholder(vertical, category)}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={2}

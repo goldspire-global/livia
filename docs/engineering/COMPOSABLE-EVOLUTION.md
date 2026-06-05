@@ -136,6 +136,9 @@ Canonical contract: [`../product/TENANT-EXPERIENCE-CONTRACT.md`](../product/TENA
 | `onboardingExtras` | `getVerticalOnboardingExtras()` |
 | `onboarding.appUnlocked` | `isOnboardingAppUnlocked()` |
 | `onboarding.activationSteps` | `activationStepsFromState()` |
+| `announcement` | `welcomeVerticalAnnouncement()` — platform defaults + capabilities (R1 / R1.1 / R2) |
+
+See [`VERTICAL-ANNOUNCEMENT.md`](./VERTICAL-ANNOUNCEMENT.md): each vertical **announces** extensions; the platform **welcomes** when `PLATFORM_DEFAULT_VERTICAL_ATTRIBUTES` are satisfied; consumers read `announcement` instead of guessing vertical contents.
 
 **Surfaces that consume (must stay thin):**
 

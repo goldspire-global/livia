@@ -2,7 +2,13 @@ import { db, livEntityMemoryTable } from "@workspace/db";
 import { and, eq, desc, isNull, or, gt } from "drizzle-orm";
 import { generateId } from "../lib/id";
 
-export type LivMemoryKind = "note" | "preference" | "ritual";
+export type LivMemoryKind =
+  | "note"
+  | "preference"
+  | "ritual"
+  | "pressure"
+  | "therapist_pref"
+  | "health_light";
 
 export async function listLivMemoryForEntity(args: {
   businessId: string;

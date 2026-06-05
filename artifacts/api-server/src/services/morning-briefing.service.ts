@@ -97,7 +97,7 @@ export async function gatherMorningBriefingFacts(
     )
     .orderBy(bookingsTable.startAt);
 
-  const enriched = await enrichBookingsBatch(todayRows);
+  const enriched = await enrichBookingsBatch(todayRows, { businessId });
 
   const [pendingCount] = await db
     .select({ count: sql<number>`count(*)::int` })

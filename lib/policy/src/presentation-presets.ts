@@ -244,10 +244,10 @@ const BASE_PRESENTATION_PRESETS: Record<BusinessVertical, PresentationPreset[]> 
   ],
   wellness: [
     {
-      id: "wellness-spa-calm",
+      id: "wellness-harbour-light",
       vertical: "wellness",
-      label: "Spa Calm",
-      description: "Serif, teal accents, generous breathing room.",
+      label: "Harbour Light",
+      description: "Day spa room board — lanes per room, concierge inbox, gift-ready book.",
       isDefault: true,
       tokens: {
         colorMode: "light",
@@ -258,13 +258,13 @@ const BASE_PRESENTATION_PRESETS: Record<BusinessVertical, PresentationPreset[]> 
         radius: "xl",
         motion: "calm",
       },
-      cssPreset: "spa-calm",
+      cssPreset: "harbour-light",
     },
     {
-      id: "wellness-zen-light",
+      id: "wellness-session-rail",
       vertical: "wellness",
-      label: "Zen Light",
-      description: "Near-white field, minimal borders, session-focused.",
+      label: "Session Rail",
+      description: "Therapist day — vertical time rail, single-column inbox, slot list on /b.",
       isDefault: false,
       tokens: {
         colorMode: "light",
@@ -272,16 +272,16 @@ const BASE_PRESENTATION_PRESETS: Record<BusinessVertical, PresentationPreset[]> 
         display: "sans",
         layout: "timeline",
         shell: "soft",
-        radius: "xl",
+        radius: "md",
         motion: "calm",
       },
-      cssPreset: "zen-light",
+      cssPreset: "session-rail",
     },
     {
-      id: "wellness-retreat-dark",
+      id: "wellness-evening-ledger",
       vertical: "wellness",
-      label: "Retreat Dark",
-      description: "Evening spa tone — dark mode default, muted motion.",
+      label: "Evening Ledger",
+      description: "Retreat evening — voucher ledger, panel inbox, ritual book path.",
       isDefault: false,
       tokens: {
         colorMode: "dark",
@@ -292,7 +292,7 @@ const BASE_PRESENTATION_PRESETS: Record<BusinessVertical, PresentationPreset[]> 
         radius: "lg",
         motion: "calm",
       },
-      cssPreset: "retreat-dark",
+      cssPreset: "evening-ledger",
     },
   ],
   fitness: [
@@ -577,11 +577,14 @@ export function listPresentationPresets(vertical: BusinessVertical): Presentatio
   return PRESENTATION_PRESETS[vertical];
 }
 
-/** Owner/onboarding picker — vertical-native skins only (no Platform Default). */
+/**
+ * API + Settings picker — all four presets per vertical (platform-default + 3 tailored).
+ * Sign-up uses platform-default; owner may switch to any morph in Appearance.
+ */
 export function listPresentationPresetsForTenantPicker(
   vertical: BusinessVertical,
 ): PresentationPreset[] {
-  return PRESENTATION_PRESETS[vertical].filter((p) => p.id !== PLATFORM_DEFAULT_PRESET_ID);
+  return PRESENTATION_PRESETS[vertical];
 }
 
 export function resolvePresentationPreset(

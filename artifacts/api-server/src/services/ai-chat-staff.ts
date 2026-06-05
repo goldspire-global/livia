@@ -3,9 +3,9 @@ import type Anthropic from "@anthropic-ai/sdk";
 import {
   buildLivSystemPrompt,
   loadVerticalPack,
-  STAFF_LIV_INBOX_SUGGESTIONS,
   STAFF_LIV_ACTION_SUGGESTIONS,
 } from "@workspace/liv-runtime";
+import { staffLivInboxSuggestions } from "@workspace/policy";
 import { appendHumanAudit } from "../lib/audit";
 import { buildLivToolDeps } from "../lib/liv-runtime-deps";
 import { executeMandateGatedTool } from "./mandate-gated-tool.service";
@@ -214,7 +214,10 @@ export async function handleStaffLivAssist(args: {
   ).catch(() => undefined);
 
   const suggestions = [
-    ...STAFF_LIV_INBOX_SUGGESTIONS.slice(0, 2),
+    ...staffLivInboxSuggestions(cached.business.vertical, cached.business.category, "open").slice(
+      0,
+      2,
+    ),
     ...STAFF_LIV_ACTION_SUGGESTIONS.slice(0, 2),
   ];
 

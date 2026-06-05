@@ -1,3 +1,4 @@
+import type { BusinessVertical } from "./types";
 import type { OnboardingActId, OnboardingChecklist, OnboardingState } from "./onboarding-state";
 import {
   ONBOARDING_ACT_IDS,
@@ -35,7 +36,22 @@ export function isOnboardingAppUnlocked(state: OnboardingState | null | undefine
   return false;
 }
 
-export function activationStepsFromState(state: OnboardingState | null | undefined): {
+function menuActivationLabel(vertical?: string | null): string {
+  if (vertical === "beauty") return "Build your treatment menu";
+  if (vertical === "hair") return "Build your service menu";
+  if (vertical === "wellness") return "Set up your session menu";
+  return "Set up your service menu";
+}
+
+/** Heartland verticals must configure menu — do not auto-complete a3 on create. */
+export function verticalRequiresMenuSetup(vertical?: string | null): boolean {
+  return vertical === "beauty" || vertical === "hair";
+}
+
+export function activationStepsFromState(
+  state: OnboardingState | null | undefined,
+  vertical?: string | null,
+): {
   id: string;
   label: string;
   done: boolean;
@@ -43,7 +59,15 @@ export function activationStepsFromState(state: OnboardingState | null | undefin
 }[] {
   const completed = new Set(state?.completedActs ?? []);
   const checklist = state?.checklist ?? ({} as OnboardingChecklist);
+  const menuDone =
+    completed.has("a3_service_menu") || checklist.servicesConfirmed === true;
   return [
+    {
+      id: "menu",
+      label: menuActivationLabel(vertical),
+      done: menuDone,
+      href: "/services",
+    },
     {
       id: "profile",
       label: "Location profile",
@@ -92,17 +116,35 @@ export function mergePercentWithBlocking(state: OnboardingState): OnboardingStat
   };
 }
 
-export function afterBusinessCreatedStateWithSeed(): OnboardingState {
-  const completed = [...AUTO_COMPLETED_ON_CREATE_ACTS] as OnboardingActId[];
+/** Onboarding after POST /businesses — menu act blocked for beauty/hair heartland. */
+export function afterBusinessCreatedStateForVertical(
+  vertical: BusinessVertical,
+): OnboardingState {
+  const needsMenu = verticalRequiresMenuSetup(vertical);
+  const completed = [
+    "a1_create_business",
+    "a4_team",
+    ...(needsMenu ? [] : (["a3_service_menu"] as OnboardingActId[])),
+  ] as OnboardingActId[];
   return mergePercentWithBlocking({
-    currentAct: "a2_shop_profile",
+    currentAct: needsMenu ? "a3_service_menu" : "a2_shop_profile",
     completedActs: completed,
     percentComplete: 0,
     checklist: onboardingChecklistSchema.parse({
-      servicesConfirmed: true,
+      servicesConfirmed: !needsMenu,
     }),
     updatedAt: new Date().toISOString(),
   });
+}
+
+/** API + dashboard create path — pass business vertical when known. */
+export function afterBusinessCreatedState(vertical?: BusinessVertical): OnboardingState {
+  return afterBusinessCreatedStateForVertical(vertical ?? "hair");
+}
+
+/** Generic demo seed — menu auto-completed (not beauty/hair heartland). */
+export function afterBusinessCreatedStateWithSeed(): OnboardingState {
+  return afterBusinessCreatedStateForVertical("fitness");
 }
 
 export function nextRecommendedAct(state: OnboardingState): OnboardingActId {

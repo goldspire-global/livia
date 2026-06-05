@@ -58,8 +58,15 @@ const PACKS: Record<string, VerticalPackManifest> = {
   wellness: {
     id: "wellness",
     label: "Wellness",
-    promptModule: "Wellness or spa. Calm tone; packages and room capacity may apply.",
-    extraToolIds: [],
+    promptModule:
+      "Wellness or day spa. Calm tone; use session, guest, and therapist — never haircut, cut, colour, or salon chair language. Respect duration options (60 / 90 min), packages, room capacity, and gift vouchers when relevant. When booking, prefer assigning a free room and mention package credits if the guest has a ledger balance. If a tool fails, explain the policy reason in plain English (deposit, turnover buffer, pending intake). Mention when Stripe or Google Calendar brokers are not connected if payment or calendar questions arise.",
+    extraToolIds: [
+      "wellness_propose_room",
+      "wellness_propose_package_book",
+      "wellness_eod_close",
+      "wellness_duty_solver",
+      "wellness_reroom",
+    ],
   },
   fitness: {
     id: "fitness",

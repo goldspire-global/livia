@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2  
 **Registry:** V-AD · **beta-full** · demo `shine-studio-belfast`  
-**Reads with:** [`vertical-playbooks/automotive-detailing.md`](./vertical-playbooks/automotive-detailing.md)
+**Reads with:** [`vertical-playbooks/automotive-detailing.md`](./vertical-playbooks/automotive-detailing.md) · **excellence:** [`vertical-excellence/automotive-detailing.md`](./vertical-excellence/automotive-detailing.md)
 
 ---
 

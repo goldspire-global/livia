@@ -186,5 +186,21 @@ export function buildLivToolDeps(args: {
         note: "Review and send via send_message or inbox — owner approval required.",
       };
     },
+    async wellnessEodClose() {
+      const { getEodCloseNarrative } = await import("../services/wellness-ops.service");
+      return getEodCloseNarrative(businessId);
+    },
+    async wellnessDutySolver(input) {
+      const { proposeDutySolver } = await import("../services/wellness-ops.service");
+      return proposeDutySolver(businessId, {
+        resourceName: input.resourceName,
+        hour: input.hour,
+        therapistGender: "any",
+      });
+    },
+    async wellnessReroom() {
+      const { proposeRerooming } = await import("../services/wellness-ops.service");
+      return proposeRerooming(businessId);
+    },
   };
 }

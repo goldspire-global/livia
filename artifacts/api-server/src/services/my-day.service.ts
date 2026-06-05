@@ -61,7 +61,7 @@ export async function getMyDay(businessId: string, staffId: string | null) {
     .orderBy(bookingsTable.startAt)
     .limit(12);
 
-  const enriched = await enrichBookingsBatch([...todayRaw, ...weekRaw]);
+  const enriched = await enrichBookingsBatch([...todayRaw, ...weekRaw], { businessId });
   const today = enriched.slice(0, todayRaw.length);
   const week = enriched.slice(todayRaw.length);
 

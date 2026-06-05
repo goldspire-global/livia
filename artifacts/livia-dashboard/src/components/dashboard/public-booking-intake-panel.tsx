@@ -9,6 +9,7 @@ import { ExternalLink, Globe, ChevronRight, Zap } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/format";
 import { BookingSourceBadge } from "@/components/booking/booking-source-badge";
 import { pendingReasonLabel } from "@/lib/booking-pending";
+import { useBusiness } from "@/lib/business-context";
 
 type IntakeFeed = {
   publicUrl: string | null;
@@ -31,6 +32,9 @@ type IntakeFeed = {
 };
 
 export function PublicBookingIntakePanel({ businessId }: { businessId: string }) {
+  const { business } = useBusiness();
+  const businessVertical = (business as { vertical?: string } | null)?.vertical;
+  const businessCategory = (business as { category?: string } | null)?.category;
   const [feed, setFeed] = useState<IntakeFeed | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -122,9 +126,13 @@ export function PublicBookingIntakePanel({ businessId }: { businessId: string })
                         {b.serviceName ?? "Service"} · {formatDate(b.startAt)} {formatTime(b.startAt)}
                         {b.staffDisplayName ? ` · ${b.staffDisplayName}` : ""}
                       </p>
-                      {b.pendingReason ? (
+                      {b.status === "PENDING" ? (
                         <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
-                          {pendingReasonLabel(b.pendingReason)}
+                          {pendingReasonLabel(
+                            b.pendingReason,
+                            businessVertical,
+                            businessCategory,
+                          )}
                         </p>
                       ) : null}
                     </div>

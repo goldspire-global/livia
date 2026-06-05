@@ -9,7 +9,7 @@ import {
 } from "@/components/gateway/gateway-demo-card-stage";
 import { WedgeBeautyThread } from "@/components/gateway/wedge-beauty-thread";
 import { WedgeStudioBrief } from "@/components/gateway/wedge-studio-brief";
-import { isBeautyWedgeThread } from "@/lib/wedge-beat-visuals";
+import { isPresetWedgeThread } from "@/lib/wedge-beat-visuals";
 import { DemoFlowShell } from "@/components/gateway/demo-flow-shell";
 import {
   getWedgeDemoStory,
@@ -193,8 +193,9 @@ export default function DemoWedgeStoryPage() {
           onSelectRole={(email) => void enterAsRole(email)}
           onBack={() => setSlide("story")}
         />
-      ) : isBeautyWedgeThread(story.vertical) ? (
+      ) : isPresetWedgeThread(story.vertical) ? (
         <WedgeBeautyThread
+          vertical={story.vertical}
           beats={story.beats}
           tradeLabel={story.label}
           disabled={!provisioned}

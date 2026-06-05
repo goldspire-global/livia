@@ -1,11 +1,13 @@
-export const STAFF_LIV_INBOX_SUGGESTIONS = [
-  "Draft the next reply — warm, concise, on-brand.",
-  "Is there a pending booking in this thread? Confirm it if policy allows.",
-  "Look up this customer and summarize strikes and last visit.",
-  "What does today's briefing say I should prioritize?",
-] as const;
+import { staffLivInboxSuggestions } from "@workspace/policy";
 
-export const STAFF_LIV_HANDOFF_SUGGESTIONS = [
-  "Draft a reply I can send now — clear and human.",
-  "Summarize what the client needs in one short paragraph.",
-] as const;
+export function inboxLivSuggestions(
+  vertical?: string | null,
+  category?: string | null,
+  mode: "open" | "handoff" = "open",
+): readonly string[] {
+  return staffLivInboxSuggestions(vertical, category, mode);
+}
+
+/** @deprecated Use `inboxLivSuggestions(vertical, category, mode)` */
+export const STAFF_LIV_INBOX_SUGGESTIONS = staffLivInboxSuggestions(null, null, "open");
+export const STAFF_LIV_HANDOFF_SUGGESTIONS = staffLivInboxSuggestions(null, null, "handoff");

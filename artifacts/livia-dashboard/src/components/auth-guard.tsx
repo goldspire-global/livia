@@ -4,7 +4,7 @@ import { useGetMyBusinesses } from "@workspace/api-client-react";
 import { BusinessProvider, normalizeBusinessList, useBusiness } from "@/lib/business-context";
 import { MembershipProvider, useMembership } from "@/lib/membership-context";
 import { isDemoLoginEnabled, usePersona } from "@/lib/persona";
-import { PERSONA_RITUALS } from "@/lib/persona-rituals";
+import { PERSONA_RITUALS, resolvePersonaRitual } from "@/lib/persona-rituals";
 import { Spinner } from "@/components/ui/spinner";
 import { ReactNode, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-fetch";
@@ -185,13 +185,14 @@ const STAFF_BLOCKED_LANDING = new Set([
 function RoleGate({ children }: { children: ReactNode }) {
   const { effectiveRole, isLoading } = useMembership();
   const { kind: persona, isLoading: personaLoading } = usePersona();
-  const { businesses } = useBusiness();
+  const { businesses, business } = useBusiness();
   const [location, navigate] = useLocation();
 
   useEffect(() => {
     if (isLoading || personaLoading) return;
 
-    let home = PERSONA_RITUALS[persona].homePath;
+    const vertical = (business as { vertical?: string } | undefined)?.vertical ?? null;
+    let home = resolvePersonaRitual(persona, vertical).homePath;
     if (persona === "org_admin" && businesses.length < 2) {
       home = "/dashboard";
     }
@@ -211,9 +212,9 @@ function RoleGate({ children }: { children: ReactNode }) {
       navigate("/my-day", { replace: true });
     }
     if (persona === "receptionist" && location === "/dashboard") {
-      navigate("/bookings", { replace: true });
+      navigate(vertical === "wellness" ? "/wellness-reception" : "/bookings", { replace: true });
     }
-  }, [effectiveRole, isLoading, location, navigate, persona, personaLoading, businesses.length]);
+  }, [effectiveRole, isLoading, location, navigate, persona, personaLoading, businesses.length, business]);
 
   return <>{children}</>;
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send, X, Loader2 } from "lucide-react";
 import { AI_DISCLOSURE } from "@workspace/ai-disclosure";
+import { publicLivChatCopy } from "@workspace/policy";
 
 interface ChatMessage {
   id: string;
@@ -12,15 +13,11 @@ interface ChatMessage {
   bookingId?: string | null;
 }
 
-const SUGGESTED = [
-  "I need a haircut tomorrow afternoon",
-  "What services do you offer?",
-  "Book a 1-hour massage this weekend",
-];
-
 interface ChatWidgetProps {
   slug: string;
   businessName: string;
+  vertical?: string | null;
+  category?: string | null;
   greeting?: string;
   /** Jurisdiction pack copy; falls back to @workspace/ai-disclosure defaults. */
   disclosureFirstMessage?: string;
@@ -38,6 +35,8 @@ interface ChatWidgetProps {
 export default function ChatWidget({
   slug,
   businessName,
+  vertical,
+  category,
   greeting,
   disclosureFirstMessage,
   disclosureFooterLine,
@@ -48,6 +47,7 @@ export default function ChatWidget({
   openRequest,
   hideLauncher = false,
 }: ChatWidgetProps) {
+  const livCopy = publicLivChatCopy(vertical, category);
   const firstMessage =
     disclosureFirstMessage ?? AI_DISCLOSURE.chatFirstMessage(businessName);
   const footerLine = disclosureFooterLine ?? AI_DISCLOSURE.chatFooterLine;
@@ -164,7 +164,7 @@ export default function ChatWidget({
             </div>
             <div>
               <div className="text-sm font-semibold leading-none">{businessName}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">Liv · booking assistant</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{livCopy.assistantSubtitle}</div>
             </div>
           </div>
           <button
@@ -217,7 +217,7 @@ export default function ChatWidget({
 
           {messages.length <= 2 && !sendMessage.isPending && (
             <div className="flex flex-wrap gap-2 pt-2">
-              {SUGGESTED.map((s) => (
+              {livCopy.suggestedPrompts.map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -244,7 +244,7 @@ export default function ChatWidget({
             data-testid="input-chat-message"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about services, prices, availability..."
+            placeholder={livCopy.inputPlaceholder}
             disabled={sendMessage.isPending}
             className="flex-1"
           />

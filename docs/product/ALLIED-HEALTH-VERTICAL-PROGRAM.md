@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2  
 **Registry:** V7 · **beta-full** · demo `motion-physio-cork`  
-**Reads with:** [`vertical-playbooks/allied-health.md`](./vertical-playbooks/allied-health.md)
+**Reads with:** [`vertical-playbooks/allied-health.md`](./vertical-playbooks/allied-health.md) · **excellence:** [`vertical-excellence/allied-health.md`](./vertical-excellence/allied-health.md)
 
 ---
 

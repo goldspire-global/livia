@@ -87,7 +87,8 @@ export default function DemoLauncher() {
 
   useLayoutEffect(() => {
     captureMarketingDemoGateKeyFromLocation();
-    if (hasMarketingDemoGateKey()) {
+    // Local dev: stay on dashboard G1 (founder smoke). Production invited guests round-trip to W1.
+    if (import.meta.env.PROD && hasMarketingDemoGateKey()) {
       window.location.replace(getMarketingDemoConciergeUrl());
     }
   }, []);

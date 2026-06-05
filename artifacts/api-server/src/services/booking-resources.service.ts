@@ -1,5 +1,6 @@
 import { db, bookingResourcesTable, servicesTable, bookingsTable } from "@workspace/db";
 import { eq, and, or, gte, lte, sql, asc } from "drizzle-orm";
+import { WELLNESS_ROOM_TURNOVER_MINUTES } from "@workspace/policy";
 import { generateId } from "../lib/id";
 
 export async function listBookingResources(businessId: string, activeOnly = true) {
@@ -65,6 +66,8 @@ export async function resourceCapacityAvailable(opts: {
   startAt: Date;
   endAt: Date;
   excludeBookingId?: string;
+  /** Extra minutes after endAt before the room is free (wellness turnover). */
+  turnoverMinutes?: number;
 }): Promise<boolean> {
   const [resource] = await db
     .select()
@@ -78,24 +81,36 @@ export async function resourceCapacityAvailable(opts: {
     );
   if (!resource) return false;
 
+  const turnoverMs = Math.max(0, opts.turnoverMinutes ?? 0) * 60_000;
+  const windowStart = opts.startAt;
+  const windowEnd = new Date(opts.endAt.getTime() + turnoverMs);
+
   const conditions = [
     eq(bookingsTable.businessId, opts.businessId),
     eq(bookingsTable.resourceId, opts.resourceId),
     or(eq(bookingsTable.status, "CONFIRMED"), eq(bookingsTable.status, "PENDING")),
-    lte(bookingsTable.startAt, opts.endAt),
-    gte(bookingsTable.endAt, opts.startAt),
+    lte(bookingsTable.startAt, windowEnd),
+    gte(bookingsTable.endAt, windowStart),
   ];
   if (opts.excludeBookingId) {
     conditions.push(sql`${bookingsTable.id} <> ${opts.excludeBookingId}`);
   }
 
-  const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
+  const overlapping = await db
+    .select({
+      id: bookingsTable.id,
+      startAt: bookingsTable.startAt,
+      endAt: bookingsTable.endAt,
+    })
     .from(bookingsTable)
     .where(and(...conditions));
 
-  const used = row?.count ?? 0;
-  return used < resource.capacity;
+  const conflicts = overlapping.filter((row) => {
+    const otherEnd = new Date(row.endAt.getTime() + turnoverMs);
+    return row.startAt < windowEnd && otherEnd > windowStart;
+  });
+
+  return conflicts.length < resource.capacity;
 }
 
 export async function resolveResourceForService(
@@ -109,4 +124,14 @@ export async function resolveResourceForService(
     .from(servicesTable)
     .where(and(eq(servicesTable.id, serviceId), eq(servicesTable.businessId, businessId)));
   return svc?.requiredResourceId ?? null;
+}
+
+/** Turnover buffer minutes when assigning room-type resources. */
+export function resolveResourceTurnoverMinutes(
+  resourceType: "room" | "equipment" | "thermal",
+): number {
+  if (resourceType === "room") {
+    return WELLNESS_ROOM_TURNOVER_MINUTES;
+  }
+  return 0;
 }

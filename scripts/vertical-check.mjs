@@ -39,10 +39,22 @@ run("Presentation presets smoke", [
   "src/services/__tests__/presentation-presets.test.ts",
 ]);
 
+run("Presentation surface handshake", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/presentation-surface.test.ts",
+]);
+
 run("Vertical doc propagation", [
   "--import",
   "tsx/esm",
   "../../lib/policy/src/__tests__/vertical-doc-propagation.test.ts",
+]);
+
+run("Vertical announcement handshake", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/vertical-announcement.test.ts",
 ]);
 
 console.log("\n✅ vertical:check passed\n");

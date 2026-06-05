@@ -2,7 +2,7 @@
 
 **Status:** program complete · **execution:** Phase V2  
 **Registry:** V9 · **beta-full** · demo `paws-parlour-dublin`  
-**Reads with:** [`vertical-playbooks/pet-grooming.md`](./vertical-playbooks/pet-grooming.md)
+**Reads with:** [`vertical-playbooks/pet-grooming.md`](./vertical-playbooks/pet-grooming.md) · **excellence:** [`vertical-excellence/pet-grooming.md`](./vertical-excellence/pet-grooming.md)
 
 ---
 

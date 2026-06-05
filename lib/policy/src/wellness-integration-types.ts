@@ -1,0 +1,15 @@
+export type BrokerId =
+  | "fresha"
+  | "square"
+  | "google_calendar"
+  | "xero"
+  | "quickbooks"
+  | "vagaro"
+  | "acuity"
+  | "timely"
+  | "mindbody"
+  | "stripe"
+  | "treatwell"
+  | "mailchimp"
+  | "whatsapp"
+  | "booksy";

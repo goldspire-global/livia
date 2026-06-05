@@ -19,7 +19,7 @@ Livia’s **code** is designed to propagate from `lib/policy`. **Docs** can stil
 | Hub type | When | Canonical home |
 |----------|------|----------------|
 | **Platform** | Cross-cutting UX, presets, gateway | `EXPERIENCE-ARCHITECTURE.md`, `UI-UX-MASTER-PROGRAM.md`, `LIVIA-STATUS.md` |
-| **Vertical** | One industry pack (beauty, medspa, …) | `docs/product/vertical-playbooks/{vertical}.md` + optional **`{VERTICAL}-VERTICAL-PROGRAM.md`** while that vertical is in active completion |
+| **Vertical** | One industry pack (beauty, medspa, …) | `docs/product/vertical-playbooks/{vertical}.md` + **`{VERTICAL}-VERTICAL-PROGRAM.md`** + excellence spec `docs/product/vertical-excellence/{vertical}.md` when defining “complete” |
 
 **Rule:** Do not duplicate long narrative in build plans. Build plans **link** to the program doc and track **exit gates** only.
 

@@ -1,0 +1,434 @@
+/**
+ * Wellness presentation presets — W4 dashboard + W5 /b
+ * Targets: docs/design/assets/w4-tenant/wellness, w5-public/wellness
+ * Palette authority: scripts/generate-wellness-wedge-mocks.py Theme harbour-light
+ */
+
+html[data-vertical="wellness"][data-presentation="harbour-light"] {
+  color-scheme: light;
+  --background: 160 28% 94%;
+  --foreground: 168 42% 14%;
+  --card: 42 35% 98%;
+  --card-foreground: 168 42% 14%;
+  --border: 158 24% 78%;
+  --muted: 158 28% 93%;
+  --muted-foreground: 158 14% 38%;
+  --secondary: 158 32% 91%;
+  --primary: 174 72% 28%;
+  --ring: 174 72% 28%;
+  --primary-foreground: 0 0% 100%;
+  --sidebar: 155 35% 97%;
+  --sidebar-foreground: 168 42% 14%;
+  --sidebar-accent: 158 40% 88%;
+  --wellness-accent-soft: 158 38% 90%;
+  --wellness-sand: 40 33% 94%;
+  --wellness-pending-fg: 32 42% 32%;
+  --wellness-pending-bg: 40 40% 92%;
+  --wellness-pending-border: 38 32% 78%;
+}
+
+html[data-vertical="wellness"][data-presentation="session-rail"] {
+  color-scheme: light;
+  --background: 220 16% 96%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --border: 220 13% 86%;
+  --muted: 220 14% 94%;
+  --muted-foreground: 220 9% 42%;
+  --secondary: 220 14% 92%;
+  --primary: 222 47% 11%;
+  --ring: 222 47% 11%;
+  --primary-foreground: 0 0% 100%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 210 20% 98%;
+  --sidebar-accent: 222 30% 18%;
+  --wellness-accent-soft: 220 14% 92%;
+  --wellness-pending-fg: 222 40% 28%;
+  --wellness-pending-bg: 220 20% 94%;
+  --wellness-pending-border: 220 14% 82%;
+}
+
+html[data-vertical="wellness"][data-presentation="evening-ledger"] {
+  color-scheme: dark;
+  --background: 220 25% 6%;
+  --foreground: 210 20% 96%;
+  --card: 220 20% 12%;
+  --card-foreground: 210 20% 96%;
+  --border: 220 14% 22%;
+  --muted: 220 18% 14%;
+  --muted-foreground: 215 12% 58%;
+  --secondary: 220 16% 16%;
+  --primary: 38 55% 58%;
+  --ring: 38 55% 58%;
+  --primary-foreground: 220 25% 8%;
+  --sidebar: 220 22% 8%;
+  --sidebar-foreground: 210 20% 96%;
+  --sidebar-accent: 38 35% 22%;
+  --wellness-accent-soft: 220 18% 14%;
+  --wellness-pending-fg: 38 55% 72%;
+  --wellness-pending-bg: 38 35% 16%;
+  --wellness-pending-border: 38 30% 28%;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .app-shell-main {
+  background: linear-gradient(180deg, hsl(158 32% 92%) 0%, hsl(var(--background)) 14rem);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="session-rail"] .app-shell-main {
+  background: hsl(var(--background));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="evening-ledger"] .app-shell-main {
+  background: radial-gradient(ellipse 80% 50% at 70% 100%, hsl(38 40% 14% / 0.35), transparent),
+    hsl(var(--background));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-operational-page h1,
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-operational-page h2 {
+  font-family: var(--app-font-serif, Georgia, serif);
+  letter-spacing: -0.02em;
+}
+
+/* List shells — inbox / guests / rooms share white card + teal hairline (not beige panel) */
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-list-shell {
+  border: 1px solid hsl(var(--border) / 0.88);
+  background: hsl(var(--card));
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.85);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-grid.wellness-list-shell,
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-grid {
+  border: 1px solid hsl(var(--border) / 0.88);
+  background: hsl(var(--card));
+  border-radius: 0.75rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-op-list-scroll > * + * {
+  border-color: hsl(var(--border) / 0.55);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 2px hsl(174 50% 18% / 0.2);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-btn-primary:hover {
+  background: hsl(174 72% 24%);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-btn-outline {
+  border-color: hsl(var(--border));
+  background: hsl(var(--wellness-accent-soft));
+  color: hsl(var(--foreground));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-btn-outline:hover {
+  background: hsl(158 35% 86%);
+  border-color: hsl(var(--primary) / 0.35);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-avatar-ring {
+  background: hsl(var(--wellness-accent-soft));
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.2);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-status-pending {
+  background: hsl(var(--wellness-pending-bg));
+  color: hsl(var(--wellness-pending-fg));
+  border-color: hsl(var(--wellness-pending-border));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-status-confirmed {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / 0.22);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-list-shell [data-testid^="row-booking-"]:hover,
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-list-shell [data-testid^="row-staff-"]:hover,
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-list-shell [data-testid^="row-customer-"]:hover {
+  background: hsl(var(--muted) / 0.55);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-op-row--attention {
+  background: hsl(var(--muted) / 0.7);
+  border-left: 2px solid hsl(var(--primary) / 0.35);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="session-rail"] .wellness-list-shell {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="session-rail"] .wellness-btn-primary {
+  background: hsl(var(--primary));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="evening-ledger"] .wellness-list-shell {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="evening-ledger"] .wellness-btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="harbour-light"] .wellness-panel {
+  border-radius: 1rem;
+  border-color: hsl(var(--border) / 0.85);
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="session-rail"] .wellness-panel {
+  border-radius: 0.5rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"][data-presentation="evening-ledger"] .wellness-panel {
+  border-radius: 0.75rem;
+  border-color: hsl(var(--border));
+  background: hsl(var(--card) / 0.92);
+}
+
+html[data-vertical="wellness"][data-presentation="evening-ledger"] .public-booking-shell {
+  --background: 220 25% 6%;
+  --foreground: 210 20% 96%;
+  --primary: 38 55% 58%;
+}
+
+html[data-vertical="wellness"][data-presentation="harbour-light"] .public-booking-shell {
+  --background: 160 28% 94%;
+  --primary: 174 72% 28%;
+}
+
+html[data-vertical="wellness"][data-presentation="session-rail"] .public-booking-shell {
+  --background: 220 16% 96%;
+  --primary: 222 47% 11%;
+}
+
+/* W5 — session grid (harbour-light book-mobile target) */
+html[data-vertical="wellness"] .wellness-public-shell .wellness-service-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+html[data-vertical="wellness"] .wellness-service-card {
+  text-align: left;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--card));
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+html[data-vertical="wellness"] .wellness-service-card--selected {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+html[data-vertical="wellness"] .wellness-service-card-thumb {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+html[data-vertical="wellness"] .wellness-service-card-body {
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+html[data-vertical="wellness"] .wellness-service-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+html[data-vertical="wellness"] .wellness-service-card-meta {
+  font-size: 0.7rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.15rem;
+}
+
+html[data-vertical="wellness"][data-layout-morph="atrium"] .wellness-atrium-topnav-bar,
+html[data-vertical="wellness"][data-layout-morph="ledger"] .wellness-shell-topnav {
+  background: hsl(var(--card) / 0.98);
+  border-color: hsl(var(--border) / 0.65);
+}
+
+html[data-vertical="wellness"] .wellness-shell-nav-bar {
+  backdrop-filter: blur(10px);
+}
+
+html[data-vertical="wellness"] .wellness-nav-pill--active {
+  letter-spacing: 0.01em;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-quick-nav {
+  scrollbar-width: none;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-quick-nav::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-vertical="wellness"][data-layout-morph="atrium"] .wellness-atrium-board--hero .wellness-atrium-lane {
+  min-height: 12rem;
+  padding: 1rem;
+}
+
+
+html[data-vertical="wellness"][data-layout-morph="timeline-rail"] .wellness-rail-shell-nav {
+  min-height: 100%;
+}
+
+html[data-vertical="wellness"][data-layout-morph="atrium"] .wellness-atrium-lane {
+  box-shadow: 0 1px 0 hsl(158 40% 88% / 0.8);
+}
+
+html[data-vertical="wellness"][data-layout-morph="timeline-rail"] .wellness-timeline-active .rounded-lg {
+  border-width: 2px;
+}
+
+html[data-vertical="wellness"][data-layout-morph="ledger"] .wellness-ledger-metric {
+  border-color: hsl(var(--primary) / 0.35);
+}
+
+html[data-vertical="wellness"][data-layout-morph="ledger"] .wellness-inbox--ledger .divide-y > button,
+html[data-vertical="wellness"][data-layout-morph="ledger"] .wellness-inbox--ledger [data-testid="inbox-thread-list"] > div {
+  border-radius: 0.75rem;
+  margin: 0.35rem 0.5rem;
+  border: 1px solid hsl(var(--border));
+}
+
+html[data-vertical="wellness"][data-layout-morph="timeline-rail"] .wellness-inbox--timeline-rail [data-testid="inbox-thread-list"] {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-page header[data-testid^="page-header-"] {
+  margin-bottom: 0.5rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-page header[data-testid^="page-header-"] h1 {
+  font-size: 1.35rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-grid {
+  grid-template-rows: 1fr;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-grid > * {
+  min-height: 0;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-conversation-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-messages-scroll {
+  flex: 1 1 auto;
+  min-height: 16rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-compose textarea {
+  min-height: 2.25rem;
+}
+
+html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-liv-inbox-assist[open] summary {
+  margin-bottom: 0.25rem;
+}
+
+/* ── Experiential layer (policy → wellness-experience.ts → canvas + data attrs) ── */
+
+.wellness-atmosphere-wrap {
+  isolation: isolate;
+}
+
+.wellness-atmosphere-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-vertical="wellness"][data-wellness-ambience="reduced"] .wellness-atmosphere-wrap {
+  display: none;
+}
+
+html[data-vertical="wellness"] .wellness-operational-page,
+html[data-vertical="wellness"] [data-testid="wellness-reception-page"],
+html[data-vertical="wellness"] [data-testid="wellness-tv-mode"] {
+  animation: wellness-page-enter 0.5s ease-out both;
+}
+
+@keyframes wellness-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-vertical="wellness"] .wellness-operational-page,
+  html[data-vertical="wellness"] [data-testid="wellness-reception-page"] {
+    animation: none;
+  }
+}
+
+html[data-vertical="wellness"][data-wellness-surface="tablet"] button,
+html[data-vertical="wellness"][data-wellness-surface="tablet"] [role="button"],
+html[data-vertical="wellness"][data-wellness-surface="tablet"] input[type="text"] {
+  min-height: var(--wellness-touch-min, 56px);
+  font-size: 1rem;
+}
+
+html[data-vertical="wellness"] .wellness-reception-desk {
+  width: 100%;
+}
+
+html[data-vertical="wellness"][data-wellness-surface="tablet"] [data-testid="wellness-reception-page"] {
+  max-width: none;
+  margin-inline: 0;
+}
+
+html[data-vertical="wellness"] .wellness-success-glow {
+  animation: wellness-success-glow var(--wellness-breath-ms, 600ms) ease-out both;
+}
+
+@keyframes wellness-success-glow {
+  0% {
+    box-shadow: 0 0 0 0 hsla(174, 72%, 28%, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 12px hsla(174, 72%, 28%, 0);
+  }
+}
+
+html[data-vertical="wellness"] .wellness-room-drag-glow {
+  box-shadow: 0 0 0 2px hsla(174, 72%, 28%, 0.25), 0 8px 24px hsla(174, 72%, 28%, 0.12);
+}
+
+html[data-vertical="wellness"] .wellness-atrium-lane--drop {
+  background: hsla(174, 72%, 28%, 0.06);
+}
+
+html[data-vertical="wellness"] .wellness-turnover-lane--pulse {
+  animation: wellness-turnover-pulse var(--wellness-turnover-ms, 800ms) ease-in-out infinite alternate;
+}
+
+@keyframes wellness-turnover-pulse {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 1;
+  }
+}
+

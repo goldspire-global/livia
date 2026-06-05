@@ -14,6 +14,7 @@ import { SPRING_GENTLE } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
+import { useBusiness } from "@/contexts/BusinessContext";
 import { pendingReasonLabel } from "@/lib/booking-pending";
 import { formatShortDateInZone, formatTimeInZone, resolveBusinessTimeZone } from "@/lib/datetime";
 import { StatusBadge } from "./StatusBadge";
@@ -46,6 +47,7 @@ export function BookingCard({
   onPress,
   onLongPress,
 }: BookingCardProps) {
+  const { currentBusiness } = useBusiness();
   const colors = useColors();
   const haptics = useHaptics();
   const timeZone = resolveBusinessTimeZone(timeZoneProp ? { timezone: timeZoneProp } : null);
@@ -133,7 +135,11 @@ export function BookingCard({
           </Text>
           {booking.status === "PENDING" && booking.pendingReason ? (
             <Text style={[styles.pendingReason, { color: colors.primary }]} numberOfLines={1}>
-              {pendingReasonLabel(booking.pendingReason)}
+              {pendingReasonLabel(
+                booking.pendingReason,
+                (currentBusiness as { vertical?: string } | null)?.vertical,
+                (currentBusiness as { category?: string } | null)?.category,
+              )}
             </Text>
           ) : null}
           {booking.notes ? (

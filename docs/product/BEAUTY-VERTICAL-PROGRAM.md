@@ -4,7 +4,19 @@
 **Registry:** `VERTICAL_COVERAGE_REGISTRY` V2 · **heartland** tier  
 **Canonical demo:** `bloom-beauty-dublin` · owner `owner-bloom@demo.livia-hq.com` (legacy `owner-bloom@livia.io`) · default preset **`beauty-noir-dusk`** (P0 dark mock — not flat black; atmospheric charcoal per target)  
 **Reads with:** [`vertical-playbooks/beauty.md`](./vertical-playbooks/beauty.md) · [`EXPERIENCE-ARCHITECTURE.md`](../design/EXPERIENCE-ARCHITECTURE.md) · [`assets/w4-tenant/beauty/README.md`](../design/assets/w4-tenant/beauty/README.md)  
+**Excellence spec (L9–L15, research + P0–P3 roadmap):** [`vertical-excellence/beauty.md`](./vertical-excellence/beauty.md)  
+**Inspiration:** [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · **Smoke:** [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md)  
 **Doc propagation:** [`DOC-PROPAGATION-CASCADE.md`](../engineering/DOC-PROPAGATION-CASCADE.md) — `pnpm vertical:doc-check` must pass when this file or beauty spokes change.
+
+---
+
+## P0 — menu / treatments discoverability (2026-06-03)
+
+**Shipped (wellness-parity pass):** Treatments in sidebar nav · beauty onboarding blocks auto-complete menu · quick-add templates on `/services` · `beauty-inbox-nav` announcement · beauty booking/pending copy · [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md).
+
+**Shipped (wow / layout morph — 2026-06-03):** Four native presets map to distinct owner **Today** shells (`split-inbox` · `atrium` · `menu-card` · `cockpit`) via `BeautyMorphTodayHome` — switch preset in Settings → Guest look and reload `/dashboard` to see layout change, not palette only. Policy: `BEAUTY_MORPH_BY_CSS` in `presentation-surface.ts`.
+
+**Still open (P1):** per-service patch-test flag · fill-cycle SMS · client beauty preference tab · studio setup hub route. See [`vertical-excellence/beauty.md`](./vertical-excellence/beauty.md).
 
 ---
 
@@ -287,3 +299,6 @@ Founder can answer **yes** to all:
 | 2026-06-01 | Full beauty build: 4 presets W4/W5, settings swatches, mobile owner + `/b` |
 | 2026-06-02 | W2 gateway targets locked (G1–G3 + sign-in); staging sign-off queue § Engineering |
 | 2026-06-02 | G1–G3 + sign-in shipped; Bloom founder UAT E2E; customers ambient panel; MKT wedge deep-link |
+| 2026-06-03 | P0 menu/nav + onboarding + announcement (wellness-parity pass) |
+| 2026-06-03 | R3 Today layout morphs (four beauty presets — wellness wow parity) |
+| 2026-06-03 | Excellence spec + gap audit documented |

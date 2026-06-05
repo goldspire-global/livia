@@ -219,11 +219,6 @@ export default function PublicBookScreen() {
           )
         ) : null}
         <View style={styles.body}>
-          {xp.marketRibbon ? (
-            <Text style={[type.eyebrow, { color: xp.primary, marginBottom: 6 }]}>
-              {xp.marketRibbon}
-            </Text>
-          ) : null}
           {beautyPublic && step === "services" ? (
             <View style={styles.beautyBrand}>
               {b.logoUrl ? (

@@ -237,9 +237,16 @@ export async function getGuestHubView(hubToken: string) {
     upcomingBookings.map((b) => [b.businessId, b.visitUrl] as const),
   );
 
+  const { listGuestPackageCreditsForGuest } = await import("./package-credits.service");
+  const packageCredits = await listGuestPackageCreditsForGuest(
+    session.guestId,
+    session.phoneE164,
+  );
+
   return {
     guestId: session.guestId,
     phoneE164: session.phoneE164,
+    packageCredits,
     upcomingBookings,
     shops: shops.map((s) => {
       const last = lastByBusiness.get(s.businessId);

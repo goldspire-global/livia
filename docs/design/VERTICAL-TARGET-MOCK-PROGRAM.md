@@ -2,6 +2,8 @@
 
 **Beauty:** ✅ founder review complete — `w4-tenant/beauty/`, `w5-public/beauty/`
 
+**Wellness:** ✅ locked — `w4-tenant/wellness/presets/{platform-default,harbour-light,session-rail,evening-ledger}/`, `w5-public/wellness/` · regenerate `python scripts/generate-wellness-wedge-mocks.py`
+
 **Other verticals:** generate `.sample.png` → founder deletes rejects → rename survivors to `.target.png`
 
 ## Folder layout (all verticals)
@@ -30,7 +32,7 @@ w5-public/{vertical}/presets/{cssPreset}/
 | hair | `warm-chair` | clean-salon, barber-bold | — | book |
 | beauty | `noir-dusk` | soft-studio, editorial, premium-dark | (done) | (done) |
 | body-art | `studio-dark` | flash-light, minimal-mono | **design-proofs** | **proof** (guest approve) |
-| wellness | `spa-calm` | zen-light, retreat-dark | — | book, **visit** |
+| wellness | `harbour-light` | platform-default, session-rail, evening-ledger | — | book, **visit** |
 | fitness | `gym-bold` | studio-clean, coach-compact | **classes** | book |
 | medspa | `clinical-calm` | luxury-serif, minimal-consent | **medspa-hub** | book, **intake** |
 | allied-health | `allied-clinic-standard` | rehab-focused, telehealth | — | book |

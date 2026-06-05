@@ -387,6 +387,19 @@ export const GetMyDayResponse = zod.object({
               zod.null(),
             ])
             .optional(),
+          resource: zod
+            .union([
+              zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                resourceType: zod.enum(["room", "equipment", "thermal"]),
+                capacity: zod.number(),
+                isActive: zod.boolean(),
+                sortOrder: zod.number(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
         }),
       ),
   ),
@@ -479,6 +492,19 @@ export const GetMyDayResponse = zod.object({
                   isActive: zod.boolean(),
                   createdAt: zod.coerce.date(),
                   updatedAt: zod.coerce.date(),
+                }),
+                zod.null(),
+              ])
+              .optional(),
+            resource: zod
+              .union([
+                zod.object({
+                  id: zod.string(),
+                  name: zod.string(),
+                  resourceType: zod.enum(["room", "equipment", "thermal"]),
+                  capacity: zod.number(),
+                  isActive: zod.boolean(),
+                  sortOrder: zod.number(),
                 }),
                 zod.null(),
               ])
@@ -576,6 +602,19 @@ export const GetMyDayResponse = zod.object({
                   isActive: zod.boolean(),
                   createdAt: zod.coerce.date(),
                   updatedAt: zod.coerce.date(),
+                }),
+                zod.null(),
+              ])
+              .optional(),
+            resource: zod
+              .union([
+                zod.object({
+                  id: zod.string(),
+                  name: zod.string(),
+                  resourceType: zod.enum(["room", "equipment", "thermal"]),
+                  capacity: zod.number(),
+                  isActive: zod.boolean(),
+                  sortOrder: zod.number(),
                 }),
                 zod.null(),
               ])
@@ -833,6 +872,72 @@ export const SearchAuditLogResponse = zod.object({
     }),
   ),
   total: zod.number(),
+});
+
+/**
+ * @summary Wellness reports bundle (room heatmap, packages, stress score)
+ */
+export const GetWellnessReportsParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+/**
+ * @summary End-of-day close narrative for wellness operators
+ */
+export const GetWellnessEodCloseParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+/**
+ * @summary Wellness audit diary (bookings, Liv memory, audit events)
+ */
+export const GetWellnessAuditDiaryParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+/**
+ * @summary Guest vault profile by phone
+ */
+export const GetWellnessGuestVaultParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetWellnessGuestVaultQueryParams = zod.object({
+  phone: zod.coerce.string(),
+});
+
+/**
+ * @summary Look up gift or package redemption code
+ */
+export const LookupWellnessRedeemCodeParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const LookupWellnessRedeemCodeBody = zod.object({
+  code: zod.string(),
+});
+
+/**
+ * @summary Find free therapists in a room at an hour
+ */
+export const WellnessDutySolverParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const WellnessDutySolverBody = zod.object({
+  resourceName: zod.string().optional(),
+  hour: zod.number().optional(),
+});
+
+/**
+ * @summary Stripe Terminal checkout hook for desk payment
+ */
+export const WellnessTerminalCheckoutParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const WellnessTerminalCheckoutBody = zod.object({
+  bookingId: zod.string(),
 });
 
 /**
@@ -1686,6 +1791,19 @@ export const ListBookingsResponse = zod.object({
               zod.null(),
             ])
             .optional(),
+          resource: zod
+            .union([
+              zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                resourceType: zod.enum(["room", "equipment", "thermal"]),
+                capacity: zod.number(),
+                isActive: zod.boolean(),
+                sortOrder: zod.number(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
         }),
       ),
   ),
@@ -1813,6 +1931,19 @@ export const GetBookingResponse = zod
           zod.null(),
         ])
         .optional(),
+      resource: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            resourceType: zod.enum(["room", "equipment", "thermal"]),
+            capacity: zod.number(),
+            isActive: zod.boolean(),
+            sortOrder: zod.number(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
     }),
   );
 
@@ -1831,6 +1962,7 @@ export const UpdateBookingBody = zod.object({
   internalNotes: zod.string().optional(),
   cancellationReason: zod.string().optional(),
   staffId: zod.string().optional(),
+  resourceId: zod.string().nullish().describe("Assign or clear room\/resource"),
 });
 
 export const UpdateBookingResponse = zod.object({
@@ -2128,6 +2260,19 @@ export const GetDashboardSummaryResponse = zod.object({
               zod.null(),
             ])
             .optional(),
+          resource: zod
+            .union([
+              zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                resourceType: zod.enum(["room", "equipment", "thermal"]),
+                capacity: zod.number(),
+                isActive: zod.boolean(),
+                sortOrder: zod.number(),
+              }),
+              zod.null(),
+            ])
+            .optional(),
         }),
       ),
   ),
@@ -2142,6 +2287,28 @@ export const GetDashboardSummaryResponse = zod.object({
     .describe(
       "Estimated voice outcome share this billing period (from meters)",
     ),
+  bookingResources: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        resourceType: zod.enum(["room", "equipment", "thermal"]),
+        capacity: zod.number(),
+        isActive: zod.boolean(),
+        sortOrder: zod.number(),
+      }),
+    )
+    .optional()
+    .describe("Active bookable resources (wellness room board)"),
+  packageCreditSummary: zod
+    .object({
+      ledgerCount: zod.number(),
+      activePackages: zod.number(),
+      creditsSold: zod.number(),
+      creditsRedeemed: zod.number(),
+      creditsRemaining: zod.number(),
+    })
+    .optional(),
 });
 
 /**

@@ -11,6 +11,10 @@ import {
   type BLOCKING_ONBOARDING_ACTS,
 } from "./onboarding-program";
 import type { OnboardingState } from "./onboarding-state";
+import {
+  welcomeVerticalAnnouncement,
+  type WelcomedVerticalAnnouncement,
+} from "./vertical-announcement";
 
 export type TenantExperienceSkin = {
   shell: string;
@@ -40,6 +44,8 @@ export type TenantExperience = {
   vocabulary: ReturnType<typeof businessVocabulary>;
   playbook: ReturnType<typeof getVerticalPlaybook>;
   onboardingExtras: ReturnType<typeof getVerticalOnboardingExtras>;
+  /** Vertical announcement welcomed by platform — capabilities flow to surfaces. */
+  announcement: WelcomedVerticalAnnouncement;
   skin: TenantExperienceSkin;
   onboarding: {
     appUnlocked: boolean;
@@ -139,12 +145,13 @@ export function resolveTenantExperience(args: {
     vocabulary,
     playbook,
     onboardingExtras,
+    announcement: welcomeVerticalAnnouncement(key),
     skin,
     onboarding: {
       appUnlocked,
       blockingPercent,
       tourPercent,
-      activationSteps: activationStepsFromState(state),
+      activationSteps: activationStepsFromState(state, key),
       welcomeHeadline,
       welcomeSubline,
     },

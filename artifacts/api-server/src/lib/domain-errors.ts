@@ -10,6 +10,7 @@ const DOMAIN_ERRORS: Record<string, { status: number; message: string; code?: st
     message: "That room or suite is full for the chosen time",
     code: "RESOURCE_AT_CAPACITY",
   },
+  RESOURCE_NOT_FOUND: { status: 404, message: "Room or resource not found", code: "RESOURCE_NOT_FOUND" },
   STAFF_NOT_ASSIGNED_TO_SERVICE: {
     status: 400,
     message: "That team member is not assigned to this service — update Team → Services first.",
@@ -58,5 +59,3 @@ export function replyRouteError(
   logRouteError(req, err, logMessage);
   sendError(res, req, 500, safeClientMessage(err, fallback));
 }
-
-// fix typo - sendError(res, req, ...)

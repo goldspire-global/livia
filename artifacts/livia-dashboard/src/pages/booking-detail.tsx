@@ -12,12 +12,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/format";
 import { pendingReasonLabel } from "@/lib/booking-pending";
+import { bookingExperienceCopy } from "@workspace/policy";
 import { canMarkNoShow, noShowUnavailableHint } from "@/lib/booking-appointment-window";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, User, Scissors, Clock, FileText, CalendarClock } from "lucide-react";
+import { ArrowLeft, User, Sparkles, Clock, FileText, CalendarClock } from "lucide-react";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import { BookingRescheduleDialog } from "@/components/booking/booking-reschedule-dialog";
 import { HelpSupportDialog } from "@/components/help-support-dialog";
 import { BookingContextRail } from "@/components/booking/booking-context-rail";
@@ -47,12 +49,6 @@ const TRANSITIONS: Record<string, string[]> = {
   NO_SHOW: [],
 };
 
-const ACTION_LABELS: Record<string, string> = {
-  CONFIRMED: "Confirm",
-  COMPLETED: "Mark Complete",
-  CANCELLED: "Cancel",
-  NO_SHOW: "No Show",
-};
 
 const ACTION_VARIANTS: Record<string, "default" | "destructive" | "outline"> = {
   CONFIRMED: "default",
@@ -66,6 +62,10 @@ export default function BookingDetailPage() {
   const { business } = useBusiness();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const businessVertical = (business as { vertical?: string } | null)?.vertical;
+  const businessCategory = (business as { category?: string } | null)?.category;
+  const exp = bookingExperienceCopy(businessVertical, businessCategory);
+  const op = useOperationalChrome(businessVertical);
 
   const bid = business?.id ?? "";
   const bkId = bookingId ?? "";
@@ -87,7 +87,7 @@ export default function BookingDetailPage() {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetBookingQueryKey(bid, bkId) });
           invalidateOperationalState(qc, bid);
-          toast({ title: `Booking ${newStatus.toLowerCase()}` });
+          toast({ title: exp.toastStatusUpdated(newStatus) });
         },
         onError: () => toast({ title: "Failed to update booking", variant: "destructive" }),
       }
@@ -122,12 +122,12 @@ export default function BookingDetailPage() {
     <OperationalPageShell
       data-testid="booking-detail-page"
       width="md"
-      title="Booking detail"
-      subtitle="Status, continuity, and next actions"
+      title={exp.detailPageTitle}
+      subtitle={exp.detailPageSubtitle}
       actions={
         <div className="flex items-center gap-2">
           <Link href="/bookings">
-            <Button variant="ghost" size="icon" data-testid="button-back" aria-label="Back to bookings">
+            <Button variant="ghost" size="icon" data-testid="button-back" aria-label={exp.backToListAria}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -157,9 +157,9 @@ export default function BookingDetailPage() {
             cancelPending={updateBooking.isPending}
             onCancelBooking={() => handleTransition("CANCELLED")}
           />
-          <Card>
+          <Card className={op.wellness ? "wellness-list-shell border-0 shadow-sm" : undefined}>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Status</CardTitle>
+              <CardTitle>{exp.statusSectionTitle}</CardTitle>
               <span
                 className={`text-xs font-semibold px-3 py-1 rounded-full border ${
                   STATUS_COLORS[(booking as any).status] ?? ""
@@ -174,7 +174,11 @@ export default function BookingDetailPage() {
               </div>
               {(booking as any).status === "PENDING" && (booking as any).pendingReason ? (
                 <p className="text-sm text-muted-foreground mb-3">
-                  {pendingReasonLabel((booking as any).pendingReason)}
+                  {pendingReasonLabel(
+                    (booking as any).pendingReason,
+                    businessVertical,
+                    businessCategory,
+                  )}
                 </p>
               ) : null}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
@@ -235,7 +239,7 @@ export default function BookingDetailPage() {
                         onClick={() => handleTransition(status)}
                         data-testid={`button-transition-${status}`}
                       >
-                        {ACTION_LABELS[status]}
+                        {exp.statusActions[status as keyof typeof exp.statusActions] ?? status}
                       </Button>
                     ))
                   : null}
@@ -269,17 +273,23 @@ export default function BookingDetailPage() {
             continuityConversationId={
               (booking as { continuityConversationId?: string }).continuityConversationId
             }
+            vertical={businessVertical}
+            category={businessCategory}
+            copy={exp}
           />
 
-          <Card data-testid="booking-detail-party">
+          <Card
+            data-testid="booking-detail-party"
+            className={op.wellness ? "wellness-list-shell border-0 shadow-sm" : undefined}
+          >
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Client & service</CardTitle>
+              <CardTitle className="text-base">{exp.partyCardTitle}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 text-sm">
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5" />
-                  Customer
+                  {exp.clientFieldLabel}
                 </p>
                 {(booking as any).customer ? (
                   <>
@@ -296,13 +306,13 @@ export default function BookingDetailPage() {
                     ) : null}
                   </>
                 ) : (
-                  <p className="text-muted-foreground">No customer</p>
+                  <p className="text-muted-foreground">{exp.noGuestLabel}</p>
                 )}
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Scissors className="h-3.5 w-3.5" />
-                  Service
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {exp.serviceFieldLabel}
                 </p>
                 {(booking as any).service ? (
                   <>
@@ -313,7 +323,7 @@ export default function BookingDetailPage() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-muted-foreground">No service</p>
+                  <p className="text-muted-foreground">{exp.noServiceLabel}</p>
                 )}
               </div>
             </CardContent>
@@ -322,7 +332,7 @@ export default function BookingDetailPage() {
           {Array.isArray((booking as any).media) && (booking as any).media.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Reference photos</CardTitle>
+                <CardTitle className="text-base">{exp.mediaCardTitle}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 {(booking as any).media.map((m: { id: string; url: string }) => (
@@ -341,7 +351,11 @@ export default function BookingDetailPage() {
           )}
 
           {(booking as any).notes ? (
-            <SettingsDisclosure title="Notes" description="Internal booking notes" defaultOpen={false}>
+            <SettingsDisclosure
+              title={exp.notesDisclosureTitle}
+              description={exp.notesDisclosureDescription}
+              defaultOpen={false}
+            >
               <p className="text-sm text-muted-foreground pt-1 flex items-start gap-2">
                 <FileText className="h-4 w-4 shrink-0 mt-0.5" />
                 {(booking as any).notes}
