@@ -2,7 +2,6 @@ import type { PresentationLayoutMorph } from "@workspace/policy";
 import {
   guestPublicHeroTagline,
   guestPublicCatalogLayout,
-  resolveWellnessOperatorCssPreset,
   PLATFORM_DEFAULT_PRESET_ID,
 } from "@workspace/policy";
 
@@ -49,15 +48,14 @@ export function useBeautyChrome(vertical?: string | null): boolean {
   return isBeautyVertical(vertical) && isBeautyPresentationPreset();
 }
 
-/** W4 list/inbox shells — any wellness tenant (operator preset resolves platform-default → harbour-light). */
+/** W4 list/inbox shells — any wellness tenant. */
 export function useWellnessChrome(vertical?: string | null): boolean {
   return isWellnessVertical(vertical);
 }
 
-/** Effective CSS after wellness operator defaulting (for public /b when API still stores platform-default). */
+/** Stored presentation CSS preset (no operator override). */
 export function wellnessEffectiveCssPreset(cssPreset?: string | null): string | null {
-  if (!cssPreset) return null;
-  return resolveWellnessOperatorCssPreset(cssPreset);
+  return cssPreset ?? null;
 }
 
 export const WELLNESS_NATIVE_MORPHS = ["atrium", "timeline-rail", "ledger"] as const;

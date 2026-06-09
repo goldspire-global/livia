@@ -55,12 +55,12 @@ test.describe("Full platform demo — API", () => {
     }
   });
 
-  test("bloom beauty exposes noir-dusk default skin on public API", async ({ request }) => {
+  test("bloom beauty exposes platform-default skin on public API", async ({ request }) => {
     const res = await request.get(`${apiBase}/api/public/b/bloom-beauty-dublin`);
     expect(res.ok(), await res.text()).toBeTruthy();
     const body = await res.json();
     expect(body.vertical).toBe("beauty");
-    expect(body.experienceSkin?.presentation).toBe("noir-dusk");
+    expect(body.experienceSkin?.presentation).toBe("platform-default");
     const mode = body.experienceSkin?.presentationColorMode;
     if (mode != null) {
       expect(mode).toBe("dark");

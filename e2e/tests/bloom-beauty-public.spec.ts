@@ -8,14 +8,14 @@ import { test, expect } from "@playwright/test";
 const slug = "bloom-beauty-dublin";
 
 test.describe("Bloom beauty public book", () => {
-  test("loads with noir-dusk dark presentation", async ({ page, request }) => {
+  test("loads with platform-default constellation presentation", async ({ page, request }) => {
     const apiBase = process.env.E2E_API_BASE ?? "http://127.0.0.1:3000";
     const pub = await request.get(`${apiBase}/api/public/b/${slug}`);
     if (!pub.ok()) {
       test.skip(true, "Bloom not seeded — run pnpm demo:repair");
     }
     const body = await pub.json();
-    expect(body.experienceSkin?.presentation).toBe("noir-dusk");
+    expect(body.experienceSkin?.presentation).toBe("platform-default");
 
     await page.goto(`/b/${slug}`);
     await expect(page.locator("body")).toContainText(/lash|manicure|book/i, { timeout: 20_000 });
@@ -28,7 +28,7 @@ test.describe("Bloom beauty public book", () => {
       background: getComputedStyle(document.documentElement).getPropertyValue("--background").trim(),
     }));
 
-    expect(theme.presentation).toBe("noir-dusk");
+    expect(theme.presentation).toBe("platform-default");
     expect(theme.dark).toBe(true);
     const lightness = Number.parseFloat(theme.background.split(/\s+/)[2] ?? "100");
     expect(lightness).toBeLessThan(20);

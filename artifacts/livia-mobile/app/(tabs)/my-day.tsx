@@ -245,7 +245,7 @@ export default function MyDayScreen() {
         <WellnessBreathField
           cssPreset={
             (currentBusiness as { experienceSkin?: { presentation?: string } } | null)?.experienceSkin
-              ?.presentation ?? "harbour-light"
+              ?.presentation ?? "platform-default"
           }
         />
       ) : null}

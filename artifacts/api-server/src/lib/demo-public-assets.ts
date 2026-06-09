@@ -1,4 +1,4 @@
-import { resolvePresentationPreset, type BusinessVertical } from "@workspace/policy";
+import type { BusinessVertical } from "@workspace/policy";
 import { updateBusiness } from "../services/businesses.service";
 
 /** Stable Unsplash URLs for demo public pages — no API keys, CDN-hosted. */
@@ -80,12 +80,10 @@ export async function applyDemoPublicBranding(
 ) {
   const pack = ASSETS[vertical];
   if (!pack) return;
-  const preset = resolvePresentationPreset(vertical);
   await updateBusiness(businessId, {
     coverImageUrl: pack.coverImageUrl,
     logoUrl: pack.logoUrl,
     instagramHandle: overrides?.instagramHandle ?? pack.instagramHandle,
-    presentationPresetId: preset.id,
   });
 }
 

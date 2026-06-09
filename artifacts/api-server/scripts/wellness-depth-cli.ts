@@ -17,5 +17,5 @@ for (const slug of slugs) {
   }
   await ensureWellnessDemoPresentationPreset(biz.id);
   await ensureWellnessShowcaseDepth(biz.id);
-  console.log(`✓ ${slug} (${biz.name}) — rooms + credits + harbour-light preset`);
+  console.log(`✓ ${slug} (${biz.name}) — rooms + credits`);
 }

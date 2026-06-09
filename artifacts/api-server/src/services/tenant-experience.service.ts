@@ -1,7 +1,6 @@
 import {
   resolveTenantExperience,
   resolvePresentationPreset,
-  resolveWellnessOperatorCssPreset,
   presentationPresetsActive,
   PLATFORM_DEFAULT_PRESET_ID,
   type BusinessVertical,
@@ -17,10 +16,6 @@ export async function getTenantExperienceForBusiness(businessId: string) {
   const vertical = biz.vertical as BusinessVertical;
   const presetId = biz.presentationPresetId ?? PLATFORM_DEFAULT_PRESET_ID;
   const preset = resolvePresentationPreset(vertical, presetId);
-  const cssPreset =
-    vertical === "wellness"
-      ? resolveWellnessOperatorCssPreset(preset.cssPreset)
-      : preset.cssPreset;
 
   return {
     ...resolveTenantExperience({
@@ -32,7 +27,7 @@ export async function getTenantExperienceForBusiness(businessId: string) {
     }),
     presentation: {
       presetId: preset.id,
-      cssPreset,
+      cssPreset: preset.cssPreset,
       label: preset.label,
       tokens: preset.tokens,
       brandAccentHex: biz.brandAccentHex ?? null,

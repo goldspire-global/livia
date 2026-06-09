@@ -645,10 +645,7 @@ export function presetPreservesVerticalGates(
 }
 
 /** Staging / dev gate — presentation picker + token bundles. */
-/**
- * Demo / wedge showcase tenants ship on a vertical-native skin (not platform-default)
- * so Settings → Appearance and `/b` previews match the vertical story on first walk-in.
- */
+/** Wedge / gateway beat visuals — not auto-applied to tenant `presentation_preset_id`. */
 export const DEMO_SHOWCASE_PRESENTATION_PRESET_ID: Record<BusinessVertical, string> = {
   hair: "hair-warm-chair",
   beauty: "beauty-noir-dusk",

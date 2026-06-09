@@ -10,18 +10,14 @@ import {
   ensureShowcasePets,
   refreshVerticalShowcaseShop,
 } from "./demo-showcase-depth";
-import {
-  PLATFORM_DEFAULT_PRESET_ID,
-  demoShowcasePresentationPresetId,
-  type BusinessVertical,
-} from "@workspace/policy";
+import { PLATFORM_DEFAULT_PRESET_ID, type BusinessVertical } from "@workspace/policy";
 import { inferDemoServiceImageUrl } from "../lib/experience-skin";
 import { ensureWellnessShowcaseDepth } from "./wellness-demo-depth";
 
-/** Showcase demo shops ship vertical-native skin so Appearance + `/b` match the wedge on first walk-in. */
+/** Demo shops stay on Constellation until the owner picks Appearance. */
 export async function ensureVerticalDemoPresentationPreset(
   businessId: string,
-  vertical: BusinessVertical,
+  _vertical: BusinessVertical,
 ): Promise<boolean> {
   const [row] = await db
     .select({ presentationPresetId: businessesTable.presentationPresetId })
@@ -29,11 +25,10 @@ export async function ensureVerticalDemoPresentationPreset(
     .where(eq(businessesTable.id, businessId))
     .limit(1);
   const id = row?.presentationPresetId;
-  const target = demoShowcasePresentationPresetId(vertical);
-  if (!id || id === PLATFORM_DEFAULT_PRESET_ID) {
+  if (!id) {
     await db
       .update(businessesTable)
-      .set({ presentationPresetId: target })
+      .set({ presentationPresetId: PLATFORM_DEFAULT_PRESET_ID })
       .where(eq(businessesTable.id, businessId));
     return true;
   }

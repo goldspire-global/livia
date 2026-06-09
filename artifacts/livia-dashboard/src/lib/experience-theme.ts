@@ -2,7 +2,6 @@ import {
   resolveJurisdictionCode,
   resolveVerticalKey,
   resolvePresentationLayoutMorph,
-  resolveWellnessOperatorCssPreset,
   type BusinessVertical,
   type PresentationLayoutMorph,
 } from "@workspace/policy";
@@ -276,10 +275,7 @@ export function applyTenantPresentationSurface(args: {
       persona: args.persona ?? null,
     });
   }
-  const cssPreset =
-    args.vertical === "wellness"
-      ? resolveWellnessOperatorCssPreset(args.cssPreset)
-      : args.cssPreset;
+  const cssPreset = args.cssPreset;
   if (cssPreset) {
     const mode = args.colorMode ?? resolvePresentationColorMode(cssPreset);
     applyPresentationTheme({
