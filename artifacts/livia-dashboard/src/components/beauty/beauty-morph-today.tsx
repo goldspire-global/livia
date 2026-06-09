@@ -2,9 +2,6 @@ import { Link } from "wouter";
 import { ArrowRight, Flower2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PresentationLayoutMorph } from "@workspace/policy";
-import { ownerHomeNeedsBriefingAction } from "@workspace/policy";
-import type { AtRiskGuestPreview } from "@workspace/policy";
-import { MorphOwnerSignalsFooter } from "@/components/dashboard/morph-owner-signals-footer";
 import { InboxPreviewPanel } from "@/components/dashboard/inbox-preview-panel";
 import {
   BeautyCockpitSchedule,
@@ -40,16 +37,6 @@ export type BeautyMorphTodayProps = {
   bookingResources?: RoomBoardResource[];
   onAssignBookingToResource?: (bookingId: string, resourceId: string | null) => Promise<boolean>;
   assigningBookingId?: string | null;
-  atRiskGuests?: AtRiskGuestPreview[];
-  recentVisitFeedback?: Array<{
-    id: string;
-    bookingId: string;
-    score: number;
-    comment: string | null;
-    createdAt: string;
-  }>;
-  lowFeedbackCount?: number;
-  signalsLoading?: boolean;
 };
 
 function greeting(firstName: string | null | undefined): string {
@@ -78,24 +65,7 @@ export function BeautyMorphTodayHome({
   bookingResources,
   onAssignBookingToResource,
   assigningBookingId,
-  atRiskGuests,
-  recentVisitFeedback,
-  lowFeedbackCount,
-  signalsLoading,
 }: BeautyMorphTodayProps) {
-  const needsAction = ownerHomeNeedsBriefingAction({
-    pendingCount,
-    handedOffCount: handoffCount,
-    atRiskCount: atRiskGuests?.length,
-    lowFeedbackCount,
-  });
-  const signalsFooter = (
-    <MorphOwnerSignalsFooter
-      atRiskGuests={atRiskGuests}
-      recentVisitFeedback={recentVisitFeedback}
-      loading={signalsLoading}
-    />
-  );
   if (morph === "split-inbox") {
     return (
       <div
@@ -125,7 +95,7 @@ export function BeautyMorphTodayHome({
             <Flower2 className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden />
             <p className="text-sm text-foreground/90 line-clamp-2">{livLine}</p>
           </div>
-          {(needsAction) && (
+          {(pendingCount > 0 || handoffCount > 0) && (
             <Link href={oneThingHref} className="shrink-0">
               <Button size="sm" className="rounded-full gap-1.5 beauty-briefing-cta">
                 {oneThingLabel}
@@ -169,7 +139,6 @@ export function BeautyMorphTodayHome({
             </Link>
           </section>
         </div>
-        {signalsFooter}
       </div>
     );
   }
@@ -228,7 +197,6 @@ export function BeautyMorphTodayHome({
             </>
           ) : null}
         </p>
-        {signalsFooter}
       </div>
     );
   }
@@ -257,7 +225,7 @@ export function BeautyMorphTodayHome({
         >
           <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">Liv</span>
           <p className="mt-1 text-foreground/90">{livLine}</p>
-          {needsAction ? (
+          {pendingCount > 0 ? (
             <Link href={oneThingHref} className="inline-block mt-3">
               <Button variant="outline" size="sm" className="rounded-full">
                 {oneThingLabel}
@@ -275,7 +243,6 @@ export function BeautyMorphTodayHome({
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         ) : null}
-        {signalsFooter}
       </div>
     );
   }
@@ -312,7 +279,7 @@ export function BeautyMorphTodayHome({
           todayTotal={todayTotal}
           completedToday={completedToday}
         />
-        {needsAction ? (
+        {pendingCount > 0 ? (
           <Link href={oneThingHref} className="inline-block mt-4">
             <Button size="sm" className="gap-1.5 rounded-full">
               {oneThingLabel}
@@ -320,7 +287,6 @@ export function BeautyMorphTodayHome({
             </Button>
           </Link>
         ) : null}
-        {signalsFooter}
       </div>
     );
   }
