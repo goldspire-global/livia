@@ -5,7 +5,7 @@ import { useBusiness } from "@/lib/business-context";
 import { apiFetch } from "@/lib/api-fetch";
 import { Button } from "@/components/ui/button";
 
-type Row = {
+export type VisitFeedbackRow = {
   id: string;
   bookingId: string;
   score: number;
@@ -13,18 +13,27 @@ type Row = {
   createdAt: string;
 };
 
-export function VisitFeedbackStrip() {
+type Props = {
+  /** When set, skips the extra API fetch (e.g. from dashboard summary). */
+  items?: VisitFeedbackRow[];
+  loading?: boolean;
+};
+
+export function VisitFeedbackStrip({ items: itemsProp, loading }: Props) {
   const { business } = useBusiness();
   const bid = business?.id ?? "";
-  const [rows, setRows] = useState<Row[]>([]);
+  const [fetched, setFetched] = useState<VisitFeedbackRow[]>([]);
 
   useEffect(() => {
-    if (!bid) return;
-    void apiFetch<{ data: Row[] }>(`/businesses/${bid}/visit-feedback`)
-      .then((r) => setRows(r.data ?? []))
-      .catch(() => setRows([]));
-  }, [bid]);
+    if (itemsProp !== undefined || !bid) return;
+    void apiFetch<{ data: VisitFeedbackRow[] }>(`/businesses/${bid}/visit-feedback`)
+      .then((r) => setFetched(r.data ?? []))
+      .catch(() => setFetched([]));
+  }, [bid, itemsProp]);
 
+  if (loading) return null;
+
+  const rows = itemsProp ?? fetched;
   const low = rows.filter((r) => r.score <= 3);
   if (rows.length === 0) return null;
 

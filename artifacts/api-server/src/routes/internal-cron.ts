@@ -153,6 +153,59 @@ router.post("/internal/cron/onboarding-stuck", async (req, res): Promise<void> =
   });
 });
 
+/** Daily commerce intelligence sync — fallback when Inngest is off. */
+router.post("/internal/cron/commerce-intelligence", async (req, res): Promise<void> => {
+  if (!authorize(req)) {
+    sendError(res, req, 401, "Unauthorized");
+    return;
+  }
+  if (isInngestWorkflowsEnabled()) {
+    res.json({
+      engine: "inngest",
+      message: "commerce-intelligence-daily workflow handles this when Inngest is on",
+    });
+    return;
+  }
+  const rows = await db.select({ id: businessesTable.id }).from(businessesTable);
+  const { runCommerceIntelligenceDaily } = await import(
+    "../services/commerce-weekly-digest.service"
+  );
+  let signalsSynced = 0;
+  let proposalsCreated = 0;
+  for (const row of rows) {
+    const result = await runCommerceIntelligenceDaily(row.id);
+    signalsSynced += result.signalsSynced;
+    proposalsCreated += result.proposalsCreated;
+  }
+  res.json({ processed: rows.length, signalsSynced, proposalsCreated });
+});
+
+/** Beauty fill-cycle rebook SMS — weekly dedupe per client + service. */
+router.post("/internal/cron/beauty-fill-cycle", async (req, res): Promise<void> => {
+  if (!authorize(req)) {
+    sendError(res, req, 401, "Unauthorized");
+    return;
+  }
+  const { sweepBeautyFillCycleNudges } = await import(
+    "../services/beauty-fill-cycle.service"
+  );
+  const result = await sweepBeautyFillCycleNudges();
+  res.json(result);
+});
+
+/** Multi-touch aftercare sequence steps (body-art / medspa). */
+router.post("/internal/cron/aftercare-sequences", async (req, res): Promise<void> => {
+  if (!authorize(req)) {
+    sendError(res, req, 401, "Unauthorized");
+    return;
+  }
+  const { processDueAftercareSequences } = await import(
+    "../services/guest-care-aftercare.service"
+  );
+  const result = await processDueAftercareSequences();
+  res.json(result);
+});
+
 router.post("/internal/cron/test-push", async (req, res): Promise<void> => {
   if (!authorize(req)) {
     sendError(res, req, 401, "Unauthorized");

@@ -30,6 +30,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarPlus, Check, ChevronRight, Clock, UserPlus } from "lucide-react";
+import { customFetch } from "@workspace/api-client-react";
+import { inferFillRecommendation, resolveVerticalKey } from "@workspace/policy";
 
 const STEPS = ["Client", "Service", "Team", "Time", "Confirm"] as const;
 const QUICK_STEPS = ["Client", "Schedule", "Confirm"] as const;
@@ -64,12 +66,19 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   const bid = business?.id ?? "";
 
   useEffect(() => {
-    const prefill = new URLSearchParams(window.location.search).get("customerId");
-    if (prefill) {
-      setCustomerId(prefill);
+    const params = new URLSearchParams(window.location.search);
+    const prefillCustomer = params.get("customerId");
+    const prefillService = params.get("serviceId");
+    if (prefillCustomer) {
+      setCustomerId(prefillCustomer);
       if (quick) setStep("Schedule");
     }
+    if (prefillService) setServiceId(prefillService);
   }, [quick]);
+
+  const businessVertical = (business as { vertical?: string; category?: string } | null)?.vertical;
+  const verticalKey = resolveVerticalKey(businessVertical, (business as { category?: string } | null)?.category);
+
   const debouncedCustomerSearch = useDebouncedValue(customerSearch, 300);
 
   const { data: customersData, isLoading: customersLoading } = useListCustomers(
@@ -105,6 +114,32 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   const customers = (customersData as { data?: unknown[] })?.data ?? customersData ?? [];
   const services = servicesData ?? [];
   const staff = staffData ?? [];
+
+  useEffect(() => {
+    if (!bid || !customerId || verticalKey !== "beauty" || serviceId) return;
+    const svcList = Array.isArray(services) ? services : [];
+    if (!svcList.length) return;
+    void customFetch<{
+      recentBookings?: Array<{ serviceId: string; status: string; startAt: string; endAt?: string }>;
+    }>(`/api/businesses/${bid}/customers/${customerId}`).then((detail) => {
+      const lastCompleted = detail.recentBookings?.find((b) => b.status === "COMPLETED");
+      if (!lastCompleted) return;
+      const lastSvc = svcList.find((s) => s.id === lastCompleted.serviceId) as
+        | { serviceKind?: string | null; rebookIntervalDays?: number | null }
+        | undefined;
+      const rec = inferFillRecommendation({
+        serviceKind: (lastSvc?.serviceKind as import("@workspace/policy").BeautyServiceKind | null) ?? "fill",
+        rebookIntervalDays: lastSvc?.rebookIntervalDays ?? 14,
+        lastVisitAt: lastCompleted.endAt ?? lastCompleted.startAt,
+      });
+      const targetKind = rec.suggestFullSet ? "full_set" : rec.dueForFill ? "fill" : lastSvc?.serviceKind ?? "fill";
+      const match =
+        svcList.find((s) => (s as { serviceKind?: string }).serviceKind === targetKind) ??
+        svcList.find((s) => s.id === lastCompleted.serviceId);
+      if (match) setServiceId(match.id);
+    });
+  }, [bid, customerId, verticalKey, serviceId, services]);
+
   const availableSlots = useMemo(() => {
     const raw = (
       (slotsData as { slots?: { startAt: string; available: boolean }[] })?.slots ?? []

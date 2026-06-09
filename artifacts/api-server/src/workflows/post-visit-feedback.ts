@@ -5,6 +5,7 @@ import { ensureBookingGuestAccess } from "../services/booking-guest-access.servi
 import { db, businessesTable, customersTable, bookingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createTwilioClient } from "@workspace/integrations-twilio";
+import { resolveGuestVisitTokenUrl } from "../lib/guest-public-urls";
 
 const DELAY_MS = 24 * 60 * 60 * 1000;
 
@@ -60,10 +61,7 @@ export const postVisitFeedback = inngest.createFunction(
       ensureBookingGuestAccess(businessId, bookingId),
     );
 
-    const base =
-      process.env["PUBLIC_BOOKING_BASE_URL"]?.replace(/\/$/, "") ??
-      "http://127.0.0.1:5173";
-    const link = `${base}/b/${biz.slug}/visit/${token}`;
+    const link = resolveGuestVisitTokenUrl(biz.slug, token);
 
     const twilioSid = process.env["TWILIO_ACCOUNT_SID"];
     const twilioToken = process.env["TWILIO_AUTH_TOKEN"];

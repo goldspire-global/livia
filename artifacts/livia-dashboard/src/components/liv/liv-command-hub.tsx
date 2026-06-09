@@ -7,7 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sparkles, Inbox, LayoutGrid, Settings, ExternalLink, RefreshCw } from "lucide-react";
 import { StuckContinuityCard } from "@/components/stuck-continuity-card";
 import { DriftRecoveryCard } from "@/components/drift-recovery-card";
+import { BeautyFillCycleCard } from "@/components/beauty/beauty-fill-cycle-card";
 import { LivMomentsStrip } from "@/components/ritual/liv-moments-strip";
+import { OwnerLivOpsPanel } from "@/components/liv/owner-liv-ops-panel";
+import { OwnerIntelligenceStack } from "@/components/dashboard/owner-intelligence-stack";
+import { ActivityFeedPanel } from "@/components/dashboard/activity-feed-panel";
 
 /**
  * Liv as the visible centre of the owner/org-admin day — briefing, inbox, toolkit, public preview.
@@ -38,7 +42,7 @@ export function LivCommandHub({
     }
   }
 
-  const publicUrl = slug ? `/b/${slug}` : null;
+  const publicUrl = slug ? `/book/${slug}` : null;
 
   return (
     <Card
@@ -48,7 +52,7 @@ export function LivCommandHub({
       <CardHeader className={compact ? "pb-2" : undefined}>
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
-          Liv — your operating brain
+          Liv — runs the floor with you
         </CardTitle>
         <CardDescription>
           Liv works from your calendar, inbox, and shop settings — so replies and bookings stay accurate
@@ -97,8 +101,16 @@ export function LivCommandHub({
           </p>
         ) : null}
         {density === "full" && !compact ? <StuckContinuityCard /> : null}
+        {density === "full" && !compact ? <BeautyFillCycleCard /> : null}
         {density === "full" && !compact ? <DriftRecoveryCard /> : null}
         {density === "full" && !compact ? <LivMomentsStrip /> : null}
+        {density === "focused" ? (
+          <div className="space-y-3">
+            <OwnerLivOpsPanel compact />
+            <OwnerIntelligenceStack variant="embedded" />
+          </div>
+        ) : null}
+        {density === "full" && !compact ? <ActivityFeedPanel limit={6} /> : null}
       </CardContent>
     </Card>
   );

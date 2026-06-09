@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link } from "wouter";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, useLocation } from "wouter";
 import { useBusiness } from "@/lib/business-context";
 import { legalUrl } from "@/lib/surface-urls";
 import {
@@ -24,23 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Settings,
-  Copy,
-  ExternalLink,
-  Globe,
-  Sparkles,
-  KeyRound,
-  Palette,
-  UserCircle,
-} from "lucide-react";
+import { Settings, Sparkles, Palette, UserCircle } from "lucide-react";
+import { PublicBookLinkCard } from "@/components/settings/public-book-link-card";
+import { GuestVaultOwnerCallout } from "@/components/customers/guest-vault-owner-callout";
 import { useForm, Controller } from "react-hook-form";
 import CommunicationsControls from "@/components/communications-controls";
 import { NotificationPreferencesControls } from "@/components/notification-preferences-controls";
-import BillingControls from "@/components/billing-controls";
-import PeerInsightsControls from "@/components/peer-insights-controls";
-import IntegrationsControls from "@/components/integrations-controls";
+import { SettingsBillingTab } from "@/components/settings/settings-billing-tab";
 import OperationalPolicyControls from "@/components/operational-policy-controls";
+import { GuestCarePolicyControls } from "@/components/settings/guest-care-policy-controls";
 import { BookingResourcesPanel } from "@/components/settings/booking-resources-panel";
 import { WellnessIntegrationsPanel } from "@/components/settings/wellness-integrations-panel";
 import { MessageSquare, CreditCard, Plug, Shield } from "lucide-react";
@@ -55,23 +47,45 @@ import {
   canViewBilling,
   type SettingsTabId,
 } from "@/lib/settings-persona";
+
+const SETTINGS_TAB_LEGACY: Record<string, SettingsTabId> = {
+  general: "shop",
+  ai: "liv",
+  audit: "legal",
+  policy: "legal",
+  ownership: "legal",
+  team: "shop",
+  integrations: "billing",
+  demo: "account",
+};
+
+function resolveSettingsTabFromUrl(visibleTabs: SettingsTabId[]): SettingsTabId {
+  if (typeof window === "undefined") return visibleTabs[0] ?? "shop";
+  const raw = new URLSearchParams(window.location.search).get("tab");
+  const mapped = raw ? (SETTINGS_TAB_LEGACY[raw] ?? (raw as SettingsTabId)) : null;
+  if (mapped && visibleTabs.includes(mapped)) return mapped;
+  return visibleTabs[0] ?? "shop";
+}
 import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
 import { PageFrame } from "@/components/ui/page-frame";
 import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import {
-  showBookingResourcesSettings,
-  showPeerInsightsForTenant,
-} from "@workspace/policy";
+import { showBookingResourcesSettings } from "@workspace/policy";
 import { OwnershipTransferPanel } from "@/components/lifecycle/ownership-transfer-panel";
+import { GuestPoliciesPanel } from "@/components/settings/guest-policies-panel";
 import { AccountSettingsPanel } from "@/components/settings/account-settings-panel";
 import {
   StudioProfileForm,
   type StudioProfileFormValues,
 } from "@/components/settings/studio-profile-form";
 import { PublicAppearancePanel } from "@/components/settings/public-appearance-panel";
+import { LivSetupPanel } from "@/components/liv/liv-setup-panel";
 import { AuditLogPanel } from "@/components/audit/audit-log-panel";
 import { Users, FileText } from "lucide-react";
+import {
+  scrollToSettingsAnchor,
+  SETTINGS_URL_SYNC_EVENT,
+} from "@/lib/commerce-fix-navigation";
 
 interface AIForm {
   aiEnabled: boolean;
@@ -95,32 +109,52 @@ export default function SettingsPage() {
   const canTransferOwnership = effectiveRole === "OWNER";
   const [brandFields, setBrandFields] = useState({ logoUrl: "", coverImageUrl: "" });
 
-  const resolvedDefaultTab = useMemo((): SettingsTabId => {
-    if (typeof window === "undefined") return visibleTabs[0] ?? "shop";
-    const raw = new URLSearchParams(window.location.search).get("tab");
-    const legacy: Record<string, SettingsTabId> = {
-      general: "shop",
-      ai: "liv",
-      audit: "legal",
-      policy: "shop",
-      team: "shop",
-      integrations: "billing",
-      demo: "account",
-    };
-    const mapped = raw ? (legacy[raw] ?? (raw as SettingsTabId)) : null;
-    if (mapped && visibleTabs.includes(mapped)) return mapped;
-    return visibleTabs[0] ?? "shop";
-  }, [visibleTabs]);
+  const [, setLocation] = useLocation();
+  const [settingsTab, setSettingsTab] = useState<SettingsTabId>(() =>
+    resolveSettingsTabFromUrl(visibleTabs),
+  );
 
-  const [settingsTab, setSettingsTab] = useState<SettingsTabId>(resolvedDefaultTab);
+  const syncSettingsFromUrl = useCallback(
+    (scrollToHash = true) => {
+      const tab = resolveSettingsTabFromUrl(visibleTabs);
+      setSettingsTab(tab);
+      if (!scrollToHash || typeof window === "undefined") return;
+      const hash = window.location.hash.replace("#", "");
+      if (!hash) return;
+      window.setTimeout(() => {
+        scrollToSettingsAnchor(
+          `${window.location.pathname}${window.location.search}#${hash}`,
+        );
+      }, 200);
+    },
+    [visibleTabs],
+  );
+
   useEffect(() => {
-    setSettingsTab(resolvedDefaultTab);
-  }, [resolvedDefaultTab]);
+    syncSettingsFromUrl(true);
+    const onUrlChange = () => syncSettingsFromUrl(true);
+    window.addEventListener("popstate", onUrlChange);
+    window.addEventListener(SETTINGS_URL_SYNC_EVENT, onUrlChange);
+    return () => {
+      window.removeEventListener("popstate", onUrlChange);
+      window.removeEventListener(SETTINGS_URL_SYNC_EVENT, onUrlChange);
+    };
+  }, [syncSettingsFromUrl]);
+
+  const onSettingsTabChange = useCallback(
+    (tab: SettingsTabId) => {
+      setSettingsTab(tab);
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", tab);
+      const hash = window.location.hash;
+      setLocation(`/settings?${params.toString()}${hash}`);
+    },
+    [setLocation],
+  );
 
   const bid = business?.id ?? "";
   const businessVertical = (business as { vertical?: string } | null)?.vertical;
   const vocab = verticalPackUi(businessVertical, business?.category);
-  const showPeerInsights = showPeerInsightsForTenant(businessVertical);
   const showBookingResources = showBookingResourcesSettings(businessVertical);
 
   const { data: biz, isLoading } = useGetBusiness(
@@ -199,7 +233,7 @@ export default function SettingsPage() {
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetBusinessQueryKey(bid) });
-          toast({ title: "AI assistant updated" });
+          toast({ title: "Liv booking-page settings saved" });
         },
         onError: () =>
           toast({ title: "Failed to save AI settings", variant: "destructive" }),
@@ -208,13 +242,7 @@ export default function SettingsPage() {
   }
 
   const b = biz as any;
-  const bookingUrl = b ? `${window.location.origin}/b/${b.slug}` : "";
-
-  function copyLink() {
-    if (!bookingUrl) return;
-    navigator.clipboard.writeText(bookingUrl);
-    toast({ title: "Booking link copied" });
-  }
+  const bookingSlug = b?.slug as string | undefined;
 
   return (
     <PageFrame width="md" data-testid="settings-page">
@@ -223,7 +251,7 @@ export default function SettingsPage() {
         title="Settings"
         subtitle={
           persona === "owner" || persona === "org_admin"
-            ? "Your login, studio profile, guest look, Liv, channels, and billing."
+            ? "Your login, studio profile, guest look, Liv, channels, billing, and legal policies."
             : persona === "manager"
               ? "Your login, Liv tone, and channels — calendar stays on Bookings."
               : "Your login, notifications, and shop basics."
@@ -238,7 +266,7 @@ export default function SettingsPage() {
       ) : (
         <Tabs
           value={settingsTab}
-          onValueChange={(v) => setSettingsTab(v as SettingsTabId)}
+          onValueChange={(v) => onSettingsTabChange(v as SettingsTabId)}
           className="space-y-4"
         >
           <TabsList className="flex h-auto w-full max-w-full flex-nowrap gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -252,14 +280,12 @@ export default function SettingsPage() {
                 comms: <MessageSquare className="h-4 w-4 mr-1.5 shrink-0" />,
                 team: <Users className="h-4 w-4 mr-1.5 shrink-0" />,
                 billing: <CreditCard className="h-4 w-4 mr-1.5 shrink-0" />,
-                ownership: <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />,
                 integrations: <Plug className="h-4 w-4 mr-1.5 shrink-0" />,
                 legal: <FileText className="h-4 w-4 mr-1.5 shrink-0" />,
               };
               const label =
                 tab === "shop" ? vocab.locationNoun : SETTINGS_TAB_LABELS[tab];
               if (tab === "billing" && !showBilling) return null;
-              if (tab === "ownership" && !canTransferOwnership) return null;
               if (tab === "comms" && !showComms) return null;
               return (
                 <TabsTrigger
@@ -288,41 +314,20 @@ export default function SettingsPage() {
                 View-only for your role — ask the owner to change {vocab.locationNoun.toLowerCase()} details.
               </p>
             )}
-            {b ? (
-              <div
-                className="flex items-center gap-2 rounded-lg border border-border/80 bg-muted/30 px-3 py-2.5"
-                data-testid="settings-booking-link-strip"
-              >
-                <Globe className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                <span
-                  className="flex-1 text-xs font-mono truncate text-muted-foreground"
-                  data-testid="text-booking-url"
-                  title={bookingUrl}
-                >
-                  Public booking · /b/{b?.slug}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  aria-label="Copy booking link"
-                  onClick={copyLink}
-                  data-testid="button-copy-link"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-                <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    aria-label="Open booking link"
-                    data-testid="button-open-link"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Button>
-                </a>
-              </div>
+            {bookingSlug ? (
+              <>
+                <PublicBookLinkCard
+                  slug={bookingSlug}
+                  businessName={b?.name as string | undefined}
+                  compact
+                  onCopy={() => toast({ title: "Booking link copied" })}
+                />
+                <GuestVaultOwnerCallout
+                  slug={bookingSlug}
+                  businessName={b?.name as string | undefined}
+                  compact
+                />
+              </>
             ) : null}
 
             <Card>
@@ -345,18 +350,27 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {(persona === "owner" || persona === "org_admin" || persona === "manager") && (
+            {businessVertical === "wellness" && (persona === "owner" || persona === "org_admin") ? (
               <SettingsDisclosure
-                title="Booking policies"
-                description="Deposits, buffers, and resources Liv uses when confirming."
+                title="Wellness integrations"
+                description="Broker sync and depth tools for spa operations."
                 defaultOpen={false}
               >
-                <div className="space-y-4 pt-1">
-                  <OperationalPolicyControls />
-                  {showBookingResources ? <BookingResourcesPanel /> : null}
-                  {businessVertical === "wellness" ? <WellnessIntegrationsPanel /> : null}
-                </div>
+                <WellnessIntegrationsPanel />
               </SettingsDisclosure>
+            ) : null}
+            {(persona === "owner" || persona === "org_admin" || persona === "manager") && (
+              <p className="text-sm text-muted-foreground rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5">
+                Booking terms, deposits, and cancellation rules live in{" "}
+                <button
+                  type="button"
+                  className="text-primary font-medium hover:underline"
+                  onClick={() => onSettingsTabChange("legal")}
+                >
+                  Legal &amp; trust
+                </button>
+                .
+              </p>
             )}
           </TabsContent>
 
@@ -379,6 +393,7 @@ export default function SettingsPage() {
           {/* ===== Liv tab ===== */}
           {visibleTabs.includes("liv") && (
           <TabsContent value="liv" className="space-y-4 mt-0">
+            <LivSetupPanel compact />
             {!livEditable && (
               <p className="text-sm text-muted-foreground">You do not have permission to edit Liv settings.</p>
             )}
@@ -401,9 +416,9 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                         <div className="space-y-0.5">
-                          <Label className="text-sm font-medium">Enable AI assistant</Label>
+                          <Label className="text-sm font-medium">Liv on your booking page</Label>
                           <p className="text-xs text-muted-foreground">
-                            Show the &quot;Chat with Liv&quot; button on your public booking page.
+                            Show Liv on `/b` so guests can ask questions and book when you allow it.
                           </p>
                         </div>
                         <Switch
@@ -421,10 +436,9 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                         <div className="space-y-0.5">
-                          <Label className="text-sm font-medium">Allow auto-booking</Label>
+                          <Label className="text-sm font-medium">Let Liv confirm bookings</Label>
                           <p className="text-xs text-muted-foreground">
-                            Let the AI confirm bookings directly. Otherwise it will collect
-                            details and you confirm manually.
+                            Liv can lock in a slot on the spot. Off means she gathers details and you confirm.
                           </p>
                         </div>
                         <Switch
@@ -443,7 +457,7 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <Label>Tone of voice</Label>
                         <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger aria-label="Liv AI tone" data-testid="select-ai-tone">
+                          <SelectTrigger aria-label="Liv tone on booking page" data-testid="select-ai-tone">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -466,7 +480,7 @@ export default function SettingsPage() {
                     <Label>Greeting message</Label>
                     <Textarea
                       {...aiForm.register("aiGreeting")}
-                      placeholder="Hi! I'm Liv, your booking assistant. How can I help?"
+                      placeholder="Hi — I'm Liv. Ask about services, hours, or pick a time to visit."
                       rows={2}
                       data-testid="input-ai-greeting"
                     />
@@ -476,16 +490,23 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Knowledge & house rules</Label>
+                    <Label>Extra chat notes</Label>
                     <Textarea
                       {...aiForm.register("aiKnowledge")}
-                      placeholder="e.g. We don't do bleaching after 5pm. Walk-ins welcome on Sundays. Parking on Elm Street."
-                      rows={5}
+                      placeholder="Optional extras only — house rules and policies belong in Legal & trust."
+                      rows={4}
                       data-testid="input-ai-knowledge"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Free-form notes the AI will use to answer questions. Mention policies,
-                      preferences, location quirks, anything you'd tell a new receptionist.
+                      Booking terms and house rules are in{" "}
+                      <button
+                        type="button"
+                        className="text-primary hover:underline"
+                        onClick={() => onSettingsTabChange("legal")}
+                      >
+                        Legal &amp; trust
+                      </button>
+                      . Use this field only for optional tone or one-off chat hints.
                     </p>
                   </div>
 
@@ -504,11 +525,11 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
             <p className="text-sm text-muted-foreground rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5">
-              Day-to-day rules and inbox behaviour are in{" "}
+              Day-to-day rules and inbox behaviour live in{" "}
               <Link href="/toolkit" className="text-primary font-medium hover:underline">
-                Liv hub
+                Advanced Liv
               </Link>
-              . This tab is only tone and guest-facing chat on `/b`.
+              . This tab is guest-facing tone and chat on `/b` only.
             </p>
           </TabsContent>
           )}
@@ -542,24 +563,54 @@ export default function SettingsPage() {
 
           {visibleTabs.includes("legal") && (
             <TabsContent value="legal" className="space-y-4 mt-0">
+              <GuestPoliciesPanel editable={shopEditable || livEditable} />
+
+              {(persona === "owner" || persona === "org_admin" || persona === "manager") && (
+                <SettingsDisclosure
+                  id="booking-policies-legal"
+                  title="Booking rules"
+                  description="Deposits, buffers, and cancellation windows — Liv uses these with your terms above."
+                  defaultOpen={false}
+                  className="scroll-mt-24"
+                >
+                  <div className="space-y-4 pt-1">
+                    <OperationalPolicyControls />
+                    <GuestCarePolicyControls />
+                    {showBookingResources ? <BookingResourcesPanel /> : null}
+                  </div>
+                </SettingsDisclosure>
+              )}
+
+              {canTransferOwnership ? (
+                <SettingsDisclosure
+                  id="ownership-succession"
+                  title="Ownership succession"
+                  description="Pass the keys when you sell or step back — rare, kept here so it is not in your everyday settings."
+                  defaultOpen={false}
+                  className="scroll-mt-24"
+                >
+                  <div className="pt-2">
+                    <OwnershipTransferPanel />
+                  </div>
+                </SettingsDisclosure>
+              ) : null}
+
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Legal & trust</CardTitle>
-                  <CardDescription>Policies your guests and team can rely on.</CardDescription>
+                  <CardTitle className="text-base">Livia platform agreements</CardTitle>
+                  <CardDescription>
+                    Your contract with Livia as the software provider — separate from guest-facing
+                    policies above.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <Link href="/guides">
-                    <Button variant="outline" size="sm">
-                      Help & setup guides
-                    </Button>
-                  </Link>
+                <CardContent className="space-y-2 text-sm">
                   <a
                     href={legalUrl("privacy")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline block"
                   >
-                    Privacy policy
+                    Livia privacy policy
                   </a>
                   <a
                     href={legalUrl("tos")}
@@ -567,7 +618,7 @@ export default function SettingsPage() {
                     rel="noopener noreferrer"
                     className="text-primary hover:underline block"
                   >
-                    Terms of service
+                    Livia terms of service
                   </a>
                   <a
                     href={legalUrl("dpa")}
@@ -579,6 +630,7 @@ export default function SettingsPage() {
                   </a>
                 </CardContent>
               </Card>
+
               {(persona === "owner" || persona === "org_admin") && bid ? (
                 <SettingsDisclosure
                   title="Activity log"
@@ -591,23 +643,9 @@ export default function SettingsPage() {
             </TabsContent>
           )}
 
-          {canTransferOwnership && (
-            <TabsContent value="ownership" className="space-y-6 mt-0">
-              <OwnershipTransferPanel />
-            </TabsContent>
-          )}
-
-          {showBilling && visibleTabs.includes("billing") && (
-            <TabsContent value="billing" className="space-y-6 mt-0">
-              <BillingControls />
-              {showPeerInsights ? <PeerInsightsControls /> : null}
-              <SettingsDisclosure
-                title="Imports & integrations"
-                description="Calendar sync, CSV clients, and third-party tools."
-                defaultOpen={false}
-              >
-                <IntegrationsControls />
-              </SettingsDisclosure>
+          {visibleTabs.includes("billing") && (
+            <TabsContent value="billing" className="mt-0">
+              <SettingsBillingTab />
             </TabsContent>
           )}
 

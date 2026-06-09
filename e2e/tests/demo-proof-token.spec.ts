@@ -24,7 +24,7 @@ test.describe("Demo guest proof token", () => {
     expect(retry.ok(), await retry.text()).toBeTruthy();
     const body = (await retry.json()) as { token?: string; path?: string };
     expect(body.token?.length).toBeGreaterThan(8);
-    expect(body.path).toMatch(new RegExp(`/b/${SLUG}/proof/`));
+    expect(body.path).toMatch(new RegExp(`/book/${SLUG}/proof/`));
   });
 
   test("guest proof page renders approve/reject", async ({ page, request }) => {

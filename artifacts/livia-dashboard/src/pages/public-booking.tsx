@@ -11,7 +11,21 @@ import {
 import { applyAppearancePreviewFromSearch } from "@/lib/appearance-preview-mode";
 import { playCelebrationChime, celebrationEnabled } from "@/lib/celebrate";
 import { publicGuestPwaEnabled, usePublicGuestPwa } from "@/lib/public-guest-pwa";
-import { Link, useParams } from "wouter";
+import { Link } from "wouter";
+import PublicShopPage from "@/pages/public-shop";
+import { PublicRetailCartBar } from "@/components/public-booking/public-retail-cart-bar";
+import {
+  addToRetailCart,
+  clearRetailCart,
+  readRetailCart,
+  retailCartApiItems,
+  setRetailCartQty,
+  type RetailCart,
+} from "@/lib/retail-cart";
+import type { PublicRetailProduct } from "@/components/public-booking/public-beauty-shop";
+import { isPublicShopPath } from "@/lib/public-guest-route-params";
+import { useGuestBookSlug } from "@/lib/use-guest-book-slug";
+import { guestBookTokenPath, isPublicRetailVertical } from "@workspace/policy";
 import {
   useGetPublicBusiness,
   useGetPublicSlots,
@@ -58,13 +72,7 @@ import { PublicBookPolicyFooter } from "@/components/public-booking/public-book-
 import { PublicBookingStickySummary } from "@/components/public-booking/public-booking-sticky-summary";
 import { PublicBookingSummaryCard } from "@/components/public-booking/public-booking-summary-card";
 import { PublicBookingTrustStrip } from "@/components/public-booking/public-booking-trust-strip";
-import { PublicCareNotes } from "@/components/public-booking/public-care-notes";
-import { PublicStaffStrip } from "@/components/public-booking/public-staff-strip";
-import { PublicServiceCatalog } from "@/components/public-booking/public-service-catalog";
-import {
-  PublicBookBeautyDualCta,
-  PublicBookBeautyTrustFooter,
-} from "@/components/public-booking/public-book-beauty-chrome";
+import { PublicBookServicesStep } from "@/components/public-booking/public-book-services-step";
 import {
   beautyPublicHeroTagline,
   beautyPublicHeroTitle,
@@ -77,6 +85,7 @@ import {
   wellnessPublicCatalogLayout,
 } from "@/lib/presentation-layout";
 import {
+  dedupePublicSlotsByStartAt,
   guardSectionTitle,
   guessMedspaProcedureCode,
   publicBookingLayout,
@@ -84,9 +93,9 @@ import {
   type PublicPolicyTrust,
   type PublicServiceRow,
 } from "@/lib/public-booking-helpers";
+import { PublicBookingTimePicker } from "@/components/public-booking/public-booking-time-picker";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { businessVocabulary, guestPublicExperience, isWellnessGiftPublicBookEnabled, resolveWellnessExperience } from "@workspace/policy";
-import { PublicWellnessGiftPanel } from "@/components/public/public-wellness-gift-panel";
+import { businessVocabulary, guestPublicExperience, resolveWellnessExperience } from "@workspace/policy";
 import { cn } from "@/lib/utils";
 
 type Step = "services" | "slots" | "details" | "consent" | "confirmed";
@@ -126,6 +135,7 @@ interface PublicBusiness {
   aiDisclosureChatFirstMessage?: string;
   aiDisclosureFooterLine?: string;
   bookingTermsBlock?: string;
+  privacyNoticeBlock?: string;
   depositPolicySummary?: string;
   publicCta?: string;
   policyTrust?: PublicPolicyTrust;
@@ -143,6 +153,18 @@ interface PublicBusiness {
   medspaProcedures?: MedspaProcedure[];
   regulatoryFooter?: string[];
   publicFeaturedServiceIds?: string[];
+  retailStore?: {
+    settings: { enabled: boolean; title: string };
+    products: Array<{
+      id: string;
+      name: string;
+      description?: string | null;
+      priceMinor: number;
+      currency: string;
+      imageUrl?: string | null;
+      category?: string | null;
+    }>;
+  };
   services: PublicService[];
   staff: PublicStaff[];
   countryPack?: {
@@ -230,7 +252,11 @@ function syncPublicBookingServiceQuery(serviceId: string | null) {
 }
 
 export default function PublicBookingPage() {
-  const { slug } = useParams<{ slug: string }>();
+  if (typeof window !== "undefined" && isPublicShopPath(window.location.pathname)) {
+    return <PublicShopPage />;
+  }
+
+  const slug = useGuestBookSlug();
   const [step, setStep] = useState<Step>("services");
   const { toast } = useToast();
   const [selectedService, setSelectedService] = useState<PublicService | null>(null);
@@ -246,11 +272,30 @@ export default function PublicBookingPage() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [guardAnswers, setGuardAnswers] = useState<Record<string, string>>({});
+  const [partnerFirstName, setPartnerFirstName] = useState("");
+  const [partnerLastName, setPartnerLastName] = useState("");
+  const [partnerEmail, setPartnerEmail] = useState("");
+  const [partnerPhone, setPartnerPhone] = useState("");
+  const [guestContext, setGuestContext] = useState<{
+    recognized: boolean;
+    patchTestValid?: boolean;
+    lastVisits?: Array<{ serviceId: string; fillHint?: string | null }>;
+    preferredStaff?: { id: string; displayName: string } | null;
+    pets?: Array<{ id: string; name: string; species: string; breed?: string | null }>;
+  } | null>(null);
+  const [selectedPetIds, setSelectedPetIds] = useState<string[]>([]);
+  const [consultReferenceUrl, setConsultReferenceUrl] = useState("");
+  const [waitlistBusy, setWaitlistBusy] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [usePackageCredit, setUsePackageCredit] = useState(false);
   const [validationErr, setValidationErr] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
   const [medspaProcedure, setMedspaProcedure] = useState("");
   const [consentSignature, setConsentSignature] = useState("");
   const [saveToMyLivia, setSaveToMyLivia] = useState(true);
+  const [retailCart, setRetailCart] = useState<RetailCart | null>(null);
+  const [retailCheckoutBusy, setRetailCheckoutBusy] = useState(false);
+  const [combinedCheckoutBusy, setCombinedCheckoutBusy] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const [consentAgreed, setConsentAgreed] = useState(false);
   const [chatMount, setChatMount] = useState(false);
@@ -262,6 +307,11 @@ export default function PublicBookingPage() {
   const sl = slug ?? "";
 
   usePublicGuestPwa(sl);
+
+  useEffect(() => {
+    if (!sl) return;
+    setRetailCart(readRetailCart(sl));
+  }, [sl]);
 
   const { data: bizData, isLoading: isLoadingBiz } = useGetPublicBusiness(
     sl,
@@ -364,7 +414,10 @@ export default function PublicBookingPage() {
     return () => window.clearTimeout(id);
   }, [isLoadingBiz, b, aiOn, step]);
 
-  const availableSlots = useMemo(() => slots.filter((s) => s.available), [slots]);
+  const availableSlots = useMemo(
+    () => dedupePublicSlotsByStartAt(slots.filter((s) => s.available)),
+    [slots],
+  );
 
   const vocab = useMemo(
     () => businessVocabulary(b?.vertical, b?.category),
@@ -382,21 +435,58 @@ export default function PublicBookingPage() {
   const staffForward = layout === "staff-forward";
   const presentationPreset = b?.experienceSkin?.presentation ?? null;
   const beautyCssPreset = presentationPreset;
-  const beautyPublic =
-    isBeautyVertical(b?.vertical) && isBeautyPresentationPreset(beautyCssPreset);
+  const beautyBook = isBeautyVertical(b?.vertical);
+  const beautyPublic = beautyBook && isBeautyPresentationPreset(beautyCssPreset);
   const wellnessPublic =
     isWellnessVertical(b?.vertical) && isWellnessPresentationPreset(presentationPreset);
   const wellnessExperience = wellnessPublic
     ? resolveWellnessExperience(presentationPreset)
     : null;
   const guestPublic = guestPublicExperience(b?.vertical, b?.category);
-  const beautyCatalogLayout = beautyPublic
+  const isCouplesBook =
+    b?.vertical === "wellness" && guardAnswers.couples_or_shared === "couples";
+  const needsGuestContext =
+    beautyBook || b?.vertical === "hair" || b?.vertical === "pet-grooming";
+  const isBodyArtConsult =
+    b?.vertical === "body-art" &&
+    (/consult/i.test(selectedService?.name ?? "") ||
+      /consult/i.test(selectedService?.category ?? ""));
+  const beautyCatalogLayout = beautyBook
     ? resolveBeautyPublicCatalogLayout(beautyCssPreset)
     : wellnessPublic
       ? wellnessPublicCatalogLayout(presentationPreset)
       : "list";
 
   const requestChatOpen = () => setChatOpenRequest((n) => n + 1);
+
+  useEffect(() => {
+    if (!needsGuestContext || step !== "details" || !sl || phone.trim().length < 8) {
+      if (step !== "details") setGuestContext(null);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void fetch(
+        `/api/public/b/${encodeURIComponent(sl)}/guest-context?phone=${encodeURIComponent(phone.trim())}`,
+      )
+        .then((r) => (r.ok ? r.json() : { recognized: false }))
+        .then((ctx: typeof guestContext) => {
+          setGuestContext(ctx);
+          if (ctx?.recognized && ctx.patchTestValid) {
+            setGuardAnswers((prev) =>
+              prev.patch_test === "yes" ? prev : { ...prev, patch_test: "yes" },
+            );
+          }
+          if (ctx?.recognized && ctx.preferredStaff?.id) {
+            setSelectedStaff(ctx.preferredStaff.id);
+          }
+          if (ctx?.recognized && ctx.pets?.length) {
+            setSelectedPetIds(ctx.pets.map((p) => p.id));
+          }
+        })
+        .catch(() => setGuestContext(null));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [needsGuestContext, step, sl, phone]);
 
   useEffect(() => {
     if (step !== "services") {
@@ -443,6 +533,17 @@ export default function PublicBookingPage() {
       return;
     }
 
+    if (isCouplesBook) {
+      if (!partnerFirstName.trim()) {
+        setValidationErr("Please add your partner's first name for a couples session.");
+        return;
+      }
+      if (!partnerEmail.trim() && !partnerPhone.trim()) {
+        setValidationErr("Please add your partner's phone or email so we can reach them.");
+        return;
+      }
+    }
+
     createBooking.mutate(
       {
         slug: sl,
@@ -457,6 +558,19 @@ export default function PublicBookingPage() {
           notes: notes.trim() || undefined,
           saveToMyLivia: saveToMyLivia && Boolean(phone.trim()),
           ...(Object.keys(guardAnswers).length ? { guardAnswers } : {}),
+          ...(isCouplesBook
+            ? {
+                partnerFirstName: partnerFirstName.trim(),
+                partnerLastName: partnerLastName.trim() || undefined,
+                partnerEmail: partnerEmail.trim() || undefined,
+                partnerPhone: partnerPhone.trim() || undefined,
+              }
+            : {}),
+          ...(selectedPetIds.length ? { petIds: selectedPetIds } : {}),
+          ...(isBodyArtConsult && consultReferenceUrl.trim()
+            ? { consultReferenceUrl: consultReferenceUrl.trim() }
+            : {}),
+          ...(wellnessPublic && usePackageCredit ? { usePackageCredit: true } : {}),
           ...(isMedspa
             ? {
                 medspaConsent: {
@@ -474,10 +588,18 @@ export default function PublicBookingPage() {
           // Champagne shimmer + soft chime — gated by reduced-motion + opt-out.
           playCelebrationChime();
         },
-        onError: (err: any) => {
-          const msg = err?.response?.data?.error ?? "Slot no longer available";
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { error?: string } }; message?: string })?.response?.data
+              ?.error ??
+            (err as { message?: string })?.message ??
+            "Slot no longer available";
           setValidationErr(msg);
-          setStep("slots");
+          if (msg.toLowerCase().includes("patch test")) {
+            setStep("services");
+          } else {
+            setStep("slots");
+          }
           setSelectedSlot("");
         },
       },
@@ -490,6 +612,95 @@ export default function PublicBookingPage() {
     syncPublicBookingServiceQuery(svc.id);
     if (!beautyPublic) {
       setStep("slots");
+    }
+  }
+
+  function retailCartQty(productId: string): number {
+    return retailCart?.lines.find((l) => l.productId === productId)?.quantity ?? 0;
+  }
+
+  function handleAddRetailToBag(product: PublicRetailProduct) {
+    if (!sl) return;
+    setRetailCart(addToRetailCart(sl, product, 1));
+  }
+
+  function handleChangeRetailQty(productId: string, quantity: number) {
+    if (!sl) return;
+    setRetailCart(setRetailCartQty(sl, productId, quantity));
+  }
+
+  async function checkoutRetailCart() {
+    if (!sl || !retailCart?.lines.length) return;
+    setRetailCheckoutBusy(true);
+    try {
+      const r = await fetch(`/api/public/b/${sl}/retail/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: retailCartApiItems(retailCart),
+          guestName: [firstName, lastName].filter(Boolean).join(" ").trim() || undefined,
+          guestEmail: email.trim() || undefined,
+          guestPhone: phone.trim() || undefined,
+        }),
+      });
+      if (!r.ok) {
+        const err = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? "Could not start order");
+      }
+      const body = (await r.json()) as { payUrl: string; payToken?: string };
+      clearRetailCart(sl);
+      setRetailCart(null);
+      window.location.href =
+        body.payToken && sl ? guestBookTokenPath(sl, "shop", body.payToken) : body.payUrl;
+    } catch (e) {
+      toast({
+        title: "Could not open checkout",
+        description: e instanceof Error ? e.message : "Try again",
+        variant: "destructive",
+      });
+    } finally {
+      setRetailCheckoutBusy(false);
+    }
+  }
+
+  async function checkoutCombinedWithBooking(payToken: string) {
+    if (!sl || !retailCart?.lines.length || !payToken) return;
+    setCombinedCheckoutBusy(true);
+    try {
+      const r = await fetch(`/api/public/b/${sl}/pay/${payToken}/checkout-combined`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: retailCartApiItems(retailCart) }),
+      });
+      const j = (await r.json().catch(() => ({}))) as {
+        mode?: string;
+        checkoutUrl?: string;
+        payUrl?: string;
+        message?: string;
+        error?: string;
+      };
+      if (!r.ok) throw new Error(j.error ?? "Could not start checkout");
+      if (j.mode === "stripe" && j.checkoutUrl) {
+        clearRetailCart(sl);
+        setRetailCart(null);
+        window.location.href = j.checkoutUrl;
+        return;
+      }
+      if (j.mode === "dev") {
+        clearRetailCart(sl);
+        setRetailCart(null);
+        window.location.href = j.payUrl ?? guestBookTokenPath(sl, "pay", payToken);
+        return;
+      }
+      throw new Error(j.message ?? "Unexpected checkout response");
+    } catch (e) {
+      toast({
+        title: "Could not open checkout",
+        description: e instanceof Error ? e.message : "Try again",
+        variant: "destructive",
+      });
+    } finally {
+      setCombinedCheckoutBusy(false);
     }
   }
 
@@ -545,9 +756,10 @@ export default function PublicBookingPage() {
     >
       <main
         className={cn(
-          "max-w-xl mx-auto px-4 py-6 pb-6 md:pb-8 relative z-10",
-          beautyPublic && step === "services" && "beauty-public-shell",
-          beautyPublic &&
+          "mx-auto px-4 sm:px-6 py-6 pb-6 md:pb-8 relative z-10",
+          step === "services" ? "max-w-6xl w-full" : "max-w-xl",
+          beautyBook && step === "services" && "beauty-public-shell",
+          beautyBook &&
             step === "services" &&
             beautyCssPreset === "editorial" &&
             "beauty-public-shell--editorial",
@@ -622,77 +834,53 @@ export default function PublicBookingPage() {
           </>
         ) : null}
 
-        {/* Step: Services */}
-        {step === "services" && (
-          <div
-            id="public-service-menu"
-            className={cn(
-              "space-y-3 rounded-xl transition-shadow",
-              pickServiceHint && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background",
-            )}
-          >
-            {staffForward ? (
-              <PublicStaffStrip
-                staff={b.staff}
-                selectedStaffId={selectedStaff}
-                onSelect={setSelectedStaff}
-                teamNoun={vocab.teamNoun}
-              />
-            ) : null}
-            <PublicServiceCatalog
-              services={b.services}
-              vertical={b.vertical}
-              featuredServiceIds={b.publicFeaturedServiceIds}
-              catalogTitle={vocab.publicBookCatalogTitle}
-              layout={beautyCatalogLayout}
-              selectedServiceId={beautyPublic ? selectedService?.id : undefined}
-              onSelect={selectPublicService}
-            />
-            {wellnessPublic && isWellnessGiftPublicBookEnabled(b.vertical, b.category) ? (
-              <div className="mt-6">
-                <PublicWellnessGiftPanel slug={sl} />
-              </div>
-            ) : null}
-            {beautyPublic ? (
-              <>
-                <PublicBookBeautyDualCta
-                  bookLabel="Book now"
-                  showChat={aiOn}
-                  onChat={aiOn ? requestChatOpen : undefined}
-                  bookDisabled={!selectedService}
-                  onBook={() => {
-                    if (selectedService) {
-                      setPickServiceHint(false);
-                      setStep("slots");
-                      return;
-                    }
-                    setPickServiceHint(true);
-                    toast({
-                      title: "Choose a treatment first",
-                      description: "Tap a service above, then continue to pick a time.",
-                    });
-                    document
-                      .getElementById("public-service-menu")
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                />
-                <PublicBookBeautyTrustFooter cancelWindowHours={b.policyTrust?.cancelWindowHours} />
-              </>
-            ) : (
-              <>
-                {guestPublic.giftComingSoonNote ? (
-                  <p
-                    className="text-xs text-muted-foreground rounded-lg border border-dashed px-3 py-2 mb-3"
-                    data-testid="public-wellness-gift-soon"
-                  >
-                    {guestPublic.giftComingSoonNote}
-                  </p>
-                ) : null}
-                <PublicCareNotes vertical={b.vertical} category={b.category} />
-              </>
-            )}
-          </div>
-        )}
+        {step === "services" ? (
+          <PublicBookServicesStep
+            staffForward={staffForward}
+            staff={b.staff}
+            selectedStaff={selectedStaff}
+            onSelectStaff={setSelectedStaff}
+            teamNoun={vocab.teamNoun}
+            services={b.services}
+            vertical={b.vertical}
+            category={b.category}
+            featuredServiceIds={b.publicFeaturedServiceIds}
+            catalogTitle={vocab.publicBookCatalogTitle}
+            catalogLayout={beautyCatalogLayout}
+            selectedService={selectedService}
+            onSelectService={selectPublicService}
+            beautyBook={beautyBook}
+            beautyPublic={beautyPublic}
+            wellnessPublic={wellnessPublic}
+            retailEnabled={
+              isPublicRetailVertical(b?.vertical) && !!b.retailStore?.settings?.enabled
+            }
+            retailTitle={b.retailStore?.settings?.title ?? "Take home"}
+            retailProducts={b.retailStore?.products ?? []}
+            retailCartQty={retailCartQty}
+            onAddRetailToBag={handleAddRetailToBag}
+            onChangeRetailQty={handleChangeRetailQty}
+            wellnessSlug={sl}
+            aiOn={aiOn}
+            onChat={aiOn ? requestChatOpen : undefined}
+            pickServiceHint={pickServiceHint}
+            cancelWindowHours={b.policyTrust?.cancelWindowHours}
+            giftComingSoonNote={guestPublic.giftComingSoonNote}
+            onBook={() => {
+              if (selectedService) {
+                setPickServiceHint(false);
+                setStep("slots");
+                return;
+              }
+              setPickServiceHint(true);
+              toast({
+                title: beautyPublic ? "Choose a treatment first" : `Choose a ${vocab.serviceNoun.toLowerCase()} first`,
+                description: "Pick from the menu above, then continue to choose a time.",
+              });
+              document.getElementById("public-service-menu")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+        ) : null}
 
         {/* Step: Slots */}
         {step === "slots" && selectedService && (
@@ -784,34 +972,89 @@ export default function PublicBookingPage() {
                 ))}
               </div>
             ) : availableSlots.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-6 border rounded-md">
-                No available times on this date
-              </p>
+              <div className="space-y-3 py-4 border rounded-md px-4">
+                <p className="text-center text-sm text-muted-foreground">
+                  No available times on this date
+                </p>
+                {waitlistDone ? (
+                  <p className="text-sm text-center text-emerald-700 dark:text-emerald-300">
+                    You are on the waitlist — we will reach out when a slot opens.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Leave your details and we will text you when something opens.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input
+                        placeholder="First name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Mobile"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={waitlistBusy || !firstName.trim() || phone.trim().length < 8}
+                      onClick={() => {
+                        if (!sl || !selectedService) return;
+                        setWaitlistBusy(true);
+                        void fetch(`/api/public/b/${encodeURIComponent(sl)}/waitlist/join`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            serviceId: selectedService.id,
+                            staffId: selectedStaff || undefined,
+                            customerFirstName: firstName.trim(),
+                            customerPhone: phone.trim(),
+                            notes: notes.trim() || undefined,
+                          }),
+                        })
+                          .then(async (r) => {
+                            if (!r.ok) {
+                              const j = await r.json().catch(() => ({}));
+                              throw new Error((j as { error?: string }).error ?? "Could not join");
+                            }
+                            setWaitlistDone(true);
+                          })
+                          .catch((e: unknown) => {
+                            setValidationErr(
+                              e instanceof Error ? e.message : "Could not join waitlist",
+                            );
+                          })
+                          .finally(() => setWaitlistBusy(false));
+                      }}
+                    >
+                      {waitlistBusy ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Join waitlist"
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
             ) : (
               <div>
                 <Label className="mb-2 block">
                   {b.countryPack?.publicBooking.pickTime ?? "Pick a time"}
                 </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {availableSlots.map((slot) => (
-                    <button
-                      key={slot.startAt}
-                      type="button"
-                      data-testid={`button-slot-${slot.startAt}`}
-                      onClick={() => {
-                        setSelectedSlot(slot.startAt);
-                        setStep("details");
-                      }}
-                      className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
-                        selectedSlot === slot.startAt
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border hover:bg-muted"
-                      }`}
-                    >
-                      {formatTime(slot.startAt)}
-                    </button>
-                  ))}
-                </div>
+                <PublicBookingTimePicker
+                  slots={availableSlots}
+                  selectedStartAt={selectedSlot}
+                  timeZone={b.timezone}
+                  onSelect={(startAt) => {
+                    setSelectedSlot(startAt);
+                    setStep("details");
+                  }}
+                />
               </div>
             )}
           </div>
@@ -898,6 +1141,25 @@ export default function PublicBookingPage() {
               <p className="text-xs text-muted-foreground">
                 <span className="text-destructive">*</span> At least one of email or phone is required.
               </p>
+              {guestContext?.recognized ? (
+                <p
+                  className="text-xs rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-muted-foreground"
+                  data-testid="public-guest-recognized"
+                >
+                  {guestContext.patchTestValid
+                    ? "Welcome back — your patch test is on file for this studio."
+                    : "Welcome back — confirm patch-test status below if this treatment needs one."}
+                  {guestContext.lastVisits?.find((v) => v.serviceId === selectedService?.id)
+                    ?.fillHint ? (
+                    <span className="block mt-1 text-foreground/90">
+                      {
+                        guestContext.lastVisits.find((v) => v.serviceId === selectedService?.id)
+                          ?.fillHint
+                      }
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
               {phone.trim() ? (
                 <label className="flex items-start gap-3 rounded-lg border border-border/60 p-3 cursor-pointer">
                   <Checkbox
@@ -972,6 +1234,120 @@ export default function PublicBookingPage() {
                 </div>
               )}
 
+              {guestContext?.recognized && (guestContext.pets?.length ?? 0) > 0 ? (
+                <div
+                  className="space-y-2 rounded-lg border border-amber-500/25 bg-amber-500/5 p-4"
+                  data-testid="public-booking-pet-picker"
+                >
+                  <p className="text-sm font-medium">Which pet is this visit for?</p>
+                  {guestContext.pets!.map((pet) => (
+                    <label key={pet.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={selectedPetIds.includes(pet.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedPetIds((prev) =>
+                            v === true
+                              ? [...new Set([...prev, pet.id])]
+                              : prev.filter((id) => id !== pet.id),
+                          );
+                        }}
+                      />
+                      <span>
+                        {pet.name}
+                        {pet.breed ? ` (${pet.breed})` : ""}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              {wellnessPublic ? (
+                <label className="flex items-start gap-3 rounded-lg border border-border/60 p-3 cursor-pointer">
+                  <Checkbox
+                    checked={usePackageCredit}
+                    onCheckedChange={(v) => setUsePackageCredit(v === true)}
+                    data-testid="use-package-credit"
+                  />
+                  <span className="text-sm leading-snug">
+                    <span className="font-medium">Use session pack credit</span>
+                    <span className="block text-muted-foreground text-xs mt-0.5">
+                      If you have a package on file, we&apos;ll burn one session on confirm.
+                    </span>
+                  </span>
+                </label>
+              ) : null}
+
+              {isBodyArtConsult ? (
+                <div className="space-y-2">
+                  <Label htmlFor="consult-reference-url">Reference image URL (optional)</Label>
+                  <Input
+                    id="consult-reference-url"
+                    value={consultReferenceUrl}
+                    onChange={(e) => setConsultReferenceUrl(e.target.value)}
+                    placeholder="Link to inspiration photo"
+                    data-testid="consult-reference-url"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Paste a link to your reference — the artist will review before your session.
+                  </p>
+                </div>
+              ) : null}
+
+              {isCouplesBook ? (
+                <div
+                  className="space-y-3 rounded-lg border border-primary/20 p-4 bg-primary/5"
+                  data-testid="public-booking-couples-partner"
+                >
+                  <p className="text-sm font-medium">Partner details</p>
+                  <p className="text-xs text-muted-foreground">
+                    We&apos;ll book you both into the same session time.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="partner-first-name">Partner first name *</Label>
+                      <Input
+                        id="partner-first-name"
+                        value={partnerFirstName}
+                        onChange={(e) => setPartnerFirstName(e.target.value)}
+                        data-testid="input-partner-first-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="partner-last-name">Partner last name</Label>
+                      <Input
+                        id="partner-last-name"
+                        value={partnerLastName}
+                        onChange={(e) => setPartnerLastName(e.target.value)}
+                        data-testid="input-partner-last-name"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="partner-phone">Partner phone</Label>
+                    <Input
+                      id="partner-phone"
+                      type="tel"
+                      value={partnerPhone}
+                      onChange={(e) => setPartnerPhone(e.target.value)}
+                      data-testid="input-partner-phone"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="partner-email">Partner email</Label>
+                    <Input
+                      id="partner-email"
+                      type="email"
+                      value={partnerEmail}
+                      onChange={(e) => setPartnerEmail(e.target.value)}
+                      data-testid="input-partner-email"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    At least one of partner phone or email is required.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="space-y-2">
                 <Label>Notes for the team (optional)</Label>
                 <Textarea
@@ -999,11 +1375,16 @@ export default function PublicBookingPage() {
                 serviceNoun={vocab.serviceNoun}
               />
 
-              {b.bookingTermsBlock && (
+              {b.bookingTermsBlock ? (
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {b.bookingTermsBlock}
                 </p>
-              )}
+              ) : null}
+              {b.privacyNoticeBlock ? (
+                <p className="text-[11px] text-muted-foreground/90 leading-relaxed">
+                  {b.privacyNoticeBlock}
+                </p>
+              ) : null}
 
               <Button
                 className="w-full hidden md:flex"
@@ -1250,6 +1631,43 @@ export default function PublicBookingPage() {
               Add to calendar
             </a>
 
+            {confirmation.guestToken &&
+            retailCart &&
+            retailCart.lines.length > 0 &&
+            isPublicRetailVertical(b?.vertical) ? (
+              <Card className="text-left border-primary/20">
+                <CardContent className="pt-4 space-y-3">
+                  <p className="text-sm font-medium">Your bag</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {retailCart.lines.map((line) => (
+                      <li key={line.productId} className="flex justify-between gap-2">
+                        <span className="truncate">
+                          {line.name} × {line.quantity}
+                        </span>
+                        <span className="tabular-nums shrink-0">
+                          {formatCurrency(line.priceMinor * line.quantity, line.currency)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full"
+                    disabled={combinedCheckoutBusy}
+                    data-testid="public-combined-checkout"
+                    onClick={() => void checkoutCombinedWithBooking(confirmation.guestToken!)}
+                  >
+                    {combinedCheckoutBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Pay deposit + bag in one checkout
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    One secure payment for your visit deposit and take-home items.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : null}
+
             <Button
               variant="outline"
               className="w-full"
@@ -1316,6 +1734,18 @@ export default function PublicBookingPage() {
           }}
         />
       )}
+
+      {step === "services" &&
+      isPublicRetailVertical(b.vertical) &&
+      b.retailStore?.settings?.enabled &&
+      retailCart &&
+      retailCart.lines.length > 0 ? (
+        <PublicRetailCartBar
+          cart={retailCart}
+          checkoutBusy={retailCheckoutBusy}
+          onCheckout={() => void checkoutRetailCart()}
+        />
+      ) : null}
 
       {chatMount && aiOn && step !== "confirmed" && (
         <Suspense fallback={null}>

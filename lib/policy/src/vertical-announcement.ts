@@ -152,7 +152,8 @@ const BEAUTY_EXTENSIONS: VerticalCapability[] = [
   {
     id: "fill-cycle-rebook",
     label: "Fill-cycle rebook SMS + per-service patch flag",
-    maturity: "R2",
+    maturity: "R1",
+    surfaces: ["/customers", "/toolkit"],
   },
   {
     id: "lash-preference-profile",

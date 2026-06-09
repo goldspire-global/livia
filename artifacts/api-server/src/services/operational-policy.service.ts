@@ -1,4 +1,5 @@
 import {
+  buildGuestPolicyTemplates,
   mergeOperationalPolicy,
   parseOperationalPolicy,
   type OperationalPolicy,
@@ -10,11 +11,21 @@ export async function getOperationalPolicyForBusiness(businessId: string) {
   const biz = await getBusinessById(businessId);
   if (!biz) return null;
   const policies = policiesFromBusiness(biz);
+  const policy = parseOperationalPolicy(biz.operationalPolicy);
   return {
-    policy: parseOperationalPolicy(biz.operationalPolicy),
+    policy,
     resolved: policies.operational,
     depositPolicySummary: policies.depositPolicySummary,
     bookingTermsBlock: policies.bookingTermsBlock,
+    bookingTermsTemplate: policies.bookingTermsTemplate,
+    privacyNoticeBlock: policies.privacyNoticeBlock,
+    houseRulesBlock: policies.houseRulesBlock,
+    guestPolicyTemplates: buildGuestPolicyTemplates({
+      businessName: biz.name,
+      country: biz.country,
+      vertical: biz.vertical,
+      operational: policy,
+    }),
   };
 }
 

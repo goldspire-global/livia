@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PublicBookLoading() {
   return (
     <div
-      className="min-h-screen bg-background max-w-xl mx-auto px-4 py-0"
+      className="min-h-screen bg-background max-w-6xl w-full mx-auto px-4 sm:px-6 py-0"
       data-testid="public-book-loading"
       aria-busy
       aria-label="Loading booking page"

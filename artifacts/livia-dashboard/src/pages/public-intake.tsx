@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link } from "wouter";
+import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
+import { clientGuestBookHref } from "@/lib/guest-book-url";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
 import { Button } from "@/components/ui/button";
@@ -69,7 +71,7 @@ function YesNoField({
 }
 
 export default function PublicIntakePage() {
-  const { slug, token } = useParams<{ slug: string; token: string }>();
+  const { slug, token } = useGuestBookTokenRoute("intake");
   const [data, setData] = useState<IntakePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [allergies, setAllergies] = useState("");
@@ -117,7 +119,7 @@ export default function PublicIntakePage() {
   }, [slug, token]);
 
   const readOnly = data?.status !== "draft";
-  const bookUrl = data ? `/b/${data.slug}` : "#";
+  const bookUrl = data ? clientGuestBookHref(data.slug) : "#";
 
   const canSubmit = useMemo(() => {
     if (readOnly || busy) return false;

@@ -46,7 +46,7 @@ export default function PublicPremisesPage() {
         if (!cancelled) {
           setDetail(data);
           if (data.tenants.length === 1) {
-            navigate(`/b/${data.tenants[0].slug}`);
+            navigate(`/book/${data.tenants[0].slug}`);
           }
         }
       } catch {
@@ -102,7 +102,7 @@ export default function PublicPremisesPage() {
                 MOTION.listItem,
               )}
               style={{ animationDelay: `${i * 60}ms` }}
-              onClick={() => navigate(`/b/${t.slug}`)}
+              onClick={() => navigate(`/book/${t.slug}`)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {

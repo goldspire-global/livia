@@ -38,7 +38,7 @@ export default function WellnessCorporatePage() {
       actions={
         slug ? (
           <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
-            <a href={`/b/${slug}`} target="_blank" rel="noreferrer">
+            <a href={`/book/${slug}`} target="_blank" rel="noreferrer">
               Employee book preview
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             </a>

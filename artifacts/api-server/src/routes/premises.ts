@@ -9,6 +9,8 @@ import {
   linkBusinessToPremises,
   listPremisesForUser,
   provisionCoTenantAtPremises,
+  createPremisesCoTenantInvite,
+  acceptPremisesCoTenantInvite,
 } from "../services/premises.service";
 import type { BusinessVertical, BusinessTier } from "@workspace/policy";
 
@@ -182,6 +184,56 @@ router.get("/premises/:premisesId", requireAuth, async (req, res): Promise<void>
     return;
   }
   res.json(detail);
+});
+
+router.post("/premises/:premisesId/co-tenant-invites", requireAuth, async (req, res) => {
+  const userId = getUserId(req);
+  const premisesId = getBizId(req.params.premisesId);
+  const { invitingBusinessId, invitedEmail, publicLabel } = req.body ?? {};
+  if (!invitingBusinessId || !invitedEmail || !publicLabel) {
+    sendError(res, req, 400, "invitingBusinessId, invitedEmail, publicLabel required");
+    return;
+  }
+  try {
+    res.status(201).json(
+      await createPremisesCoTenantInvite(userId, premisesId, {
+        invitingBusinessId,
+        invitedEmail,
+        publicLabel,
+      }),
+    );
+  } catch (err) {
+    const e = err as Error & { code?: string };
+    if (e.code === "FORBIDDEN") {
+      sendError(res, req, 403, e.message);
+      return;
+    }
+    throw err;
+  }
+});
+
+router.post("/premises/invites/:token/accept", requireAuth, async (req, res) => {
+  const userId = getUserId(req);
+  const token = getBizId(req.params.token);
+  const { businessId } = req.body ?? {};
+  if (!businessId) {
+    sendError(res, req, 400, "businessId required");
+    return;
+  }
+  try {
+    res.json(await acceptPremisesCoTenantInvite(userId, token, businessId));
+  } catch (err) {
+    const e = err as Error & { code?: string };
+    if (e.code === "NOT_FOUND") {
+      sendError(res, req, 404, "Invite expired or invalid");
+      return;
+    }
+    if (e.code === "FORBIDDEN") {
+      sendError(res, req, 403, e.message);
+      return;
+    }
+    throw err;
+  }
 });
 
 export default router;

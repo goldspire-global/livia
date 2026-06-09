@@ -238,7 +238,7 @@ function buildGraduationSuggestions(ctx: LifecycleContext): GraduationSuggestion
       summary:
         "Selling the studio or stepping back? Hand legal ownership to someone who already signs in — not the same as calendar staff.",
       whyNow: `${ctx.eligibleSuccessorCount} team member(s) signed in as Admin or Staff can receive ownership.`,
-      primaryCta: { label: "Ownership settings", href: "/settings?tab=ownership" },
+      primaryCta: { label: "Ownership succession", href: "/settings?tab=legal#ownership-succession" },
       status: "suggested",
       priority: 40,
     });

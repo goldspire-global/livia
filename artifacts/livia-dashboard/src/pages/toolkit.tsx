@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { useBusiness } from "@/lib/business-context";
 import { useMembership } from "@/lib/membership-context";
 import { usePersona } from "@/lib/persona";
 import { LivCommandHub } from "@/components/liv/liv-command-hub";
 import { LivTrustEmbeddedPanel } from "@/components/liv/liv-trust-embedded-panel";
+import { LivProposalsPanel } from "@/components/liv-proposals-panel";
+import { scrollToToolkitAnchor } from "@/lib/toolkit-navigation";
 import { PayrollExportCard } from "@/components/payroll-export-card";
 import { EnterpriseExportCard } from "@/components/enterprise-export-card";
 import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
@@ -24,6 +27,14 @@ export default function ToolkitPage() {
   const showPayroll = showExports && showPayrollToolkitExport(vertical, tier);
   const showEnterprise = showExports && showEnterpriseToolkitExports(vertical, tier);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const t = window.setTimeout(() => scrollToToolkitAnchor(`${window.location.pathname}${hash}`), 120);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return (
     <PageFrame width="md" className="space-y-4" data-testid="toolkit-page">
       <PersonaRitualHeader
@@ -33,6 +44,10 @@ export default function ToolkitPage() {
       />
 
       <LivCommandHub density="focused" />
+
+      <div id="liv-approvals" className="scroll-mt-20">
+        <LivProposalsPanel variant="home" />
+      </div>
 
       {showPayroll || showEnterprise ? (
         <SettingsDisclosure

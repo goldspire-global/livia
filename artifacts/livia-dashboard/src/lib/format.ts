@@ -22,6 +22,16 @@ export function formatCurrency(
   }).format(amountMinor / 100);
 }
 
+/** Display/storage conversion — API stores minor units (cents). */
+export function majorFromMinor(amountMinor: number): number {
+  return amountMinor / 100;
+}
+
+export function minorFromMajor(amountMajor: number): number {
+  if (!Number.isFinite(amountMajor) || amountMajor < 0) return 0;
+  return Math.round(amountMajor * 100);
+}
+
 export function formatDate(dateStr: string, opts?: FormatLocaleOptions) {
   return new Intl.DateTimeFormat(intlLocale(opts), {
     weekday: "short",

@@ -78,8 +78,8 @@ export default function WellnessGuestVaultPage() {
   return (
     <div className="space-y-6 max-w-3xl" data-testid="wellness-guest-vault-page">
       <PersonaRitualHeader
-        title="Guest vault"
-        subtitle="Cross-visit memory, brand gift redemption, float roster"
+        title="Guest lookup"
+        subtitle="Cross-visit notes, gift redemption, and float roster"
       />
 
       <Card>

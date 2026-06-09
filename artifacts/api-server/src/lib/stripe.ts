@@ -48,6 +48,15 @@ export function priceIdForPlan(planId: string): string | null {
 
 }
 
+/** Env var name for a checkout plan — used in billing error messages. */
+export function stripePriceEnvKeyForPlan(planId: string): string | null {
+  if (planId === "solo") return "STRIPE_PRICE_SOLO";
+  if (planId === "studio") return "STRIPE_PRICE_STUDIO";
+  if (planId === "chain") return "STRIPE_PRICE_CHAIN";
+  if (planId === "chair-host") return "STRIPE_PRICE_CHAIR_HOST";
+  return null;
+}
+
 
 
 export function priceIdForPeerInsightsAddon(): string | null {

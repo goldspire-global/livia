@@ -39,7 +39,7 @@ flowchart TD
   F --> G[Post-go-live: live channels, Stripe Connect]
 ```
 
-**Pre-login platform readiness:** Demo wedge story lands user in **pre-seeded vertical tenant** (`VERTICAL_COVERAGE_REGISTRY.demoSlug`). Sign-up path seeds vertical pack on A1 from form/metadata. **Presentation preset = `platform-default`** on create (Track D2). See [`LIVIA-PLATFORM-LIFECYCLE.md`](./LIVIA-PLATFORM-LIFECYCLE.md) §3.
+**Pre-login platform readiness:** Demo wedge story lands user in **pre-seeded vertical tenant** (`VERTICAL_COVERAGE_REGISTRY.demoSlug`). Sign-up A1 creates an **empty studio** by default; owner may opt into **`starterPack`** (all verticals; beauty adds mini store). **Presentation preset = `platform-default`** on create (Track D2). See [`LIVIA-PLATFORM-LIFECYCLE.md`](./LIVIA-PLATFORM-LIFECYCLE.md) §3 · [`VERTICAL-STARTER-PACK.md`](../engineering/VERTICAL-STARTER-PACK.md).
 
 ### Phase −1 — Before Clerk (marketing + gateway)
 

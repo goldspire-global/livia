@@ -12,6 +12,7 @@ import { AlertTriangle, Download } from "lucide-react";
 import { FounderChainLoading } from "@/components/chain/founder-chain-loading";
 import { FounderChainBriefing } from "@/components/chain/founder-chain-briefing";
 import { FounderShopCard } from "@/components/chain/founder-shop-card";
+import { ChainCommercePanel } from "@/components/chain/chain-commerce-panel";
 import type { ChainAlert, ChainPeriod, ChainRollup } from "@/components/chain/founder-chain-types";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,12 @@ export default function ChainPage() {
         businesses.map((b) => [b.id, (b as { vertical?: string }).vertical ?? null]),
       ),
     [businesses],
+  );
+
+  const commerceById = useMemo(
+    () =>
+      Object.fromEntries((rollup?.commerceByShop ?? []).map((c) => [c.businessId, c])),
+    [rollup?.commerceByShop],
   );
 
   function openShop(businessId: string, name: string) {
@@ -140,6 +147,11 @@ export default function ChainPage() {
         shopsNeedingAttention={rollup?.shopsNeedingAttention}
       />
 
+      <ChainCommercePanel
+        commerceAlerts={rollup?.commerceAlerts}
+        commerceSummary={rollup?.commerceSummary}
+      />
+
       {(rollup?.alerts?.length ?? 0) > 0 ? (
         <Card className="border-destructive/40 bg-destructive/5" data-testid="chain-alerts">
           <CardHeader className="pb-2">
@@ -192,6 +204,7 @@ export default function ChainPage() {
             shop={shop}
             vertical={verticalById[shop.businessId]}
             period={period}
+            commerce={commerceById[shop.businessId]}
             onOpen={() => openShop(shop.businessId, shop.name)}
           />
         ))}

@@ -191,6 +191,14 @@ const NAV_POOL: RitualNavItem[] = [
     personas: ["org_admin", "owner", "manager"],
   },
   {
+    ritualName: "Mini store",
+    href: "/beauty-store",
+    icon: Sparkles,
+    min: "ADMIN",
+    verticals: ["beauty"],
+    personas: ["org_admin", "owner", "manager"],
+  },
+  {
     ritualName: "Franchise",
     href: "/franchise",
     icon: Network,
@@ -236,6 +244,12 @@ export function personaNavOrder(
   if (businessVertical === "wellness" && persona === "manager") {
     return ["/wellness-reception", "/inbox", "/dashboard", "/bookings", "/wellness-reports", "/settings"];
   }
+  if (businessVertical === "beauty" && persona === "receptionist") {
+    return ["/beauty-reception", "/bookings", "/inbox", "/customers", "/settings"];
+  }
+  if (businessVertical === "beauty" && (persona === "manager" || persona === "owner")) {
+    return ["/dashboard", "/beauty-reception", "/inbox", "/bookings", "/beauty-store", "/studio-setup", "/settings"];
+  }
   return PERSONA_NAV_ORDER[persona];
 }
 
@@ -275,6 +289,7 @@ const VERTICAL_NAV_LABELS: Record<string, Partial<Record<string, string>>> = {
     "/customers": "Clients",
     "/bookings": "Schedule",
     "/inbox": "Inbox",
+    "/beauty-store": "Mini store",
   },
   hair: {
     "/services": "Services",

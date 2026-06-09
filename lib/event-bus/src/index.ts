@@ -91,6 +91,57 @@ export const eventRegistry = {
     briefingId: z.string(),
   }),
 
+  "payment.failed": z.object({
+    businessId: z.string(),
+    paymentId: z.string(),
+    amountMinor: z.number().int().nonnegative().optional(),
+    currency: z.string().optional(),
+  }),
+
+  "commerce.signal.detected": z.object({
+    businessId: z.string(),
+    signalId: z.string(),
+    severity: z.enum(["act", "watch", "info"]),
+  }),
+
+  // Twin understanding outputs → Liv reactions
+  "twin.observation.generated": z.object({
+    businessId: z.string(),
+    observationKey: z.string(),
+    domain: z.string(),
+    title: z.string(),
+    body: z.string(),
+    confidence: z.enum(["high", "medium", "low"]),
+    href: z.string().optional(),
+  }),
+  "twin.insight.generated": z.object({
+    businessId: z.string(),
+    observationKey: z.string(),
+    domain: z.string(),
+    title: z.string(),
+    body: z.string(),
+    confidence: z.enum(["high", "medium", "low"]),
+    href: z.string().optional(),
+  }),
+  "twin.risk.detected": z.object({
+    businessId: z.string(),
+    riskId: z.string(),
+    domain: z.string(),
+    title: z.string(),
+    body: z.string(),
+    href: z.string().optional(),
+    confidence: z.enum(["high", "medium", "low"]).optional(),
+  }),
+  "twin.opportunity.detected": z.object({
+    businessId: z.string(),
+    opportunityId: z.string(),
+    domain: z.string(),
+    title: z.string(),
+    body: z.string(),
+    href: z.string().optional(),
+    confidence: z.enum(["high", "medium", "low"]).optional(),
+  }),
+
   // Eval / rollback
   "eval.rollback.triggered": z.object({
     businessId: z.string().nullable(),

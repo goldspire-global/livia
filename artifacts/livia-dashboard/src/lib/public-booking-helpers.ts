@@ -2,6 +2,7 @@
 
 import {
   getVerticalPlaybook,
+  groupAlliedServicesByKind,
   guestPublicCareNotes as guestPublicCareNotesFromPolicy,
   guestPublicGuardSectionTitle,
   type BusinessVertical,
@@ -17,6 +18,9 @@ export type PublicServiceRow = {
   currency: string;
   imageUrl?: string | null;
   sortOrder?: number;
+  serviceKind?: string | null;
+  rebookIntervalDays?: number | null;
+  requiresPatchTest?: boolean;
 };
 
 export type PublicStaffRow = {
@@ -26,6 +30,71 @@ export type PublicStaffRow = {
   photoUrl?: string | null;
   color?: string | null;
 };
+
+export type PublicSlotRow = {
+  startAt: string;
+  endAt?: string;
+  available?: boolean;
+  staffId?: string | null;
+};
+
+/** One pickable time per clock label — API dedupes too; belt for older responses. */
+export function dedupePublicSlotsByStartAt<T extends PublicSlotRow>(slots: T[]): T[] {
+  const byStart = new Map<string, T>();
+  for (const slot of slots) {
+    const prev = byStart.get(slot.startAt);
+    if (!prev) {
+      byStart.set(slot.startAt, slot);
+      continue;
+    }
+    if (slot.available !== false && prev.available === false) {
+      byStart.set(slot.startAt, slot);
+    }
+  }
+  return [...byStart.values()].sort((a, b) => a.startAt.localeCompare(b.startAt));
+}
+
+export type PublicSlotDayPart = "morning" | "afternoon" | "evening";
+
+export function publicSlotDayPart(startAt: string, timeZone?: string): PublicSlotDayPart {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: timeZone ?? "Europe/Dublin",
+    }).format(new Date(startAt)),
+  );
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  return "evening";
+}
+
+const DAY_PART_LABELS: Record<PublicSlotDayPart, string> = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
+};
+
+export function groupPublicSlotsByDayPart<T extends PublicSlotRow>(
+  slots: T[],
+  timeZone?: string,
+): Array<{ part: PublicSlotDayPart; label: string; slots: T[] }> {
+  const order: PublicSlotDayPart[] = ["morning", "afternoon", "evening"];
+  const buckets = new Map<PublicSlotDayPart, T[]>();
+  for (const slot of slots) {
+    const part = publicSlotDayPart(slot.startAt, timeZone);
+    const list = buckets.get(part) ?? [];
+    list.push(slot);
+    buckets.set(part, list);
+  }
+  return order
+    .filter((part) => (buckets.get(part)?.length ?? 0) > 0)
+    .map((part) => ({
+      part,
+      label: DAY_PART_LABELS[part],
+      slots: buckets.get(part) ?? [],
+    }));
+}
 
 export type PublicPolicyTrust = {
   cancelWindowHours: number;
@@ -127,6 +196,12 @@ export function groupServicesByCategory(
   const sorted = [...services].sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name),
   );
+  if (vertical === "allied-health") {
+    return groupAlliedServicesByKind(sorted).map((g) => ({
+      category: g.label,
+      services: g.services,
+    }));
+  }
   const map = new Map<string, PublicServiceRow[]>();
   for (const svc of sorted) {
     const key = svc.category?.trim()

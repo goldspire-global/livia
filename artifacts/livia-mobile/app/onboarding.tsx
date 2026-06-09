@@ -59,7 +59,11 @@ import {
 import { fetchOnboardingPreview } from "@/lib/onboarding-preview";
 import { getPublicBookingLabel } from "@/lib/public-booking-url";
 import { verticalAccentHex } from "@/lib/vertical-theme";
-import { getVerticalPlaybook } from "@workspace/policy";
+import {
+  getVerticalStarterPackOffer,
+  getVerticalPlaybook,
+  verticalStarterPackIncludesRetail,
+} from "@workspace/policy";
 
 const TIMEZONES = [
   "Europe/Dublin",
@@ -154,6 +158,7 @@ export default function OnboardingScreen() {
   const [timezone, setTimezone] = useState("Europe/Dublin");
   const [jurisdiction, setJurisdiction] = useState<CreateBusinessBodyJurisdiction>("IE");
   const [vertical, setVertical] = useState<BusinessVertical>("hair");
+  const [starterPack, setStarterPack] = useState(false);
 
   useEffect(() => {
     const tz: Record<string, string> = {
@@ -214,7 +219,8 @@ export default function OnboardingScreen() {
           vertical,
           category: vertical,
           tier: tier as "solo" | "studio" | "chain",
-          seedDefaults: true,
+          seedDefaults: false,
+          starterPack: starterPack ? true : undefined,
         },
       });
       setCurrentBusiness(created);
@@ -333,6 +339,7 @@ export default function OnboardingScreen() {
                 jurisdiction={jurisdiction}
                 vertical={vertical}
                 tier={tier}
+                starterPack={starterPack}
                 showTz={showTz}
                 error={error}
                 isLoading={isLoading}
@@ -348,8 +355,12 @@ export default function OnboardingScreen() {
                   setPhone,
                   setTimezone,
                   setJurisdiction,
-                  setVertical,
+                  setVertical: (v) => {
+                    setVertical(v);
+                    setStarterPack(false);
+                  },
                   setTier,
+                  setStarterPack,
                   setShowTz,
                   handleCreate,
                   handleLoadDemo,
@@ -479,6 +490,7 @@ function FormSlide({
   jurisdiction,
   vertical,
   tier,
+  starterPack,
   showTz,
   error,
   isLoading,
@@ -500,6 +512,7 @@ function FormSlide({
   jurisdiction: CreateBusinessBodyJurisdiction;
   vertical: BusinessVertical;
   tier: string;
+  starterPack: boolean;
   showTz: boolean;
   error: string;
   isLoading: boolean;
@@ -517,6 +530,7 @@ function FormSlide({
     setJurisdiction: (v: CreateBusinessBodyJurisdiction) => void;
     setVertical: (v: BusinessVertical) => void;
     setTier: (v: string) => void;
+    setStarterPack: (v: boolean) => void;
     setShowTz: (v: boolean) => void;
     handleCreate: () => void;
     handleLoadDemo: () => void;
@@ -525,9 +539,11 @@ function FormSlide({
 }) {
   const verticalAccent = verticalAccentHex(vertical);
   const playbook = getVerticalPlaybook(vertical);
+  const starterOffer = getVerticalStarterPackOffer(vertical);
   const [preview, setPreview] = React.useState<{
     services: { name: string }[];
     aiGreeting: string;
+    starterPackServices?: { name: string }[];
   } | null>(null);
 
   React.useEffect(() => {
@@ -545,7 +561,11 @@ function FormSlide({
       }).then((p) =>
         setPreview(
           p
-            ? { services: p.services, aiGreeting: p.aiGreeting }
+            ? {
+                services: p.services,
+                aiGreeting: p.aiGreeting,
+                starterPackServices: p.starterPackServices,
+              }
             : null,
         ),
       );
@@ -732,7 +752,29 @@ function FormSlide({
               ))}
             </ScrollView>
             <Text style={[styles.demoSub, { color: verticalAccent, marginTop: 6 }]}>{playbook.wedge}</Text>
-            {preview && preview.services.length > 0 ? (
+            <Pressable
+              onPress={() => {
+                handlers.haptics.selection();
+                handlers.setStarterPack(!starterPack);
+              }}
+              style={[
+                styles.demoBox,
+                {
+                  borderColor: starterPack ? verticalAccent : colors.border,
+                  backgroundColor: starterPack ? verticalAccent + "14" : "transparent",
+                  marginTop: 8,
+                },
+              ]}
+              testID="vertical-starter-pack-opt-in"
+            >
+              <Text style={{ color: colors.foreground, fontFamily: fonts.bodySemi, fontSize: 13 }}>
+                {starterOffer.label}
+              </Text>
+              <Text style={[styles.demoSub, { color: colors.mutedForeground, marginTop: 4 }]}>
+                {starterOffer.description}
+              </Text>
+            </Pressable>
+            {preview && (preview.services.length > 0 || starterPack) ? (
               <View
                 style={[
                   styles.demoBox,
@@ -740,8 +782,18 @@ function FormSlide({
                 ]}
               >
                 <Text style={[styles.demoSub, { color: colors.mutedForeground }]}>
-                  Starter menu: {preview.services.slice(0, 3).map((s) => s.name).join(" · ")}
+                  {starterPack && preview.starterPackServices?.length
+                    ? `Template menu: ${preview.starterPackServices
+                        .slice(0, 3)
+                        .map((s) => s.name)
+                        .join(" · ")}…`
+                    : `Add your menu on the next setup step.`}
                 </Text>
+                {starterPack && verticalStarterPackIncludesRetail(vertical) && starterOffer.extraLine ? (
+                  <Text style={[styles.demoSub, { color: colors.mutedForeground, marginTop: 4 }]}>
+                    {starterOffer.extraLine}
+                  </Text>
+                ) : null}
                 <Text
                   style={[styles.demoSub, { color: colors.mutedForeground, fontStyle: "italic" }]}
                   numberOfLines={2}

@@ -1,12 +1,14 @@
 # Systems completeness audit — nothing forgotten
 
-**Status:** canonical (2026-05-31)  
+**Status:** canonical (2026-06-05)  
 **Audience:** founder, engineering, product, ops  
 **Purpose:** Cross-functional inventory of **every platform system** Livia needs — what exists, what’s partial, what’s missing — so doc prep catches gaps like notifications before build resumes.
 
-**Method:** Multi-hat review (§7). Update after each doc sprint.
+**Blueprint authority:** [`REPO-VS-BLUEPRINT-GAP-MATRIX.md`](./REPO-VS-BLUEPRINT-GAP-MATRIX.md) — system scores + P0–P3 priorities.
 
-**Reads with:** [`LIVIA-IDEA-TO-REALITY.md`](./LIVIA-IDEA-TO-REALITY.md) · [`MULTI-HAT-GAP-REVIEW.md`](./MULTI-HAT-GAP-REVIEW.md) · [`LIVIA-DOCUMENTATION-PROGRAM.md`](./LIVIA-DOCUMENTATION-PROGRAM.md)
+**Method:** Multi-hat review (§7). Update after each era quarter.
+
+**Reads with:** [`MASTER-BLUEPRINT-INDEX.md`](./MASTER-BLUEPRINT-INDEX.md) · [`LIVIA-IDEA-TO-REALITY.md`](./LIVIA-IDEA-TO-REALITY.md) · [`MULTI-HAT-GAP-REVIEW.md`](./MULTI-HAT-GAP-REVIEW.md)
 
 ---
 
@@ -33,8 +35,8 @@
 | Services catalog | ✅ | policy verticals | Duration/skill validation doc |
 | Staff + roster | ⚠️ | personas, journeys | Swap/sickness workflow full spec |
 | Audit log (hash chain) | ✅ | ADR 0015 | Owner-facing “Liv diary” UI spec |
-| Entitlements / capabilities | ✅ | composable monetisation | Per-tenant feature flags doc |
-| Domain events (Inngest) | ✅ | ADR 0013 | Event catalog completeness audit |
+| Entitlements / capabilities | ⚠️ | [`CAPABILITY-GRAPH-SPEC.md`](../engineering/CAPABILITY-GRAPH-SPEC.md) | Registry Phase 1 + instances — Era 1 Q3 / Era 2 Q1 |
+| Domain events (Inngest) | ⚠️ | [`EVENT-TAXONOMY.md`](../engineering/EVENT-TAXONOMY.md) | Dual event-bus + events table — unify Era 1 Q3 |
 | OpenAPI + codegen | ✅ | ADR 0005 | surfaceId on all new routes |
 
 ---
@@ -45,7 +47,8 @@
 |--------|--------|---------------|--------------|
 | Agent runtime | ⚠️ | ADR 0012, LIV-OS | Tool registry vs shipped tools matrix |
 | Tool registry (target) | 📋 | LIV-OPERATING-SYSTEM | Full alphabet → implementation map |
-| Policy graph | ⚠️ | notification-policy, wedge-gate | Central policy graph diagram doc |
+| Policy graph | ⚠️ | [`MASTER-BLUEPRINT-INDEX.md`](./MASTER-BLUEPRINT-INDEX.md) | `@workspace/policy` strong; scattered notification/wedge policies |
+| Business Twin | ⚠️ | [`BUSINESS-TWIN-SPEC.md`](./BUSINESS-TWIN-SPEC.md) | Distributed — twin service Era 2 Q1 |
 | AI disclosure (EU) | ✅ | lib/ai-disclosure | Per-channel tone matrix |
 | Eval (3-layer) | ⚠️ | ADR 0016 | Pre-merge eval CI doc |
 | Liv signals / coach cards | ⚠️ | liv-signals.service | UI spec per persona |
@@ -196,4 +199,5 @@ Before build resumes, each hat confirms **L2 spec exists** for their domain:
 
 | Date | Change |
 |------|--------|
+| 2026-06-05 | Linked to Master Blueprint gap matrix; event/capability/twin rows updated |
 | 2026-05-31 | Initial systems audit — notifications called out; P7 mobile; search; demo depth |

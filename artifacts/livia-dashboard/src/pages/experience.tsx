@@ -170,7 +170,7 @@ export default function ExperiencePage() {
             <Card key={b.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">{b.name}</CardTitle>
-                <CardDescription>{b.city ?? "—"} · /b/{b.slug}</CardDescription>
+                <CardDescription>{b.city ?? "—"} · /book/{b.slug}</CardDescription>
               </CardHeader>
               <CardContent className="flex gap-2">
                 <Button

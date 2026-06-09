@@ -1,5 +1,4 @@
-import { useGetCustomer, customFetch, getGetCustomerQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetCustomer, useGetCustomerRelationship, customFetch } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -9,7 +8,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -22,20 +20,14 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { LivMemoryCard } from "@/components/LivMemoryCard";
 import { OperationalScreen } from "@/components/OperationalScreen";
-import { invalidateOperationalState } from "@/lib/operational-cache";
-
 export default function CustomerDetailScreen() {
   const colors = useColors();
   const router = useRouter();
-  const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { currentBusiness } = useBusiness();
   const { role } = useMembership();
   const canEdit = role === "OWNER" || role === "ADMIN";
   const bid = currentBusiness?.id ?? "";
-  const [mergeIdentityId, setMergeIdentityId] = useState("");
-  const [merging, setMerging] = useState(false);
-  const [mergeError, setMergeError] = useState("");
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
   const showCareSeries = vertical === "allied-health" || vertical === "wellness";
   const [careSeries, setCareSeries] = useState<
@@ -72,6 +64,12 @@ export default function CustomerDetailScreen() {
     currentBusiness?.id ?? "",
     id ?? "",
     { query: { enabled: !!currentBusiness?.id && !!id } as any },
+  );
+
+  const { data: relationship } = useGetCustomerRelationship(
+    bid,
+    id ?? "",
+    { query: { enabled: !!bid && !!id } as any },
   );
 
   if (isLoading) {
@@ -157,65 +155,22 @@ export default function CustomerDetailScreen() {
         )}
       </View>
 
-      {bid && id ? (
-        <LivMemoryCard businessId={bid} customerId={id} canEdit={canEdit} />
+      {relationship ? (
+        <View
+          style={[styles.relCard, { backgroundColor: colors.card, borderColor: colors.border }, elevation.resting]}
+        >
+          <Text style={[styles.relTitle, { color: colors.foreground }]}>Relationship</Text>
+          <Text style={[styles.relStage, { color: colors.primary }]}>
+            {(relationship as { stageLabel?: string }).stageLabel}
+          </Text>
+          <Text style={[styles.relHeadline, { color: colors.mutedForeground }]}>
+            {(relationship as { headline?: string }).headline}
+          </Text>
+        </View>
       ) : null}
 
-      {canEdit ? (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.border },
-            Platform.OS !== "web" && elevation.resting,
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Merge duplicate channel</Text>
-          <Text style={[styles.noteText, { color: colors.mutedForeground, fontSize: 13 }]}>
-            Paste a channel identity id from a duplicate profile.
-          </Text>
-          <TextInput
-            style={[
-              styles.mergeInput,
-              {
-                backgroundColor: colors.input + "55",
-                color: colors.foreground,
-                borderColor: colors.border,
-              },
-            ]}
-            placeholder="Channel identity id"
-            placeholderTextColor={colors.mutedForeground}
-            value={mergeIdentityId}
-            onChangeText={setMergeIdentityId}
-          />
-          {mergeError ? (
-            <Text style={{ color: colors.destructive, fontSize: 12 }}>{mergeError}</Text>
-          ) : null}
-          <Pressable
-            onPress={async () => {
-              if (!bid || !id || !mergeIdentityId.trim()) return;
-              setMerging(true);
-              setMergeError("");
-              try {
-                await customFetch(`/api/businesses/${bid}/customers/${id}/merge-identity`, {
-                  method: "POST",
-                  body: JSON.stringify({ identityId: mergeIdentityId.trim() }),
-                });
-                invalidateOperationalState(qc, bid);
-                qc.invalidateQueries({ queryKey: getGetCustomerQueryKey(bid, id) });
-                setMergeIdentityId("");
-              } catch {
-                setMergeError("Merge failed — check the id.");
-              } finally {
-                setMerging(false);
-              }
-            }}
-            style={[styles.editBtn, { borderColor: colors.primary, alignSelf: "flex-start" }]}
-          >
-            <Text style={[styles.editLabel, { color: colors.primary }]}>
-              {merging ? "Merging…" : "Merge"}
-            </Text>
-          </Pressable>
-        </View>
+      {bid && id ? (
+        <LivMemoryCard businessId={bid} customerId={id} canEdit={canEdit} />
       ) : null}
 
       {showCareSeries && careSeries.length > 0 ? (
@@ -323,19 +278,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bookBtnText: { ...type.label, fontSize: 15 },
+  relCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 6 },
+  relTitle: { ...type.eyebrow, fontSize: 11 },
+  relStage: { fontFamily: fonts.serifMedium, fontSize: 20 },
+  relHeadline: { ...type.body, fontSize: 14, lineHeight: 20 },
   card: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 4 },
   eyebrow: { ...type.eyebrow, fontSize: 10.5 },
   noteText: { ...type.body, lineHeight: 22 },
   section: { gap: 10 },
   sectionTitle: { fontFamily: fonts.serifMedium, fontSize: 22, letterSpacing: -0.3 },
-  mergeInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginTop: 8,
-    marginBottom: 8,
-    fontFamily: fonts.body,
-    fontSize: 14,
-  },
 });

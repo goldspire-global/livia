@@ -19,6 +19,12 @@ type BriefingPayload = {
     source?: "liv" | "stats_fallback";
     summary: string;
     highlights: string[];
+    intel?: {
+      commerceSignals?: Array<{ id: string; title: string; severity: string }>;
+      capabilityHealth?: { score: number; grade: string; headline: string };
+      twinHeadline?: string | null;
+      twinSubline?: string | null;
+    };
     todayBookings: Array<{
       id: string;
       customerName: string;
@@ -92,6 +98,24 @@ export function MorningBriefingCard({
               · {h}
             </Text>
           ))}
+          {data.content.intel?.twinHeadline ? (
+            <Text style={[styles.intel, { color: colors.mutedForeground }]} numberOfLines={2}>
+              {data.content.intel.twinHeadline}
+              {data.content.intel.twinSubline ? ` — ${data.content.intel.twinSubline}` : ""}
+            </Text>
+          ) : null}
+          {data.content.intel?.capabilityHealth ? (
+            <Text style={[styles.intel, { color: colors.mutedForeground }]}>
+              Setup {data.content.intel.capabilityHealth.score}% ·{" "}
+              {data.content.intel.capabilityHealth.headline}
+            </Text>
+          ) : null}
+          {(data.content.intel?.commerceSignals ?? []).slice(0, 2).map((s) => (
+            <Text key={s.id} style={[styles.intel, { color: colors.mutedForeground }]}>
+              · {s.title}
+              {s.severity === "act" ? " — needs action" : ""}
+            </Text>
+          ))}
           {data.content.source !== "liv" ? (
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               Liv is writing your briefing for this shop… pull to refresh on Today.
@@ -117,6 +141,7 @@ const styles = StyleSheet.create({
   date: { ...type.caption, marginTop: 4, marginBottom: 8 },
   summary: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
   bullet: { fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
+  intel: { fontFamily: fonts.body, fontSize: 12, marginTop: 6, lineHeight: 17 },
   hint: { ...type.caption, marginTop: 8 },
   refresh: { marginTop: 10, alignSelf: "flex-start" },
 });

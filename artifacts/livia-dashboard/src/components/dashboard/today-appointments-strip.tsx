@@ -84,8 +84,10 @@ export function TodayAppointmentsStrip({
               return (
                 <li
                   key={b.id}
-                  className="px-3 py-2.5 flex items-center gap-3"
-                  data-testid={`today-appointment-${b.id}`}
+                  className="relative px-3 py-2.5 flex items-center gap-3 pl-8"
+                  data-testid="today-appointment-row"
+                  data-kind={b.kind}
+                  data-appointment-id={b.id}
                 >
                   <div className="min-w-0 flex-1">
                     <Link href={`/bookings/${b.id}`} className="block group">

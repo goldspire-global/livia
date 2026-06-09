@@ -18,7 +18,7 @@ import {
   mergeCustomerProfiles,
 } from "../services/identity-merge-suggestions.service";
 import { createMediaAsset, listMediaAssets } from "../services/media-assets.service";
-import { handleStaffLivAssist } from "../services/ai-chat-staff";
+import { handleStaffLivAssist, handleSetupLivCopilot, handleOwnerLivOps } from "../services/ai-chat-staff";
 import {
   getLivPresenceForBusiness,
   type LivPresenceContext,
@@ -434,7 +434,15 @@ router.post(
     await appendHumanAudit(businessId, getUserId(req), "human.liv.proposal.resolve", "liv_proposal", proposalId, {
       status,
     });
-    res.json(row);
+    const { extractLivProposalNavigateHref } = await import("@workspace/policy");
+    const execution = row && "execution" in row ? row.execution : undefined;
+    const effects =
+      execution && typeof execution === "object" && "effects" in execution
+        ? (execution.effects as string[] | undefined)
+        : undefined;
+    const nextHref =
+      status === "approved" ? extractLivProposalNavigateHref(effects) : null;
+    res.json({ ...row, nextHref });
   },
 );
 
@@ -498,6 +506,97 @@ router.get(
   },
 );
 
+router.get(
+  "/businesses/:businessId/liv-setup/guided-flow",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    try {
+      const { getSetupGuidedFlowForBusiness } = await import(
+        "../services/setup-guided-flow.service"
+      );
+      const flow = await getSetupGuidedFlowForBusiness(businessId);
+      if (!flow) {
+        sendError(res, req, 404, "Business not found");
+        return;
+      }
+      res.json(flow);
+    } catch (err: unknown) {
+      logRouteError(req, err, "liv-setup guided-flow failed", { businessId });
+      sendError(res, req, 500, safeClientMessage(err, "Guided flow failed"));
+    }
+  },
+);
+
+router.post(
+  "/businesses/:businessId/liv-owner/assist",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const message = String(req.body?.message ?? "").trim();
+    if (!message) {
+      sendError(res, req, 400, "message is required");
+      return;
+    }
+    const history = Array.isArray(req.body?.history)
+      ? (req.body.history as { role: string; content: string }[])
+          .filter((m) => (m.role === "user" || m.role === "assistant") && m.content)
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: String(m.content),
+          }))
+      : undefined;
+    try {
+      const result = await handleOwnerLivOps({
+        businessId,
+        message,
+        staffUserId: getUserId(req),
+        history,
+      });
+      res.json(result);
+    } catch (err: unknown) {
+      logRouteError(req, err, "liv-owner assist failed", { businessId });
+      sendError(res, req, 500, safeClientMessage(err, "Liv owner assist failed"));
+    }
+  },
+);
+
+router.post(
+  "/businesses/:businessId/liv-setup/assist",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const message = String(req.body?.message ?? "").trim();
+    if (!message) {
+      sendError(res, req, 400, "message is required");
+      return;
+    }
+    const history = Array.isArray(req.body?.history)
+      ? (req.body.history as { role: string; content: string }[])
+          .filter((m) => (m.role === "user" || m.role === "assistant") && m.content)
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: String(m.content),
+          }))
+      : undefined;
+    try {
+      const result = await handleSetupLivCopilot({
+        businessId,
+        message,
+        staffUserId: getUserId(req),
+        history,
+      });
+      res.json(result);
+    } catch (err: unknown) {
+      logRouteError(req, err, "liv-setup assist failed", { businessId });
+      sendError(res, req, 500, safeClientMessage(err, "Liv setup assist failed"));
+    }
+  },
+);
+
 router.post(
   "/businesses/:businessId/conversations/:conversationId/liv-assist",
   requireAuth,
@@ -511,11 +610,15 @@ router.post(
       return;
     }
     try {
+      const livModeRaw = req.body?.livMode;
+      const livMode =
+        livModeRaw === "setup" || livModeRaw === "ops" ? livModeRaw : undefined;
       const result = await handleStaffLivAssist({
         businessId,
         conversationId,
         message,
         staffUserId: getUserId(req),
+        livMode,
       });
       res.json(result);
     } catch (err: unknown) {

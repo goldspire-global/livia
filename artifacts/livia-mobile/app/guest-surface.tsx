@@ -12,7 +12,7 @@ import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { getGuestSurfaceUrl, type GuestSurfaceKind } from "@/lib/guest-surface-url";
 
-const KINDS: GuestSurfaceKind[] = ["visit", "intake", "waitlist", "pay", "proof"];
+const KINDS: GuestSurfaceKind[] = ["visit", "intake", "waitlist", "pay", "proof", "shop"];
 
 export default function GuestSurfaceScreen() {
   const colors = useColors();

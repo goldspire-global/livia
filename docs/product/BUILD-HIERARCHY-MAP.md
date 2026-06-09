@@ -1,7 +1,8 @@
 # Build hierarchy map — where we are
 
-**Status:** canonical (2026-05-31)  
-**Purpose:** One diagram of **nested plans** so every doc, screen, and build task has a known place in the stack.
+**Status:** canonical (2026-06-05)  
+**Purpose:** One diagram of **nested plans** so every doc, screen, and build task has a known place in the stack.  
+**GTM lock:** [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md) sits beside V3 execution plan for Wave 1 vertical depth.
 
 ---
 

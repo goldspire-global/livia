@@ -40,7 +40,7 @@ export async function getTenantExperienceForBusiness(businessId: string) {
     },
     publicAppearance: {
       slug: biz.slug,
-      publicPreviewUrl: `/b/${biz.slug}`,
+      publicPreviewUrl: `/book/${biz.slug}`,
       logoUrl: biz.logoUrl ?? null,
       coverImageUrl: biz.coverImageUrl ?? null,
       brandAccentHex: biz.brandAccentHex ?? null,

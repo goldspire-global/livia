@@ -5,6 +5,7 @@ export * from "./identity/staff";
 export * from "./identity/delegations";
 export * from "./identity/host-renter-links";
 export * from "./identity/premises";
+export * from "./identity/premises-co-tenant-invites";
 export * from "./identity/channel-premises-routing";
 export * from "./identity/franchise-links";
 export * from "./identity/enterprise-sso";
@@ -25,6 +26,7 @@ export * from "./booking/design-proof-guest-access";
 export * from "./booking/booking-resources";
 export * from "./booking/day-packages";
 export * from "./booking/care-series";
+export * from "./booking/allied-health";
 export * from "./booking/pets";
 export * from "./booking/medspa";
 export * from "./booking/booking-guest-access";
@@ -40,6 +42,9 @@ export * from "./voice/voice-call-sessions";
 // Payments
 export * from "./payments/payments";
 export * from "./payments/stripe-events";
+
+// Retail (mini-store)
+export * from "./retail/retail-products";
 
 // Notifications
 export * from "./notifications/notifications";
@@ -61,6 +66,7 @@ export * from "./marketing/marketing-leads";
 
 // Guest hub (W6 — P7 cross-shop vault)
 export * from "./guest/guest-hub";
+export * from "./guest/aftercare-sequence";
 
 // Billing (usage meters; plan composition in @workspace/entitlements)
 export * from "./billing";

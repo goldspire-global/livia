@@ -34,6 +34,7 @@ export const LazyLaunchStatusPage = lazyPage(() => import("@/pages/launch-status
 export const LazyInboxPage = lazyPage(() => import("@/pages/inbox"));
 export const LazyMyDayPage = lazyPage(() => import("@/pages/my-day"));
 export const LazyPremisesPage = lazyPage(() => import("@/pages/premises"));
+export const LazyPremisesInvitePage = lazyPage(() => import("@/pages/premises-invite"));
 export const LazyDayPackagesPage = lazyPage(() => import("@/pages/day-packages"));
 export const LazyWellnessReportsPage = lazyPage(() => import("@/pages/wellness-reports"));
 export const LazyWellnessReceptionPage = lazyPage(() => import("@/pages/wellness-reception"));
@@ -42,4 +43,8 @@ export const LazyWellnessTvPage = lazyPage(() => import("@/pages/wellness-tv"));
 export const LazyWellnessAuditDiaryPage = lazyPage(() => import("@/pages/wellness-audit-diary"));
 export const LazyWellnessGuestVaultPage = lazyPage(() => import("@/pages/wellness-guest-vault"));
 export const LazyWellnessRetailPage = lazyPage(() => import("@/pages/wellness-retail"));
+export const LazyStudioSetupPage = lazyPage(() => import("@/pages/studio-setup"));
+export const LazyBeautyReceptionPage = lazyPage(() => import("@/pages/beauty-reception"));
+export const LazyBeautyTvPage = lazyPage(() => import("@/pages/beauty-tv"));
+export const LazyBeautyStorePage = lazyPage(() => import("@/pages/beauty-store"));
 export const LazyDemoShowcase = lazyPage(() => import("@/pages/demo/Showcase"));

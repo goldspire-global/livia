@@ -11,6 +11,7 @@ import {
   resolveLivDecision,
   simulateMandateScenarios,
   livMandateSchema,
+  dedupeLivProposalsForDisplay,
   type LivMandate,
   type LivMandateAction,
   type LivDecision,
@@ -91,11 +92,66 @@ export async function createLivProposalIfNeeded(args: {
     valueMinor: args.valueMinor,
   });
   if (decision.outcome === "auto") {
-    return { decision, proposal: null };
+    return { decision, proposal: null, inserted: false };
   }
   if (decision.outcome === "refuse") {
-    return { decision, proposal: null };
+    return { decision, proposal: null, inserted: false };
   }
+
+  if (args.action === "collect_deposit") {
+    const [existingDeposit] = await db
+      .select()
+      .from(livActionProposalsTable)
+      .where(
+        and(
+          eq(livActionProposalsTable.businessId, args.businessId),
+          eq(livActionProposalsTable.action, "collect_deposit"),
+          eq(livActionProposalsTable.status, "pending"),
+        ),
+      )
+      .limit(1);
+    if (existingDeposit) {
+      return { decision, proposal: existingDeposit, inserted: false };
+    }
+  }
+
+  if (args.resourceKind === "commerce_signal") {
+    const [existingCommerce] = await db
+      .select()
+      .from(livActionProposalsTable)
+      .where(
+        and(
+          eq(livActionProposalsTable.businessId, args.businessId),
+          eq(livActionProposalsTable.action, args.action),
+          eq(livActionProposalsTable.status, "pending"),
+          eq(livActionProposalsTable.resourceKind, "commerce_signal"),
+        ),
+      )
+      .limit(1);
+    if (existingCommerce) {
+      return { decision, proposal: existingCommerce, inserted: false };
+    }
+  }
+
+  if (args.resourceKind && args.resourceId) {
+    const [existing] = await db
+      .select()
+      .from(livActionProposalsTable)
+      .where(
+        and(
+          eq(livActionProposalsTable.businessId, args.businessId),
+          eq(livActionProposalsTable.action, args.action),
+          eq(livActionProposalsTable.status, "pending"),
+          eq(livActionProposalsTable.resourceKind, args.resourceKind),
+          eq(livActionProposalsTable.resourceId, args.resourceId),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      return { decision, proposal: existing, inserted: false };
+    }
+  }
+
   const id = generateId();
   const [row] = await db
     .insert(livActionProposalsTable)
@@ -124,11 +180,11 @@ export async function createLivProposalIfNeeded(args: {
       }).catch(() => undefined),
     );
   }
-  return { decision, proposal: row };
+  return { decision, proposal: row, inserted: Boolean(row) };
 }
 
 export async function listPendingLivProposals(businessId: string, limit = 50) {
-  return db
+  const rows = await db
     .select()
     .from(livActionProposalsTable)
     .where(
@@ -139,6 +195,7 @@ export async function listPendingLivProposals(businessId: string, limit = 50) {
     )
     .orderBy(desc(livActionProposalsTable.createdAt))
     .limit(limit);
+  return dedupeLivProposalsForDisplay(rows);
 }
 
 export async function resolveLivProposal(args: {
@@ -168,6 +225,26 @@ export async function resolveLivProposal(args: {
     .where(eq(livActionProposalsTable.id, args.proposalId))
     .returning();
 
+  if (updated && args.status === "approved" && updated.action === "collect_deposit") {
+    await db
+      .update(livActionProposalsTable)
+      .set({
+        status: "dismissed",
+        resolvedBy: args.userId,
+        resolvedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(livActionProposalsTable.businessId, args.businessId),
+          eq(livActionProposalsTable.action, "collect_deposit"),
+          eq(livActionProposalsTable.status, "pending"),
+        ),
+      );
+  }
+
+  const commerceRelated =
+    row.action === "collect_deposit" || row.resourceKind === "commerce_signal";
+
   if (args.status === "approved" && updated) {
     const { executeApprovedProposal } = await import("./conversation-case.service");
     const exec = await executeApprovedProposal({
@@ -175,7 +252,20 @@ export async function resolveLivProposal(args: {
       proposalId: args.proposalId,
       userId: args.userId,
     });
+    if (commerceRelated) {
+      const { syncCommerceIntelligenceLoop } = await import("./commerce-signals.service");
+      void syncCommerceIntelligenceLoop(args.businessId);
+    const { invalidateOwnerIntelligenceCache } = await import("./owner-intelligence-cache");
+    invalidateOwnerIntelligenceCache(args.businessId);
+    }
     return { ...updated, execution: exec };
+  }
+
+  if (updated && commerceRelated && args.status === "dismissed") {
+    const { syncCommerceIntelligenceLoop } = await import("./commerce-signals.service");
+    void syncCommerceIntelligenceLoop(args.businessId);
+    const { invalidateOwnerIntelligenceCache } = await import("./owner-intelligence-cache");
+    invalidateOwnerIntelligenceCache(args.businessId);
   }
 
   return updated;

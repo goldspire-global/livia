@@ -1,7 +1,8 @@
 # Livia verticals — final build plan (cross-vertical)
 
-**Status:** canonical execution plan (2026-06-01)  
-**Supersedes:** ad-hoc vertical notes in chat; **does not** replace [`LIVIA-FINAL-BUILD-PLAN.md`](./LIVIA-FINAL-BUILD-PLAN.md) platform locks.  
+**Status:** canonical execution plan (2026-06-05)  
+**GTM lock:** [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md) — all nine verticals, one exit checklist  
+**Innovation:** [`VERTICAL-INNOVATION-PROGRAM.md`](./VERTICAL-INNOVATION-PROGRAM.md)  
 **Index:** [`VERTICAL-PROGRAMS-INDEX.md`](./VERTICAL-PROGRAMS-INDEX.md)  
 **Progress:** [`LIVIA-STATUS.md`](../LIVIA-STATUS.md)
 
@@ -9,7 +10,7 @@
 
 ## 1. Objective
 
-Every **code vertical** reaches the same bar: founder can demo **web + mobile** with honest tier labels, preset parity (web-first), live demo world, and doc propagation that **fails CI** when spokes drift.
+Every **code vertical** reaches the **GTM Wave 1 package** ([`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md) §4): sub-segment onboarding, subdomain book, `/my` relationship, innovation P0, demo depth, founder smoke, doc propagation.
 
 ---
 
@@ -21,7 +22,9 @@ Every **code vertical** reaches the same bar: founder can demo **web + mobile** 
 | 2 | Playbook links program | `vertical-playbooks/{v}.md` |
 | 3 | Demo slug live + depth | `POST /demo/sync-vertical-showcase` |
 | 4 | Wedge interstitial | `/demo/wedge/{vertical}` |
-| 5 | `/b` book ≤90s | Founder UAT or `public-booking-quality` |
+| 5 | Subdomain book ≤90s | Founder UAT or `public-booking-quality` |
+| 5b | `/my` relationship artifact | Guest hub seed + vertical visit shell |
+| 5c | Innovation P0 | [`VERTICAL-INNOVATION-PROGRAM.md`](./VERTICAL-INNOVATION-PROGRAM.md) |
 | 6 | Owner ritual home density | Contextual modules only |
 | 7 | Presets: 4 natives + platform-default in policy | `pnpm vertical:check` |
 | 8 | W4 preset CSS + settings iframe | Staging visual |
@@ -29,7 +32,7 @@ Every **code vertical** reaches the same bar: founder can demo **web + mobile** 
 | 10 | Doc propagation | `pnpm vertical:doc-check` |
 | 11 | P0 PNGs captured or queued honestly | `pnpm screen-cards:status` |
 
-**Heartland (hair, beauty)** also require: founder sign-off row in [`FOUNDER-UAT-CHECKLIST.md`](../operations/FOUNDER-UAT-CHECKLIST.md).
+All nine verticals require founder sign-off row in [`FOUNDER-UAT-CHECKLIST.md`](../operations/FOUNDER-UAT-CHECKLIST.md) before GTM Wave 1 exit.
 
 ---
 
@@ -43,30 +46,24 @@ Every **code vertical** reaches the same bar: founder can demo **web + mobile** 
 - [x] `DOC-PROPAGATION-CASCADE.md` + `vertical:doc-check`
 - [x] This build plan
 
-### Phase V1 — Heartland proof (current)
+### Phase V1 — GTM Wave 1 depth (current — all nine verticals)
 
-| Vertical | Priority tasks |
-|----------|----------------|
-| **Beauty** | Founder Bloom UAT; preset CSS polish; capture queue PNGs |
-| **Hair** | Registry `demoSlug`; warm-chair targets; Luxe UAT sign-off |
-
-**Exit:** Both heartland rows checked in founder UAT.
-
-### Phase V2 — Beta-full vertical parity
-
-For: wellness, body-art, fitness, medspa, allied-health, pet-grooming, automotive-detailing.
+**No heartland vs beta-full split for GTM.** Parallel depth waves D0–D4 per [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md).
 
 | Workstream | Deliverable |
 |------------|-------------|
+| **D0** | Wildcard subdomain; sub-segment profiles; beauty + hair packs |
+| **D1** | `/my` visit shell; wellness + body-art relationship |
+| **D2** | Vertical memory; medspa + allied health intake |
+| **D3** | Pack/credit on `/my`; fitness + pet + automotive |
+| **D4** | Innovation P1; nine-slug founder smoke sign-off |
 | Presets | `.target.png` per [`VERTICAL-TARGET-MOCK-PROGRAM.md`](../design/VERTICAL-TARGET-MOCK-PROGRAM.md) |
-| Demo depth | Hero artifact per [`PER-VERTICAL-DEMO-SEED.md`](./PER-VERTICAL-DEMO-SEED.md) |
-| Vertical routes | `/medspa`, `/design-proofs`, `/classes` where applicable |
-| Founder smoke | 5-path mini UAT per program doc |
-| E2E | Slug in `all-verticals-smoke` + vertical-specific spec |
+| Demo depth | [`PER-VERTICAL-DEMO-SEED.md`](./PER-VERTICAL-DEMO-SEED.md) + guest hub heterogeneous links |
+| E2E | `all-verticals-smoke` + guest hub path |
 
-**Exit:** Each beta-full program doc gaps § marked ✅ or explicitly deferred to R2 with date.
+**Exit:** GTM Wave 1 criteria in GTM depth program §8.
 
-### Phase V3 — Partner honesty
+### Phase V2 — Partner honesty
 
 - Dental, mental health: sales one-pagers only — no demo grid tile pretending full product.
 - V11 adjacent: Calendly-parity messaging until Gate 2.

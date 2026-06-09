@@ -8,13 +8,19 @@ import {
 import { and, eq, gte, lte, sql, inArray } from "drizzle-orm";
 import { generateId } from "../lib/id";
 import { todayInTimezone } from "@workspace/liv-runtime";
-import { businessVocabulary } from "@workspace/policy";
+import { businessVocabulary, ownerHomeUncapturedDemand, resolveCommerceOwnerBriefingCta, buildMorningBriefingIntelHighlights, type MorningBriefingIntel } from "@workspace/policy";
 import { isAnthropicConfigured } from "@workspace/integrations-anthropic-ai";
 import { enrichBookingsBatch } from "./bookings.service";
 import {
   synthesizeOrgAdminPortfolioLine,
   synthesizeLivMorningNarrative,
 } from "./liv-morning-narrative";
+import { getOwnerIntelligenceBundle, type OwnerIntelligenceBundle } from "./owner-intelligence.service";
+import { listAtRiskGuestPreviews } from "./relationship.service";
+import { listRecentVisitFeedback } from "./visit-feedback.service";
+import { formatCommerceMinor } from "./commerce-intelligence.service";
+import { getCommerceSignalsBundle } from "./commerce-signals.service";
+import { getTenantCapabilities } from "./capability-resolution.service";
 import { logger } from "../lib/logger";
 
 export type MorningBriefingSource = "liv" | "stats_fallback";
@@ -40,6 +46,7 @@ export type MorningBriefingContent = {
     serviceName: string;
   }>;
   generatedAt: string;
+  intel?: MorningBriefingIntel;
 };
 
 export function isMorningBriefingHour(timezone: string, targetHour = 6): boolean {
@@ -61,6 +68,7 @@ function aiEnabledForBusiness(row: { aiEnabled: string } | undefined): boolean {
 export async function gatherMorningBriefingFacts(
   businessId: string,
   timezone: string,
+  preloadedIntel?: OwnerIntelligenceBundle | null,
 ): Promise<MorningBriefingContent> {
   const [biz] = await db
     .select({
@@ -126,6 +134,23 @@ export async function gatherMorningBriefingFacts(
       ),
     );
 
+  const [atRiskGuests, recentFeedback, ownerIntel] = await Promise.all([
+    listAtRiskGuestPreviews(businessId, { limit: 5 }),
+    listRecentVisitFeedback(businessId, 14),
+    preloadedIntel !== undefined
+      ? Promise.resolve(preloadedIntel)
+      : getOwnerIntelligenceBundle(businessId),
+  ]);
+
+  const commerceBundle = ownerIntel
+    ? { signals: ownerIntel.commerce.signals, snapshot: ownerIntel.commerce.snapshot }
+    : await getCommerceSignalsBundle(businessId);
+  const commerce = commerceBundle.snapshot;
+  const caps = ownerIntel
+    ? { capabilityHealth: ownerIntel.capabilityHealth }
+    : await getTenantCapabilities(businessId);
+  const lowFeedbackCount = recentFeedback.filter((r) => r.score <= 3).length;
+
   const todayBookings = enriched.map((b) => {
     const cust = b.customer as { firstName?: string; lastName?: string; displayName?: string } | null;
     const name =
@@ -145,6 +170,7 @@ export async function gatherMorningBriefingFacts(
   const pending = pendingCount?.count ?? 0;
   const handed = handedOff?.count ?? 0;
   const todayCount = todayBookings.length;
+  const confirmedTotal = pending + todayCount;
 
   const highlights: string[] = [];
   if (pending > 0) {
@@ -155,6 +181,40 @@ export async function gatherMorningBriefingFacts(
   if (handed > 0) {
     highlights.push(`${handed} ${clientWord} thread${handed === 1 ? "" : "s"} waiting for your team`);
   }
+  if (lowFeedbackCount > 0) {
+    highlights.push(
+      `${lowFeedbackCount} low post-visit score${lowFeedbackCount === 1 ? "" : "s"} worth a follow-up`,
+    );
+  }
+  if (atRiskGuests.length > 0) {
+    highlights.push(
+      `${atRiskGuests.length} ${clientWord}${atRiskGuests.length === 1 ? "" : "s"} drifting — no visit in 60+ days`,
+    );
+  }
+  if (commerce.paymentCount30d > 0) {
+    highlights.push(
+      `${formatCommerceMinor(commerce.capturedMinor30d, commerce.currency)} captured in the last 30 days (${commerce.paymentCount30d} payment${commerce.paymentCount30d === 1 ? "" : "s"})`,
+    );
+  }
+  if (
+    ownerHomeUncapturedDemand({
+      paymentCount30d: commerce.paymentCount30d,
+      demandBookings: confirmedTotal,
+      weekBookings: weekAhead?.count ?? 0,
+    })
+  ) {
+    highlights.push(
+      "Bookings are flowing but no payments captured yet — connect Stripe deposits in Settings → Billing",
+    );
+  }
+  if (resolveCommerceOwnerBriefingCta({
+    captureRatePercent: commerce.captureRatePercent,
+    paymentCount30d: commerce.paymentCount30d,
+  })?.label === "Improve payment capture") {
+    highlights.push(
+      `Payment capture at ${commerce.captureRatePercent}% — review deposits and failed cards in Settings → Billing`,
+    );
+  }
   if (todayCount === 0) {
     highlights.push(`No ${serviceWord}s on the calendar at ${businessName} yet today`);
   } else {
@@ -164,6 +224,33 @@ export async function gatherMorningBriefingFacts(
         ? `First up: ${first.customerName} (${first.serviceName}) at ${businessName}`
         : `${todayCount} ${serviceWord}${todayCount === 1 ? "" : "s"} scheduled at ${businessName}`,
     );
+  }
+
+  const intel: MorningBriefingIntel = {
+    commerceSignals: commerceBundle.signals.slice(0, 4).map((s) => ({
+      id: s.id,
+      title: s.title,
+      severity: s.severity,
+      body: s.body,
+    })),
+    capabilityHealth: caps?.capabilityHealth,
+    twinHeadline: ownerIntel?.twinHeadline ?? null,
+    twinSubline: ownerIntel?.twinSubline ?? null,
+    twinRisks: ownerIntel?.twinRisks?.map((r) => ({ title: r.title, body: r.body })),
+    twinOpportunities: ownerIntel?.twinOpportunities?.map((o) => ({
+      title: o.title,
+      body: o.body,
+    })),
+    twinObservations: ownerIntel?.twinObservations?.slice(0, 2).map((o) => ({
+      title: o.title,
+      body: o.body,
+      domain: o.domain,
+    })),
+  };
+  for (const line of buildMorningBriefingIntelHighlights(intel)) {
+    if (!highlights.some((h) => h.startsWith(line.slice(0, 24)))) {
+      highlights.push(line);
+    }
   }
 
   const summary =
@@ -186,6 +273,7 @@ export async function gatherMorningBriefingFacts(
     },
     todayBookings: todayBookings.slice(0, 12),
     generatedAt: new Date().toISOString(),
+    intel,
   };
 }
 
@@ -212,7 +300,8 @@ async function composeBriefingContent(
     .from(businessesTable)
     .where(eq(businessesTable.id, businessId));
 
-  const facts = await gatherMorningBriefingFacts(businessId, timezone);
+  const ownerIntel = await getOwnerIntelligenceBundle(businessId);
+  const facts = await gatherMorningBriefingFacts(businessId, timezone, ownerIntel);
 
   if (!biz || !aiEnabledForBusiness(biz) || !isAnthropicConfigured()) {
     return facts;
@@ -225,6 +314,21 @@ async function composeBriefingContent(
     timezone,
     briefingDate,
     facts,
+    twin: ownerIntel?.twinHeadline
+      ? {
+          headline: ownerIntel.twinHeadline,
+          subline: ownerIntel.twinSubline ?? "",
+          recommendations: ownerIntel.twinTopRecommendation
+            ? [
+                {
+                  title: ownerIntel.twinTopRecommendation.title,
+                  reason: ownerIntel.twinTopRecommendation.reason,
+                  priority: ownerIntel.twinTopRecommendation.priority,
+                },
+              ]
+            : [],
+        }
+      : null,
   });
 
   if (!liv) return facts;

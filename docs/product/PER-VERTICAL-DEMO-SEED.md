@@ -21,6 +21,20 @@
 
 **Rule:** Seeds only change **data + copy packs** — never route graph.
 
-**E2E:** `demo-live-day.spec.ts`, `demo-proof-token.spec.ts`, `public-booking-quality.spec.ts`
+### Guest hub depth (GTM Wave 1)
 
-**Exit:** `pnpm e2e:prep` + demo provision + sync → all slugs in [`DEMO-FULL-SHOWCASE.md`](../testing/DEMO-FULL-SHOWCASE.md) load with depth.
+Demo guest `+353871000001` via [`demo-guest-hub.seed.ts`](../../artifacts/api-server/src/services/demo-guest-hub.seed.ts) must link **≥3 heterogeneous verticals** with:
+
+| Vertical | Required hub artifact |
+|----------|----------------------|
+| beauty | Upcoming lash/brow + fill-cycle thread |
+| hair | Upcoming colour appointment |
+| wellness | Package credit row |
+| body-art | Proof or consult status (when seeded) |
+| Others | At least one relationship thread per vertical in full showcase |
+
+**Book URLs in seed:** `{slug}.livia-hq.com` when subdomain ships; until then legacy `/b` with migration note in GTM program.
+
+**E2E:** `demo-live-day.spec.ts`, `demo-proof-token.spec.ts`, `public-booking-quality.spec.ts`, guest hub path
+
+**Exit:** GTM Wave 1 §8 in [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md).

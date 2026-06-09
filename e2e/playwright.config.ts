@@ -373,6 +373,36 @@ export default defineConfig({
         baseURL: dashboardBase,
       },
     },
+    {
+      name: "innovation-p0-e2e",
+      testMatch: /innovation-p0-e2e\.spec\.ts/,
+      timeout: 600_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "guest-hub-smoke",
+      testMatch: /guest-hub-smoke\.spec\.ts/,
+      timeout: 300_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "dual-entry-uat",
+      testMatch: /dual-entry-uat\.spec\.ts/,
+      timeout: 600_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
   ],
   metadata: {
     demoSlug,

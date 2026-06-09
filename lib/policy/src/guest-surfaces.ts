@@ -1,6 +1,6 @@
 import type { BusinessVertical } from "./types";
 
-/** Guest surface types on W5 `/b/{slug}/*` — thick Livia, thin channels. */
+/** Guest surface types on W5 book host (`{slug}.livia-hq.com` or `/book/{slug}`) — thick Livia, thin channels. */
 export type GuestSurfaceType =
   | "storefront"
   | "liv-chat"

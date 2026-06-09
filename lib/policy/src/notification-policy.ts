@@ -9,6 +9,8 @@ export const notificationPrefsSchema = z.object({
   pushInboxInbound: z.boolean().default(true),
   pushInboxHandoff: z.boolean().default(true),
   pushLivBookingViaChannel: z.boolean().default(true),
+  pushTwinRisk: z.boolean().default(true),
+  pushTwinOpportunity: z.boolean().default(true),
 });
 
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
@@ -32,6 +34,8 @@ export const PUSH_AUDIENCE: Record<string, PushAudience> = {
   "inbox.inbound": "inbox_team",
   "inbox.handoff": "inbox_team",
   "inbox.liv_booked": "inbox_team",
+  "twin.risk": "operators",
+  "twin.opportunity": "operators",
 };
 
 export type ChannelLabel = "WhatsApp" | "Instagram" | "Messenger" | "SMS" | "Web" | "Voice";
@@ -126,7 +130,11 @@ export type InAppNotificationKind =
   | "time_off.pending"
   | "liv.proposal.pending"
   | "morning.briefing.ready"
-  | "refund.pending";
+  | "refund.pending"
+  | "commerce.signal"
+  | "payment.failed"
+  | "twin.risk"
+  | "twin.opportunity";
 
 export type NotificationPersonaHint =
   | "org_admin"
@@ -190,6 +198,12 @@ export function buildNotificationDeepLinks(args: {
       return { href: "/dashboard", mobileHref: "/(tabs)/approvals" };
     case "morning.briefing.ready":
       return { href: "/dashboard", mobileHref: "/(tabs)/today" };
+    case "commerce.signal":
+    case "payment.failed":
+      return { href: "/settings?tab=billing", mobileHref: "/(tabs)/today" };
+    case "twin.risk":
+    case "twin.opportunity":
+      return { href: "/dashboard", mobileHref: "/(tabs)/index" };
     default:
       return { href: "/dashboard", mobileHref: "/(tabs)" };
   }
@@ -209,12 +223,16 @@ export function buildInboxHandoffPush(args: {
 }
 
 /** Screen card w4m.notifications — row icon family. */
-export type NotificationFeedIcon = "booking" | "inbox" | "approval" | "chain";
+export type NotificationFeedIcon = "booking" | "inbox" | "approval" | "chain" | "commerce" | "twin";
 
 export function notificationFeedIcon(kind: string): NotificationFeedIcon {
   if (kind.startsWith("booking")) return "booking";
   if (kind.startsWith("inbox")) return "inbox";
   if (kind === "chain.alert") return "chain";
+  if (kind === "commerce.signal" || kind === "payment.failed" || kind === "capability.state") {
+    return "commerce";
+  }
+  if (kind === "twin.risk" || kind === "twin.opportunity") return "twin";
   return "approval";
 }
 

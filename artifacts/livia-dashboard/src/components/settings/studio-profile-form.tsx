@@ -79,7 +79,9 @@ function FieldInput({
       <div className="space-y-2" key={id}>
         <Label>{def.label}</Label>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">/b/</span>
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            {import.meta.env.DEV ? "/book/" : ""}
+          </span>
           <Input
             {...form.register("slug", { required: true })}
             disabled={disabled}

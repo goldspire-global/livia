@@ -13,6 +13,12 @@ type BriefingPayload = {
     verticalLabel?: string;
     summary: string;
     highlights: string[];
+    intel?: {
+      commerceSignals?: Array<{ id: string; title: string; severity: string }>;
+      capabilityHealth?: { score: number; grade: string; headline: string };
+      twinHeadline?: string | null;
+      twinSubline?: string | null;
+    };
     source?: "liv" | "stats_fallback";
     stats: {
       todayCount: number;
@@ -82,6 +88,29 @@ export function MorningBriefingCard() {
                 <li key={h}>{h}</li>
               ))}
             </ul>
+            {data.content.intel?.commerceSignals?.some((s) => s.severity === "act") ? (
+              <p className="text-xs text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-md px-2 py-1.5">
+                Commerce act:{" "}
+                {data.content.intel.commerceSignals
+                  .filter((s) => s.severity === "act")
+                  .map((s) => s.title)
+                  .join(" · ")}
+              </p>
+            ) : null}
+            {data.content.intel?.twinHeadline ? (
+              <p className="text-xs text-muted-foreground border-t border-border/60 pt-2">
+                <span className="font-medium text-foreground">{data.content.intel.twinHeadline}</span>
+                {data.content.intel.twinSubline ? ` — ${data.content.intel.twinSubline}` : null}
+              </p>
+            ) : null}
+            {data.content.intel?.capabilityHealth &&
+            data.content.intel.capabilityHealth.score < 70 ? (
+              <p className="text-xs text-muted-foreground">
+                Setup health {data.content.intel.capabilityHealth.score}% (
+                {data.content.intel.capabilityHealth.grade}) —{" "}
+                {data.content.intel.capabilityHealth.headline}
+              </p>
+            ) : null}
             {data.content.todayBookings.length > 0 ? (
               <ul className="text-xs divide-y border rounded-md">
                 {data.content.todayBookings.slice(0, 5).map((b) => (

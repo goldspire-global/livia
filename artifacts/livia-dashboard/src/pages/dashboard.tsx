@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { customFetch } from "@workspace/api-client-react";
 import {
   useGetDashboardSummary,
   useGetActivityFeed,
@@ -32,7 +33,6 @@ import { LivProposalsPanel } from "@/components/liv-proposals-panel";
 import { AccountantPreviewCard } from "@/components/accountant-preview-card";
 import { LivMomentsStrip } from "@/components/ritual/liv-moments-strip";
 import { LivIncidentsStrip } from "@/components/ritual/liv-incidents-strip";
-import { LivCommandHub } from "@/components/liv/liv-command-hub";
 import { VerticalHomeModules } from "@/components/dashboard/vertical-home-modules";
 import { OwnerHomeRitual } from "@/components/dashboard/owner-home-ritual";
 import { OwnerDashboardLoading } from "@/components/dashboard/owner-dashboard-loading";
@@ -43,11 +43,21 @@ import { useUser } from "@clerk/clerk-react";
 import { timeGreeting } from "@/lib/persona-rituals";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { ActivationWelcome } from "@/components/activation/activation-welcome";
-import { shouldShowRunningLateAffordance } from "@workspace/policy";
+import { ActivationMilestone } from "@/components/activation/activation-milestone";
+import { CapabilityReadinessPanel } from "@/components/capabilities/capability-readiness-panel";
+import { OwnerIntelligenceStack } from "@/components/dashboard/owner-intelligence-stack";
+import { ChainCommercePanel } from "@/components/chain/chain-commerce-panel";
+import type { ChainRollup } from "@/components/chain/founder-chain-types";
+import {
+  shouldShowOperatorDashboardSupplements,
+  shouldShowRunningLateAffordance,
+} from "@workspace/policy";
+import { cn } from "@/lib/utils";
 import { isAppearanceEmbed } from "@/lib/appearance-preview-mode";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
-import { resolvePresentationLayoutMorph } from "@workspace/policy";
 import { wellnessNativeMorphForVertical } from "@/lib/presentation-layout";
+import { effectivePresentationMorph } from "@/lib/appearance-preview-mode";
+import { GuestVaultOwnerCallout } from "@/components/customers/guest-vault-owner-callout";
 
 // ------------ helpers ------------
 
@@ -132,7 +142,7 @@ function shopScopedGreeting(firstName: string | null | undefined, shopName: stri
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { business } = useBusiness();
+  const { business, businesses } = useBusiness();
   const { kind: persona } = usePersona();
   const { formatTime, formatHeaderDate } = useFormat();
   const qc = useQueryClient();
@@ -149,6 +159,13 @@ export default function DashboardPage() {
     { limit: 12 },
     { query: { enabled: !!businessId } as any }
   );
+
+  const { data: chainRollup } = useQuery({
+    queryKey: ["chain-rollup-dashboard"],
+    queryFn: () => customFetch<ChainRollup>("/api/me/chain-rollup"),
+    enabled: persona === "org_admin" && businesses.length >= 2,
+    staleTime: 60_000,
+  });
 
   const updateBooking = useUpdateBooking({
     mutation: {
@@ -295,8 +312,8 @@ export default function DashboardPage() {
   const tenantVertical = (business as { vertical?: string } | null)?.vertical;
   const wellnessMorphShell = wellnessNativeMorphForVertical(
     tenantVertical,
-    tenantVertical === "wellness" && tenantXp?.presentation
-      ? resolvePresentationLayoutMorph("wellness", tenantXp.presentation.presetId)
+    tenantVertical === "wellness"
+      ? effectivePresentationMorph("wellness", tenantXp?.presentation?.presetId)
       : null,
   );
   const showTenantOpsPanels =
@@ -404,8 +421,8 @@ export default function DashboardPage() {
                     </span>
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    Share <code className="text-[10px] bg-muted px-1 rounded">/b/{business?.slug}</code> on
-                    socials — customers book on your page, not a marketplace.
+                    Share your book page ({import.meta.env.DEV ? `/book/${business?.slug}` : `${business?.slug}.livia-hq.com`}) on
+                    socials — customers book on your brand, not a marketplace.
                   </p>
                 </div>
               </li>
@@ -472,17 +489,40 @@ export default function DashboardPage() {
         />
       ) : null}
 
+      {isOperatorHome && shouldShowOperatorDashboardSupplements() ? (
+        <OwnerIntelligenceStack variant="operator" className="mb-2" />
+      ) : null}
+
+      {!isOperatorHome ? <ActivationMilestone /> : null}
+      {!isOperatorHome ? <CapabilityReadinessPanel /> : null}
       {!isOperatorHome ? <ActivationWelcome /> : null}
+      {!isOperatorHome && business?.slug ? (
+        <GuestVaultOwnerCallout
+          slug={business.slug}
+          businessName={business.name}
+          compact
+        />
+      ) : null}
+      {!isOperatorHome && persona !== "staff" && persona !== "receptionist" ? (
+        <OwnerIntelligenceStack variant="owner-home" className="mb-4" />
+      ) : null}
       {!wellnessMorphShell ? <OperatorMaturityBanner /> : null}
+
+      {!isOperatorHome && persona === "org_admin" && businesses.length >= 2 ? (
+        <ChainCommercePanel
+          commerceAlerts={chainRollup?.commerceAlerts}
+          commerceSummary={chainRollup?.commerceSummary}
+        />
+      ) : null}
 
       {!isOperatorHome && persona === "org_admin" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <LivProposalsPanel />
+          <LivProposalsPanel variant="home" maxItems={3} />
           <VerticalTodayInsights />
         </div>
       )}
 
-      {showTenantOpsPanels && !isOperatorHome && <LivMomentsStrip />}
+      {showTenantOpsPanels && !isOperatorHome ? <LivMomentsStrip /> : null}
 
       {showTenantOpsPanels && !isOperatorHome && <LivIncidentsStrip />}
 
@@ -506,7 +546,13 @@ export default function DashboardPage() {
 
       {showTenantOpsPanels && !isOperatorHome && (
         <LazyMount minHeight={80}>
-          <VisitFeedbackStrip />
+          <VisitFeedbackStrip
+            items={
+              (summary as { recentVisitFeedback?: Parameters<typeof VisitFeedbackStrip>[0]["items"] } | undefined)
+                ?.recentVisitFeedback
+            }
+            loading={isLoadingSummary}
+          />
         </LazyMount>
       )}
 
@@ -530,7 +576,7 @@ export default function DashboardPage() {
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-primary/30 bg-primary/5">
             <Zap className="w-3.5 h-3.5 text-primary" />
             <span className="text-[10px] font-medium text-primary">
-              AI agent: {summary?.pendingCount ?? 0} action{(summary?.pendingCount ?? 0) === 1 ? "" : "s"} ready
+              Liv: {summary?.pendingCount ?? 0} suggestion{(summary?.pendingCount ?? 0) === 1 ? "" : "s"} ready
             </span>
           </div>
           <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-muted-foreground bg-muted px-2 py-1 rounded border border-border">
@@ -542,8 +588,20 @@ export default function DashboardPage() {
 
       {/* ============== KPI strip + Action Queue (org_admin / legacy layout) ============== */}
       {!isOperatorHome ? (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          (isLoadingSummary || pendingBookings.length > 0) && "lg:grid-cols-3",
+        )}
+      >
+        <div
+          className={cn(
+            "grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4",
+            isLoadingSummary || pendingBookings.length > 0
+              ? "lg:col-span-2 lg:grid-cols-5"
+              : "lg:col-span-full lg:grid-cols-5",
+          )}
+        >
           <KpiTile
             label="Today's Bookings"
             value={summary?.todayBookings ?? 0}
@@ -593,65 +651,64 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Action Queue */}
-        <Panel
-          title="Action Queue"
-          right={
-            (summary?.pendingCount ?? 0) > 0 ? (
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[hsl(var(--chart-4))]/10 text-[hsl(var(--chart-4))]">
-                {summary?.pendingCount} PENDING
-              </span>
-            ) : null
-          }
-        >
-          {isLoadingSummary ? (
-            <div className="p-3 space-y-2">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-12 w-full rounded" />
-              ))}
-            </div>
-          ) : pendingBookings.length === 0 ? (
-            <EmptyState icon={Check} text="All caught up. Nothing waiting on you." />
-          ) : (
-            <div className="p-2 space-y-2 max-h-[220px] overflow-y-auto">
-              {pendingBookings.map((b) => (
-                <div
-                  key={b.id}
-                  className="flex items-center justify-between p-2 rounded border border-border bg-background/40 hover:border-muted-foreground/30 transition-colors"
-                >
-                  <Link href={`/bookings/${b.id}`}>
-                    <div className="flex flex-col gap-0.5 cursor-pointer min-w-0">
-                      <span className="text-xs font-medium truncate">{customerName(b.customer)}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono truncate">
-                        {formatTime(b.startAt)} · {b.service.name}
-                      </span>
+        {isLoadingSummary || pendingBookings.length > 0 ? (
+          <Panel
+            title="Action Queue"
+            right={
+              pendingBookings.length > 0 ? (
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[hsl(var(--chart-4))]/10 text-[hsl(var(--chart-4))]">
+                  {pendingBookings.length} today
+                </span>
+              ) : null
+            }
+          >
+            {isLoadingSummary ? (
+              <div className="p-3 space-y-2">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded" />
+                ))}
+              </div>
+            ) : (
+              <div className="p-2 space-y-2 max-h-[220px] overflow-y-auto">
+                {pendingBookings.map((b) => (
+                  <div
+                    key={b.id}
+                    className="flex items-center justify-between p-2 rounded border border-border bg-background/40 hover:border-muted-foreground/30 transition-colors"
+                  >
+                    <Link href={`/bookings/${b.id}`}>
+                      <div className="flex flex-col gap-0.5 cursor-pointer min-w-0">
+                        <span className="text-xs font-medium truncate">{customerName(b.customer)}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono truncate">
+                          {formatTime(b.startAt)} · {b.service.name}
+                        </span>
+                      </div>
+                    </Link>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <button
+                        type="button"
+                        aria-label="Decline booking"
+                        disabled={updateBooking.isPending}
+                        onClick={() => handleStatusUpdate(b.id, "CANCELLED")}
+                        className="w-7 h-7 rounded bg-muted hover:bg-destructive/15 hover:text-destructive flex items-center justify-center transition-colors disabled:opacity-40"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Confirm booking"
+                        disabled={updateBooking.isPending}
+                        onClick={() => handleStatusUpdate(b.id, "CONFIRMED")}
+                        className="w-7 h-7 rounded bg-primary/15 text-primary hover:bg-primary/25 flex items-center justify-center transition-colors disabled:opacity-40"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  </Link>
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                    <button
-                      type="button"
-                      aria-label="Decline booking"
-                      disabled={updateBooking.isPending}
-                      onClick={() => handleStatusUpdate(b.id, "CANCELLED")}
-                      className="w-7 h-7 rounded bg-muted hover:bg-destructive/15 hover:text-destructive flex items-center justify-center transition-colors disabled:opacity-40"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Confirm booking"
-                      disabled={updateBooking.isPending}
-                      onClick={() => handleStatusUpdate(b.id, "CONFIRMED")}
-                      className="w-7 h-7 rounded bg-primary/15 text-primary hover:bg-primary/25 flex items-center justify-center transition-colors disabled:opacity-40"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Panel>
+                ))}
+              </div>
+            )}
+          </Panel>
+        ) : null}
       </div>
       ) : null}
 
@@ -770,25 +827,55 @@ export default function DashboardPage() {
           ) : (
             <div className="flex flex-col">
               {activityRows.map((a) => {
+                const enriched = a as {
+                  label?: string;
+                  detail?: string;
+                  href?: string;
+                  priority?: "info" | "watch" | "act";
+                };
                 const meta = getActivityEventMeta(
                   a.type,
                   (business as { vertical?: string } | undefined)?.vertical,
                   business?.category,
                 );
-                return (
-                  <div
-                    key={a.id}
-                    className="flex items-start gap-3 px-4 py-2.5 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
-                  >
+                const label = enriched.label ?? meta.label;
+                const rowInner = (
+                  <>
                     <div className={`mt-0.5 shrink-0 ${meta.color}`}>
                       <meta.Icon className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[11px] truncate">{meta.label}</div>
+                      <div className="text-[11px] truncate">{label}</div>
+                      {enriched.detail ? (
+                        <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {enriched.detail}
+                        </div>
+                      ) : null}
                     </div>
                     <div className="text-[10px] text-muted-foreground font-mono shrink-0">
                       {formatRelativeTime(a.createdAt)}
                     </div>
+                  </>
+                );
+                const rowClass =
+                  "flex items-start gap-3 px-4 py-2.5 border-b border-border last:border-0 hover:bg-muted/30 transition-colors";
+                if (enriched.href) {
+                  return (
+                    <Link
+                      key={a.id}
+                      href={enriched.href}
+                      className={cn(
+                        rowClass,
+                        enriched.priority === "act" && "border-l-2 border-l-destructive pl-3",
+                      )}
+                    >
+                      {rowInner}
+                    </Link>
+                  );
+                }
+                return (
+                  <div key={a.id} className={rowClass}>
+                    {rowInner}
                   </div>
                 );
               })}

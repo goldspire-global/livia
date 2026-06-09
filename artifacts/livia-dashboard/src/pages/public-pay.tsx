@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearch } from "wouter";
+import { useSearch } from "wouter";
+import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
 import { formatCurrency, formatDateTime } from "@/lib/format";
@@ -33,7 +34,7 @@ type PayPayload = {
 };
 
 export default function PublicPayPage() {
-  const { slug, token } = useParams<{ slug: string; token: string }>();
+  const { slug, token } = useGuestBookTokenRoute("pay");
   const search = useSearch();
   const params = new URLSearchParams(search);
   const statusHint = params.get("status");

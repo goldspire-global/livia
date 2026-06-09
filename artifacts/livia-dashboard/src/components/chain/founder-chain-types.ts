@@ -24,6 +24,19 @@ export type ChainAlert = {
   message: string;
 };
 
+export type ChainShopCommerceSlice = {
+  businessId: string;
+  shopName: string;
+  capturedLabel: string;
+  captureRatePercent: number | null;
+  topSignal: {
+    id: string;
+    severity: "act" | "watch" | "info";
+    title: string;
+    href: string;
+  } | null;
+};
+
 export type ChainRollup = {
   shopCount: number;
   bookingsThisWeek: number;
@@ -31,6 +44,20 @@ export type ChainRollup = {
   shopsNeedingAttention: number;
   orgAdminBriefingLine: string;
   alerts?: ChainAlert[];
+  commerceAlerts?: Array<{
+    businessId: string;
+    shopName: string;
+    severity: "act" | "watch";
+    code: string;
+    message: string;
+    href: string;
+  }>;
+  commerceSummary?: {
+    totalCapturedMinor30d: number;
+    shopsWithActSignal: number;
+    shopsWithWatchSignal: number;
+  };
+  commerceByShop?: ChainShopCommerceSlice[];
   shops: ChainShopRollup[];
 };
 

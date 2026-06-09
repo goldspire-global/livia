@@ -20,8 +20,10 @@ import { useColors } from "@/hooks/useColors";
 import { useContentInsets } from "@/hooks/useContentInsets";
 import { useHaptics } from "@/hooks/useHaptics";
 import { asHref } from "@/lib/navigation";
-import type { ChainShopRollup } from "@/lib/chain-rollup";
+import type { ChainShopCommerceSlice, ChainShopRollup } from "@/lib/chain-rollup";
 import { getPublicBookingLabel } from "@/lib/public-booking-url";
+import { getDashboardBaseUrl } from "@/lib/dashboard-url";
+import * as Linking from "expo-linking";
 
 function verticalLabel(vertical?: string | null): string {
   if (!vertical) return "Business";
@@ -41,11 +43,13 @@ function ShopCardSkeleton() {
 function ShopRollupCard({
   shop,
   vertical,
+  commerce,
   isActive,
   onOpen,
 }: {
   shop: ChainShopRollup;
   vertical?: string | null;
+  commerce?: ChainShopCommerceSlice;
   isActive: boolean;
   onOpen: () => void;
 }) {
@@ -97,6 +101,42 @@ function ShopRollupCard({
           ) : null}
         </View>
         <ChainPulseReason reason={shop.pulseReason} />
+        {commerce ? (
+          <Pressable
+            onPress={() => {
+              if (commerce.topSignal?.href) {
+                void Linking.openURL(`${getDashboardBaseUrl()}${commerce.topSignal.href}`);
+              }
+            }}
+            style={[
+              styles.commerceStrip,
+              {
+                borderColor:
+                  commerce.topSignal?.severity === "act"
+                    ? colors.destructive + "44"
+                    : commerce.topSignal?.severity === "watch"
+                      ? "#f59e0b44"
+                      : colors.border,
+                backgroundColor: colors.muted + "22",
+              },
+            ]}
+          >
+            <Feather name="trending-up" size={12} color={colors.mutedForeground} />
+            <Text style={[styles.commerceLabel, { color: colors.mutedForeground }]}>30d</Text>
+            <Text style={[styles.commerceValue, { color: colors.foreground }]}>
+              {commerce.capturedLabel}
+            </Text>
+            {commerce.topSignal && commerce.topSignal.severity !== "info" ? (
+              <Text style={[styles.commerceSignal, { color: colors.destructive }]} numberOfLines={1}>
+                · {commerce.topSignal.title}
+              </Text>
+            ) : commerce.captureRatePercent != null ? (
+              <Text style={[styles.commerceSignal, { color: colors.mutedForeground }]}>
+                · {commerce.captureRatePercent}% capture
+              </Text>
+            ) : null}
+          </Pressable>
+        ) : null}
       </View>
       {isActive ? (
         <Text style={[styles.activePill, { color: aurum.champagne }]}>Active</Text>
@@ -136,6 +176,10 @@ export default function ShopsScreen() {
 
   const shops = rollup?.shops ?? [];
   const briefing = rollup?.orgAdminBriefingLine;
+  const commerceById = React.useMemo(
+    () => Object.fromEntries((rollup?.commerceByShop ?? []).map((c) => [c.businessId, c])),
+    [rollup?.commerceByShop],
+  );
 
   return (
     <OperationalScreen
@@ -187,6 +231,7 @@ export default function ShopsScreen() {
             <ShopRollupCard
               key={shop.businessId}
               shop={shop}
+              commerce={commerceById[shop.businessId]}
               vertical={verticalById[shop.businessId]}
               isActive={shop.businessId === currentBusiness?.id}
               onOpen={() => openShop(shop.businessId)}
@@ -288,5 +333,19 @@ const styles = StyleSheet.create({
   cardMeta: { ...type.caption, fontSize: 12 },
   statsRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 4 },
   statChip: { ...type.caption, fontSize: 12 },
+  commerceStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  commerceLabel: { ...type.caption, fontSize: 10, textTransform: "uppercase" },
+  commerceValue: { fontFamily: fonts.bodySemi, fontSize: 12 },
+  commerceSignal: { ...type.caption, fontSize: 11, flex: 1 },
   activePill: { ...type.eyebrow, fontSize: 10, letterSpacing: 0.6 },
 });

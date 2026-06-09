@@ -1,4 +1,5 @@
 import { db, visitFeedbackTable, bookingsTable } from "@workspace/db";
+import { EventType } from "@workspace/db";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { generateId } from "../lib/id";
 import { logEvent } from "./events.service";
@@ -44,7 +45,7 @@ export async function submitVisitFeedback(args: {
   });
 
   await logEvent({
-    type: "VISIT_FEEDBACK_SUBMITTED",
+    type: EventType.REVIEW_RECEIVED,
     businessId: args.businessId,
     entityType: "visit_feedback",
     entityId: id,

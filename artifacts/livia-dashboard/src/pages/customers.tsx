@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Search, UserPlus, ChevronRight, Loader2 } from "lucide-react";
 import { MergeSuggestionsPanel } from "@/components/merge-suggestions-panel";
+import { BeautyFillCycleCard } from "@/components/beauty/beauty-fill-cycle-card";
 import { useForm } from "react-hook-form";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
@@ -30,6 +31,7 @@ import {
 } from "@/lib/beauty-operational-ui";
 import { cn } from "@/lib/utils";
 import { onContainedScrollWheel } from "@/lib/use-contained-scroll";
+import { GuestVaultOwnerCallout } from "@/components/customers/guest-vault-owner-callout";
 
 const PAGE_SIZE = 40;
 
@@ -210,6 +212,14 @@ export default function CustomersPage() {
         </div>
       }
     >
+      {business?.slug ? (
+        <GuestVaultOwnerCallout
+          slug={business.slug}
+          businessName={business.name}
+          compact
+        />
+      ) : null}
+
       {total !== undefined ? (
         <div className="grid grid-cols-2 gap-3 max-w-md">
           <Card className={cn(beautyPanel(beautyChrome), op.wellness && op.panel())}>
@@ -247,6 +257,8 @@ export default function CustomersPage() {
       ) : null}
 
       <MergeSuggestionsPanel />
+
+      <BeautyFillCycleCard id="fill-cycle" />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

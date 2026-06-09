@@ -209,11 +209,33 @@ html[data-vertical="wellness"][data-presentation="session-rail"] .public-booking
   --primary: 222 47% 11%;
 }
 
+/* W5 — public /b shell (width from page max-w-6xl; grid columns in page) */
+.wellness-public-shell {
+  width: 100%;
+  max-width: none;
+}
+
 /* W5 — session grid (harbour-light book-mobile target) */
 html[data-vertical="wellness"] .wellness-public-shell .wellness-service-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+html[data-vertical="wellness"] .wellness-service-grid--expanded {
+  gap: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  html[data-vertical="wellness"] .wellness-service-grid--expanded {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  html[data-vertical="wellness"] .wellness-service-grid--dense {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 html[data-vertical="wellness"] .wellness-service-card {
@@ -249,6 +271,41 @@ html[data-vertical="wellness"] .wellness-service-card-meta {
   font-size: 0.7rem;
   color: hsl(var(--muted-foreground));
   margin-top: 0.15rem;
+}
+
+/* W5 /b — compact session tiles (~50% footprint) */
+.public-book-canvas .wellness-service-grid,
+.wellness-public-shell .wellness-service-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .public-book-canvas .wellness-service-grid,
+  .wellness-public-shell .wellness-service-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.public-book-canvas .wellness-treatment-card .wellness-service-card-thumb,
+.wellness-public-shell .wellness-treatment-card .wellness-service-card-thumb {
+  aspect-ratio: 8 / 3;
+}
+
+.public-book-canvas .wellness-treatment-card .wellness-service-card-body,
+.wellness-public-shell .wellness-treatment-card .wellness-service-card-body {
+  padding: 0.35rem 0.45rem 0.45rem;
+}
+
+.public-book-canvas .wellness-treatment-card .wellness-service-card-title,
+.wellness-public-shell .wellness-treatment-card .wellness-service-card-title {
+  font-size: 0.75rem;
+}
+
+.public-book-canvas .wellness-treatment-card .wellness-service-card-meta,
+.wellness-public-shell .wellness-treatment-card .wellness-service-card-meta {
+  font-size: 0.625rem;
+  margin-top: 0.05rem;
 }
 
 html[data-vertical="wellness"][data-layout-morph="atrium"] .wellness-atrium-topnav-bar,
@@ -330,8 +387,7 @@ html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-co
 }
 
 html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-messages-scroll {
-  flex: 1 1 auto;
-  min-height: 16rem;
+  flex: 1 1 0%;
 }
 
 html[data-vertical="wellness"][data-wellness-native-skin="1"] .wellness-inbox-compose textarea {

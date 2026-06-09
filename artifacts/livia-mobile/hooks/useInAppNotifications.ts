@@ -23,17 +23,71 @@ type ListResponse = {
   unreadCount: number;
 };
 
+export type MarkReadByResourceInput = {
+  resourceKind: string;
+  resourceId: string;
+  businessId?: string;
+};
+
+function notificationsQueryKey(bid: string) {
+  return ["in-app-notifications", bid] as const;
+}
+
+function notificationsListUrl(bid: string): string {
+  const params = new URLSearchParams({ limit: "50", unreadOnly: "true" });
+  if (bid) params.set("businessId", bid);
+  return `/api/me/notifications?${params.toString()}`;
+}
+
+function applyReadIds(prev: ListResponse | undefined, ids: Set<string>): ListResponse | undefined {
+  if (!prev) return prev;
+  let removed = 0;
+  const data = prev.data.filter((n) => {
+    if (ids.has(n.id)) {
+      removed += 1;
+      return false;
+    }
+    return true;
+  });
+  return {
+    data,
+    unreadCount: Math.max(0, prev.unreadCount - removed),
+  };
+}
+
+function applyReadByResource(
+  prev: ListResponse | undefined,
+  input: MarkReadByResourceInput,
+): ListResponse | undefined {
+  if (!prev) return prev;
+  let removed = 0;
+  const data = prev.data.filter((n) => {
+    const matches =
+      !n.readAt &&
+      n.resourceKind === input.resourceKind &&
+      n.resourceId === input.resourceId &&
+      (!input.businessId || n.businessId === input.businessId);
+    if (matches) {
+      removed += 1;
+      return false;
+    }
+    return true;
+  });
+  return {
+    data,
+    unreadCount: Math.max(0, prev.unreadCount - removed),
+  };
+}
+
 export function useInAppNotifications() {
   const { currentBusiness } = useBusiness();
   const bid = currentBusiness?.id ?? "";
   const qc = useQueryClient();
+  const listKey = notificationsQueryKey(bid);
 
   const query = useQuery({
-    queryKey: ["in-app-notifications", bid],
-    queryFn: () => {
-      const qs = bid ? `?businessId=${encodeURIComponent(bid)}&limit=50` : "?limit=50";
-      return customFetch<ListResponse>(`/api/me/notifications${qs}`);
-    },
+    queryKey: listKey,
+    queryFn: () => customFetch<ListResponse>(notificationsListUrl(bid)),
     enabled: !!bid,
     refetchInterval: 45_000,
     staleTime: 20_000,
@@ -42,7 +96,15 @@ export function useInAppNotifications() {
   const markRead = useMutation({
     mutationFn: (id: string) =>
       customFetch<{ ok: boolean }>(`/api/me/notifications/${id}/read`, { method: "PATCH" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["in-app-notifications"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: listKey });
+      const prev = qc.getQueryData<ListResponse>(listKey);
+      qc.setQueryData<ListResponse>(listKey, applyReadIds(prev, new Set([id])));
+      return { prev };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) qc.setQueryData(listKey, ctx.prev);
+    },
   });
 
   const markAllRead = useMutation({
@@ -52,7 +114,34 @@ export function useInAppNotifications() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId: bid }),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["in-app-notifications"] }),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: listKey });
+      const prev = qc.getQueryData<ListResponse>(listKey);
+      qc.setQueryData<ListResponse>(listKey, { data: [], unreadCount: 0 });
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(listKey, ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: listKey }),
+  });
+
+  const markReadByResource = useMutation({
+    mutationFn: (input: MarkReadByResourceInput) =>
+      customFetch<{ updated: number }>(`/api/me/notifications/read-by-resource`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      }),
+    onMutate: async (input) => {
+      await qc.cancelQueries({ queryKey: listKey });
+      const prev = qc.getQueryData<ListResponse>(listKey);
+      qc.setQueryData<ListResponse>(listKey, applyReadByResource(prev, input));
+      return { prev };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.prev) qc.setQueryData(listKey, ctx.prev);
+    },
   });
 
   return {
@@ -61,6 +150,7 @@ export function useInAppNotifications() {
     isLoading: query.isLoading,
     markRead: markRead.mutateAsync,
     markAllRead: markAllRead.mutateAsync,
+    markReadByResource: markReadByResource.mutateAsync,
     refetch: query.refetch,
   };
 }

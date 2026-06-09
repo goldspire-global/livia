@@ -20,6 +20,8 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { PERSONA_LABEL, usePersona } from "@/hooks/usePersona";
+import { useGetTenantCapabilities } from "@workspace/api-client-react";
+import { filterMobileMenuItems } from "@workspace/policy";
 import { canViewDayPackages, canViewPremises } from "@/lib/settings-persona";
 import { menuItemsForPersona } from "@/lib/mobile-menu";
 import { getPublicBookingLabel } from "@/lib/public-booking-url";
@@ -34,7 +36,12 @@ export default function MoreScreen() {
   const { kind: currentPersona } = usePersona();
   const tier = (currentBusiness as { tier?: string } | undefined)?.tier;
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
-  const menuItems = menuItemsForPersona({
+  const bid = currentBusiness?.id ?? "";
+  const { data: tenantCaps } = useGetTenantCapabilities(bid, {
+    query: { enabled: !!bid } as never,
+  });
+  const menuItems = filterMobileMenuItems(
+    menuItemsForPersona({
     persona: currentPersona,
     vertical,
     tier,
@@ -48,7 +55,9 @@ export default function MoreScreen() {
       canViewDayPackages(currentPersona) &&
       (vertical === "wellness" || vertical === "medspa"),
     isDemo: false,
-  });
+  }),
+    tenantCaps?.platformCapabilities,
+  );
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [founderTapCount, setFounderTapCount] = useState(0);
   const [founderTapAt, setFounderTapAt] = useState<number | null>(null);
@@ -82,7 +91,7 @@ export default function MoreScreen() {
             My Livia
           </Text>
           <Text style={[type.caption, { color: colors.mutedForeground }]}>
-            Customer vault — your bookings across shops
+            Your bookings and visits across studios
           </Text>
         </View>
         <Feather name="chevron-right" size={18} color={colors.mutedForeground} />

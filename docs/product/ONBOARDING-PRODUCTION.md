@@ -10,14 +10,14 @@
 ```mermaid
 flowchart LR
   signup[Clerk sign-up] --> wizard[12-act wizard]
-  wizard --> seed[Seed services + staff]
-  seed --> public[Open /b/slug]
+  wizard --> menu[Empty studio or starter pack]
+  menu --> public[Open /b/slug]
   public --> book[First booking]
   book --> today[Today + inbox]
 ```
 
 1. **A0** — Clerk account (outside wizard).
-2. **A1** — Create business (`POST /businesses`, `seedDefaults: true`).
+2. **A1** — Create business (`POST /businesses`, empty by default). Optional **`starterPack: true`** seeds a vertical template menu (+ beauty mini store). See [`VERTICAL-STARTER-PACK.md`](../engineering/VERTICAL-STARTER-PACK.md).
 3. **A2–A11** — Profile, menu, team, hours, Liv, channels, billing, invites, migration hints.
 4. **A8** — Public booking link; owner should open `/b/:slug` and complete a test booking.
 5. **A12** — Go live checklist → redirect to **`/bookings?create=1`** (first shop) or **`/lifecycle#chain`** (second location).

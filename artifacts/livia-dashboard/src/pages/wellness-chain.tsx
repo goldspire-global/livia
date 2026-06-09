@@ -129,7 +129,7 @@ export default function WellnessChainPage() {
 
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
         <Link href="/wellness-guest-vault" className="text-primary">
-          Guest vault →
+          Guest lookup →
         </Link>
         <Link href="/wellness-reports" className="text-primary">
           Reports →

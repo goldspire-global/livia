@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api-fetch";
-import { publicBookingSlugPrefix } from "@/lib/surface-urls";
+import { publicBookingSlugPrefix, publicBookingSlugSuffix } from "@/lib/surface-urls";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,7 +20,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TIER_OPTIONS } from "@/lib/onboarding-labels";
-import { getVerticalOnboardingExtras, getVerticalPlaybook } from "@workspace/policy";
+import {
+  getVerticalStarterPackOffer,
+  getVerticalOnboardingExtras,
+  getVerticalPlaybook,
+  verticalStarterPackIncludesRetail,
+  listSubverticalProfiles,
+  defaultSubverticalProfile,
+  getSubverticalProfile,
+  onboardingHintForSubvertical,
+  resolveOnboardingTierFromSubvertical,
+  SHARED_PREMISES_ONBOARDING_NOTE,
+} from "@workspace/policy";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
 
 const EU_TIMEZONES = [
@@ -49,11 +60,20 @@ const formSchema = z.object({
     "pet-grooming",
     "automotive-detailing",
   ]),
-  tier: z.enum(["solo", "studio", "chain", "chair-host", "white-label"]),
+  tier: z.enum([
+    "solo",
+    "studio",
+    "chain",
+    "mid-chain",
+    "franchise",
+    "chair-host",
+    "white-label",
+  ]),
   timezone: z.string().min(1),
   structureKind: z.enum(["standalone", "location", "brand_entity"]).optional(),
   entityKind: z.enum(["sole_trader", "partnership", "limited_company", "other"]),
   vatNumber: z.string().max(32).optional(),
+  subverticalProfileId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,6 +88,8 @@ type OnboardingPreview = {
   services: { name: string; durationMinutes: number; priceMinor: number }[];
   aiGreeting: string;
   vertical: string;
+  starterPackAvailable?: boolean;
+  starterPackServices?: { name: string; durationMinutes: number; priceMinor: number }[];
 };
 
 type Props = {
@@ -87,6 +109,7 @@ export function OnboardingCreateBusinessStep({
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [businessAttested, setBusinessAttested] = useState(false);
+  const [starterPack, setStarterPack] = useState(false);
   const [preview, setPreview] = useState<OnboardingPreview | null>(null);
 
   useEffect(() => {
@@ -116,19 +139,47 @@ export function OnboardingCreateBusinessStep({
       structureKind: defaultStructureKind,
       entityKind: "sole_trader",
       vatNumber: "",
+      subverticalProfileId: defaultSubverticalProfile("hair").id,
     },
   });
 
   const watchVertical = form.watch("vertical");
+  const watchSubverticalId = form.watch("subverticalProfileId");
+  const subverticalProfiles = listSubverticalProfiles(watchVertical);
+  const activeSubvertical =
+    getSubverticalProfile(watchSubverticalId ?? "") ?? defaultSubverticalProfile(watchVertical);
+  const subverticalHint = onboardingHintForSubvertical(activeSubvertical);
   const watchName = form.watch("name");
   const watchJurisdiction = form.watch("jurisdiction");
+  const starterOffer = getVerticalStarterPackOffer(watchVertical);
   const verticalHint = getVerticalOnboardingExtras(watchVertical).createBusinessHint;
   const packUi = verticalPackUi(watchVertical);
   const playbook = getVerticalPlaybook(watchVertical);
 
   useEffect(() => {
     onVerticalPreview?.(watchVertical ?? null);
-  }, [watchVertical, onVerticalPreview]);
+    setStarterPack(false);
+    const def = defaultSubverticalProfile(watchVertical);
+    form.setValue("subverticalProfileId", def.id);
+    if (!form.formState.dirtyFields.tier) {
+      form.setValue(
+        "tier",
+        resolveOnboardingTierFromSubvertical(def, form.getValues("tier"), false),
+      );
+    }
+  }, [watchVertical, onVerticalPreview, form]);
+
+  useEffect(() => {
+    if (!watchSubverticalId) return;
+    const profile =
+      getSubverticalProfile(watchSubverticalId) ?? defaultSubverticalProfile(watchVertical);
+    if (!form.formState.dirtyFields.tier) {
+      form.setValue(
+        "tier",
+        resolveOnboardingTierFromSubvertical(profile, form.getValues("tier"), false),
+      );
+    }
+  }, [watchSubverticalId, watchVertical, form]);
 
   useEffect(() => {
     const name = watchName?.trim();
@@ -144,13 +195,14 @@ export function OnboardingCreateBusinessStep({
           vertical: watchVertical,
           jurisdiction: watchJurisdiction,
           tier: form.getValues("tier"),
+          subverticalProfileId: form.getValues("subverticalProfileId"),
         }),
       })
         .then(setPreview)
         .catch(() => setPreview(null));
     }, 400);
     return () => window.clearTimeout(t);
-  }, [watchName, watchVertical, watchJurisdiction, form]);
+  }, [watchName, watchVertical, watchJurisdiction, watchSubverticalId, form]);
 
   const generateSlug = (name: string) =>
     name
@@ -178,6 +230,9 @@ export function OnboardingCreateBusinessStep({
       });
       return;
     }
+    const subvertical =
+      getSubverticalProfile(values.subverticalProfileId ?? "") ??
+      defaultSubverticalProfile(values.vertical);
     setSaving(true);
     apiFetch<{ id: string; slug: string }>("/businesses", {
       method: "POST",
@@ -187,9 +242,11 @@ export function OnboardingCreateBusinessStep({
         timezone: values.timezone,
         jurisdiction: values.jurisdiction,
         vertical: values.vertical,
-        category: values.vertical,
+        category: subvertical.starterPackCategory ?? subvertical.label,
+        subverticalProfileId: subvertical.id,
         tier: values.tier,
-        seedDefaults: true,
+        seedDefaults: false,
+        starterPack: starterPack ? true : undefined,
         parentBusinessId,
         structureKind: values.structureKind ?? defaultStructureKind,
         tenantAttestation: {
@@ -203,7 +260,9 @@ export function OnboardingCreateBusinessStep({
       .then((biz) => {
         toast({
           title: "Business created",
-          description: "Your starter catalog is ready — keep going through setup.",
+          description: starterPack
+            ? `${starterOffer.label} applied — finish setup steps next.`
+            : "Empty studio created — add your menu when you're ready.",
         });
         onCreated(biz.id, biz.slug);
       })
@@ -245,13 +304,26 @@ export function OnboardingCreateBusinessStep({
               <FormLabel>Booking URL</FormLabel>
               <FormControl>
                 <div className="flex items-center">
-                  <span className="text-muted-foreground bg-muted px-3 py-2 text-sm border border-r-0 border-input rounded-l-md">
-                    {publicBookingSlugPrefix()}
-                  </span>
-                  <Input className="rounded-l-none" placeholder="acme-studio" {...field} />
+                  {publicBookingSlugPrefix() ? (
+                    <span className="text-muted-foreground bg-muted px-3 py-2 text-sm border border-r-0 border-input rounded-l-md whitespace-nowrap">
+                      {publicBookingSlugPrefix()}
+                    </span>
+                  ) : null}
+                  <Input
+                    className={publicBookingSlugPrefix() ? "rounded-none" : "rounded-l-md"}
+                    placeholder="acme-studio"
+                    {...field}
+                  />
+                  {publicBookingSlugSuffix() ? (
+                    <span className="text-muted-foreground bg-muted px-3 py-2 text-sm border border-l-0 border-input rounded-r-md whitespace-nowrap">
+                      {publicBookingSlugSuffix()}
+                    </span>
+                  ) : null}
                 </div>
               </FormControl>
-              <FormDescription>Share this link with clients.</FormDescription>
+              <FormDescription>
+                Your branded book page — guests manage visits in My Livia at /my.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -307,6 +379,36 @@ export function OnboardingCreateBusinessStep({
             </FormItem>
           )}
         />
+        {subverticalProfiles.length > 1 ? (
+          <FormField
+            control={form.control}
+            name="subverticalProfileId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>What kind of studio?</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger data-testid="onboarding-subvertical">
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {subverticalProfiles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.label} — {p.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {subverticalHint ??
+                    "Tailors your starter menu and guest relationship on My Livia."}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
         <FormField
           control={form.control}
           name="entityKind"
@@ -346,13 +448,21 @@ export function OnboardingCreateBusinessStep({
             </FormItem>
           )}
         />
+        <p className="text-xs text-muted-foreground leading-relaxed rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+          {SHARED_PREMISES_ONBOARDING_NOTE}
+        </p>
         <FormField
           control={form.control}
           name="tier"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Team size</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select
+                onValueChange={(v) => {
+                  field.onChange(v);
+                }}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue />
@@ -424,14 +534,34 @@ export function OnboardingCreateBusinessStep({
             </FormItem>
           )}
         />
-        {preview && preview.services.length > 0 ? (
+        <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-primary/25 bg-primary/5 p-3">
+          <Checkbox
+            checked={starterPack}
+            onCheckedChange={(v) => setStarterPack(v === true)}
+            data-testid="vertical-starter-pack-opt-in"
+          />
+          <span className="text-sm leading-relaxed">
+            <span className="font-medium text-foreground">{starterOffer.label}</span>
+            <span className="block text-xs text-muted-foreground mt-1">
+              {starterOffer.description}
+            </span>
+          </span>
+        </label>
+        {preview && (preview.services.length > 0 || starterPack) ? (
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
             <p className="text-sm font-medium">{packUi.label}</p>
             <p className="text-xs text-muted-foreground">{playbook.wedge}</p>
             <p className="text-xs text-muted-foreground">
-              Starter {packUi.serviceNoun.toLowerCase()}s:{" "}
-              {preview.services.slice(0, 3).map((s) => s.name).join(" · ")}
+              {starterPack && preview.starterPackServices?.length
+                ? `Template ${packUi.serviceNoun.toLowerCase()}s: ${preview.starterPackServices
+                    .slice(0, 4)
+                    .map((s) => s.name)
+                    .join(" · ")}…`
+                : `Add your own ${packUi.serviceNoun.toLowerCase()}s on the next step.`}
             </p>
+            {starterPack && verticalStarterPackIncludesRetail(watchVertical) && starterOffer.extraLine ? (
+              <p className="text-xs text-muted-foreground">{starterOffer.extraLine}</p>
+            ) : null}
             <p className="text-xs italic text-muted-foreground/90 line-clamp-2">
               Liv: {preview.aiGreeting}
             </p>

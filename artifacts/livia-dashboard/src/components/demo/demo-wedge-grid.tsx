@@ -1,8 +1,17 @@
 import { Link } from "wouter";
 import { ArrowRight, Lock } from "lucide-react";
-import { getWedgeDemoStory } from "@workspace/policy";
+import { getWedgeDemoStory, type BusinessVertical } from "@workspace/policy";
 import { isG1WedgeWorldUnlocked, listG1WedgeWorldsForDisplay } from "@/lib/g1-wedge-worlds";
 import { cn } from "@/lib/utils";
+
+const G1_TRADE_CHIP: Record<string, string> = {
+  beauty: "Beauty",
+  wellness: "Wellness",
+  barber: "Barber",
+  hair: "Hair salon",
+  medspa: "Medspa",
+  tattoo: "Body art",
+};
 
 /** G1 — six portrait trade cards (locked target: g1-wedge-web.target.png). */
 export function DemoWedgeGrid({ className }: { className?: string }) {
@@ -15,11 +24,17 @@ export function DemoWedgeGrid({ className }: { className?: string }) {
       <h2 id="demo-wedge-grid-title" className="sr-only">
         Pick your world
       </h2>
+      <p className="mb-4 text-center text-xs text-white/50 lg:text-left">
+        <span className="text-white/70">Live now:</span> Beauty · Wellness · Hair · Medspa — scroll for all
+        worlds.
+      </p>
       <div className="gateway-g1-cards-track">
         {listG1WedgeWorldsForDisplay().map((world) => {
           const story = getWedgeDemoStory(world.vertical);
           const unlocked = isG1WedgeWorldUnlocked(world.vertical);
-          const href = unlocked ? `/demo/wedge/${world.vertical}` : "#";
+          const href = unlocked
+            ? `/demo/wedge/${world.vertical}?world=${encodeURIComponent(world.key)}`
+            : "#";
 
           return (
             <Link
@@ -61,6 +76,9 @@ export function DemoWedgeGrid({ className }: { className?: string }) {
               </div>
 
               <div className="gateway-g1-world-card__copy">
+                {G1_TRADE_CHIP[world.key] ? (
+                  <p className="gateway-g1-world-card__trade">{G1_TRADE_CHIP[world.key]}</p>
+                ) : null}
                 <p className="gateway-g1-world-card__title">{world.title}</p>
                 <p className="gateway-g1-world-card__tagline">{world.tagline}</p>
                 {story && unlocked ? (

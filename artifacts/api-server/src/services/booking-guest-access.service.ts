@@ -37,6 +37,7 @@ export type GuestBookingView = {
   slug: string;
   vertical: string | null;
   status: string;
+  pendingReason: string | null;
   startAt: Date;
   endAt: Date;
   serviceName: string;
@@ -59,6 +60,7 @@ export async function getGuestBookingByToken(
       bookingId: bookingsTable.id,
       businessId: bookingsTable.businessId,
       status: bookingsTable.status,
+      pendingReason: bookingsTable.pendingReason,
       startAt: bookingsTable.startAt,
       endAt: bookingsTable.endAt,
       businessName: businessesTable.name,
@@ -94,6 +96,7 @@ export async function getGuestBookingByToken(
     slug: row.slug,
     vertical: row.vertical,
     status: row.status,
+    pendingReason: row.pendingReason,
     startAt: row.startAt,
     endAt: row.endAt,
     serviceName: row.serviceName,

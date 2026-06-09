@@ -2,6 +2,7 @@ import {
   getGetConversationQueryKey,
   getListConversationsQueryKey,
   useGetConversation,
+  useGetCustomerRelationship,
   useListConversations,
   useUpdateConversation,
   UpdateConversationBodyStatus,
@@ -11,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -31,8 +32,10 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { formatTimeInZone, resolveBusinessTimeZone } from "@/lib/datetime";
 import { getApiBaseUrl } from "@/lib/api-base";
+import { asHref } from "@/lib/navigation";
 import { useMembership } from "@/hooks/useMembership";
 import { inboxLivSuggestions } from "@/lib/liv-inbox-suggestions";
+import { useInAppNotifications } from "@/hooks/useInAppNotifications";
 
 function roleLabel(role: ConversationMessage["role"]): string {
   switch (role) {
@@ -57,7 +60,17 @@ export default function ConversationScreen() {
   const { getToken } = useAuth();
   const { currentBusiness } = useBusiness();
   const businessId = currentBusiness?.id ?? "";
+  const { markReadByResource } = useInAppNotifications();
   const businessTz = resolveBusinessTimeZone(currentBusiness);
+
+  useEffect(() => {
+    if (!businessId || !conversationId) return;
+    void markReadByResource({
+      resourceKind: "conversation",
+      resourceId: conversationId,
+      businessId,
+    });
+  }, [businessId, conversationId, markReadByResource]);
   const [replyDraft, setReplyDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [livAssisting, setLivAssisting] = useState(false);
@@ -77,6 +90,15 @@ export default function ConversationScreen() {
     businessId,
     conversationId,
     { query: { enabled: !!businessId && !!conversationId } as never },
+  );
+
+  const customerId =
+    summary?.customerId ?? detail?.conversation?.customerId ?? null;
+
+  const { data: relationship } = useGetCustomerRelationship(
+    businessId,
+    customerId ?? "",
+    { query: { enabled: !!businessId && !!customerId } as never },
   );
 
   const { mutateAsync: patchConversation, isPending: patchPending } = useUpdateConversation();
@@ -126,6 +148,7 @@ export default function ConversationScreen() {
 
   const sendReply = async () => {
     if (!businessId || !conversationId || !replyDraft.trim()) return;
+    const releaseAfterSend = convStatus === "HANDED_OFF";
     setSending(true);
     try {
       const token = await getToken();
@@ -142,6 +165,13 @@ export default function ConversationScreen() {
       );
       if (!res.ok) throw new Error("send failed");
       setReplyDraft("");
+      if (releaseAfterSend) {
+        await patchConversation({
+          businessId,
+          conversationId,
+          data: { status: UpdateConversationBodyStatus.OPEN, aiHandled: true },
+        });
+      }
       await invalidate();
     } finally {
       setSending(false);
@@ -160,14 +190,28 @@ export default function ConversationScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} accessibilityLabel="Back">
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </Pressable>
-        <View style={{ flex: 1, marginHorizontal: 12 }}>
+        <Pressable
+          onPress={() => {
+            if (customerId) router.push(asHref(`/customer/${customerId}`));
+          }}
+          disabled={!customerId}
+          style={{ flex: 1, marginHorizontal: 12 }}
+          accessibilityRole={customerId ? "link" : "text"}
+          accessibilityLabel={customerId ? "Open guest profile" : title}
+        >
           <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>
             {title}
           </Text>
           <Text style={[styles.sub, { color: colors.mutedForeground }]} numberOfLines={1}>
             {summary?.channel ?? "message"} · {aiHandled ? "Liv on" : "You're replying"}
+            {customerId ? " · tap for profile" : ""}
           </Text>
-        </View>
+          {relationship?.headline ? (
+            <Text style={[styles.relHeadline, { color: colors.primary }]} numberOfLines={2}>
+              {relationship.headline}
+            </Text>
+          ) : null}
+        </Pressable>
       </View>
 
       <ScrollView
@@ -228,11 +272,11 @@ export default function ConversationScreen() {
               <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>Take over</Text>
             </Pressable>
           ) : null}
-          {(convStatus === "HANDED_OFF" || (convStatus === "OPEN" && !aiHandled)) && (
+          {convStatus === "HANDED_OFF" && !replyDraft.trim() ? (
             <Pressable onPress={returnToLiv} style={[styles.actionBtn, { borderWidth: 1, borderColor: aurora.cyan + "66" }]}>
-              <Text style={[styles.actionLabel, { color: colors.foreground }]}>Return to Liv</Text>
+              <Text style={[styles.actionLabel, { color: colors.foreground }]}>Release to Liv</Text>
             </Pressable>
-          )}
+          ) : null}
         </View>
         {(convStatus === "OPEN" || convStatus === "HANDED_OFF") && canAskLiv ? (
           <View style={styles.chipRow}>
@@ -273,23 +317,43 @@ export default function ConversationScreen() {
         ) : null}
         {convStatus === "HANDED_OFF" || !aiHandled ? (
           <View style={styles.composer}>
-            <TextInput
-              style={[styles.replyInput, { color: colors.foreground, borderColor: colors.border }]}
-              placeholder="Reply to customer…"
-              placeholderTextColor={colors.mutedForeground}
-              value={replyDraft}
-              onChangeText={setReplyDraft}
-              multiline
-            />
-            <Pressable
-              onPress={() => void sendReply()}
-              disabled={sending || !replyDraft.trim()}
-              style={[styles.actionBtn, { backgroundColor: colors.primary, opacity: sending ? 0.6 : 1 }]}
-            >
-              <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>
-                {sending ? "Sending…" : "Send"}
+            {convStatus === "HANDED_OFF" ? (
+              <Text style={[styles.handoffHint, { color: colors.mutedForeground }]}>
+                Send when ready — Liv resumes this thread after your message.
               </Text>
-            </Pressable>
+            ) : null}
+            <View style={styles.composerRow}>
+              <TextInput
+                style={[styles.replyInput, { flex: 1, color: colors.foreground, borderColor: colors.border }]}
+                placeholder="Reply to customer…"
+                placeholderTextColor={colors.mutedForeground}
+                value={replyDraft}
+                onChangeText={setReplyDraft}
+                multiline
+              />
+              <Pressable
+                onPress={() => void sendReply()}
+                disabled={sending || !replyDraft.trim()}
+                accessibilityLabel={
+                  convStatus === "HANDED_OFF"
+                    ? "Send reply and return thread to Liv"
+                    : "Send reply"
+                }
+                style={[
+                  styles.sendIconBtn,
+                  { backgroundColor: colors.primary, opacity: sending || !replyDraft.trim() ? 0.5 : 1 },
+                ]}
+              >
+                <Feather name="arrow-up" size={18} color={colors.primaryForeground} />
+              </Pressable>
+            </View>
+            {convStatus === "HANDED_OFF" && replyDraft.trim() ? (
+              <Pressable onPress={returnToLiv} disabled={patchPending}>
+                <Text style={[styles.releaseLink, { color: colors.mutedForeground }]}>
+                  Release to Liv without sending
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -308,6 +372,7 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fonts.bodyMed, fontSize: 17 },
   sub: { ...type.caption, marginTop: 2 },
+  relHeadline: { ...type.caption, fontSize: 11, marginTop: 4, lineHeight: 15 },
   messages: { padding: 16, gap: 10 },
   bubble: { maxWidth: "88%", borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 4 },
   msgMeta: { ...type.caption, fontSize: 10, marginBottom: 4 },
@@ -320,5 +385,15 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 12, padding: 10, maxWidth: "48%" },
   chipText: { fontSize: 11, lineHeight: 15 },
   composer: { gap: 8 },
+  composerRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  handoffHint: { ...type.caption, fontSize: 11, lineHeight: 15 },
   replyInput: { borderWidth: 1, borderRadius: 12, padding: 12, minHeight: 44, fontSize: 15 },
+  sendIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  releaseLink: { ...type.caption, fontSize: 11, textDecorationLine: "underline" },
 });

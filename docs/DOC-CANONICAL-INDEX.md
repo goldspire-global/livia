@@ -3,7 +3,7 @@
 **Purpose:** When two docs disagree, **this table wins**.  
 **Terminology:** [`PLATFORM-TERMINOLOGY.md`](./PLATFORM-TERMINOLOGY.md)  
 **Archived docs:** [`archive/README.md`](./archive/README.md) — do not extend  
-**Updated:** 2026-05-31 (documentation program — build paused)
+**Updated:** 2026-06-05 (Master Blueprint Volumes 0–H + V3 execution plan)
 
 ---
 
@@ -11,6 +11,12 @@
 
 | I need to… | Open |
 |------------|------|
+| **Master Blueprint (architecture authority)** | [`product/MASTER-BLUEPRINT-INDEX.md`](./product/MASTER-BLUEPRINT-INDEX.md) |
+| **What to build (24-month plan)** | [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](./product/LIVIA-MASTER-EXECUTION-PLAN-V3.md) |
+| **GTM Wave 1 + vertical depth** | [`product/GTM-VERTICAL-DEPTH-PROGRAM.md`](./product/GTM-VERTICAL-DEPTH-PROGRAM.md) |
+| **Vertical innovation (all 9)** | [`product/VERTICAL-INNOVATION-PROGRAM.md`](./product/VERTICAL-INNOVATION-PROGRAM.md) |
+| **V1 scope only** | [`product/V1-PRODUCT-DEFINITION.md`](./product/V1-PRODUCT-DEFINITION.md) |
+| **Repo vs blueprint gaps** | [`product/REPO-VS-BLUEPRINT-GAP-MATRIX.md`](./product/REPO-VS-BLUEPRINT-GAP-MATRIX.md) |
 | **Doc sprint (BUILD PAUSED)** | [`product/LIVIA-DOCUMENTATION-PROGRAM.md`](./product/LIVIA-DOCUMENTATION-PROGRAM.md) |
 | **Build hierarchy (where we are)** | [`product/BUILD-HIERARCHY-MAP.md`](./product/BUILD-HIERARCHY-MAP.md) |
 | **Visual / every screen** | [`design/VISUAL-DOCUMENTATION-PROGRAM.md`](./design/VISUAL-DOCUMENTATION-PROGRAM.md) · [`design/VISUAL-SCREEN-MASTER-INVENTORY.md`](./design/VISUAL-SCREEN-MASTER-INVENTORY.md) |
@@ -24,6 +30,7 @@
 | **Verticals build plan** | [`product/LIVIA-VERTICALS-BUILD-PLAN.md`](./product/LIVIA-VERTICALS-BUILD-PLAN.md) |
 | **Partner / defer verticals** | [`product/PARTNER-AND-ADJACENT-VERTICALS.md`](./product/PARTNER-AND-ADJACENT-VERTICALS.md) |
 | **Doc propagation (vertical/platform)** | [`engineering/DOC-PROPAGATION-CASCADE.md`](./engineering/DOC-PROPAGATION-CASCADE.md) · `pnpm vertical:doc-check` |
+| **Vertical starter pack (create)** | [`engineering/VERTICAL-STARTER-PACK.md`](./engineering/VERTICAL-STARTER-PACK.md) |
 | **Systems gap audit** | [`product/SYSTEMS-COMPLETENESS-AUDIT.md`](./product/SYSTEMS-COMPLETENESS-AUDIT.md) |
 | **Build after doc gate** | [`product/LIVIA-BUILD-PLAN-V2.md`](./product/LIVIA-BUILD-PLAN-V2.md) |
 | **Vision + build sequencing** | [`product/LIVIA-WIDE-BUILD-PLAN.md`](./product/LIVIA-WIDE-BUILD-PLAN.md) |
@@ -38,13 +45,35 @@
 
 ---
 
+## Tier 0 — Master Blueprint (2026-06-05)
+
+| Vol | Document | Role |
+|-----|----------|------|
+| Index | [`product/MASTER-BLUEPRINT-INDEX.md`](./product/MASTER-BLUEPRINT-INDEX.md) | Hub for all volumes |
+| 0 | [`product/LIVIA-CONSTITUTION.md`](./product/LIVIA-CONSTITUTION.md) | Beliefs + non-negotiables |
+| A | [`product/V1-PRODUCT-DEFINITION.md`](./product/V1-PRODUCT-DEFINITION.md) | V1 proof scope |
+| B | [`engineering/CANONICAL-DATA-MODEL.md`](./engineering/CANONICAL-DATA-MODEL.md) | 20 entities |
+| C | [`engineering/CAPABILITY-GRAPH-SPEC.md`](./engineering/CAPABILITY-GRAPH-SPEC.md) | Scalability engine |
+| D | [`product/BUSINESS-TWIN-SPEC.md`](./product/BUSINESS-TWIN-SPEC.md) | Understanding layer |
+| E | [`product/LIV-RUNTIME-SPEC.md`](./product/LIV-RUNTIME-SPEC.md) | Operating intelligence |
+| F | [`design/EXPERIENCE-OS-SPEC.md`](./design/EXPERIENCE-OS-SPEC.md) | Resolved experience |
+| G | [`product/VERTICAL-REGISTRY-MASTER.md`](./product/VERTICAL-REGISTRY-MASTER.md) | 80 configs = 1 platform |
+| H | [`engineering/EVENT-TAXONOMY.md`](./engineering/EVENT-TAXONOMY.md) | Nervous system |
+| — | [`product/REPO-VS-BLUEPRINT-GAP-MATRIX.md`](./product/REPO-VS-BLUEPRINT-GAP-MATRIX.md) | Live gap matrix |
+| — | [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](./product/LIVIA-MASTER-EXECUTION-PLAN-V3.md) | **Execution authority** |
+| — | [`engineering/CURSOR-ENGINEERING-CONSTITUTION.md`](./engineering/CURSOR-ENGINEERING-CONSTITUTION.md) | Agent + eng rules |
+
+---
+
 ## Tier 1 — Start here (read order)
 
 | # | Document | Role |
 |---|----------|------|
-| 0 | [`product/LIVIA-DOCUMENTATION-PROGRAM.md`](./product/LIVIA-DOCUMENTATION-PROGRAM.md) | **Doc sprint — BUILD PAUSED until G-DOC** |
-| 0a | [`product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) | **Category — not salon-shaped** |
-| 0b | [`product/LIVIA-BUILD-PLAN-V2.md`](./product/LIVIA-BUILD-PLAN-V2.md) | **Build authority after doc gate** |
+| 0 | [`product/MASTER-BLUEPRINT-INDEX.md`](./product/MASTER-BLUEPRINT-INDEX.md) | **Architecture + V1/V2 boundary** |
+| 0a | [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](./product/LIVIA-MASTER-EXECUTION-PLAN-V3.md) | **What to build when** |
+| 0b | [`product/LIVIA-DOCUMENTATION-PROGRAM.md`](./product/LIVIA-DOCUMENTATION-PROGRAM.md) | Doc sprint — G-DOC passed |
+| 0c | [`product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) | **Category — not salon-shaped** |
+| 0d | [`product/LIVIA-BUILD-PLAN-V2.md`](./product/LIVIA-BUILD-PLAN-V2.md) | Phase checklists (historical) |
 | 0c | [`product/LIVIA-WIDE-BUILD-PLAN.md`](./product/LIVIA-WIDE-BUILD-PLAN.md) | Vision, org shapes, cascade, R1→R3 queue |
 | 0d | [`product/LIVIA-FINAL-BUILD-PLAN.md`](./product/LIVIA-FINAL-BUILD-PLAN.md) | Master execution scope — LOCKED (pre-pause) |
 | 1 | [`LIVIA-ALIGNMENT.md`](./LIVIA-ALIGNMENT.md) | Company + product + architecture rules |
@@ -85,10 +114,15 @@
 |-------|-----------|------------|
 | North star (product POV) | `product/LIVIA-NORTH-STAR.md` | `company/NORTH-STAR-DASHBOARD.md` |
 | v3 UX / motion | `product/V3-EXPERIENCE-SPEC.md` | `V3-REAL-WORLD-SCENARIOS.md`, `V3-SURFACE-MATRIX.md` |
-| Experience architecture | `design/EXPERIENCE-ARCHITECTURE.md` | `PRESENTATION-PRESETS-AND-ROLLOUT.md`, `CHANNEL-UX-CONTRACT.md` |
+| Experience architecture | `design/EXPERIENCE-OS-SPEC.md` | `EXPERIENCE-ARCHITECTURE.md`, `PRESENTATION-PRESETS-AND-ROLLOUT.md` |
+| Capability graph | `engineering/CAPABILITY-GRAPH-SPEC.md` | `vertical-announcement.ts`, entitlements |
+| Business Twin | `product/BUSINESS-TWIN-SPEC.md` | liv-presence, liv-signals, briefing |
+| Event taxonomy | `engineering/EVENT-TAXONOMY.md` | `lib/event-bus`, domain-events |
+| Canonical data model | `engineering/CANONICAL-DATA-MODEL.md` | `data-model.md` (tables) |
+| Vertical registry (master) | `product/VERTICAL-REGISTRY-MASTER.md` | `verticals.ts`, coverage registry |
 | Personas | `personas.md` | `product/PERSONA-UX.md`, journeys/ |
 | Verticals | `verticals.md` | `lib/policy` |
-| Liv OS | `product/LIV-OPERATING-SYSTEM.md` | `LIV-OS-ALPHABET.md` |
+| Liv OS | `product/LIV-RUNTIME-SPEC.md` | `LIV-OPERATING-SYSTEM.md`, `LIV-OS-ALPHABET.md` |
 | Liv setup copilot | `product/LIV-SETUP-COPILOT.md` | LIV-OPERATING-SYSTEM §6.5, PLATFORM-EVOLUTION Track I |
 | Business rules | `product/BUSINESS-RULES-REGISTRY.md` | — |
 | Scope / gates | `product/SCOPE-MORATORIUM.md` | `launch-plan.md`, `TARGET-STATE-VS-SHIP-SCOPE.md` |
@@ -199,6 +233,7 @@ See [`archive/README.md`](./archive/README.md). Includes: `SYSTEM-REALIGNMENT-PR
 
 | Date | Change |
 |------|--------|
+| 2026-06-05 | Master Blueprint Volumes 0–H ingested; V3 execution plan; gap matrix; engineering constitution |
 | 2026-05-31 | Documentation program — build pause, category manifesto, UX/skin/systems specs |
 | 2026-05-30 | Full audit — tiers, surface programs, archive, terminology, gap review link |
 | 2026-05-30 | Track H workforce + platform surfaces (prior) |

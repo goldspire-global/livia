@@ -40,6 +40,9 @@ import { useTheme } from "next-themes";
 import { fetchUserLifecycle } from "@/lib/lifecycle-api";
 import { useTenantExperience } from "@/lib/tenant-experience-api";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
+import { useGetTenantCapabilities } from "@workspace/api-client-react";
+import { useOnboardingCapabilitySync } from "@/hooks/use-onboarding-capability-sync";
+import { filterNavItemsByCapabilities, filterWellnessNavItems } from "@workspace/policy";
 
 import { UserButton } from "@clerk/clerk-react";
 
@@ -73,6 +76,7 @@ import { OnboardingProgressBanner } from "@/components/onboarding-progress-banne
 import { OperatorMaturityBanner } from "@/components/operator-maturity-banner";
 import { PlatformTour } from "@/components/platform-tour";
 import { NotificationCenter } from "@/components/notification-center";
+import { LivNotificationToastBridge } from "@/components/liv/liv-notification-toast-bridge";
 import { useNavActionCounts } from "@/hooks/use-nav-action-counts";
 import { useWebPush } from "@/hooks/useWebPush";
 import { HelpSupportDialog } from "@/components/help-support-dialog";
@@ -242,26 +246,48 @@ export function AppLayout({ children }: { children: ReactNode }) {
   /** Vertical theme sets `--primary`; persona tint only for badge copy. */
   const accent = "hsl(var(--primary))";
 
-  const items = getRitualNav(
-    persona,
-    effectiveRole,
-    businesses.length,
-    isDemoLoginEnabled,
-    (business as { tier?: string } | null)?.tier,
-    (business as { vertical?: string } | null)?.vertical,
-    (business as { category?: string } | null)?.category,
-    { showLifecycle },
+  const bid = business?.id ?? "";
+  const { data: tenantCapabilities } = useGetTenantCapabilities(bid, {
+    query: { enabled: !!bid } as never,
+  });
+
+  useOnboardingCapabilitySync(bid, tenantCapabilities?.onboardingAutoAdvanced);
+
+  const readyVerticalCapabilityIds = useMemo(
+    () => tenantCapabilities?.verticalCapabilities?.map((c) => c.id) ?? [],
+    [tenantCapabilities],
+  );
+  const readyVerticalCapSet = useMemo(
+    () => new Set(readyVerticalCapabilityIds),
+    [readyVerticalCapabilityIds],
+  );
+
+  const items = filterWellnessNavItems(
+    filterNavItemsByCapabilities(
+      getRitualNav(
+        persona,
+        effectiveRole,
+        businesses.length,
+        isDemoLoginEnabled,
+        (business as { tier?: string } | null)?.tier,
+        (business as { vertical?: string } | null)?.vertical,
+        (business as { category?: string } | null)?.category,
+        { showLifecycle },
+      ),
+      tenantCapabilities?.platformCapabilities,
+    ),
+    readyVerticalCapSet,
   );
 
 
 
-  const { pendingCount, handedOffCount } = useNavActionCounts();
+  const { pendingCount, handedOffCount, intelBadges } = useNavActionCounts();
   const navBadges = useMemo(() => {
-    const badges: Record<string, number> = {};
+    const badges: Record<string, number> = { ...intelBadges };
     if (handedOffCount > 0) badges["/inbox"] = handedOffCount;
     if (pendingCount > 0) badges["/bookings"] = pendingCount;
     return badges;
-  }, [handedOffCount, pendingCount]);
+  }, [handedOffCount, pendingCount, intelBadges]);
 
   const navBadgeLabels = useMemo(() => {
     const labels: Record<string, string> = {};
@@ -276,10 +302,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const vertical =
     (business as { vertical?: string } | null)?.vertical ?? tenantExperience?.vertical ?? null;
-  const showBeautyFlower = isBeautyVertical(vertical);
   const appearanceDraft = readAppearancePreviewParams(previewSearch);
   const effectiveCssPreset =
     appearanceDraft.cssPreset ?? tenantExperience?.presentation?.cssPreset ?? "platform-default";
+  const showBeautyFlower =
+    isBeautyVertical(vertical) && isBeautyPresentationPreset(effectiveCssPreset);
   const isPlatformDefault = effectiveCssPreset === "platform-default";
   const layoutMorph =
     typeof document !== "undefined"
@@ -359,6 +386,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           teamNoun={wellnessVocab.teamNoun}
           serviceNoun={wellnessVocab.serviceNoun === "Session" ? "Sessions" : wellnessVocab.serviceNoun}
           persona={persona}
+          readyVerticalCapabilityIds={readyVerticalCapabilityIds}
         />
       ) : null}
 
@@ -387,6 +415,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             teamNoun={wellnessVocab.teamNoun}
             serviceNoun={wellnessVocab.serviceNoun === "Session" ? "Sessions" : wellnessVocab.serviceNoun}
             persona={persona}
+            readyVerticalCapabilityIds={readyVerticalCapabilityIds}
             utilityActions={
               <>
                 <HelpSupportDialog />
@@ -476,6 +505,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <ErrorBoundary>{children}</ErrorBoundary>
         </div>
         <KeysChangedRitual />
+        {!appearanceEmbed ? <LivNotificationToastBridge /> : null}
 
       </main>
 

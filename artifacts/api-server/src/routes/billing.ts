@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 
-import { requireAuth, requireRole, getUserId } from "../lib/auth";
+import { requireAuth, requireRole, getUserId, resolveMembership } from "../lib/auth";
 
 import {
 
@@ -27,10 +27,12 @@ import {
 
   priceIdForPlan,
 
+  stripePriceEnvKeyForPlan,
+
 } from "../lib/stripe";
 
 import { CHECKOUT_PLAN_IDS } from "@workspace/entitlements";
-import { sendError } from "../lib/http-errors";
+import { sendError, logRouteError, safeClientMessage } from "../lib/http-errors";
 import { replyDomainError } from "../lib/domain-errors";
 
 
@@ -78,7 +80,7 @@ router.post(
 
   requireAuth,
 
-  requireRole("OWNER"),
+  requireRole("ADMIN"),
 
   async (req, res): Promise<void> => {
 
@@ -104,9 +106,21 @@ router.post(
 
 
 
+    const role = await resolveMembership(userId, businessId);
+
+    if (!role || role === "STAFF") {
+
+      sendError(res, req, 404, "Business not found");
+
+      return;
+
+    }
+
+
+
     const biz = await getBusinessById(businessId);
 
-    if (!biz || biz.ownerId !== userId) {
+    if (!biz) {
 
       sendError(res, req, 404, "Business not found");
 
@@ -144,6 +158,28 @@ router.post(
 
       }
 
+      const priceEnv = stripePriceEnvKeyForPlan(planId);
+
+      if (stripe && !priceId && priceEnv) {
+
+        sendError(
+
+          res,
+
+          req,
+
+          503,
+
+          `Billing price is not configured. Set ${priceEnv} in the API environment.`,
+
+          { code: "STRIPE_PRICE_NOT_CONFIGURED", planId, priceEnv },
+
+        );
+
+        return;
+
+      }
+
       sendError(res, req, 503, "Billing is not configured in this environment.", { code: "STRIPE_NOT_CONFIGURED", });
 
       return;
@@ -152,67 +188,79 @@ router.post(
 
 
 
-    const user = await getOrCreateUser(userId);
+    try {
 
-    let customerId = biz.stripeCustomerId;
+      const user = await getOrCreateUser(userId);
 
-    if (!customerId) {
+      let customerId = biz.stripeCustomerId;
 
-      const customer = await stripe.customers.create({
+      if (!customerId) {
 
-        email: user.email ?? undefined,
+        const customer = await stripe.customers.create({
 
-        name: biz.name,
+          email: user.email ?? undefined,
 
-        metadata: { businessId, ownerId: userId },
+          name: biz.name,
+
+          metadata: { businessId, ownerId: biz.ownerId },
+
+        });
+
+        customerId = customer.id;
+
+        await updateBusiness(businessId, { stripeCustomerId: customerId });
+
+      }
+
+
+
+      const baseUrl = getDashboardUrl();
+
+
+
+      const quantity =
+
+        planId === "chain" ? shopCount : planId === "chair-host" ? renterCount : 1;
+
+
+
+      const session = await stripe.checkout.sessions.create({
+
+        mode: "subscription",
+
+        customer: customerId,
+
+        line_items: [{ price: priceId, quantity }],
+
+        success_url: `${baseUrl}/settings?tab=billing&billing=success`,
+
+        cancel_url: `${baseUrl}/settings?tab=billing&billing=cancel`,
+
+        metadata: { businessId, planId, shopCount: String(shopCount), renterCount: String(renterCount) },
+
+        subscription_data: {
+
+          metadata: { businessId, planId },
+
+        },
 
       });
 
-      customerId = customer.id;
 
-      await updateBusiness(businessId, { stripeCustomerId: customerId });
+
+      res.json({ url: session.url, sessionId: session.id });
+
+    } catch (err: unknown) {
+
+      logRouteError(req, err, "billing checkout-session failed", { businessId, planId });
+
+      sendError(res, req, 502, safeClientMessage(err, "Could not start Stripe checkout."), {
+
+        code: "STRIPE_CHECKOUT_FAILED",
+
+      });
 
     }
-
-
-
-    const baseUrl =
-
-      getDashboardUrl();
-
-
-
-    const quantity =
-
-      planId === "chain" ? shopCount : planId === "chair-host" ? renterCount : 1;
-
-
-
-    const session = await stripe.checkout.sessions.create({
-
-      mode: "subscription",
-
-      customer: customerId,
-
-      line_items: [{ price: priceId, quantity }],
-
-      success_url: `${baseUrl}/settings?billing=success`,
-
-      cancel_url: `${baseUrl}/settings?billing=cancel`,
-
-      metadata: { businessId, planId, shopCount: String(shopCount), renterCount: String(renterCount) },
-
-      subscription_data: {
-
-        metadata: { businessId, planId },
-
-      },
-
-    });
-
-
-
-    res.json({ url: session.url, sessionId: session.id });
 
   },
 

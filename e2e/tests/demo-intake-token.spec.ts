@@ -24,7 +24,7 @@ test.describe("Demo guest intake token", () => {
     expect(res.ok(), await res.text()).toBeTruthy();
     const body = (await res.json()) as { token?: string; path?: string };
     expect(body.token?.length).toBeGreaterThan(8);
-    expect(body.path).toMatch(new RegExp(`/b/${SLUG}/intake/`));
+    expect(body.path).toMatch(new RegExp(`/book/${SLUG}/intake/`));
   });
 
   test("guest intake page renders form", async ({ page, request }) => {

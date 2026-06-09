@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 
-/** Logo / brand mark → public booking home (`/b/:slug`, services step). */
+import { clientGuestBookHref } from "@/lib/guest-book-url";
+
+/** Logo / brand mark → public booking home (`/book/:slug`, services step). */
 export function PublicBookingHomeLink({
   slug,
   className,
@@ -16,7 +18,7 @@ export function PublicBookingHomeLink({
   onNavigate?: () => void;
   "aria-label"?: string;
 }) {
-  const href = `/b/${slug}`;
+  const href = clientGuestBookHref(slug);
   return (
     <Link
       href={href}

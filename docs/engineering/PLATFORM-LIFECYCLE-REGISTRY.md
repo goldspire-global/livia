@@ -42,15 +42,16 @@ Today, adding a vertical or onboarding a business requires **human memory** of 1
 
 **Trigger:** `POST /api/businesses` (or demo provision).
 
-**Hub:** `createBusiness()` + `seedBusinessFromOnboardingPack()`.
+**Hub:** `createBusiness()` + optional `seedVerticalStarterPack()` / legacy `seedBusinessFromOnboardingPack()`.
 
 **Already cascades:**
 
 - Vertical pack → `livPackConfig`, mandate, operational policy  
 - Jurisdiction → currency, locale, timezone  
-- Default services + staff template  
-- Onboarding acts (partial auto-complete)  
+- Empty studio by default (`a1` only); opt-in starter pack → template menu + staff (+ beauty retail)  
 - `EventType.BUSINESS_CREATED` logged  
+
+See [`VERTICAL-STARTER-PACK.md`](./VERTICAL-STARTER-PACK.md).
 
 **Consumers:**
 

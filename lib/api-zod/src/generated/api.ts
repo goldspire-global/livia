@@ -349,6 +349,10 @@ export const GetMyDayResponse = zod.object({
             imageUrl: zod.string().nullish(),
             isActive: zod.boolean(),
             sortOrder: zod.number(),
+            aftercareInstructions: zod.string().nullish(),
+            serviceKind: zod.string().nullish(),
+            rebookIntervalDays: zod.number().nullish(),
+            requiresPatchTest: zod.boolean().optional(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -458,6 +462,10 @@ export const GetMyDayResponse = zod.object({
               imageUrl: zod.string().nullish(),
               isActive: zod.boolean(),
               sortOrder: zod.number(),
+              aftercareInstructions: zod.string().nullish(),
+              serviceKind: zod.string().nullish(),
+              rebookIntervalDays: zod.number().nullish(),
+              requiresPatchTest: zod.boolean().optional(),
               createdAt: zod.coerce.date(),
               updatedAt: zod.coerce.date(),
             }),
@@ -568,6 +576,10 @@ export const GetMyDayResponse = zod.object({
               imageUrl: zod.string().nullish(),
               isActive: zod.boolean(),
               sortOrder: zod.number(),
+              aftercareInstructions: zod.string().nullish(),
+              serviceKind: zod.string().nullish(),
+              rebookIntervalDays: zod.number().nullish(),
+              requiresPatchTest: zod.boolean().optional(),
               createdAt: zod.coerce.date(),
               updatedAt: zod.coerce.date(),
             }),
@@ -828,6 +840,12 @@ export const CreateBusinessBody = zod.object({
     .optional()
     .describe(
       "When true (default), seed services and staff from the vertical pack",
+    ),
+  starterPack: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Opt-in vertical starter menu on create (does not auto-complete onboarding acts)",
     ),
   logoUrl: zod.string().optional(),
   instagramHandle: zod.string().optional(),
@@ -1349,6 +1367,10 @@ export const GetStaffServicesResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  aftercareInstructions: zod.string().nullish(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1380,6 +1402,10 @@ export const SetStaffServicesResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  aftercareInstructions: zod.string().nullish(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1410,6 +1436,10 @@ export const ListServicesResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  aftercareInstructions: zod.string().nullish(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1443,6 +1473,10 @@ export const CreateServiceBody = zod.object({
   currency: zod.string().default(createServiceBodyCurrencyDefault),
   imageUrl: zod.string().optional(),
   sortOrder: zod.number().default(createServiceBodySortOrderDefault),
+  aftercareInstructions: zod.string().optional(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
 });
 
 /**
@@ -1467,6 +1501,10 @@ export const GetServiceResponse = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  aftercareInstructions: zod.string().nullish(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1491,6 +1529,10 @@ export const UpdateServiceBody = zod.object({
   imageUrl: zod.string().optional(),
   isActive: zod.boolean().optional(),
   sortOrder: zod.number().optional(),
+  aftercareInstructions: zod.string().optional(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
 });
 
 export const UpdateServiceResponse = zod.object({
@@ -1507,6 +1549,10 @@ export const UpdateServiceResponse = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  aftercareInstructions: zod.string().nullish(),
+  serviceKind: zod.string().nullish(),
+  rebookIntervalDays: zod.number().nullish(),
+  requiresPatchTest: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1814,6 +1860,10 @@ export const ListBookingsResponse = zod.object({
             imageUrl: zod.string().nullish(),
             isActive: zod.boolean(),
             sortOrder: zod.number(),
+            aftercareInstructions: zod.string().nullish(),
+            serviceKind: zod.string().nullish(),
+            rebookIntervalDays: zod.number().nullish(),
+            requiresPatchTest: zod.boolean().optional(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -1954,6 +2004,10 @@ export const GetBookingResponse = zod
         imageUrl: zod.string().nullish(),
         isActive: zod.boolean(),
         sortOrder: zod.number(),
+        aftercareInstructions: zod.string().nullish(),
+        serviceKind: zod.string().nullish(),
+        rebookIntervalDays: zod.number().nullish(),
+        requiresPatchTest: zod.boolean().optional(),
         createdAt: zod.coerce.date(),
         updatedAt: zod.coerce.date(),
       }),
@@ -2283,6 +2337,10 @@ export const GetDashboardSummaryResponse = zod.object({
             imageUrl: zod.string().nullish(),
             isActive: zod.boolean(),
             sortOrder: zod.number(),
+            aftercareInstructions: zod.string().nullish(),
+            serviceKind: zod.string().nullish(),
+            rebookIntervalDays: zod.number().nullish(),
+            requiresPatchTest: zod.boolean().optional(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -2370,6 +2428,45 @@ export const GetDashboardSummaryResponse = zod.object({
       creditsRemaining: zod.number(),
     })
     .optional(),
+  handedOffCount: zod.number().optional(),
+  activation: zod
+    .object({
+      status: zod.string(),
+      sacredMetricMet: zod.boolean(),
+      timeToFirstBookingLabel: zod.string().nullish(),
+      activationSource: zod.string().nullish(),
+      activationStepsComplete: zod.number(),
+      activationStepsTotal: zod.number(),
+      firstBookingAt: zod.string().nullish(),
+      firstBookingId: zod.string().nullish(),
+      paymentsConnected: zod.boolean().optional(),
+    })
+    .optional(),
+  atRiskGuests: zod
+    .array(
+      zod.object({
+        customerId: zod.string(),
+        displayName: zod.string(),
+        stage: zod.enum(["at_risk", "lapsed"]),
+        daysSinceLastVisit: zod.number(),
+        headline: zod.string(),
+      }),
+    )
+    .optional(),
+  recentVisitFeedback: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        bookingId: zod.string(),
+        score: zod.number(),
+        comment: zod.string().nullish(),
+        createdAt: zod.coerce.date(),
+      }),
+    )
+    .optional(),
+  lowFeedbackCount: zod.number().optional(),
+  commerce: zod.record(zod.string(), zod.unknown()).optional(),
+  wellnessTomorrowStress: zod.string().nullish(),
 });
 
 /**
@@ -2393,8 +2490,437 @@ export const GetActivityFeedResponseItem = zod.object({
   entityId: zod.string().nullish(),
   context: zod.object({}).passthrough().optional(),
   createdAt: zod.coerce.date(),
+  label: zod.string(),
+  detail: zod.string().optional(),
+  href: zod.string().optional(),
+  priority: zod.enum(["info", "watch", "act"]),
 });
 export const GetActivityFeedResponse = zod.array(GetActivityFeedResponseItem);
+
+/**
+ * @summary Tenant capability graph + readiness
+ */
+export const GetTenantCapabilitiesParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetTenantCapabilitiesResponse = zod.object({
+  businessId: zod.string(),
+  vertical: zod.string(),
+  platformCapabilities: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      state: zod.enum([
+        "defined",
+        "installed",
+        "configured",
+        "active",
+        "suspended",
+      ]),
+      readinessBlockers: zod.array(zod.string()),
+    }),
+  ),
+  verticalCapabilities: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string().optional(),
+        status: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  deferredVerticalCapabilities: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+  capabilityHealth: zod
+    .object({
+      score: zod.number(),
+      grade: zod.string(),
+    })
+    .optional(),
+  readinessFacts: zod.record(zod.string(), zod.unknown()).optional(),
+  capabilityInstances: zod.record(zod.string(), zod.unknown()).optional(),
+  activation: zod
+    .object({
+      status: zod.string(),
+      sacredMetricMet: zod.boolean(),
+      timeToFirstBookingLabel: zod.string().nullish(),
+      activationSource: zod.string().nullish(),
+      activationStepsComplete: zod.number(),
+      activationStepsTotal: zod.number(),
+      firstBookingAt: zod.string().nullish(),
+      firstBookingId: zod.string().nullish(),
+      paymentsConnected: zod.boolean().optional(),
+    })
+    .optional(),
+  onboardingAutoAdvanced: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Suspend or resume a platform capability instance
+ */
+export const PatchTenantCapabilityInstanceParams = zod.object({
+  businessId: zod.coerce.string(),
+  capabilityId: zod.coerce.string(),
+});
+
+export const PatchTenantCapabilityInstanceBody = zod.object({
+  action: zod.enum(["suspend", "resume"]),
+});
+
+export const PatchTenantCapabilityInstanceResponse = zod.object({
+  businessId: zod.string(),
+  vertical: zod.string(),
+  platformCapabilities: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      state: zod.enum([
+        "defined",
+        "installed",
+        "configured",
+        "active",
+        "suspended",
+      ]),
+      readinessBlockers: zod.array(zod.string()),
+    }),
+  ),
+  verticalCapabilities: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string().optional(),
+        status: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  deferredVerticalCapabilities: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+  capabilityHealth: zod
+    .object({
+      score: zod.number(),
+      grade: zod.string(),
+    })
+    .optional(),
+  readinessFacts: zod.record(zod.string(), zod.unknown()).optional(),
+  capabilityInstances: zod.record(zod.string(), zod.unknown()).optional(),
+  activation: zod
+    .object({
+      status: zod.string(),
+      sacredMetricMet: zod.boolean(),
+      timeToFirstBookingLabel: zod.string().nullish(),
+      activationSource: zod.string().nullish(),
+      activationStepsComplete: zod.number(),
+      activationStepsTotal: zod.number(),
+      firstBookingAt: zod.string().nullish(),
+      firstBookingId: zod.string().nullish(),
+      paymentsConnected: zod.boolean().optional(),
+    })
+    .optional(),
+  onboardingAutoAdvanced: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Owner intelligence bundle (commerce + twin + Liv)
+ */
+export const GetOwnerIntelligenceParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetOwnerIntelligenceResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  commerce: zod.object({
+    signals: zod.array(
+      zod.object({
+        id: zod.string(),
+        severity: zod.enum(["act", "watch", "info"]),
+        title: zod.string(),
+        body: zod.string(),
+        href: zod.string(),
+        priority: zod.number(),
+      }),
+    ),
+    topSignal: zod
+      .union([
+        zod.object({
+          id: zod.string(),
+          severity: zod.enum(["act", "watch", "info"]),
+          title: zod.string(),
+          body: zod.string(),
+          href: zod.string(),
+          priority: zod.number(),
+        }),
+        zod.null(),
+      ])
+      .optional(),
+    snapshot: zod.object({
+      capturedMinor30d: zod.number(),
+      captureRatePercent: zod.number().nullish(),
+      paymentCount30d: zod.number(),
+      refundMinor30d: zod.number().optional(),
+      currency: zod.string(),
+      capturedLabel: zod.string(),
+    }),
+  }),
+  capabilityHealth: zod
+    .object({
+      score: zod.number(),
+      grade: zod.string(),
+    })
+    .optional(),
+  capabilityBlockers: zod.number(),
+  commerceCapabilityBlockers: zod.array(
+    zod.object({
+      capabilityId: zod.string(),
+      capabilityName: zod.string(),
+      blocker: zod.string(),
+      href: zod.string(),
+    }),
+  ),
+  livSuggestions: zod.array(zod.record(zod.string(), zod.unknown())),
+  livPrompts: zod.array(zod.string()),
+  remediationTasks: zod.array(
+    zod.object({
+      signalId: zod.string(),
+      severity: zod.enum(["act", "watch", "info"]),
+      title: zod.string(),
+      body: zod.string(),
+      href: zod.string(),
+      ownerPrompt: zod.string().optional(),
+      priority: zod.number().optional(),
+    }),
+  ),
+  twinTopRecommendation: zod
+    .union([
+      zod.object({
+        title: zod.string(),
+        reason: zod.string(),
+        priority: zod.string(),
+        href: zod.string().optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  twinHeadline: zod.string().nullish(),
+  twinSubline: zod.string().nullish(),
+  ops: zod.record(zod.string(), zod.unknown()),
+  twinObservations: zod.array(zod.record(zod.string(), zod.unknown())),
+  twinRisks: zod.array(
+    zod.object({
+      id: zod.string(),
+      kind: zod.enum(["risk", "opportunity"]),
+      domain: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      href: zod.string().optional(),
+      confidence: zod.string(),
+    }),
+  ),
+  twinOpportunities: zod.array(
+    zod.object({
+      id: zod.string(),
+      kind: zod.enum(["risk", "opportunity"]),
+      domain: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      href: zod.string().optional(),
+      confidence: zod.string(),
+    }),
+  ),
+  twinHealth: zod
+    .union([
+      zod.object({
+        businessId: zod.string(),
+        generatedAt: zod.coerce.date(),
+        overallScore: zod.number(),
+        domains: zod.array(
+          zod.object({
+            domain: zod.string(),
+            score: zod.number(),
+            label: zod.string(),
+            summary: zod.string(),
+            trajectory: zod.enum([
+              "strengthening",
+              "stable",
+              "weakening",
+              "unknown",
+            ]),
+          }),
+        ),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+/**
+ * @summary Recent visit feedback for staff
+ */
+export const GetVisitFeedbackParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetVisitFeedbackResponse = zod.object({
+  data: zod.array(
+    zod.object({
+      id: zod.string(),
+      bookingId: zod.string(),
+      score: zod.number(),
+      comment: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Commerce signals bundle
+ */
+export const GetCommerceSignalsParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetCommerceSignalsResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  signals: zod.array(
+    zod.object({
+      id: zod.string(),
+      severity: zod.enum(["act", "watch", "info"]),
+      title: zod.string(),
+      body: zod.string(),
+      href: zod.string(),
+      priority: zod.number(),
+    }),
+  ),
+  snapshot: zod.object({
+    capturedMinor30d: zod.number(),
+    captureRatePercent: zod.number().nullish(),
+    paymentCount30d: zod.number(),
+    refundMinor30d: zod.number().optional(),
+    currency: zod.string(),
+    capturedLabel: zod.string(),
+  }),
+});
+
+/**
+ * @summary Commerce snapshot for billing
+ */
+export const GetCommerceSnapshotParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetCommerceSnapshotResponse = zod.object({
+  capturedMinor30d: zod.number(),
+  captureRatePercent: zod.number().nullish(),
+  paymentCount30d: zod.number(),
+  refundMinor30d: zod.number().optional(),
+  currency: zod.string(),
+  capturedLabel: zod.string(),
+});
+
+/**
+ * @summary Guided Liv setup flow for onboarding
+ */
+export const GetLivSetupGuidedFlowParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetLivSetupGuidedFlowResponse = zod.object({
+  phases: zod.array(
+    zod.object({
+      id: zod.string(),
+      label: zod.string(),
+      headline: zod.string(),
+      done: zod.boolean(),
+      current: zod.boolean(),
+      href: zod.string(),
+      optional: zod.boolean().optional(),
+      livPrompt: zod.string(),
+    }),
+  ),
+  currentPhaseId: zod.enum(["setup", "publish", "billing", "first_booking"]),
+  complete: zod.boolean(),
+  publicPath: zod.string().nullish(),
+  nextHref: zod.string(),
+  nextLivPrompt: zod.string(),
+  nextAct: zod.string().nullish(),
+  capabilityBlockers: zod.array(
+    zod.object({
+      capabilityId: zod.string(),
+      capabilityName: zod.string(),
+      blocker: zod.string(),
+      href: zod.string(),
+    }),
+  ),
+  readinessActHints: zod.array(zod.string()),
+  activation: zod
+    .object({
+      status: zod.string(),
+      sacredMetricMet: zod.boolean(),
+      timeToFirstBookingLabel: zod.string().nullish(),
+      activationSource: zod.string().nullish(),
+      activationStepsComplete: zod.number(),
+      activationStepsTotal: zod.number(),
+      firstBookingAt: zod.string().nullish(),
+      firstBookingId: zod.string().nullish(),
+      paymentsConnected: zod.boolean().optional(),
+    })
+    .optional(),
+  percentComplete: zod.number(),
+});
+
+/**
+ * @summary Owner ops Liv copilot assist
+ */
+export const PostLivOwnerAssistParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const PostLivOwnerAssistBody = zod.object({
+  message: zod.string(),
+  history: zod
+    .array(
+      zod.object({
+        role: zod.enum(["user", "assistant"]),
+        content: zod.string(),
+      }),
+    )
+    .optional(),
+});
+
+export const PostLivOwnerAssistResponse = zod.object({
+  reply: zod.string(),
+  suggestions: zod.array(zod.string()),
+  toolsUsed: zod.array(zod.string()),
+});
+
+/**
+ * @summary Setup Liv copilot assist
+ */
+export const PostLivSetupAssistParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const PostLivSetupAssistBody = zod.object({
+  message: zod.string(),
+  history: zod
+    .array(
+      zod.object({
+        role: zod.enum(["user", "assistant"]),
+        content: zod.string(),
+      }),
+    )
+    .optional(),
+});
+
+export const PostLivSetupAssistResponse = zod.object({
+  reply: zod.string(),
+  suggestions: zod.array(zod.string()),
+  toolsUsed: zod.array(zod.string()),
+});
 
 /**
  * @summary List feature flags for a business
@@ -2456,6 +2982,10 @@ export const GetPublicBusinessResponse = zod.object({
       imageUrl: zod.string().nullish(),
       isActive: zod.boolean(),
       sortOrder: zod.number(),
+      aftercareInstructions: zod.string().nullish(),
+      serviceKind: zod.string().nullish(),
+      rebookIntervalDays: zod.number().nullish(),
+      requiresPatchTest: zod.boolean().optional(),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     }),

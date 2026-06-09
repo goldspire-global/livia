@@ -91,6 +91,34 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
           const sub = await stripe.subscriptions.retrieve(session.subscription as string);
           await handleSubscription(sub);
         }
+        if (session.mode === "payment" && session.metadata?.kind === "retail_order" && session.metadata.retailOrderId) {
+          const { markRetailOrderPaid } = await import("../services/beauty-retail.service");
+          await markRetailOrderPaid(session.metadata.retailOrderId, session.metadata.businessId);
+        }
+        if (session.mode === "payment" && session.metadata?.kind === "guest_combined") {
+          const bid = session.metadata.businessId;
+          const bookingId = session.metadata.bookingId;
+          const retailOrderId = session.metadata.retailOrderId;
+          const depositMinor = Math.max(0, Number(session.metadata.depositMinor ?? 0));
+          if (bid && bookingId && depositMinor > 0) {
+            const { db, bookingsTable } = await import("@workspace/db");
+            const { eq, and } = await import("drizzle-orm");
+            const [row] = await db
+              .select({ depositPaidEurCents: bookingsTable.depositPaidEurCents })
+              .from(bookingsTable)
+              .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, bid)))
+              .limit(1);
+            const nextPaid = (row?.depositPaidEurCents ?? 0) + depositMinor;
+            await db
+              .update(bookingsTable)
+              .set({ depositPaidEurCents: nextPaid, updatedAt: new Date() })
+              .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, bid)));
+          }
+          if (retailOrderId) {
+            const { markRetailOrderPaid } = await import("../services/beauty-retail.service");
+            await markRetailOrderPaid(retailOrderId, bid);
+          }
+        }
         break;
       }
       case "payment_intent.succeeded":

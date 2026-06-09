@@ -1,13 +1,14 @@
 # Livia — top-level status
 
-**Updated:** 2026-06-03  
-**Read this first** for “are we finished?” — not the phase checklists in build-plan v2.
+**Updated:** 2026-06-05 (GTM vertical depth lock)  
+**Read this first** for “are we finished?” — execution sequencing: [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](product/LIVIA-MASTER-EXECUTION-PLAN-V3.md).  
+**GTM + vertical parity:** [`product/GTM-VERTICAL-DEPTH-PROGRAM.md`](product/GTM-VERTICAL-DEPTH-PROGRAM.md).
 
 ---
 
 ## One sentence
 
-**Core platform engineering (R1–R3 + build-plan v2 phases 0–6) is done in the repo; launch-quality feel** still needs founder Bucket C sign-off on staging.
+**Core platform engineering (R1–R3) is done in the repo; V1 market proof (activation, retention, MRR) is not.** Architecture is ahead of proof — see [`product/REPO-VS-BLUEPRINT-GAP-MATRIX.md`](product/REPO-VS-BLUEPRINT-GAP-MATRIX.md).
 
 ---
 
@@ -62,9 +63,12 @@
 
 | Item | Notes |
 |------|-------|
+| **GTM Wave 1 (founder lock)** | **All 9 code verticals** at one creative parity bar — [`GTM-VERTICAL-DEPTH-PROGRAM.md`](product/GTM-VERTICAL-DEPTH-PROGRAM.md) · innovation [`VERTICAL-INNOVATION-PROGRAM.md`](product/VERTICAL-INNOVATION-PROGRAM.md) |
+| **Guest surfaces** | Retire user-facing `/b` → **`{slug}.livia-hq.com`** book + **`/my`** relationship (vertical morph) |
+| **Sub-segment onboarding** | Org shape + category profile at create — full beauty aisle + all vertical sub-segments |
 | **Vertical programs (all 9)** | [`VERTICAL-PROGRAMS-INDEX.md`](product/VERTICAL-PROGRAMS-INDEX.md) · build [`LIVIA-VERTICALS-BUILD-PLAN.md`](product/LIVIA-VERTICALS-BUILD-PLAN.md) |
-| **Execution focus** | Phase **V4 wellness** — waves **0–6** shipped (Harbour demo: gift, reports, reception/TV, chain, brokers panel, mobile complete+turnover); wave **7** Ring 2 open; inventory [`WELLNESS-MASTER-BACKLOG.md`](product/WELLNESS-MASTER-BACKLOG.md); Phase V1 beauty Bucket C |
-| **Your UAT** | Medspa + Bloom + Luxe in [`FOUNDER-UAT-CHECKLIST.md`](operations/FOUNDER-UAT-CHECKLIST.md); beta smokes in each program doc |
+| **Execution focus** | Era 1 **depth waves D0–D4** (subdomain, `/my`, relationship, demo seed) in parallel with capability instances |
+| **Your UAT** | Nine-slug showcase + guest hub — [`FOUNDER-UAT-CHECKLIST.md`](operations/FOUNDER-UAT-CHECKLIST.md) |
 | Staging | **`livia-stg`** only — [`VERCEL-DEPLOY-ENVIRONMENTS.md`](operations/VERCEL-DEPLOY-ENVIRONMENTS.md) |
 | Local automation | `pnpm founder:uat-preflight` then `test:founder-uat` |
 
@@ -75,9 +79,9 @@
 - North-star density on all 11 screen families (`now/` → `v3/` → `northstar/`)
 - Mobile full preset morph (phone/tablet)
 - WhatsApp Liv Personal pilot
-- Custom domain on `/b`
+- Custom domain on book subdomain (Wave 1b)
 - Gate 2 field evidence (`pnpm smoke:gate2`)
-- Liv setup copilot — configure skin, brand, persona, onboarding via chat (Track I, R2) — [`product/LIV-SETUP-COPILOT.md`](product/LIV-SETUP-COPILOT.md)
+- Event coverage sweep on remaining mutation paths (notifications, incidents — lower priority)
 
 ---
 
@@ -99,8 +103,12 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 | Question | Doc |
 |----------|-----|
 | **“Where are we?”** | **This file** |
-| Scope locks | `docs/product/LIVIA-FINAL-BUILD-PLAN.md` |
-| Screen truth | `docs/design/screen-cards/*.yaml` + PNG baselines `docs/design/assets/screen-cards/` (`pnpm screen-cards:status`) |
+| **Architecture / V1 vs V2** | `docs/product/MASTER-BLUEPRINT-INDEX.md` |
+| **What to build when** | `docs/product/LIVIA-MASTER-EXECUTION-PLAN-V3.md` |
+| **V1 scope only** | `docs/product/V1-PRODUCT-DEFINITION.md` |
+| **Repo gaps** | `docs/product/REPO-VS-BLUEPRINT-GAP-MATRIX.md` |
+| Scope locks (R1–R3) | `docs/product/LIVIA-FINAL-BUILD-PLAN.md` |
+| Screen truth | `docs/design/screen-cards/*.yaml` + PNG baselines (`pnpm screen-cards:status`) |
 
 ---
 
@@ -108,6 +116,8 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 
 | Date | Change |
 |------|--------|
+| 2026-06-05 | GTM Wave 1 lock — nine verticals, one bar; subdomain + `/my`; innovation program; retire `/b` UX |
+| 2026-06-05 | Master Blueprint Volumes 0–H; V3 execution plan; Era 1 focus replaces open-ended wellness wave 7 |
 | 2026-06-02 | R∞: Liv setup copilot spec + Track I in evolution program |
 | 2026-06-01 | All nine vertical program docs + VERTICALS build plan + `vertical:doc-check` for every enum |
 | 2026-06-01 | Beauty program + Bloom UAT; mobile preset tint; doc propagation cascade |

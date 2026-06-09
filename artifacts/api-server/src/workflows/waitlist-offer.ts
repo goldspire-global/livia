@@ -10,7 +10,7 @@ import { tenantContextStore, type TenantContext } from "@workspace/tenant-contex
 import { db, businessesTable, slotWaitlistEntriesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createTwilioClient } from "@workspace/integrations-twilio";
-import { getDashboardUrl } from "../lib/public-urls";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
 
 /**
  * When a booking is cancelled, offer the freed slot to the next waitlist entry (FIFO).
@@ -72,7 +72,7 @@ export const waitlistOfferOnCancel = inngest.createFunction(
     const offerToken = offeredRow[0]?.offerToken;
     const waitlistUrl =
       offerToken && biz?.slug
-        ? `${getDashboardUrl().replace(/\/+$/, "")}/b/${biz.slug}/waitlist/${offerToken}`
+        ? resolveGuestTokenUrl(biz.slug, "waitlist", offerToken)
         : null;
 
     const body = [

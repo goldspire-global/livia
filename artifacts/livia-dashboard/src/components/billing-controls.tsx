@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { CreditCard, Mic, TrendingUp } from "lucide-react";
+import { BillingRemediationStrip } from "@/components/billing/billing-remediation-strip";
+import { CommerceFixPanel } from "@/components/billing/commerce-fix-panel";
 import { useBusiness } from "@/lib/business-context";
+import { useMembership } from "@/lib/membership-context";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customFetch } from "@workspace/api-client-react";
+import { useBillingState } from "@/hooks/use-billing-state";
 
 type BillingState = {
   planId: string;
@@ -32,43 +36,46 @@ function eur(cents: number): string {
 
 export default function BillingControls() {
   const { business } = useBusiness();
+  const { role } = useMembership();
   const { toast } = useToast();
   const qc = useQueryClient();
   const bid = business?.id ?? "";
-  const [loading, setLoading] = useState(true);
-  const [billing, setBilling] = useState<BillingState | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const { data: billing, isLoading, isError, refetch } = useBillingState();
 
-  async function load() {
-    if (!bid) return;
-    setLoading(true);
-    try {
-      const data = await customFetch<BillingState>(`/api/businesses/${bid}/billing`);
-      setBilling(data);
-    } catch {
-      setBilling(null);
-    } finally {
-      setLoading(false);
-    }
+  if (!bid) {
+    return <Skeleton className="h-48 w-full rounded-xl" data-testid="billing-loading" />;
   }
 
-  useEffect(() => {
-    void load();
-  }, [bid]);
-
-  if (!bid) return null;
-
-  if (loading && !billing) {
-    return <Skeleton className="h-48 w-full" />;
-  }
-
-  if (!billing) {
+  if (!["OWNER", "ADMIN"].includes(role ?? "")) {
     return (
-      <Card>
+      <Card data-testid="billing-role-blocked">
         <CardHeader>
-          <CardTitle>Billing</CardTitle>
-          <CardDescription>Could not load billing for this shop.</CardDescription>
+          <CardTitle>Plan & billing</CardTitle>
+          <CardDescription>Only the shop owner can view or change the plan.</CardDescription>
         </CardHeader>
+      </Card>
+    );
+  }
+
+  if (isLoading) {
+    return <Skeleton className="h-48 w-full rounded-xl" data-testid="billing-loading" />;
+  }
+
+  if (isError || !billing) {
+    return (
+      <Card data-testid="billing-load-error">
+        <CardHeader>
+          <CardTitle>Plan & billing</CardTitle>
+          <CardDescription>
+            We could not load your plan right now. Check that the API is running, then try again.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        </CardContent>
       </Card>
     );
   }
@@ -102,14 +109,39 @@ export default function BillingControls() {
         title: res.mode === "dev" ? "Plan updated (dev)" : "Checkout started",
         description: res.message,
       });
-      await load();
+      await refetch();
       if (bid) invalidateOperationalState(qc, bid);
     } catch (err: unknown) {
-      const code = (err as { data?: { code?: string } })?.data?.code;
+      const data = (err as { data?: { code?: string; error?: string; priceEnv?: string } })?.data;
+      const code = data?.code;
+      const detail =
+        (err as Error)?.message ||
+        data?.error ||
+        "Could not start checkout. Try again or contact support.";
       if (code === "ENTITLEMENT_REQUIRED") {
-        toast({ title: "Upgrade required", variant: "destructive" });
+        toast({ title: "Upgrade required", description: detail, variant: "destructive" });
+      } else if (code === "INSUFFICIENT_ROLE") {
+        toast({
+          title: "Owner access required",
+          description: "Only the shop owner can change the subscription plan.",
+          variant: "destructive",
+        });
+      } else if (code === "STRIPE_PRICE_NOT_CONFIGURED") {
+        toast({
+          title: "Billing not fully configured",
+          description: data?.priceEnv
+            ? `API is missing ${data.priceEnv}. In local dev, remove STRIPE_SECRET_KEY or add price IDs to .env.`
+            : detail,
+          variant: "destructive",
+        });
+      } else if (code === "STRIPE_NOT_CONFIGURED") {
+        toast({
+          title: "Billing unavailable",
+          description: "Stripe is not configured on the API server for this environment.",
+          variant: "destructive",
+        });
       } else {
-        toast({ title: "Checkout failed", variant: "destructive" });
+        toast({ title: "Checkout failed", description: detail, variant: "destructive" });
       }
     } finally {
       setCheckoutLoading(null);
@@ -118,7 +150,9 @@ export default function BillingControls() {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <BillingRemediationStrip />
+      <CommerceFixPanel />
+      <Card id="plan-billing-card" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <CreditCard className="h-4 w-4" />

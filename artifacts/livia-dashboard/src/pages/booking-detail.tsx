@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetch";
 import { usePathId } from "@/lib/detail-route-params";
 import { useBusiness } from "@/lib/business-context";
 import {
@@ -24,6 +26,9 @@ import { BookingRescheduleDialog } from "@/components/booking/booking-reschedule
 import { HelpSupportDialog } from "@/components/help-support-dialog";
 import { BookingContextRail } from "@/components/booking/booking-context-rail";
 import { BookingContinuityPanel } from "@/components/booking-continuity-panel";
+import { BookingAftercarePanel } from "@/components/booking/booking-aftercare-panel";
+import { BeautyWalletPassPanel } from "@/components/beauty/beauty-wallet-pass-panel";
+import { BeautyRetailAttachPanel } from "@/components/beauty/beauty-retail-attach-panel";
 import { BookingSourceBadge } from "@/components/booking/booking-source-badge";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
@@ -32,6 +37,7 @@ import {
   BookingLinkedInboxBanner,
   type LinkedInboxCaseDto,
 } from "@/components/booking/booking-linked-inbox-banner";
+import { useInAppNotifications } from "@/hooks/use-in-app-notifications";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-[hsl(var(--chart-4))]/10 text-[hsl(var(--chart-4))] border-[hsl(var(--chart-4))]/20",
@@ -69,11 +75,36 @@ export default function BookingDetailPage() {
 
   const bid = business?.id ?? "";
   const bkId = bookingId ?? "";
+  const { markReadByResource } = useInAppNotifications();
+
+  useEffect(() => {
+    if (!bid || !bkId) return;
+    void markReadByResource({
+      resourceKind: "booking",
+      resourceId: bkId,
+      businessId: bid,
+    });
+  }, [bid, bkId, markReadByResource]);
 
   const { data: booking, isLoading } = useGetBooking(
     bid,
     bkId,
     { query: { enabled: !!bid && !!bkId } as any }
+  );
+
+  const { data: retailBundle } = useQuery({
+    queryKey: ["retail-store", bid],
+    queryFn: () =>
+      apiFetch<{
+        settings: { enabled: boolean; postSessionSuggest?: boolean };
+        products: Array<{ id: string; name: string; priceMinor: number; currency: string; isActive?: boolean }>;
+      }>(`/api/businesses/${bid}/retail/store`),
+    enabled: !!bid && businessVertical === "beauty",
+  });
+
+  const retailProducts = useMemo(
+    () => (retailBundle?.products ?? []).filter((p) => p.isActive !== false),
+    [retailBundle],
   );
 
   const updateBooking = useUpdateBooking();
@@ -277,6 +308,28 @@ export default function BookingDetailPage() {
             category={businessCategory}
             copy={exp}
           />
+
+          <BookingAftercarePanel
+            businessId={bid}
+            bookingId={bkId}
+            status={booking.status}
+          />
+
+          {businessVertical === "beauty" && booking.status === "COMPLETED" ? (
+            <BeautyRetailAttachPanel
+              businessId={bid}
+              businessName={business?.name ?? "Studio"}
+              guestFirstName={(booking as { customer?: { firstName?: string } }).customer?.firstName}
+              products={retailProducts}
+              enabled={
+                retailBundle?.settings?.enabled && retailBundle.settings.postSessionSuggest !== false
+              }
+            />
+          ) : null}
+
+          {businessVertical === "beauty" && ["CONFIRMED", "PENDING"].includes(booking.status) ? (
+            <BeautyWalletPassPanel businessId={bid} bookingId={bkId} />
+          ) : null}
 
           <Card
             data-testid="booking-detail-party"

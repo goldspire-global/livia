@@ -25,6 +25,7 @@
     "test:northstar-p0": "playwright test tests/northstar-p0-pixel.spec.ts --project=northstar-p0 --workers=1",
     "test:screen-card-p0": "playwright test tests/screen-card-p0-pixel.spec.ts --project=screen-card-p0 --workers=1",
     "test:founder-uat": "playwright test tests/founder-uat-p0.spec.ts --project=founder-uat-p0 --workers=1",
+    "test:innovation-p0": "playwright test tests/innovation-p0-e2e.spec.ts --project=innovation-p0-e2e --workers=1",
     "install-browsers": "playwright install chromium --with-deps"
   },
   "devDependencies": {

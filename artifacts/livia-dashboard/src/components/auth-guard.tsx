@@ -212,7 +212,11 @@ function RoleGate({ children }: { children: ReactNode }) {
       navigate("/my-day", { replace: true });
     }
     if (persona === "receptionist" && location === "/dashboard") {
-      navigate(vertical === "wellness" ? "/wellness-reception" : "/bookings", { replace: true });
+      const v = (business as { vertical?: string } | null)?.vertical;
+      navigate(
+        v === "wellness" ? "/wellness-reception" : v === "beauty" ? "/beauty-reception" : "/bookings",
+        { replace: true },
+      );
     }
   }, [effectiveRole, isLoading, location, navigate, persona, personaLoading, businesses.length, business]);
 

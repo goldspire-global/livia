@@ -122,6 +122,10 @@ export interface ResolvedBusinessPolicies {
   locale: string;
   timezone: string;
   bookingTermsBlock: string;
+  /** Jurisdiction-computed terms before owner override — for reset/preview in settings. */
+  bookingTermsTemplate: string;
+  privacyNoticeBlock: string;
+  houseRulesBlock: string;
   depositPolicySummary: string;
   aiDisclosure: JurisdictionPack["aiDisclosure"];
   operational: OperationalPolicySnapshot;

@@ -8,8 +8,10 @@ import {
   getMonitoringLogFields,
   getMonitoringLogs,
   getMonitoringLoki,
+  getMonitoringActivation,
   getMonitoringOnboarding,
   getMonitoringOverview,
+  type PlatformActivationRollup,
   getMonitoringReport,
   getMonitoringSeries,
   listAlertFirings,
@@ -116,6 +118,7 @@ export function MonitoringView() {
   const [series, setSeries] = useState<MonitoringTimeSeries | null>(null);
   const [flows, setFlows] = useState<DataFlowNode[]>([]);
   const [onboarding, setOnboarding] = useState<OpsOnboardingChecklist | null>(null);
+  const [activation, setActivation] = useState<PlatformActivationRollup | null>(null);
   const [logs, setLogs] = useState<PlatformLogEntry[]>([]);
   const [lokiLines, setLokiLines] = useState<Array<{ timestamp: string; line: string }>>([]);
   const [lokiMeta, setLokiMeta] = useState<{ configured: boolean; error?: string; hint?: string }>({
@@ -143,11 +146,12 @@ export function MonitoringView() {
   const loadCore = useCallback(async () => {
     setErr(null);
     try {
-      const [ov, ser, fl, ob, rulesRes, firingsRes, saved, fields] = await Promise.all([
+      const [ov, ser, fl, ob, act, rulesRes, firingsRes, saved, fields] = await Promise.all([
         getMonitoringOverview(),
         getMonitoringSeries(24),
         getMonitoringFlows(),
         getMonitoringOnboarding(),
+        getMonitoringActivation(),
         listAlertRules(),
         listAlertFirings(true),
         listSavedLogSearches(),
@@ -157,6 +161,7 @@ export function MonitoringView() {
       setSeries(ser);
       setFlows(fl.flows);
       setOnboarding(ob);
+      setActivation(act);
       setRules(rulesRes.data);
       setFirings(firingsRes.data);
       setSavedSearches(saved.data);
@@ -346,6 +351,18 @@ export function MonitoringView() {
               ["Failed msgs", String(obs.traffic.messagesFailed24h), obs.traffic.messagesFailed24h < 5],
               ["Events 15m", String(overview.live.eventsLast15m), true],
               ["Tenants", String(obs.tenantCount), true],
+              [
+                "Activated",
+                activation
+                  ? `${activation.activatedCount}/${activation.totalBusinesses} (${activation.activationRate}%)`
+                  : "—",
+                activation ? activation.activationRate >= 10 : true,
+              ],
+              [
+                "Median TTFB",
+                activation?.medianTimeToFirstBookingLabel ?? "—",
+                true,
+              ],
               ["Tickets open", String(obs.support.ticketsOpen), obs.support.ticketsOpen < 50],
             ].map(([k, v, ok], i) => (
               <div key={`metric-${i}`} style={{ ...card, borderColor: ok ? "#334155" : "#7f1d1d" }}>

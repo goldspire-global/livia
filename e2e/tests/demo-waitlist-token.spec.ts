@@ -24,7 +24,7 @@ test.describe("Demo guest waitlist token", () => {
     expect(res.ok(), await res.text()).toBeTruthy();
     const body = (await res.json()) as { token?: string; path?: string };
     expect(body.token?.length).toBeGreaterThan(8);
-    expect(body.path).toMatch(new RegExp(`/b/${SLUG}/waitlist/`));
+    expect(body.path).toMatch(new RegExp(`/book/${SLUG}/waitlist/`));
   });
 
   test("waitlist page shows accept CTA", async ({ page, request }) => {

@@ -45,7 +45,7 @@ test.describe("Guest token API suite (R2-E7)", () => {
       expect(res.ok(), `${kind} ${slug}: ${await res.text()}`).toBeTruthy();
       const body = (await res.json()) as { token?: string; path?: string };
       expect(body.token?.length).toBeGreaterThan(8);
-      expect(body.path).toContain(`/b/${slug}/${kind === "pay" ? "pay" : kind}/`);
+      expect(body.path).toContain(`/book/${slug}/${kind === "pay" ? "pay" : kind}/`);
     });
   }
 });

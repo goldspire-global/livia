@@ -231,6 +231,15 @@
   text-align: center;
 }
 
+.gateway-g1-world-card__trade {
+  margin-bottom: 0.25rem;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.5);
+}
+
 .gateway-g1-world-card__title {
   font-family: var(--app-font-serif);
   font-size: 1.125rem;

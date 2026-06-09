@@ -309,6 +309,28 @@ export async function markInAppNotificationRead(
   return (result.rowCount ?? 0) > 0;
 }
 
+export async function markInAppNotificationsReadByResource(
+  userId: string,
+  opts: { resourceKind: string; resourceId: string; businessId?: string },
+): Promise<number> {
+  const conditions = [
+    eq(userNotificationsTable.userId, userId),
+    isNull(userNotificationsTable.readAt),
+    eq(userNotificationsTable.resourceKind, opts.resourceKind),
+    eq(userNotificationsTable.resourceId, opts.resourceId),
+  ];
+  if (opts.businessId) {
+    conditions.push(eq(userNotificationsTable.businessId, opts.businessId));
+  }
+
+  const result = await db
+    .update(userNotificationsTable)
+    .set({ readAt: new Date() })
+    .where(and(...conditions));
+
+  return result.rowCount ?? 0;
+}
+
 export async function markAllInAppNotificationsRead(
   userId: string,
   businessId?: string,
@@ -419,6 +441,10 @@ export function inAppAllowedForPrefs(
       return prefs.pushInboxHandoff;
     case "inbox.liv_booked":
       return prefs.pushLivBookingViaChannel;
+    case "twin.risk":
+      return prefs.pushTwinRisk;
+    case "twin.opportunity":
+      return prefs.pushTwinOpportunity;
     case "chain.alert":
     case "continuity.stuck":
     case "time_off.pending":

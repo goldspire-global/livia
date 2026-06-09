@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronDown, Compass, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   wellnessContextExtraItems,
   WELLNESS_GUEST_SURFACE_LINKS,
   resolveWellnessGuestSurfaceHref,
+  filterWellnessNavItems,
   type WellnessShellNavItem,
 } from "@workspace/policy";
 import { WellnessCompassDialog, useWellnessCompassShortcut } from "@/components/wellness/wellness-compass-dialog";
@@ -24,6 +25,8 @@ type Props = {
   serviceNoun?: string;
   persona?: WellnessPersonaKind | null;
   utilityActions?: React.ReactNode;
+  /** Vertical capability ids that are ready (not deferred-only). */
+  readyVerticalCapabilityIds?: string[];
 };
 
 function NavPill({
@@ -112,7 +115,16 @@ export function WellnessShellNav({
   serviceNoun = "Sessions",
   persona = null,
   utilityActions,
+  readyVerticalCapabilityIds,
 }: Props) {
+  const readyCapSet = useMemo(
+    () => new Set(readyVerticalCapabilityIds ?? []),
+    [readyVerticalCapabilityIds],
+  );
+  const filterNav = useCallback(
+    <T extends { href: string }>(items: T[]) => filterWellnessNavItems(items, readyCapSet),
+    [readyCapSet],
+  );
   const [location] = useLocation();
   const search = typeof window !== "undefined" ? window.location.search : "";
   const [compassOpen, setCompassOpen] = useState(false);
@@ -121,22 +133,27 @@ export function WellnessShellNav({
   const activeNavId = resolveWellnessShellActiveId(location, morph, search);
   const navContext = resolveWellnessNavContext(location, morph, teamNoun, serviceNoun, search);
   const pinnedIds = wellnessQuickAccessIdSet(morph, persona);
-  const quickGroups = wellnessQuickAccessGrouped(morph, teamNoun, serviceNoun, persona);
-  const contextExtras = wellnessContextExtraItems(navContext, pinnedIds);
+  const quickGroups = wellnessQuickAccessGrouped(morph, teamNoun, serviceNoun, persona).map(
+    (group) => ({
+      ...group,
+      items: filterNav(group.items),
+    }),
+  ).filter((group) => group.items.length > 0);
+  const contextExtras = filterNav(wellnessContextExtraItems(navContext, pinnedIds));
 
   useWellnessCompassShortcut(openCompass, morph !== "timeline-rail");
 
   if (morph === "timeline-rail") {
-    const rail = [
-      { href: "/dashboard", label: "◎", title: "Today" },
-      { href: "/wellness-reception", label: "⌂", title: "Reception" },
-      { href: "/inbox", label: "✉", title: "Inbox" },
-      { href: "/bookings", label: "▣", title: "Rooms" },
-      { href: "/wellness-retail", label: "◇", title: "Retail" },
-      { href: "/services", label: "◆", title: serviceNoun },
-      { href: "/staff", label: "👥", title: teamNoun },
-      { href: "/settings", label: "⚙", title: "Settings" },
-    ];
+    const rail = filterNav([
+      { id: "today", href: "/dashboard", label: "◎", title: "Today" },
+      { id: "reception", href: "/wellness-reception", label: "⌂", title: "Reception" },
+      { id: "inbox", href: "/inbox", label: "✉", title: "Inbox" },
+      { id: "rooms", href: "/bookings", label: "▣", title: "Rooms" },
+      { id: "retail", href: "/wellness-retail", label: "◇", title: "Retail" },
+      { id: "sessions", href: "/services", label: "◆", title: serviceNoun },
+      { id: "staff", href: "/staff", label: "👥", title: teamNoun },
+      { id: "settings", href: "/settings", label: "⚙", title: "Settings" },
+    ]);
     return (
       <nav
         className="wellness-rail-shell-nav hidden md:flex flex-col w-14 shrink-0 border-r bg-foreground text-background py-4 gap-3 items-center"

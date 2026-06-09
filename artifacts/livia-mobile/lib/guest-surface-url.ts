@@ -6,7 +6,7 @@ export function getDashboardOrigin(): string {
   return "https://app.livia-hq.com";
 }
 
-export type GuestSurfaceKind = "visit" | "intake" | "waitlist" | "pay" | "proof";
+export type GuestSurfaceKind = "visit" | "intake" | "waitlist" | "pay" | "proof" | "shop";
 
 export function getGuestSurfaceUrl(
   kind: GuestSurfaceKind,
@@ -25,6 +25,8 @@ export function getGuestSurfaceUrl(
       return `${base}/b/${slug}/pay/${token}`;
     case "proof":
       return `${base}/b/${slug}/proof/${token}`;
+    case "shop":
+      return `${base}/b/${slug}/shop/${token}`;
   }
 }
 

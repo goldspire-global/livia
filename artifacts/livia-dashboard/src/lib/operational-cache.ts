@@ -4,6 +4,7 @@ import {
   getGetDashboardSummaryQueryKey,
   getListBookingsQueryKey,
 } from "@workspace/api-client-react";
+import { invalidateCommerceIntelligence } from "@/lib/commerce-intelligence-cache";
 
 /** After any operational action, refresh all surfaces that depend on live business state. */
 export function invalidateOperationalState(qc: QueryClient, businessId: string) {
@@ -16,6 +17,7 @@ export function invalidateOperationalState(qc: QueryClient, businessId: string) 
   void qc.invalidateQueries({ queryKey: ["my-day", businessId] });
   void qc.invalidateQueries({ queryKey: ["shift-templates", businessId] });
   void qc.invalidateQueries({ queryKey: ["staff-shifts", businessId] });
+  invalidateCommerceIntelligence(qc, businessId);
 }
 
 /** Background poll so operator surfaces stay aligned with backend state. */

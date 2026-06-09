@@ -115,12 +115,12 @@ export function AccountSettingsPanel() {
       </Card>
 
       <p className="text-xs text-muted-foreground leading-relaxed px-1">
-        Deleting your login is in <ProfileSecurityLink className="inline" /> when enabled. If you own this
-        studio,{" "}
-        <Link href="/settings?tab=ownership" className="font-medium text-foreground hover:underline">
-          pass the keys
+        Deleting your login is in <ProfileSecurityLink className="inline" /> when enabled. Transferring
+        studio ownership is under{" "}
+        <Link href="/settings?tab=legal#ownership-succession" className="text-primary hover:underline">
+          Settings → Legal
         </Link>{" "}
-        before removing the last owner. See our{" "}
+        if you ever need it. See our{" "}
         <a
           href={legalUrl("privacy")}
           target="_blank"

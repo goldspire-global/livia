@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plug, Webhook, Key, Trash2 } from "lucide-react";
+import { Trash2, FileUp } from "lucide-react";
 import { useBusiness } from "@/lib/business-context";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,27 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
+import { MigrationBrokersPanel } from "@/components/settings/migration-brokers-panel";
 import { customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
-
-function brokerStatusLabel(b: BrokerStatus): string {
-  if (b.mode === "csv_only") {
-    return b.connected ? "CSV export ready" : "CSV export only — no live OAuth";
-  }
-  if (b.mode === "oauth_stub") {
-    return b.connected ? "OAuth configured — sync job pending" : "Not connected";
-  }
-  return b.connected ? "API key configured" : "Not connected";
-}
-
-type BrokerStatus = {
-  id: string;
-  label: string;
-  mode: string;
-  connected: boolean;
-  note: string;
-};
+import type { BrokerStatus } from "@/lib/migration-brokers-ui";
 
 type IntegrationsState = {
   webhookableEvents: string[];
@@ -199,21 +184,48 @@ export default function IntegrationsControls() {
 
   const events = state?.webhookableEvents ?? [];
   const scopes = state?.availableScopes ?? [];
+  const deliveryCount = state?.recentDeliveries.length ?? 0;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="space-y-4">
+      <Card id="booksy-import" className="scroll-mt-24 border-primary/20">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Webhook className="h-4 w-4" />
-            Outbound webhooks
+            <FileUp className="h-4 w-4" />
+            Import clients (Booksy CSV)
           </CardTitle>
           <CardDescription>
-            Livia POSTs signed events to your URL (HMAC-SHA256, header{" "}
-            <code className="text-xs">X-Livia-Signature</code>). At-least-once delivery with retries.
+            The only self-serve import today. Export your client list from Booksy, paste below, and
+            Livia adds new guests — no OAuth setup required.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
+          <textarea
+            className="w-full min-h-[120px] rounded-md border bg-muted/30 p-3 text-sm font-mono"
+            placeholder="firstName,lastName,email,phone&#10;Jane,Doe,jane@example.com,+353..."
+            value={booksyCsv}
+            onChange={(e) => setBooksyCsv(e.target.value)}
+          />
+          <Button disabled={busy || !booksyCsv.trim()} onClick={() => void importBooksy()}>
+            Import clients
+          </Button>
+          {booksyResult ? (
+            <p className="text-sm text-muted-foreground">
+              Imported {booksyResult.imported}, skipped {booksyResult.skipped}
+              {booksyResult.errors?.length ? ` — ${booksyResult.errors.join("; ")}` : ""}
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <MigrationBrokersPanel brokers={brokers} />
+
+      <SettingsDisclosure
+        title="Outbound webhooks"
+        description="POST signed booking events to Zapier, your ERP, or a custom endpoint."
+        defaultOpen={false}
+      >
+        <div className="space-y-4 pt-1">
           <div className="space-y-2">
             <Label>Endpoint URL</Label>
             <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} />
@@ -244,29 +256,24 @@ export default function IntegrationsControls() {
                   {wh.subscribedEvents.join(", ")} · {wh.enabled ? "enabled" : "disabled"}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => testWebhook(wh.id)}>
-                  Test ping
-                </Button>
-              </div>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => testWebhook(wh.id)}>
+                Test ping
+              </Button>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsDisclosure>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Key className="h-4 w-4" />
-            API keys (Partner plane)
-          </CardTitle>
-          <CardDescription>
-            Scoped read keys for ERP, data warehouse, or migration tools. Use header{" "}
-            <code className="text-xs">X-Partner-Api-Key</code> on{" "}
-            <code className="text-xs">/api/partner/v1/...</code>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SettingsDisclosure
+        title="API keys"
+        description="Scoped read keys for partner tools and data warehouse exports."
+        defaultOpen={false}
+      >
+        <div className="space-y-4 pt-1">
+          <p className="text-xs text-muted-foreground">
+            Use header <code className="text-[11px]">X-Partner-Api-Key</code> on{" "}
+            <code className="text-[11px]">/api/partner/v1/...</code>
+          </p>
           <div className="space-y-2">
             <Label>Label</Label>
             <Input value={keyLabel} onChange={(e) => setKeyLabel(e.target.value)} />
@@ -313,81 +320,36 @@ export default function IntegrationsControls() {
               </Button>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsDisclosure>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Migration brokers</CardTitle>
-          <CardDescription>Fresha, Square, Google Calendar, and accounting exports (v1.5 scaffolds).</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {brokers.length === 0 ? (
-            <p className="text-muted-foreground">Loading broker status…</p>
-          ) : (
-            brokers.map((b) => (
-              <div key={b.id} className="flex justify-between border-b py-2 last:border-0 gap-4">
-                <span className="font-medium">{b.label}</span>
-                <span className="text-muted-foreground text-right">
-                  {brokerStatusLabel(b)} — {b.note}
-                </span>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Booksy CSV import</CardTitle>
-          <CardDescription>
-            Paste a CSV with columns: firstName, lastName, email, phone. New clients are added to your list.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <textarea
-            className="w-full min-h-[120px] rounded-md border bg-muted/30 p-3 text-sm font-mono"
-            placeholder="firstName,lastName,email,phone&#10;Jane,Doe,jane@example.com,+353..."
-            value={booksyCsv}
-            onChange={(e) => setBooksyCsv(e.target.value)}
-          />
-          <Button disabled={busy || !booksyCsv.trim()} onClick={() => void importBooksy()}>
-            Import clients
-          </Button>
-          {booksyResult ? (
-            <p className="text-sm text-muted-foreground">
-              Imported {booksyResult.imported}, skipped {booksyResult.skipped}
-              {booksyResult.errors?.length ? ` — ${booksyResult.errors.join("; ")}` : ""}
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Plug className="h-4 w-4" />
-            Recent deliveries
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+      <SettingsDisclosure
+        title="Recent webhook deliveries"
+        description={
+          deliveryCount > 0
+            ? `${deliveryCount} recent deliver${deliveryCount === 1 ? "y" : "ies"} — troubleshooting only.`
+            : "No deliveries yet — opens when you add a webhook."
+        }
+        defaultOpen={false}
+      >
+        <div className="space-y-2 text-sm pt-1">
           {(state?.recentDeliveries ?? []).length === 0 ? (
             <p className="text-muted-foreground">No deliveries yet.</p>
           ) : (
             state?.recentDeliveries.map((d) => (
-              <div key={d.id} className="flex justify-between border-b py-2 last:border-0">
+              <div key={d.id} className="flex justify-between border-b py-2 last:border-0 gap-3">
                 <span>
                   {d.eventName} · {d.status}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground text-right">
                   {d.attempts} attempt{d.attempts === 1 ? "" : "s"}
                   {d.lastError ? ` — ${d.lastError}` : ""}
                 </span>
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsDisclosure>
     </div>
   );
 }

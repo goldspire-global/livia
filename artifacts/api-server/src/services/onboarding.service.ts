@@ -1,4 +1,10 @@
-import { resolveOnboardingDefaults, type BusinessTier, type BusinessVertical } from "@workspace/policy";
+import {
+  mergeOnboardingAfterMenuSeed,
+  resolveOnboardingDefaults,
+  type BusinessTier,
+  type BusinessVertical,
+  type OnboardingState,
+} from "@workspace/policy";
 import { createService } from "./services.service";
 import { createStaff, setStaffServices } from "./staff.service";
 import { getBusinessById, updateBusiness } from "./businesses.service";
@@ -62,6 +68,16 @@ export async function seedBusinessFromOnboardingPack(
     if (serviceIds.length > 0) {
       await setStaffServices(staff.id, serviceIds);
     }
+  }
+
+  if (serviceIds.length > 0 && defaults.vertical) {
+    const raw = (biz.onboardingState ?? {}) as OnboardingState;
+    await updateBusiness(businessId, {
+      onboardingState: mergeOnboardingAfterMenuSeed(raw, defaults.vertical) as unknown as Record<
+        string,
+        unknown
+      >,
+    });
   }
 
   return defaults;

@@ -1,6 +1,9 @@
 import { inngest } from "../lib/inngest";
 import { getBookingById } from "../services/bookings.service";
-import { sendBookingReminderEmail } from "../services/booking-emails.service";
+import {
+  sendBookingReminderEmail,
+  sendBookingReminderPrepSms,
+} from "../services/booking-emails.service";
 import { recordWorkflowPause } from "../lib/workflow-pause";
 import { tenantContextStore, type TenantContext } from "@workspace/tenant-context";
 
@@ -81,6 +84,15 @@ export const bookingReminderT24 = inngest.createFunction(
       ),
     );
 
-    return { sent: true, bookingId: data.bookingId };
+    const sms = await step.run("send-reminder-prep-sms", () =>
+      runWithTenant(tenantCtx, async () =>
+        sendBookingReminderPrepSms({
+          business: data.businessId,
+          booking: fresh as unknown as Parameters<typeof sendBookingReminderPrepSms>[0]["booking"],
+        }),
+      ),
+    );
+
+    return { sent: true, sms, bookingId: data.bookingId };
   },
 );

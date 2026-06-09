@@ -14,6 +14,15 @@ import {
   type ChainPulseStatus,
   type ChainShopRollup,
 } from "./chain-alerts";
+import {
+  buildChainCommerceAlerts,
+  chainShopCommerceSignals,
+  chainShopTopSignal,
+  summarizeChainCommerce,
+  type ChainCommerceAlert,
+  type ChainShopCommerceSlice,
+} from "@workspace/policy";
+import { formatCommerceMinor, getCommerceSnapshot } from "./commerce-intelligence.service";
 
 export type { ChainAlert, ChainPulseStatus, ChainShopRollup };
 export { buildChainAlerts };
@@ -26,6 +35,13 @@ export type ChainRollup = {
   shopsNeedingAttention: number;
   orgAdminBriefingLine: string;
   alerts: ChainAlert[];
+  commerceAlerts?: ChainCommerceAlert[];
+  commerceSummary?: {
+    totalCapturedMinor30d: number;
+    shopsWithActSignal: number;
+    shopsWithWatchSignal: number;
+  };
+  commerceByShop?: ChainShopCommerceSlice[];
   shops: ChainShopRollup[];
 };
 
@@ -57,23 +73,29 @@ function derivePulse(input: {
 }
 
 export function chainRollupToCsv(rollup: ChainRollup): string {
-  const header =
-    "name,slug,city,bookings_this_week,completed_today,pending_bookings,open_inbox,handed_off,pending_time_off,pulse";
-  const lines = rollup.shops.map(
-    (s) =>
-      [
-        JSON.stringify(s.name),
-        s.slug,
-        s.city ?? "",
-        s.bookingsThisWeek,
-        s.completedThisWeek,
-        s.pendingBookings,
-        s.openConversations,
-        s.handedOffConversations,
-        s.pendingTimeOff,
-        s.pulseStatus,
-      ].join(","),
+  const commerceById = new Map(
+    (rollup.commerceByShop ?? []).map((c) => [c.businessId, c]),
   );
+  const header =
+    "name,slug,city,bookings_this_week,completed_today,pending_bookings,open_inbox,handed_off,pending_time_off,pulse,captured_30d,capture_rate,commerce_signal";
+  const lines = rollup.shops.map((s) => {
+    const commerce = commerceById.get(s.businessId);
+    return [
+      JSON.stringify(s.name),
+      s.slug,
+      s.city ?? "",
+      s.bookingsThisWeek,
+      s.completedThisWeek,
+      s.pendingBookings,
+      s.openConversations,
+      s.handedOffConversations,
+      s.pendingTimeOff,
+      s.pulseStatus,
+      commerce?.capturedLabel ?? "",
+      commerce?.captureRatePercent ?? "",
+      commerce?.topSignal?.id ?? "",
+    ].join(",");
+  });
   return [header, ...lines].join("\n");
 }
 
@@ -214,6 +236,34 @@ export async function getChainRollupForOwner(ownerId: string): Promise<ChainRoll
     return rank(a.pulseStatus) - rank(b.pulseStatus);
   });
 
+  const commerceByShop: ChainShopCommerceSlice[] = await Promise.all(
+    shopRollups.map(async (shop) => {
+      const snapshot = await getCommerceSnapshot(shop.businessId);
+      const capturedLabel = formatCommerceMinor(snapshot.capturedMinor30d, snapshot.currency);
+      const signals = chainShopCommerceSignals({
+        capturedMinor30d: snapshot.capturedMinor30d,
+        captureRatePercent: snapshot.captureRatePercent,
+        paymentCount30d: snapshot.paymentCount30d,
+        refundMinor30d: snapshot.refundMinor30d,
+        demandBookings: shop.pendingBookings + shop.todayBookings,
+        weekBookings: shop.bookingsThisWeek,
+        capturedLabel,
+      });
+      return {
+        businessId: shop.businessId,
+        shopName: shop.name,
+        capturedMinor30d: snapshot.capturedMinor30d,
+        capturedLabel,
+        captureRatePercent: snapshot.captureRatePercent,
+        paymentCount30d: snapshot.paymentCount30d,
+        demandBookings: shop.pendingBookings + shop.todayBookings,
+        topSignal: chainShopTopSignal(signals),
+      };
+    }),
+  );
+  const commerceAlerts = buildChainCommerceAlerts(commerceByShop);
+  const commerceSummary = summarizeChainCommerce(commerceByShop);
+
   let orgAdminBriefingLine: string;
   if (shops.length === 0) {
     orgAdminBriefingLine = "No shops on your account yet.";
@@ -240,6 +290,10 @@ export async function getChainRollupForOwner(ownerId: string): Promise<ChainRoll
     orgAdminBriefingLine = livLine ?? fallback;
   }
 
+  if (commerceSummary.shopsWithActSignal > 0) {
+    orgAdminBriefingLine = `${commerceSummary.shopsWithActSignal} location${commerceSummary.shopsWithActSignal === 1 ? "" : "s"} need commerce attention · ${orgAdminBriefingLine}`;
+  }
+
   return {
     shopCount: shops.length,
     bookingsThisWeek,
@@ -247,6 +301,9 @@ export async function getChainRollupForOwner(ownerId: string): Promise<ChainRoll
     shopsNeedingAttention,
     orgAdminBriefingLine,
     alerts: buildChainAlerts(shopRollups),
+    commerceAlerts,
+    commerceSummary,
+    commerceByShop,
     shops: shopRollups,
   };
 }

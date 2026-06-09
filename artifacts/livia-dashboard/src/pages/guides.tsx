@@ -1,160 +1,125 @@
 import { Link } from "wouter";
-import { BookOpen, Building2, Globe, Shield, ArrowRight } from "lucide-react";
+import { BookOpen, Building2, Globe, Inbox, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const VERTICAL_BOOKING_LINKS = [
-  { href: "/b/paws-parlour-dublin", label: "Pet grooming" },
-  { href: "/b/clarity-medspa-dublin", label: "Medspa + consent" },
-  { href: "/b/motion-physio-cork", label: "Physio / allied health" },
-  { href: "/b/peak-fitness-dublin", label: "Fitness / PT" },
-  { href: "/b/luxe-salon-spa", label: "Hair + continuity (E2E seed)" },
-] as const;
+import { PageFrame } from "@/components/ui/page-frame";
+import { useBusiness } from "@/lib/business-context";
 
 const TRACKS = [
   {
-    id: "public",
-    title: "Public & customer",
+    id: "guest",
+    title: "Your guest booking page",
     icon: Globe,
-    summary: "No login. Book, chat with Liv, wallet pass — the outward face of a shop.",
+    summary: "What customers see without signing in.",
     steps: [
-      "Provision demo world at /demo (once).",
-      "Open Customer door or /b/aurora-studio in incognito.",
-      "Book a slot; optional chat on the public booking page.",
-      "Try vertical showcases: pet, medspa consent, physio, fitness (links below).",
-      "Confirm email/SMS copy in Settings (as shop owner later).",
+      "Share your /b link from Settings → Studio.",
+      "Guests pick a service, time, and contact details.",
+      "Liv can answer questions on the page when you enable it.",
+      "Booking terms and privacy copy come from Settings → Legal & trust.",
     ],
-    cta: { href: "/b/aurora-studio", label: "Open Aurora Studio booking" },
+    cta: { href: "/settings?tab=shop", label: "Copy booking link" },
   },
   {
-    id: "business",
-    title: "Business owners & staff",
+    id: "floor",
+    title: "Running the floor",
     icon: Building2,
-    summary: "Org admin, owner, manager, staff, front desk — each gets their own Clerk login and landing route.",
+    summary: "Day-to-day work for owners and staff.",
     steps: [
-      "POST /api/demo/provision (button on /demo).",
-      "Pick a door: org admin (3 locations), owner (Conor's Cut), manager (inbox), staff (My Day), reception (bookings).",
-      "Use business switcher (org admin) and View as (owner/manager).",
-      "Team: Staff → Invite (not hiring). Leave: staff requests, manager approves on Rota.",
-      "Running late: Today or booking detail. Liv tuning: Liv command (not Operations grid).",
-      "Business ready pack: docs/business/OPERATOR-READY-PACK.md in repo.",
-      "Mobile: same businesses via sign-in; parity in docs/product/WEB-MOBILE-PARITY.md.",
+      "Today — pending bookings and what needs attention.",
+      "Inbox — reply to guests; Ask Liv drafts from your policies.",
+      "Bookings — calendar, status, and running late.",
+      "Customers — history, Liv memory, and relationship context.",
     ],
-    cta: { href: "/demo", label: "Demo gateway (live sign-in)" },
+    cta: { href: "/dashboard", label: "Open Today" },
   },
   {
-    id: "internal",
-    title: "Livia Inc · internal ops",
-    icon: Shield,
-    summary: "Tenant directory and health cards — never tenant JWTs. Service token only.",
+    id: "liv",
+    title: "Tuning Liv",
+    icon: Sparkles,
+    summary: "Keep replies accurate and on-brand.",
     steps: [
-      "pnpm dev:internal → http://localhost:5175",
-      "Paste INTERNAL_OPS_SECRET from root .env.",
-      "Search tenants; open health card + deep links (Stripe, Clerk, public booking).",
-      "Impersonation policy: owners use ?as=staff — audited; ops do not borrow tenant sessions.",
+      "Legal & trust — booking terms, privacy, house rules (Liv reads these).",
+      "Settings → Liv — tone and guest-facing chat greeting.",
+      "Liv hub — mandate, channels, and day-to-day operating rules.",
+      "Refresh morning briefing after big policy changes.",
     ],
-    cta: { href: "http://localhost:5175", label: "Open internal console", external: true },
+    cta: { href: "/settings?tab=legal", label: "Review policies" },
+  },
+  {
+    id: "inbox",
+    title: "Inbox & handoffs",
+    icon: Inbox,
+    summary: "When a thread needs a human.",
+    steps: [
+      "Open a conversation from Inbox or a booking.",
+      "Use Ask Liv on the right to draft — always review before sending.",
+      "Hand off when refunds, complaints, or edge cases need you.",
+      "Liv memory updates from resolved threads.",
+    ],
+    cta: { href: "/inbox", label: "Open inbox" },
   },
 ] as const;
 
 export default function GuidesPage() {
+  const { business } = useBusiness();
+  const slug = business?.slug;
+
   return (
-    <div className="min-h-[100dvh] bg-background">
-      <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="flex items-center gap-2 text-primary mb-4">
-          <BookOpen className="h-5 w-5" />
-          <span className="text-xs font-mono uppercase tracking-wider">E2E playbook</span>
-        </div>
-        <h1 className="font-serif text-4xl tracking-tight mb-3">Navigate all of Livia</h1>
-        <p className="text-muted-foreground leading-relaxed mb-10">
-          Three onboarding tracks — public customer, tenant users, and Livia internal staff. Full
-          copy-paste commands live in{" "}
-          <code className="text-sm">docs/testing/FULL-LIVIA-EXPERIENCE.md</code> in the repo.
+    <PageFrame width="md" className="pb-12">
+      <div className="mb-8">
+        <p className="text-xs font-mono uppercase tracking-wider text-primary mb-2 flex items-center gap-2">
+          <BookOpen className="h-4 w-4" />
+          Help
         </p>
+        <h1 className="font-serif text-2xl tracking-tight">Getting the most from Livia</h1>
+        <p className="text-muted-foreground text-sm mt-2 max-w-lg">
+          Quick paths for your team — no engineering jargon. Need support? Use the help button in
+          the top bar.
+        </p>
+      </div>
 
-        <div className="space-y-6">
-          {TRACKS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Card key={t.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon className="h-5 w-5 text-primary" />
-                    {t.title}
-                  </CardTitle>
-                  <CardDescription>{t.summary}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1.5">
-                    {t.steps.map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ol>
-                  {"external" in t.cta && t.cta.external ? (
-                    <a href={t.cta.href} target="_blank" rel="noreferrer">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        {t.cta.label}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </a>
-                  ) : (
-                    <Link href={t.cta.href}>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        {t.cta.label}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </Link>
-                  )}
-                  {t.id === "public" ? (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {VERTICAL_BOOKING_LINKS.map((v) => (
-                        <Link key={v.href} href={v.href}>
-                          <Button variant="secondary" size="sm">
-                            {v.label}
-                          </Button>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+      <div className="space-y-4">
+        {TRACKS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <Card key={t.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Icon className="h-4 w-4 text-primary" />
+                  {t.title}
+                </CardTitle>
+                <CardDescription>{t.summary}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                  {t.steps.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+                <Link href={t.cta.href}>
+                  <Button variant="outline" size="sm">
+                    {t.cta.label}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-        <Card className="mt-10 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-lg">Operator ready pack</CardTitle>
-            <CardDescription>
-              Starter policies, leave procedure, running late, team invite, and AI disclosure — adapt with
-              your solicitor, then mirror in Settings → Policy and Liv.
-            </CardDescription>
+      {slug ? (
+        <Card className="mt-6 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Preview your storefront</CardTitle>
+            <CardDescription>Open what guests see before you share the link.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Link href="/settings">
-              <Button variant="default" size="sm">
-                Open Settings (legal tab)
-              </Button>
-            </Link>
-            <p className="text-xs text-muted-foreground w-full">
-              Full pack: <code className="text-[11px]">docs/business/OPERATOR-READY-PACK.md</code> and{" "}
-              <code className="text-[11px]">docs/business/templates/</code>
-            </p>
+          <CardContent>
+            <a href={`/book/${slug}`} target="_blank" rel="noopener noreferrer">
+              <Button size="sm">Open book page</Button>
+            </a>
           </CardContent>
         </Card>
-
-        <div className="mt-12 flex flex-wrap gap-3">
-          <Link href="/demo">
-            <Button>Live demo gateway</Button>
-          </Link>
-          <Link href="/lifecycle">
-            <Button variant="outline">Lifecycle map</Button>
-          </Link>
-          <Link href="/demo">
-            <Button variant="outline">Portal hub</Button>
-          </Link>
-        </div>
-      </div>
-    </div>
+      ) : null}
+    </PageFrame>
   );
 }

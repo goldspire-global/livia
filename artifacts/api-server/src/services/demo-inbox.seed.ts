@@ -15,8 +15,10 @@ function ago(minutes: number): Date {
 }
 
 type InboxThread = {
-  customerIdx: number;
-  channel: "WEB" | "SMS" | "EMAIL";
+  customerIdx?: number;
+  /** No linked customer row — e.g. unknown caller. */
+  anonymous?: boolean;
+  channel: "WEB" | "SMS" | "EMAIL" | "VOICE";
   status: "OPEN" | "HANDED_OFF" | "CLOSED";
   aiHandled: boolean;
   name: string;
@@ -125,14 +127,14 @@ const SALON_THREADS: InboxThread[] = [
     ],
   },
   {
-    customerIdx: 1,
-    channel: "SMS",
+    anonymous: true,
+    channel: "VOICE",
     status: "OPEN",
     aiHandled: true,
-    name: "Walk-in (unknown)",
+    name: "Unknown caller",
     phone: "+353 87 199 8822",
-    email: "walkin@email.ie",
-    summary: "Incoming call missed — Liv rebooked for tomorrow 11am.",
+    email: "",
+    summary: "Missed call — Liv texted back with tomorrow 11:00 hold.",
     messages: [
       { role: "USER", content: "Missed your call — still want a cut tomorrow if possible", minsAgo: 5 },
       {
@@ -202,13 +204,13 @@ const ALLIED_HEALTH_THREADS: InboxThread[] = [
     ],
   },
   {
-    customerIdx: 0,
-    channel: "SMS",
+    anonymous: true,
+    channel: "VOICE",
     status: "OPEN",
     aiHandled: true,
-    name: "Walk-in (unknown)",
+    name: "Unknown caller",
     phone: "+353 87 199 8822",
-    email: "walkin@email.ie",
+    email: "",
     summary: "Missed call — Liv offered sports massage tomorrow 11am.",
     messages: [
       { role: "USER", content: "Missed your call — still need sports massage tomorrow", minsAgo: 5 },
@@ -319,8 +321,8 @@ export async function seedDemoInbox(
 ) {
   const threads: InboxThread[] = threadsForVertical(opts?.vertical).map((t) => ({
     ...t,
-    phone: customers[t.customerIdx]?.phone ?? t.phone,
-    email: customers[t.customerIdx]?.email ?? t.email,
+    phone: t.customerIdx != null ? (customers[t.customerIdx]?.phone ?? t.phone) : t.phone,
+    email: t.customerIdx != null ? (customers[t.customerIdx]?.email ?? t.email) : t.email,
   }));
 
   if (opts?.pendingBookingNotes) {
@@ -341,7 +343,9 @@ export async function seedDemoInbox(
   }
 
   for (const t of threads) {
-    const cid = customers[t.customerIdx]?.id ?? customers[0]?.id;
+    const cid = t.anonymous
+      ? null
+      : (customers[t.customerIdx ?? 0]?.id ?? customers[0]?.id);
     const linkedBookingId =
       t.linkedBookingKey && opts?.bookingKeys?.[t.linkedBookingKey]
         ? opts.bookingKeys[t.linkedBookingKey]

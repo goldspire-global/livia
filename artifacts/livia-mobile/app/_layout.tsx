@@ -21,7 +21,8 @@ import {
 } from "@workspace/api-client-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { isDemoRoute } from "@/lib/navigation";
+import { isDemoRoute, isGatewayRoute, isGuestPublicRoute } from "@/lib/navigation";
+import { GUEST_HUB_TOKEN_KEY } from "@/lib/guest-hub";
 import { consumeMobileHomeRoute } from "@/lib/demo-session";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -72,20 +73,40 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
     const onSignIn = segments[0] === "sign-in";
+    const onGateway = isGatewayRoute(segments);
     const onExecDesk = segments[0] === "_internal";
     const onDemo = isDemoRoute(segments);
-    const onPublicBook = segments[0] === "public-book";
-    const onGuestHub = segments[0] === "my-livia";
-    const onGuestSurface = segments[0] === "guest-surface";
+    const onGuestPublic = isGuestPublicRoute(segments);
     const allowDemo =
       onDemo &&
       (process.env.EXPO_PUBLIC_DEMO_LOGIN === "true" || __DEV__);
     if (onDemo && !allowDemo) {
-      router.replace("/sign-in");
+      router.replace("/");
       return;
     }
-    if (!isSignedIn && !onSignIn && !allowDemo && !onPublicBook && !onGuestHub && !onGuestSurface) {
-      router.replace("/sign-in");
+    if (isSignedIn && (onGateway || onSignIn)) {
+      void (async () => {
+        const surface = await fetchOperatorSurface(() => getToken());
+        if (surface?.platformExec) {
+          router.replace("/_internal/desk" as never);
+          return;
+        }
+        const home = await consumeMobileHomeRoute();
+        router.replace((home ?? "/(tabs)") as never);
+      })();
+      return;
+    }
+    if (!isSignedIn && onGateway) {
+      void (async () => {
+        const hubToken = await AsyncStorage.getItem(GUEST_HUB_TOKEN_KEY);
+        if (hubToken) {
+          router.replace("/my-livia" as never);
+        }
+      })();
+      return;
+    }
+    if (!isSignedIn && !onGateway && !onSignIn && !allowDemo && !onGuestPublic) {
+      router.replace("/");
     } else if (isSignedIn && onSignIn) {
       void (async () => {
         const surface = await fetchOperatorSurface(() => getToken());
@@ -96,7 +117,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         const home = await consumeMobileHomeRoute();
         router.replace((home ?? "/(tabs)") as never);
       })();
-    } else if (isSignedIn && !onExecDesk && !onDemo && !onPublicBook && !onGuestHub && !onGuestSurface) {
+    } else if (isSignedIn && !onExecDesk && !onDemo && !onGuestPublic && !onGateway) {
       void (async () => {
         const surface = await fetchOperatorSurface(() => getToken());
         if (surface?.platformExec) {
@@ -127,8 +148,10 @@ function RootLayoutNav() {
             headerShadowVisible: false,
           }}
         >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="my" options={{ headerShown: false }} />
           <Stack.Screen name="demo/index" options={{ headerShown: false }} />
           <Stack.Screen name="demo/[persona]" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />

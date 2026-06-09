@@ -114,5 +114,12 @@ export async function submitGuestProofDecision(
 
   const { updateDesignProofStatus } = await import("./design-proofs.service");
   const row = await updateDesignProofStatus(view.businessId, view.proofId, decision);
-  return { ok: true as const, row };
+  let depositBind: Awaited<
+    ReturnType<(typeof import("./body-art-proof-deposit.service"))["bindDepositAfterProofApproval"]>
+  > | null = null;
+  if (decision === "approved") {
+    const { bindDepositAfterProofApproval } = await import("./body-art-proof-deposit.service");
+    depositBind = await bindDepositAfterProofApproval(view.businessId, view.proofId);
+  }
+  return { ok: true as const, row, depositBind };
 }

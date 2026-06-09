@@ -4,6 +4,7 @@ import { businessesTable } from "../identity/businesses";
 export const guestIdentitiesTable = pgTable("guest_identities", {
   id: text("id").primaryKey(),
   phoneE164: text("phone_e164").notNull().unique(),
+  preferredModality: text("preferred_modality").notNull().default("ANY"),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

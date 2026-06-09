@@ -119,7 +119,7 @@ export async function buildInternalSupportBundle(
       "Do not use tenant JWT from this portal. Open tenant health in Internal → Tenants; owner view-as is audited in tenant dashboard only.",
     tenantLinks: {
       internalTenantPath: `/tenants/${businessId}`,
-      publicBookingUrl: detail.deepLinks.publicBooking ?? `/b/${detail.slug}`,
+      publicBookingUrl: detail.deepLinks.publicBooking ?? `/book/${detail.slug}`,
       tenantDashboardUrl: detail.deepLinks.tenantDashboard,
     },
   };

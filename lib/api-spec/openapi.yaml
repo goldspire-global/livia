@@ -1443,6 +1443,214 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /businesses/{businessId}/capabilities:
+    get:
+      operationId: getTenantCapabilities
+      tags: [dashboard]
+      summary: Tenant capability graph + readiness
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Capabilities payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantCapabilitiesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/capabilities/{capabilityId}:
+    patch:
+      operationId: patchTenantCapabilityInstance
+      tags: [dashboard]
+      summary: Suspend or resume a platform capability instance
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: capabilityId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [suspend, resume]
+              required: [action]
+      responses:
+        "200":
+          description: Updated capabilities payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantCapabilitiesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/owner-intelligence:
+    get:
+      operationId: getOwnerIntelligence
+      tags: [dashboard]
+      summary: Owner intelligence bundle (commerce + twin + Liv)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Owner intelligence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerIntelligenceBundle"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/visit-feedback:
+    get:
+      operationId: getVisitFeedback
+      tags: [bookings]
+      summary: Recent visit feedback for staff
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Visit feedback rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisitFeedbackListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/commerce/signals:
+    get:
+      operationId: getCommerceSignals
+      tags: [dashboard]
+      summary: Commerce signals bundle
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Commerce signals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceSignalsBundle"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/commerce/snapshot:
+    get:
+      operationId: getCommerceSnapshot
+      tags: [dashboard]
+      summary: Commerce snapshot for billing
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Commerce snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommerceSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/liv-setup/guided-flow:
+    get:
+      operationId: getLivSetupGuidedFlow
+      tags: [liv]
+      summary: Guided Liv setup flow for onboarding
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Guided setup flow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LivSetupGuidedFlow"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/liv-owner/assist:
+    post:
+      operationId: postLivOwnerAssist
+      tags: [liv]
+      summary: Owner ops Liv copilot assist
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LivStaffAssistRequest"
+      responses:
+        "200":
+          description: Assist reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LivStaffAssistResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/liv-setup/assist:
+    post:
+      operationId: postLivSetupAssist
+      tags: [liv]
+      summary: Setup Liv copilot assist
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LivStaffAssistRequest"
+      responses:
+        "200":
+          description: Assist reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LivStaffAssistResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   # ─── Feature Flags ────────────────────────────────────────────────────────
   /businesses/{businessId}/feature-flags:
     get:
@@ -2850,6 +3058,9 @@ components:
         seedDefaults:
           type: boolean
           description: When true (default), seed services and staff from the vertical pack
+        starterPack:
+          type: boolean
+          description: Opt-in vertical starter menu on create (does not auto-complete onboarding acts)
         logoUrl:
           type: string
         instagramHandle:
@@ -3219,6 +3430,14 @@ components:
           type: boolean
         sortOrder:
           type: integer
+        aftercareInstructions:
+          type: ["string", "null"]
+        serviceKind:
+          type: ["string", "null"]
+        rebookIntervalDays:
+          type: ["integer", "null"]
+        requiresPatchTest:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -3255,6 +3474,14 @@ components:
         sortOrder:
           type: integer
           default: 0
+        aftercareInstructions:
+          type: string
+        serviceKind:
+          type: ["string", "null"]
+        rebookIntervalDays:
+          type: ["integer", "null"]
+        requiresPatchTest:
+          type: boolean
       required: [name, durationMinutes]
 
     UpdateServiceBody:
@@ -3282,6 +3509,14 @@ components:
           type: boolean
         sortOrder:
           type: integer
+        aftercareInstructions:
+          type: string
+        serviceKind:
+          type: ["string", "null"]
+        rebookIntervalDays:
+          type: ["integer", "null"]
+        requiresPatchTest:
+          type: boolean
 
     # ── Customer ──
     Customer:
@@ -3729,6 +3964,25 @@ components:
             $ref: "#/components/schemas/BookingResource"
         packageCreditSummary:
           $ref: "#/components/schemas/PackageCreditSummary"
+        handedOffCount:
+          type: integer
+        activation:
+          $ref: "#/components/schemas/ActivationSnapshot"
+        atRiskGuests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AtRiskGuestPreview"
+        recentVisitFeedback:
+          type: array
+          items:
+            $ref: "#/components/schemas/VisitFeedbackPreview"
+        lowFeedbackCount:
+          type: integer
+        commerce:
+          type: object
+          additionalProperties: true
+        wellnessTomorrowStress:
+          type: ["string", "null"]
       required: [todayBookings, weekBookings, pendingCount, confirmedCount, completedTodayCount, noShowTodayCount, totalCustomers, upcomingBookings, voiceBookingsThisWeek, voiceRecoveredValueEurCents, voiceOutcomeShareEurCents]
 
     PackageCreditSummary:
@@ -3783,7 +4037,462 @@ components:
         createdAt:
           type: string
           format: date-time
-      required: [id, type, level, createdAt]
+        label:
+          type: string
+        detail:
+          type: string
+        href:
+          type: string
+        priority:
+          type: string
+          enum: [info, watch, act]
+      required: [id, type, level, createdAt, label, priority]
+
+    VisitFeedbackPreview:
+      type: object
+      properties:
+        id:
+          type: string
+        bookingId:
+          type: string
+        score:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, bookingId, score, createdAt]
+
+    VisitFeedbackListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/VisitFeedbackPreview"
+      required: [data]
+
+    ActivationSnapshot:
+      type: object
+      properties:
+        status:
+          type: string
+        sacredMetricMet:
+          type: boolean
+        timeToFirstBookingLabel:
+          type: ["string", "null"]
+        activationSource:
+          type: ["string", "null"]
+        activationStepsComplete:
+          type: integer
+        activationStepsTotal:
+          type: integer
+        firstBookingAt:
+          type: ["string", "null"]
+        firstBookingId:
+          type: ["string", "null"]
+        paymentsConnected:
+          type: boolean
+      required: [status, sacredMetricMet, activationStepsComplete, activationStepsTotal]
+
+    TenantCapabilitiesResponse:
+      type: object
+      properties:
+        businessId:
+          type: string
+        vertical:
+          type: string
+        platformCapabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResolvedPlatformCapability"
+        verticalCapabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/VerticalCapabilitySummary"
+        deferredVerticalCapabilities:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        capabilityHealth:
+          $ref: "#/components/schemas/CapabilityHealthScore"
+        readinessFacts:
+          type: object
+          additionalProperties: true
+        capabilityInstances:
+          type: object
+          additionalProperties: true
+        activation:
+          $ref: "#/components/schemas/ActivationSnapshot"
+        onboardingAutoAdvanced:
+          type: array
+          items:
+            type: string
+      required: [businessId, vertical, platformCapabilities]
+
+    ResolvedPlatformCapability:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+          enum: [defined, installed, configured, active, suspended]
+        readinessBlockers:
+          type: array
+          items:
+            type: string
+      required: [id, name, state, readinessBlockers]
+
+    CapabilityHealthScore:
+      type: object
+      properties:
+        score:
+          type: integer
+        grade:
+          type: string
+      required: [score, grade]
+
+    CommerceSignal:
+      type: object
+      properties:
+        id:
+          type: string
+        severity:
+          type: string
+          enum: [act, watch, info]
+        title:
+          type: string
+        body:
+          type: string
+        href:
+          type: string
+        priority:
+          type: integer
+      required: [id, severity, title, body, href, priority]
+
+    CommerceRemediationTask:
+      type: object
+      properties:
+        signalId:
+          type: string
+        severity:
+          type: string
+          enum: [act, watch, info]
+        title:
+          type: string
+        body:
+          type: string
+        href:
+          type: string
+        ownerPrompt:
+          type: string
+        priority:
+          type: integer
+      required: [signalId, severity, title, body, href]
+
+    CommerceCapabilityBlocker:
+      type: object
+      properties:
+        capabilityId:
+          type: string
+        capabilityName:
+          type: string
+        blocker:
+          type: string
+        href:
+          type: string
+      required: [capabilityId, capabilityName, blocker, href]
+
+    CommerceSnapshot:
+      type: object
+      properties:
+        capturedMinor30d:
+          type: integer
+        captureRatePercent:
+          type: ["number", "null"]
+        paymentCount30d:
+          type: integer
+        refundMinor30d:
+          type: integer
+        currency:
+          type: string
+        capturedLabel:
+          type: string
+      required: [capturedMinor30d, paymentCount30d, currency, capturedLabel]
+
+    CommerceSignalsBundle:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceSignal"
+        snapshot:
+          $ref: "#/components/schemas/CommerceSnapshot"
+      required: [businessId, generatedAt, signals, snapshot]
+
+    OwnerIntelligenceCommerce:
+      type: object
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceSignal"
+        topSignal:
+          oneOf:
+            - $ref: "#/components/schemas/CommerceSignal"
+            - type: "null"
+        snapshot:
+          $ref: "#/components/schemas/CommerceSnapshot"
+      required: [signals, snapshot]
+
+    TwinDomainScore:
+      type: object
+      properties:
+        domain:
+          type: string
+        score:
+          type: integer
+        label:
+          type: string
+        summary:
+          type: string
+        trajectory:
+          type: string
+          enum: [strengthening, stable, weakening, unknown]
+      required: [domain, score, label, summary, trajectory]
+
+    BusinessTwinHealth:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        overallScore:
+          type: integer
+        domains:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinDomainScore"
+      required: [businessId, generatedAt, overallScore, domains]
+
+    TwinRecommendation:
+      type: object
+      properties:
+        title:
+          type: string
+        reason:
+          type: string
+        priority:
+          type: string
+        href:
+          type: string
+      required: [title, reason, priority]
+
+    TwinRiskOrOpportunity:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [risk, opportunity]
+        domain:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        href:
+          type: string
+        confidence:
+          type: string
+      required: [id, kind, domain, title, body, confidence]
+
+    OwnerIntelligenceBundle:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        commerce:
+          $ref: "#/components/schemas/OwnerIntelligenceCommerce"
+        capabilityHealth:
+          $ref: "#/components/schemas/CapabilityHealthScore"
+        capabilityBlockers:
+          type: integer
+        commerceCapabilityBlockers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceCapabilityBlocker"
+        livSuggestions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        livPrompts:
+          type: array
+          items:
+            type: string
+        remediationTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceRemediationTask"
+        twinTopRecommendation:
+          oneOf:
+            - $ref: "#/components/schemas/TwinRecommendation"
+            - type: "null"
+        twinHeadline:
+          type: ["string", "null"]
+        twinSubline:
+          type: ["string", "null"]
+        ops:
+          type: object
+          additionalProperties: true
+        twinObservations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        twinRisks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinRiskOrOpportunity"
+        twinOpportunities:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinRiskOrOpportunity"
+        twinHealth:
+          oneOf:
+            - $ref: "#/components/schemas/BusinessTwinHealth"
+            - type: "null"
+      required: [businessId, generatedAt, commerce, capabilityBlockers, commerceCapabilityBlockers, livSuggestions, livPrompts, remediationTasks, ops, twinObservations, twinRisks, twinOpportunities]
+
+    SetupGuidedFlowPhase:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        headline:
+          type: string
+        done:
+          type: boolean
+        current:
+          type: boolean
+        href:
+          type: string
+        optional:
+          type: boolean
+        livPrompt:
+          type: string
+      required: [id, label, headline, done, current, href, livPrompt]
+
+    SetupCapabilityBlocker:
+      type: object
+      properties:
+        capabilityId:
+          type: string
+        capabilityName:
+          type: string
+        blocker:
+          type: string
+        href:
+          type: string
+      required: [capabilityId, capabilityName, blocker, href]
+
+    VerticalCapabilitySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+      required: [id]
+
+    LivStaffAssistRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
+            required: [role, content]
+      required: [message]
+
+    LivStaffAssistResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        toolsUsed:
+          type: array
+          items:
+            type: string
+      required: [reply, suggestions, toolsUsed]
+
+    LivSetupGuidedFlow:
+      type: object
+      properties:
+        phases:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetupGuidedFlowPhase"
+        currentPhaseId:
+          type: string
+          enum: [setup, publish, billing, first_booking]
+        complete:
+          type: boolean
+        publicPath:
+          type: ["string", "null"]
+        nextHref:
+          type: string
+        nextLivPrompt:
+          type: string
+        nextAct:
+          type: ["string", "null"]
+        capabilityBlockers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetupCapabilityBlocker"
+        readinessActHints:
+          type: array
+          items:
+            type: string
+        activation:
+          $ref: "#/components/schemas/ActivationSnapshot"
+        percentComplete:
+          type: integer
+      required: [phases, currentPhaseId, complete, nextHref, nextLivPrompt, capabilityBlockers, readinessActHints, percentComplete]
 
     # ── Feature Flags ──
     FeatureFlag:

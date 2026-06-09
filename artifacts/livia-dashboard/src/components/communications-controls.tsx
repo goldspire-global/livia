@@ -309,7 +309,7 @@ export default function CommunicationsControls({ businessId }: { businessId: str
         ) : (
           <SettingsDisclosure
             title="Get a shop SMS number"
-            description="Search Twilio inventory by country — Liv answers with AI disclosure."
+            description="Search Twilio inventory by country — Liv replies automatically and tells customers they're chatting with AI."
           >
             <div className="space-y-3 pt-2">
               <div className="grid grid-cols-3 gap-2">

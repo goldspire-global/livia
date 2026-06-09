@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import type { BusinessVertical } from "./types";
 import { getCountryOverlay } from "./country-overlays";
+import { guestCareAutomationSchema } from "./guest-care-automation";
 
 /** Tenant-editable operational rules (stored on business.operational_policy jsonb). */
 export const operationalPolicySchema = z.object({
@@ -17,6 +18,14 @@ export const operationalPolicySchema = z.object({
   bookingContinuityMode: z
     .enum(["sms_thread", "whatsapp_thread", "email_only", "instagram_deep_link"])
     .default("sms_thread"),
+  /** Owner-edited guest-facing booking terms — overrides computed jurisdiction block. */
+  bookingTermsCustom: z.string().max(8000).optional(),
+  /** Guest privacy notice shown on storefront and referenced by Liv. */
+  privacyNoticeCustom: z.string().max(8000).optional(),
+  /** House rules Liv follows — separate from free-form aiKnowledge on business row. */
+  houseRulesCustom: z.string().max(8000).optional(),
+  /** Post-session aftercare — see guest-care-automation.ts */
+  guestCare: guestCareAutomationSchema.partial().optional(),
 });
 
 export type OperationalPolicy = z.infer<typeof operationalPolicySchema>;
@@ -34,6 +43,52 @@ export function mergeOperationalPolicy(
   current: OperationalPolicy,
 ): OperationalPolicy {
   return operationalPolicySchema.parse({ ...current, ...partial });
+}
+
+/** Owner-facing plain-language summary for Liv setup copilot. */
+export function explainOperationalPolicySummary(args: {
+  operational: OperationalPolicy;
+  cancelWindowHours: number;
+  depositPolicySummary: string;
+}): { headline: string; bullets: string[] } {
+  const { operational: op, cancelWindowHours, depositPolicySummary } = args;
+  const bullets: string[] = [
+    depositPolicySummary,
+    `Free cancellation window: ${cancelWindowHours} hours before the appointment.`,
+    `Late grace: ${op.lateGraceMinutes} minutes.`,
+    op.noShowStrikeThreshold > 0
+      ? `After ${op.noShowStrikeThreshold} no-shows, deposits may be required for new clients.`
+      : "No-show strike policy is off.",
+    op.bookingContinuityEnabled
+      ? `Booking continuity: ${op.bookingContinuityMode.replace(/_/g, " ")}.`
+      : "Booking continuity follow-up is off.",
+    op.autoConfirmWhenNoDeposit
+      ? "Bookings auto-confirm when no deposit is required."
+      : "Bookings stay pending until staff confirms.",
+  ];
+  return {
+    headline: op.depositRequired
+      ? `Deposits on — ${op.depositPercent}% for online bookings.`
+      : "No deposit required for online bookings.",
+    bullets,
+  };
+}
+
+/** Diff helper for propose_policy_patch (read-only). */
+export function diffOperationalPolicy(
+  current: OperationalPolicy,
+  proposed: OperationalPolicy,
+): Array<{ field: string; from: string; to: string }> {
+  const changes: Array<{ field: string; from: string; to: string }> = [];
+  const keys = Object.keys(operationalPolicySchema.shape) as (keyof OperationalPolicy)[];
+  for (const key of keys) {
+    const a = current[key];
+    const b = proposed[key];
+    if (a !== b) {
+      changes.push({ field: String(key), from: String(a), to: String(b) });
+    }
+  }
+  return changes;
 }
 
 /**

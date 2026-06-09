@@ -430,6 +430,11 @@ router.get("/internal/ops/monitoring/onboarding", async (_req, res): Promise<voi
   res.json(await getInternalOpsOnboardingChecklist());
 });
 
+router.get("/internal/ops/monitoring/activation", async (_req, res): Promise<void> => {
+  const { getPlatformActivationRollup } = await import("../services/activation-metrics.service");
+  res.json(await getPlatformActivationRollup());
+});
+
 router.get("/internal/ops/monitoring/report", async (_req, res): Promise<void> => {
   res.json(await getMonitoringReport());
 });
@@ -588,6 +593,31 @@ router.post("/internal/ops/demo/ensure-ready", async (_req, res): Promise<void> 
   }
   res.json(await ensureDemoOpsReadiness());
 });
+
+router.post(
+  "/internal/ops/twin/sync-batch",
+  requireInternalOpsMutation("engineer"),
+  async (req, res): Promise<void> => {
+    try {
+      const body = req.body ?? {};
+      const { runInternalTwinSyncBatch, resolveBusinessIdsBySlug } = await import(
+        "../services/internal-twin-sync.service"
+      );
+      const slugs = Array.isArray(body.slugs)
+        ? body.slugs.map((s: unknown) => String(s).trim()).filter(Boolean)
+        : [];
+      const businessIds = Array.isArray(body.businessIds)
+        ? body.businessIds.map((id: unknown) => String(id).trim()).filter(Boolean)
+        : slugs.length > 0
+          ? await resolveBusinessIdsBySlug(slugs)
+          : undefined;
+      const limit = typeof body.limit === "number" ? body.limit : undefined;
+      res.json(await runInternalTwinSyncBatch({ businessIds, limit }));
+    } catch (err) {
+      sendError(res, req, 500, err instanceof Error ? err.message : "Twin sync failed");
+    }
+  },
+);
 
 router.get("/internal/ops/continuity-traces", async (_req, res): Promise<void> => {
   res.json({ data: await listPlatformContinuityTraces(100) });

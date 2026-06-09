@@ -12,6 +12,11 @@ export type LivNarrativeInput = {
   timezone: string;
   briefingDate: string;
   facts: MorningBriefingContent;
+  twin?: {
+    headline: string;
+    subline: string;
+    recommendations: Array<{ title: string; reason: string; priority: string }>;
+  } | null;
 };
 
 export type LivNarrativeResult = {
@@ -57,6 +62,8 @@ export async function synthesizeLivMorningNarrative(
       customer: b.customerName,
       service: b.serviceName,
     })),
+    intel: input.facts.intel ?? null,
+    businessTwin: input.twin ?? null,
   };
 
   const system = `You are Liv, the operating intelligence for ${input.businessName} (${vocab.label}).
@@ -64,7 +71,10 @@ Write a morning briefing for the owner or manager. Use ONLY the JSON facts — n
 Return valid JSON only: {"summary":"...","highlights":["...","..."]}
 - summary: 1-2 sentences, MUST include the business name "${input.businessName}", calm and specific.
 - highlights: 2-4 bullets; use client/service names and times from facts when present; use ${vocab.serviceNoun}/${vocab.clientNoun} vocabulary.
-- If quiet day, say so clearly for THIS business only.`;
+- If quiet day, say so clearly for THIS business only.
+- If intel.commerceSignals has act/watch items, include the top revenue nudge in summary or highlights.
+- If intel.capabilityHealth.score is below 70, mention setup health briefly when relevant.
+- If businessTwin.recommendations present, weave the highest-priority nudge into summary or highlights when relevant.`;
 
   try {
     const response = await getAnthropic().messages.create({

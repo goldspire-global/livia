@@ -26,7 +26,7 @@ test.describe("Guest deposit pay", () => {
     }
     const body = (await res.json()) as { token?: string; path?: string };
     expect(body.token?.length).toBeGreaterThan(8);
-    expect(body.path).toMatch(new RegExp(`/b/${SLUG}/pay/`));
+    expect(body.path).toMatch(new RegExp(`/book/${SLUG}/pay/`));
   });
 
   test("pay page shows checkout CTA or complete state", async ({ page, request }) => {

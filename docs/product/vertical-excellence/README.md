@@ -15,7 +15,9 @@
 | Pet grooming | [pet-grooming.md](./pet-grooming.md) | [PET-GROOMING-VERTICAL-PROGRAM.md](../PET-GROOMING-VERTICAL-PROGRAM.md) |
 | Automotive detailing | [automotive-detailing.md](./automotive-detailing.md) | [AUTOMOTIVE-DETAILING-VERTICAL-PROGRAM.md](../AUTOMOTIVE-DETAILING-VERTICAL-PROGRAM.md) |
 
-**Excluded:** Wellness — not in scope for this pass (per product request).
+| Wellness | [WELLNESS-NORTHSTAR-PROGRAM.md](../WELLNESS-NORTHSTAR-PROGRAM.md) | [WELLNESS-VERTICAL-PROGRAM.md](../WELLNESS-VERTICAL-PROGRAM.md) |
+
+**GTM:** All nine code verticals — [`GTM-VERTICAL-DEPTH-PROGRAM.md`](../GTM-VERTICAL-DEPTH-PROGRAM.md).
 
 **Research basis:** 2026 incumbent feature sets (Fresha, Phorest, GlossGenius, SuiteCal, Tattoogenda, Glofox, PatientNow, Cliniko, MoeGo, SchedulingKit, etc.) cross-checked against Livia repo audit 2026-06-03.
 

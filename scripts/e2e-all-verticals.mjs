@@ -88,6 +88,12 @@ if (mktOk) {
   console.log("⊘ Skip marketing-platform — marketing :5174 not running");
 }
 ok = run("pnpm", [...e2e, "--project=all-verticals-smoke", "--workers=1"], "Smoke: 9 verticals × owner + public") && ok;
+ok = run("node", ["scripts/innovation-p0-smoke.mjs"], "Innovation P0 API smoke") && ok;
+if (dashOk) {
+  ok =
+    run("pnpm", [...e2e, "--project=innovation-p0-e2e", "--workers=1"], "Innovation P0 Playwright E2E") &&
+    ok;
+}
 if (dashOk) {
   ok =
     run("pnpm", [...e2e, "--project=public-booking-quality", "--workers=1"], "Public booking B2C quality") &&

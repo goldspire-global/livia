@@ -103,11 +103,33 @@ const MEDSPA_CALM: ContinuityTemplate = {
   ],
 };
 
+const BEAUTY: ContinuityTemplate = {
+  smsBody: (a) =>
+    BASE_SMS(
+      a,
+      "Reply with lash map notes or aftercare questions — we'll nudge you when your fill cycle is due.",
+    ),
+  emailSubject: (a) => `Your appointment at ${a.businessName}`,
+  emailBody: (a) =>
+    `${BASE_SMS(a, "Reply with lash map notes, allergies, or inspiration photos.")}`,
+  publicNextSteps: (a) => [
+    a.visitUrl
+      ? `Watch for a message from ${a.businessName} — reply with photos or questions (ref ${a.bookingRef}).`
+      : `Watch for a message from ${a.businessName} — reply in the same thread (ref ${a.bookingRef}).`,
+    "Patch tests may be required before colour or lash services — your studio will confirm.",
+    "Add the appointment to your calendar below.",
+  ],
+  igDeepLinkHint: (a) =>
+    a.instagramHandle
+      ? `Message @${a.instagramHandle.replace(/^@/, "")} with booking ref ${a.bookingRef}`
+      : undefined,
+};
+
 const DEFAULT = HAIR;
 
 export const CONTINUITY_TEMPLATES: Record<BusinessVertical, ContinuityTemplate> = {
   hair: HAIR,
-  beauty: HAIR,
+  beauty: BEAUTY,
   "body-art": {
     ...HAIR,
     smsBody: (a) =>

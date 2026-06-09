@@ -6,7 +6,7 @@ export const WELLNESS_CHAIN_COPY = {
   glanceTitle: "Locations at a glance",
   transferMemoryTitle: "Share guest notes across sites",
   transferMemoryBody:
-    "Guest vault preferences can follow someone between your studios only when they opt in — never automatic.",
+    "Guest preferences in My Livia can follow someone between your studios only when they choose to — never automatic.",
   brandGiftTitle: "Brand-wide session packs",
   brandGiftBody: "Sell a pack once; the guest redeems at any site in your group when brand packs are on.",
   stressHint: "Tomorrow stress score (0–100) — same metric as Reports.",

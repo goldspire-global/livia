@@ -1,7 +1,7 @@
 # Livia final build plan — master execution scope
 
 **Status:** **LOCKED FOR BUILD** (2026-05-30) — **implementation paused** until **G-DOC** + **G-VISUAL** pass ([`LIVIA-DOCUMENTATION-PROGRAM.md`](./LIVIA-DOCUMENTATION-PROGRAM.md)).  
-**Post-gate execution authority:** [`LIVIA-BUILD-PLAN-V2.md`](./LIVIA-BUILD-PLAN-V2.md) (sequencing + checklists when docs gate clears).  
+**Post-gate execution authority:** [`LIVIA-MASTER-EXECUTION-PLAN-V3.md`](./LIVIA-MASTER-EXECUTION-PLAN-V3.md) (24-month eras + quarterly plan). Historical: [`LIVIA-BUILD-PLAN-V2.md`](./LIVIA-BUILD-PLAN-V2.md).  
 **Authority:** When this doc conflicts with older programs, **this wins** for scope locks. Index: [`DOC-CANONICAL-INDEX.md`](../DOC-CANONICAL-INDEX.md)  
 **Audience:** founder, engineering, product, agents — read before any heavy build session.
 

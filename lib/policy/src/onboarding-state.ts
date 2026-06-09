@@ -20,8 +20,22 @@ export type OnboardingActId = (typeof ONBOARDING_ACT_IDS)[number];
 
 export const onboardingActIdSchema = z.enum(ONBOARDING_ACT_IDS);
 
+export const activationSourceSchema = z.enum([
+  "public",
+  "owner-manual",
+  "staff",
+  "walk-in",
+  "unknown",
+]);
+
+export type ActivationSource = z.infer<typeof activationSourceSchema>;
+
 export const onboardingChecklistSchema = z.object({
   testBooking: z.boolean().default(false),
+  /** ISO timestamp — first booking that marks sacred V1 activation */
+  firstBookingAt: z.string().datetime().optional(),
+  firstBookingId: z.string().optional(),
+  activationSource: activationSourceSchema.optional(),
   livEnabled: z.boolean().default(false),
   publicLinkShared: z.boolean().default(false),
   smsOrVoiceConnected: z.boolean().default(false),

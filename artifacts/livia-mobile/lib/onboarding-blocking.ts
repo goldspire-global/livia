@@ -1,6 +1,7 @@
 import {
   BLOCKING_ONBOARDING_ACTS,
   mergePercentWithBlocking,
+  nextRecommendedActWithReadiness,
   type OnboardingActId,
   type OnboardingChecklist,
   type OnboardingState,
@@ -15,7 +16,13 @@ export const DEFAULT_WEEKDAY_HOURS: AvailRule[] = [1, 2, 3, 4, 5].map((dayOfWeek
   endTime: "17:00",
 }));
 
-export function nextBlockingAct(state: OnboardingState | null | undefined): OnboardingActId {
+export function nextBlockingAct(
+  state: OnboardingState | null | undefined,
+  readinessActHints: OnboardingActId[] = [],
+): OnboardingActId {
+  if (readinessActHints.length > 0) {
+    return nextRecommendedActWithReadiness(state, readinessActHints);
+  }
   const completed = new Set(state?.completedActs ?? []);
   for (const act of BLOCKING_ONBOARDING_ACTS) {
     if (!completed.has(act)) return act;

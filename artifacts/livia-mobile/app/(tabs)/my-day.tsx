@@ -2,7 +2,7 @@
 
 import { Feather } from "@expo/vector-icons";
 import { useGetMyDay, useUpdateBooking } from "@workspace/api-client-react";
-import { WELLNESS_ROOM_TURNOVER_MINUTES } from "@workspace/policy";
+import { WELLNESS_ROOM_TURNOVER_MINUTES, staffWalkInHint } from "@workspace/policy";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 import { invalidateOperationalState } from "@/lib/operational-cache";
@@ -343,7 +343,10 @@ export default function MyDayScreen() {
               <EmptyState
                 icon="calendar"
                 title="Your day is open"
-                subtitle="Walk-ins welcome — check the floor calendar or ask front desk."
+                subtitle={
+                  staffWalkInHint("staff") ??
+                  "Walk-ins welcome — check the floor calendar or ask front desk."
+                }
               />
             ) : null}
 

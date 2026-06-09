@@ -12,6 +12,8 @@ import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { designProofsSubmitDefaultOpen } from "@workspace/policy";
 import { ImageIcon, Link2 } from "lucide-react";
 import { uploadImageFile } from "@/lib/upload-media";
+import { clientGuestTokenHref } from "@/lib/guest-book-url";
+import { BodyArtPipelineCard } from "@/components/body-art/body-art-pipeline-card";
 
 type Proof = {
   id: string;
@@ -81,7 +83,7 @@ export default function DesignProofsPage() {
 
   async function copyGuestLink(guestToken: string) {
     if (!business?.slug) return;
-    const url = `${window.location.origin}/b/${business.slug}/proof/${guestToken}`;
+    const url = clientGuestTokenHref(business.slug, "proof", guestToken);
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: "Guest link copied" });
@@ -92,6 +94,8 @@ export default function DesignProofsPage() {
 
   return (
     <PageFrame width="md" className="space-y-4" data-testid="design-proofs-page">
+      <BodyArtPipelineCard />
+
       <PersonaRitualHeader
         variant="page"
         title="Design proofs"

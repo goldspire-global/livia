@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link } from "wouter";
+import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
+import { clientGuestBookHref } from "@/lib/guest-book-url";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
 import { Button } from "@/components/ui/button";
@@ -28,12 +30,14 @@ type VisitPayload = {
   timezone: string;
   feedbackSubmitted: boolean;
   feedbackScore: number | null;
+  depositPaidEurCents?: number;
+  depositLine?: { label: string; tone: "paid" | "due" | "hold" | "none" } | null;
 };
 
 const SCORES = [1, 2, 3, 4, 5] as const;
 
 export default function PublicVisitPage() {
-  const { slug, token } = useParams<{ slug: string; token: string }>();
+  const { slug, token } = useGuestBookTokenRoute("visit");
   const [data, setData] = useState<VisitPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState<number | null>(null);
@@ -129,7 +133,7 @@ export default function PublicVisitPage() {
   const isCancelled = data.status === "CANCELLED";
   const guestPublic = guestPublicExperience(data.vertical, null);
   const prepNotes = guestPublicVisitPrep(data.vertical, null);
-  const bookUrl = `/b/${data.slug}`;
+  const bookUrl = clientGuestBookHref(data.slug);
 
   return (
     <div className="min-h-screen bg-background" data-testid="guest-visit-page">
@@ -186,13 +190,27 @@ export default function PublicVisitPage() {
             <p className="text-xs text-muted-foreground mt-3">
               {guestPublic.visitGreeting(data.customerFirstName)}
             </p>
+            {data.depositLine ? (
+              <p
+                className={`text-xs mt-3 rounded-lg px-3 py-2 ${
+                  data.depositLine.tone === "paid"
+                    ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                    : data.depositLine.tone === "due"
+                      ? "bg-amber-500/10 text-amber-900 dark:text-amber-100"
+                      : "bg-muted text-muted-foreground"
+                }`}
+                data-testid="guest-visit-deposit-line"
+              >
+                {data.depositLine.label}
+              </p>
+            ) : null}
           </section>
         )}
 
         {!isCancelled && prepNotes.length > 0 ? (
           <section className="mt-8" data-testid="guest-visit-prep">
             <h2 className="text-[13px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
-              Before you arrive
+              For your visit
             </h2>
             <ul className="space-y-2 text-[15px] leading-relaxed text-foreground/90 list-disc pl-5">
               {prepNotes.map((note) => (

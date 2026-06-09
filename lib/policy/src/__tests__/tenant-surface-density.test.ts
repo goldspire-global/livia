@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import {
+  ownerHomeNeedsBriefingAction,
   resolveOwnerHomeBriefingCta,
   resolveOwnerHomeKpiChips,
   resolveOwnerHomeModuleLayout,
+  shouldShowOwnerPendingPanel,
   shouldShowActivationWelcomeCard,
   shouldShowOwnerLivGuardrails,
   shouldShowOnboardingMaturityBanner,
@@ -12,6 +14,8 @@ import {
   resolveMedspaHubDefaultTab,
   chainShopsVisibleSlice,
   designProofsSubmitDefaultOpen,
+  shouldShowOperatorDashboardSupplements,
+  shouldExpandOwnerHomeInsightsDisclosure,
 } from "../tenant-surface-density";
 
 assert.deepEqual(resolveOwnerHomeKpiChips({ todayBookings: 0, pendingCount: 0, handedOffCount: 0 }), [
@@ -21,6 +25,82 @@ assert.deepEqual(resolveOwnerHomeKpiChips({ todayBookings: 0, pendingCount: 0, h
 assert.deepEqual(
   resolveOwnerHomeKpiChips({ todayBookings: 5, pendingCount: 2, handedOffCount: 1 }),
   ["todayBookings", "inboxHandoffs", "toConfirm", "completedToday"],
+);
+
+assert.ok(
+  resolveOwnerHomeKpiChips({
+    todayBookings: 3,
+    pendingCount: 0,
+    handedOffCount: 0,
+    colourDayBlocks: 2,
+  }).includes("colourDayBlocks"),
+);
+assert.ok(
+  resolveOwnerHomeKpiChips({
+    todayBookings: 3,
+    pendingCount: 0,
+    handedOffCount: 0,
+    medspaConsentQueueCount: 1,
+  }).includes("medspaConsentQueue"),
+);
+
+assert.deepEqual(
+  resolveOwnerHomeKpiChips({
+    todayBookings: 3,
+    pendingCount: 0,
+    handedOffCount: 0,
+    atRiskCount: 2,
+    lowFeedbackCount: 1,
+    capturedMinor30d: 12500,
+  }),
+  ["todayBookings", "lowFeedback", "atRiskGuests", "revenue30d", "completedToday"],
+);
+
+assert.deepEqual(
+  resolveOwnerHomeBriefingCta({
+    pendingCount: 0,
+    handedOffCount: 0,
+    paymentCount30d: 0,
+    confirmedCount: 3,
+    weekBookings: 2,
+    fallbackHref: "/bookings",
+    fallbackLabel: "View calendar",
+  }),
+  { href: "/settings?tab=billing#commerce-fix", label: "Turn on deposits" },
+);
+
+assert.deepEqual(
+  resolveOwnerHomeBriefingCta({
+    pendingCount: 0,
+    handedOffCount: 0,
+    captureRatePercent: 55,
+    paymentCount30d: 4,
+    fallbackHref: "/bookings",
+    fallbackLabel: "View calendar",
+  }),
+  { href: "/settings?tab=billing#commerce-fix", label: "Improve payment capture" },
+);
+
+assert.equal(
+  ownerHomeNeedsBriefingAction({ pendingCount: 0, handedOffCount: 0, captureRatePercent: 55, paymentCount30d: 4 }),
+  true,
+);
+
+assert.equal(
+  ownerHomeNeedsBriefingAction({ pendingCount: 0, handedOffCount: 0, atRiskCount: 2 }),
+  true,
+);
+assert.equal(ownerHomeNeedsBriefingAction({ pendingCount: 0, handedOffCount: 0 }), false);
+
+assert.deepEqual(
+  resolveOwnerHomeBriefingCta({
+    pendingCount: 0,
+    handedOffCount: 0,
+    lowFeedbackCount: 2,
+    fallbackHref: "/bookings",
+    fallbackLabel: "View calendar",
+  }),
+  { href: "/dashboard", label: "Review 2 low scores" },
 );
 
 assert.deepEqual(
@@ -66,6 +146,30 @@ assert.deepEqual(resolveOwnerHomeModuleLayout({ pendingCount: 1, openInboxCount:
   mode: "dual",
 });
 
+assert.deepEqual(
+  resolveOwnerHomeModuleLayout({
+    pendingCount: 2,
+    openInboxCount: 3,
+    homePendingCount: 2,
+    pendingSurfacedElsewhere: true,
+  }),
+  { mode: "single", focus: "inbox" },
+);
+
+assert.deepEqual(
+  resolveOwnerHomeModuleLayout({ pendingCount: 4, openInboxCount: 0, homePendingCount: 0 }),
+  { mode: "all_clear" },
+);
+
+assert.deepEqual(
+  resolveOwnerHomeModuleLayout({ pendingCount: 4, openInboxCount: 2, homePendingCount: 0 }),
+  { mode: "single", focus: "inbox" },
+);
+
+assert.equal(shouldShowOwnerPendingPanel(0, false), false);
+assert.equal(shouldShowOwnerPendingPanel(0, true), true);
+assert.equal(shouldShowOwnerPendingPanel(2, false), true);
+
 assert.equal(shouldShowOwnerLivGuardrails({ livNeedsAttention: true, mandateRung: "R4" }), true);
 assert.equal(shouldShowOwnerLivGuardrails({ mandateRung: "R1" }), true);
 assert.equal(shouldShowOwnerLivGuardrails({ mandateRung: "R4" }), false);
@@ -106,3 +210,17 @@ assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 0, hasNextBooking
 assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: true }), false);
 assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 2, hasNextBooking: true }), true);
 assert.equal(shouldShowStaffMyDayTimeline({ todayBookingCount: 1, hasNextBooking: false }), true);
+
+assert.equal(shouldShowOperatorDashboardSupplements(), false);
+assert.equal(
+  shouldExpandOwnerHomeInsightsDisclosure({ hasIntelligenceContent: false, commerceNeedsAttention: true }),
+  false,
+);
+assert.equal(
+  shouldExpandOwnerHomeInsightsDisclosure({
+    hasIntelligenceContent: true,
+    commerceNeedsAttention: true,
+    pendingRemediationCount: 0,
+  }),
+  false,
+);

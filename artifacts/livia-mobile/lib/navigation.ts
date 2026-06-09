@@ -12,3 +12,13 @@ export function routeRoot(segments: readonly string[]): string | undefined {
 export function isDemoRoute(segments: readonly string[]): boolean {
   return routeRoot(segments) === "demo";
 }
+
+/** Cold-open gateway at `/` (app/index.tsx). */
+export function isGatewayRoute(segments: readonly string[]): boolean {
+  return segments.length === 0;
+}
+
+export function isGuestPublicRoute(segments: readonly string[]): boolean {
+  const root = routeRoot(segments);
+  return root === "public-book" || root === "my-livia" || root === "my" || root === "guest-surface";
+}

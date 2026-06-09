@@ -3,6 +3,7 @@ import {
   customFetch,
   useGetBusiness,
   useGetDashboardSummary,
+  useGetTenantCapabilities,
   useListBookings,
   useListConversations,
   useUpdateBooking,
@@ -10,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import { asHref } from "@/lib/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -32,6 +34,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivationWelcome } from "@/components/ActivationWelcome";
+import { ActivationMilestone } from "@/components/ActivationMilestone";
 import { BookingCard } from "@/components/BookingCard";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { LivPulse } from "@/components/brand/LivPulse";
@@ -56,14 +59,27 @@ import { LivMomentsCard } from "@/components/LivMomentsCard";
 import { LivIncidentsCard } from "@/components/LivIncidentsCard";
 import { StuckContinuityCard } from "@/components/StuckContinuityCard";
 import { VisitFeedbackCard } from "@/components/VisitFeedbackCard";
+import { OwnerIntelligenceHub } from "@/components/OwnerIntelligenceHub";
+import { ActNotificationBanner } from "@/components/ActNotificationBanner";
+import { OwnerLivOpsCard } from "@/components/OwnerLivOpsCard";
+import {
+  OwnerMobileBriefingChips,
+  OwnerMobileRevenueStat,
+} from "@/components/OwnerMobileBriefing";
+import { getDashboardBaseUrl } from "@/lib/dashboard-url";
 import { ScreenTopBar } from "@/components/ScreenTopBar";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import { resolveTenantAccentHex } from "@/lib/vertical-theme";
+import { useOnboardingCapabilitySync } from "@/lib/onboarding-capability-sync";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
 import { useChainRollup } from "@/hooks/useChainRollup";
 import { VerticalTodayInsights } from "@/components/VerticalTodayInsights";
 import { VerticalHomeShortcuts } from "@/components/VerticalHomeShortcuts";
 import { LivProposalsCard } from "@/components/LivProposalsCard";
+import { ChainCommerceCard } from "@/components/ChainCommerceCard";
+import { ActivityFeedCard } from "@/components/ActivityFeedCard";
+import { OwnerLivAssistFab } from "@/components/OwnerLivAssistFab";
+import { CapabilityReadinessCard } from "@/components/CapabilityReadinessCard";
 import { BeautyTodayHandoffStrip } from "@/components/beauty/BeautyTodayHandoffStrip";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
@@ -159,6 +175,10 @@ export default function DashboardScreen() {
   });
 
   const bid = currentBusiness?.id ?? "";
+  const { data: tenantCapabilities } = useGetTenantCapabilities(bid, {
+    query: { enabled: !!bid } as any,
+  });
+  useOnboardingCapabilitySync(bid, tenantCapabilities?.onboardingAutoAdvanced);
   const { data: bizDetail } = useGetBusiness(bid, {
     query: { enabled: !!bid } as any,
   });
@@ -213,11 +233,13 @@ export default function DashboardScreen() {
   const { data: livPresence } = useQuery({
     queryKey: ["liv-presence", currentBusiness?.id, role],
     queryFn: () =>
-      customFetch<{ line: string; source: string }>(
-        `/api/businesses/${currentBusiness!.id}/liv-presence?context=${
-          role === "ADMIN" ? "manager_today" : "owner_today"
-        }`,
-      ),
+      customFetch<{
+        line: string;
+        source: string;
+        intel?: { commerceHref?: string; commerceTopSignal?: { title: string } };
+      }>(`/api/businesses/${currentBusiness!.id}/liv-presence?context=${
+        role === "ADMIN" ? "manager_today" : "owner_today"
+      }`),
     enabled: !!currentBusiness?.id && (role === "OWNER" || role === "ADMIN"),
     staleTime: 90_000,
   });
@@ -346,8 +368,9 @@ export default function DashboardScreen() {
   };
 
   return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
     <ScrollView
-      style={[styles.root, { backgroundColor: colors.background }]}
+      style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: topPad + 12 }]}
       contentInsetAdjustmentBehavior="automatic"
       refreshControl={
@@ -370,6 +393,7 @@ export default function DashboardScreen() {
         </Animated.View>
       ) : null}
 
+      <ActivationMilestone />
       <ActivationWelcome />
 
       {/* Header */}
@@ -409,24 +433,29 @@ export default function DashboardScreen() {
 
 
       {isFounder && businesses.length >= 2 ? (
-        <Pressable
-          onPress={() => router.push(asHref("/shops"))}
-          style={[styles.founderStrip, { borderColor: aurora.cyan + "44", backgroundColor: aurora.cyan + "10" }]}
-        >
-          <Feather name="grid" size={18} color={aurora.cyan} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.founderTitle, { color: colors.foreground }]}>
-              {businesses.length} locations
-            </Text>
-            <Text style={[styles.founderSub, { color: colors.mutedForeground }]} numberOfLines={2}>
-              {(rollup?.alerts?.length ?? 0) > 0
-                ? `${rollup!.alerts!.length} cross-shop alert${rollup!.alerts!.length === 1 ? "" : "s"} on Glance`
-                : rollup?.orgAdminBriefingLine ??
-                  "Open Glance for pulse across every shop — Today stays focused on one location at a time."}
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={aurora.cyan} />
-        </Pressable>
+        <>
+          <Pressable
+            onPress={() => router.push(asHref("/shops"))}
+            style={[styles.founderStrip, { borderColor: aurora.cyan + "44", backgroundColor: aurora.cyan + "10" }]}
+          >
+            <Feather name="grid" size={18} color={aurora.cyan} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.founderTitle, { color: colors.foreground }]}>
+                {businesses.length} locations
+              </Text>
+              <Text style={[styles.founderSub, { color: colors.mutedForeground }]} numberOfLines={2}>
+                {(rollup?.alerts?.length ?? 0) > 0
+                  ? `${rollup!.alerts!.length} cross-shop alert${rollup!.alerts!.length === 1 ? "" : "s"} on Glance`
+                  : (rollup?.commerceSummary?.shopsWithActSignal ?? 0) > 0
+                    ? `${rollup!.commerceSummary!.shopsWithActSignal} location${rollup!.commerceSummary!.shopsWithActSignal === 1 ? "" : "s"} need commerce attention`
+                    : rollup?.orgAdminBriefingLine ??
+                      "Open Glance for pulse across every shop — Today stays focused on one location at a time."}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={aurora.cyan} />
+          </Pressable>
+          {rollup ? <ChainCommerceCard rollup={rollup} /> : null}
+        </>
       ) : null}
 
       {beautyLayout === "premium-glow" ? (
@@ -546,6 +575,32 @@ export default function DashboardScreen() {
         </View>
       ) : null}
 
+      {(summary as { atRiskGuests?: Array<{ customerId: string; displayName: string; headline: string; stage: string }> } | undefined)
+        ?.atRiskGuests?.length ? (
+        <View
+          style={[
+            styles.atRiskBlock,
+            { borderColor: colors.warning + "55", backgroundColor: colors.warning + "12" },
+          ]}
+        >
+          <Text style={[styles.atRiskEyebrow, { color: colors.warning }]}>Guests to reconnect</Text>
+          {(summary as { atRiskGuests: Array<{ customerId: string; displayName: string; headline: string; stage: string }> }).atRiskGuests.map((g) => (
+            <Pressable
+              key={g.customerId}
+              onPress={() => router.push(`/customer/${g.customerId}`)}
+              style={styles.atRiskRow}
+            >
+              <Text style={[styles.atRiskName, { color: colors.foreground }]} numberOfLines={1}>
+                {g.displayName}
+              </Text>
+              <Text style={[styles.atRiskHint, { color: colors.mutedForeground }]} numberOfLines={2}>
+                {g.headline}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       {/* Next-up hero card — only when something is coming up */}
       {!isLoading && next ? (
         <Pressable
@@ -615,6 +670,18 @@ export default function DashboardScreen() {
         </Pressable>
       </Animated.View>
 
+      {(role === "OWNER" || role === "ADMIN") && !isLoading ? (
+        <OwnerMobileBriefingChips
+          pendingCount={pendingCount}
+          handedOffCount={handoffCount}
+          atRiskCount={(summary as { atRiskGuests?: unknown[] } | undefined)?.atRiskGuests?.length ?? 0}
+          lowFeedbackCount={(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount ?? 0}
+          confirmedCount={summary?.confirmedCount ?? 0}
+          weekBookings={summary?.weekBookings ?? 0}
+          commerce={(summary as { commerce?: { capturedLabel?: string; captureRatePercent?: number | null; paymentCount30d?: number; capturedMinor30d?: number } })?.commerce}
+        />
+      ) : null}
+
       {/* Stats */}
       <View style={styles.statsRow}>
         {isLoading ? (
@@ -641,12 +708,20 @@ export default function DashboardScreen() {
               hint={(summary?.pendingCount ?? 0) > 0 ? "Tap to review" : undefined}
             />
             {beautyLayout !== "premium-glow" ? (
-              <StatsCard
-                label="Done"
-                value={summary?.completedTodayCount ?? 0}
-                color={colors.success}
-                index={2}
-              />
+              (summary as { commerce?: { paymentCount30d?: number; capturedLabel?: string } })?.commerce
+                ?.paymentCount30d ? (
+                <OwnerMobileRevenueStat
+                  commerce={(summary as { commerce?: { capturedLabel?: string; captureRatePercent?: number | null; paymentCount30d?: number } }).commerce}
+                  onPress={() => void Linking.openURL(`${getDashboardBaseUrl()}/settings?tab=billing`)}
+                />
+              ) : (
+                <StatsCard
+                  label="Done"
+                  value={summary?.completedTodayCount ?? 0}
+                  color={colors.success}
+                  index={2}
+                />
+              )
             ) : (
               <StatsCard
                 label="Confirmed"
@@ -658,6 +733,20 @@ export default function DashboardScreen() {
           </>
         )}
       </View>
+
+      {(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount ? (
+        <View
+          style={[
+            styles.feedbackAlert,
+            { borderColor: colors.destructive + "55", backgroundColor: colors.destructive + "12" },
+          ]}
+        >
+          <Text style={[styles.feedbackAlertText, { color: colors.destructive }]}>
+            {(summary as { lowFeedbackCount: number }).lowFeedbackCount} low visit score
+            {(summary as { lowFeedbackCount: number }).lowFeedbackCount === 1 ? "" : "s"} in Liv & insights
+          </Text>
+        </View>
+      ) : null}
 
       {schedulePreview.length > 0 && !isLoading ? (
         <View style={styles.section}>
@@ -703,11 +792,19 @@ export default function DashboardScreen() {
               businessName={currentBusiness.name}
             />
           </View>
+          <ActNotificationBanner />
           <LivMomentsCard businessId={currentBusiness.id} />
           <LivIncidentsCard businessId={currentBusiness.id} />
           <LivProposalsCard businessId={currentBusiness.id} />
           <StuckContinuityCard businessId={currentBusiness.id} />
-          <VisitFeedbackCard businessId={currentBusiness.id} />
+          <OwnerIntelligenceHub businessId={currentBusiness.id} />
+          <CapabilityReadinessCard businessId={currentBusiness.id} />
+          <OwnerLivOpsCard businessId={currentBusiness.id} />
+          <ActivityFeedCard businessId={currentBusiness.id} />
+          <VisitFeedbackCard
+            businessId={currentBusiness.id}
+            items={summary?.recentVisitFeedback}
+          />
           <VerticalHomeShortcuts />
           <VerticalTodayInsights businessId={currentBusiness.id} />
         </View>
@@ -730,6 +827,10 @@ export default function DashboardScreen() {
         />
       ) : null}
     </ScrollView>
+    {(role === "OWNER" || role === "ADMIN") && currentBusiness?.id ? (
+      <OwnerLivAssistFab businessId={currentBusiness.id} />
+    ) : null}
+    </View>
   );
 }
 
@@ -842,6 +943,13 @@ const styles = StyleSheet.create({
   },
   founderTitle: { fontFamily: fonts.bodySemi, fontSize: 15 },
   founderSub: { ...type.caption, fontSize: 12, marginTop: 2 },
+  atRiskBlock: { borderRadius: 14, borderWidth: 1, padding: 12, gap: 8 },
+  atRiskEyebrow: { ...type.eyebrow, fontSize: 10, letterSpacing: 0.8 },
+  atRiskRow: { gap: 2 },
+  atRiskName: { fontFamily: fonts.bodySemi, fontSize: 15 },
+  atRiskHint: { ...type.caption, fontSize: 12, lineHeight: 16 },
+  feedbackAlert: { borderRadius: 12, borderWidth: 1, padding: 10, marginTop: 8 },
+  feedbackAlertText: { fontFamily: fonts.bodySemi, fontSize: 13 },
   pendingBlock: { gap: 8 },
   pendingHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   pendingTitle: { fontFamily: fonts.bodySemi, fontSize: 16 },

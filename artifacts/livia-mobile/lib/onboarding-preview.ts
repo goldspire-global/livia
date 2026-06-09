@@ -4,6 +4,8 @@ export type OnboardingPreview = {
   vertical: string;
   aiGreeting: string;
   services: { name: string; durationMinutes: number; priceMinor: number }[];
+  starterPackAvailable?: boolean;
+  starterPackServices?: { name: string; durationMinutes: number; priceMinor: number }[];
 };
 
 export async function fetchOnboardingPreview(

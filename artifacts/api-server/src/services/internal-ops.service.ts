@@ -223,7 +223,9 @@ export async function getInternalTenantDetail(
         : null,
       clerkUser: clerkUserDeepLink(biz.ownerId),
       tenantDashboard: dashBase ? `${dashBase}/dashboard` : null,
-      publicBooking: publicBase ? `${publicBase}/b/${biz.slug}` : `/b/${biz.slug}`,
+      publicBooking: publicBase
+        ? `${publicBase}/book/${biz.slug}`
+        : `/book/${biz.slug}`,
       sentry: sentryTenantSearchUrl(biz.id),
     },
     supportDocLinks: [

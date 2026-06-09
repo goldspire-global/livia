@@ -1,22 +1,110 @@
 import { cn } from "@/lib/utils";
 import { staffStripScrollHint } from "@/lib/public-featured-services";
 import type { PublicStaffRow } from "@/lib/public-booking-helpers";
+import type { PublicBookStaffPickerMode } from "@workspace/policy";
+
+function StaffAvatar({
+  staff: s,
+  compact,
+}: {
+  staff: PublicStaffRow;
+  compact?: boolean;
+}) {
+  const size = compact ? "h-10 w-10 text-xs" : "h-12 w-12 text-sm";
+  if (s.photoUrl) {
+    return (
+      <img
+        src={s.photoUrl}
+        alt=""
+        className={cn(size, "rounded-full object-cover border border-border/50")}
+      />
+    );
+  }
+  return (
+    <span
+      className={cn(
+        "flex items-center justify-center rounded-full font-semibold text-white",
+        size,
+      )}
+      style={{ backgroundColor: s.color ?? "hsl(var(--primary))" }}
+    >
+      {s.displayName.charAt(0)}
+    </span>
+  );
+}
 
 export function PublicStaffStrip({
   staff,
   selectedStaffId,
   onSelect,
   teamNoun,
+  pickerMode = "strip",
 }: {
   staff: PublicStaffRow[];
   selectedStaffId: string;
   onSelect: (staffId: string) => void;
   teamNoun: string;
+  pickerMode?: PublicBookStaffPickerMode;
 }) {
   if (staff.length < 2) return null;
 
   const scrollHint = staffStripScrollHint(staff.length, teamNoun);
-  const scrollable = staff.length >= 4;
+  const scrollable = staff.length >= 4 && pickerMode === "strip";
+
+  if (pickerMode === "grid" || pickerMode === "collapsible") {
+    return (
+      <section aria-labelledby="public-staff-heading" data-testid="public-staff-strip">
+        <div className="flex items-end justify-between gap-2 mb-3">
+          <h2 id="public-staff-heading" className="text-sm font-medium">
+            Choose your {teamNoun.toLowerCase()}
+          </h2>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0 tabular-nums">
+            {staff.length} on the team
+          </p>
+        </div>
+        <div
+          className="public-staff-grid"
+          role="list"
+          aria-label={`${teamNoun} selection`}
+        >
+          <button
+            type="button"
+            onClick={() => onSelect("")}
+            className={cn(
+              "public-staff-grid__card",
+              !selectedStaffId && "public-staff-grid__card--selected",
+            )}
+            data-testid="public-staff-any"
+            role="listitem"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-medium">
+              Any
+            </span>
+            <span className="public-staff-grid__label">First available</span>
+          </button>
+          {staff.map((s) => {
+            const active = selectedStaffId === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onSelect(s.id)}
+                className={cn(
+                  "public-staff-grid__card",
+                  active && "public-staff-grid__card--selected",
+                )}
+                data-testid={`public-staff-${s.id}`}
+                role="listitem"
+              >
+                <StaffAvatar staff={s} compact />
+                <span className="public-staff-grid__label">{s.displayName.split(" ")[0]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-6" aria-labelledby="public-staff-heading" data-testid="public-staff-strip">
@@ -72,20 +160,7 @@ export function PublicStaffStrip({
                 data-testid={`public-staff-${s.id}`}
                 role="listitem"
               >
-                {s.photoUrl ? (
-                  <img
-                    src={s.photoUrl}
-                    alt=""
-                    className="h-12 w-12 rounded-full object-cover border border-border/50"
-                  />
-                ) : (
-                  <span
-                    className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold text-white"
-                    style={{ backgroundColor: s.color ?? "hsl(var(--primary))" }}
-                  >
-                    {s.displayName.charAt(0)}
-                  </span>
-                )}
+                <StaffAvatar staff={s} />
                 <span className="text-[11px] font-medium text-center leading-tight max-w-[6rem] truncate">
                   {s.displayName.split(" ")[0]}
                 </span>

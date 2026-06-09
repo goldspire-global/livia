@@ -29,6 +29,8 @@ import type {
   BusinessCommunications,
   ChainRollup,
   ClearDevWorkspace200,
+  CommerceSignalsBundle,
+  CommerceSnapshot,
   ConflictResponse,
   ConversationDetail,
   ConversationListItem,
@@ -83,6 +85,9 @@ import type {
   ListStaffParams,
   ListSupportTicketsParams,
   ListTimeOffParams,
+  LivSetupGuidedFlow,
+  LivStaffAssistRequest,
+  LivStaffAssistResponse,
   LookupWellnessRedeemCodeBody,
   MarkAllMyNotificationsRead200,
   MarkAllMyNotificationsReadBody,
@@ -96,7 +101,9 @@ import type {
   OnboardingDefaults,
   OnboardingPreviewBody,
   OptInPeerInsights200,
+  OwnerIntelligenceBundle,
   PartnerBookingsResponse,
+  PatchTenantCapabilityInstanceBody,
   PeerInsights,
   ProvisionSmsNumber201,
   ProvisionSmsNumberBody,
@@ -117,6 +124,7 @@ import type {
   SlotListResponse,
   Staff,
   SupportTicket,
+  TenantCapabilitiesResponse,
   TestSendCommunication200,
   TestSendCommunicationBody,
   TimeOff,
@@ -137,6 +145,7 @@ import type {
   UpdateStaffBody,
   User,
   VerifyMarketingDemoGateParams,
+  VisitFeedbackListResponse,
   WellnessDutySolverBody,
   WellnessTerminalCheckoutBody,
 } from "./api.schemas";
@@ -5788,6 +5797,885 @@ export function useGetActivityFeed<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Tenant capability graph + readiness
+ */
+export const getGetTenantCapabilitiesUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/capabilities`;
+};
+
+export const getTenantCapabilities = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<TenantCapabilitiesResponse> => {
+  return customFetch<TenantCapabilitiesResponse>(
+    getGetTenantCapabilitiesUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetTenantCapabilitiesQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/capabilities`] as const;
+};
+
+export const getGetTenantCapabilitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTenantCapabilities>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTenantCapabilities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTenantCapabilitiesQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTenantCapabilities>>
+  > = ({ signal }) =>
+    getTenantCapabilities(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTenantCapabilities>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTenantCapabilitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTenantCapabilities>>
+>;
+export type GetTenantCapabilitiesQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Tenant capability graph + readiness
+ */
+
+export function useGetTenantCapabilities<
+  TData = Awaited<ReturnType<typeof getTenantCapabilities>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTenantCapabilities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTenantCapabilitiesQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Suspend or resume a platform capability instance
+ */
+export const getPatchTenantCapabilityInstanceUrl = (
+  businessId: string,
+  capabilityId: string,
+) => {
+  return `/api/businesses/${businessId}/capabilities/${capabilityId}`;
+};
+
+export const patchTenantCapabilityInstance = async (
+  businessId: string,
+  capabilityId: string,
+  patchTenantCapabilityInstanceBody: PatchTenantCapabilityInstanceBody,
+  options?: RequestInit,
+): Promise<TenantCapabilitiesResponse> => {
+  return customFetch<TenantCapabilitiesResponse>(
+    getPatchTenantCapabilityInstanceUrl(businessId, capabilityId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(patchTenantCapabilityInstanceBody),
+    },
+  );
+};
+
+export const getPatchTenantCapabilityInstanceMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchTenantCapabilityInstance>>,
+    TError,
+    {
+      businessId: string;
+      capabilityId: string;
+      data: BodyType<PatchTenantCapabilityInstanceBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchTenantCapabilityInstance>>,
+  TError,
+  {
+    businessId: string;
+    capabilityId: string;
+    data: BodyType<PatchTenantCapabilityInstanceBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["patchTenantCapabilityInstance"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchTenantCapabilityInstance>>,
+    {
+      businessId: string;
+      capabilityId: string;
+      data: BodyType<PatchTenantCapabilityInstanceBody>;
+    }
+  > = (props) => {
+    const { businessId, capabilityId, data } = props ?? {};
+
+    return patchTenantCapabilityInstance(
+      businessId,
+      capabilityId,
+      data,
+      requestOptions,
+    );
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PatchTenantCapabilityInstanceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchTenantCapabilityInstance>>
+>;
+export type PatchTenantCapabilityInstanceMutationBody =
+  BodyType<PatchTenantCapabilityInstanceBody>;
+export type PatchTenantCapabilityInstanceMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Suspend or resume a platform capability instance
+ */
+export const usePatchTenantCapabilityInstance = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchTenantCapabilityInstance>>,
+    TError,
+    {
+      businessId: string;
+      capabilityId: string;
+      data: BodyType<PatchTenantCapabilityInstanceBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof patchTenantCapabilityInstance>>,
+  TError,
+  {
+    businessId: string;
+    capabilityId: string;
+    data: BodyType<PatchTenantCapabilityInstanceBody>;
+  },
+  TContext
+> => {
+  return useMutation(getPatchTenantCapabilityInstanceMutationOptions(options));
+};
+
+/**
+ * @summary Owner intelligence bundle (commerce + twin + Liv)
+ */
+export const getGetOwnerIntelligenceUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/owner-intelligence`;
+};
+
+export const getOwnerIntelligence = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<OwnerIntelligenceBundle> => {
+  return customFetch<OwnerIntelligenceBundle>(
+    getGetOwnerIntelligenceUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetOwnerIntelligenceQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/owner-intelligence`] as const;
+};
+
+export const getGetOwnerIntelligenceQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOwnerIntelligence>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOwnerIntelligence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetOwnerIntelligenceQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOwnerIntelligence>>
+  > = ({ signal }) =>
+    getOwnerIntelligence(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOwnerIntelligence>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetOwnerIntelligenceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOwnerIntelligence>>
+>;
+export type GetOwnerIntelligenceQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Owner intelligence bundle (commerce + twin + Liv)
+ */
+
+export function useGetOwnerIntelligence<
+  TData = Awaited<ReturnType<typeof getOwnerIntelligence>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOwnerIntelligence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOwnerIntelligenceQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Recent visit feedback for staff
+ */
+export const getGetVisitFeedbackUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/visit-feedback`;
+};
+
+export const getVisitFeedback = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<VisitFeedbackListResponse> => {
+  return customFetch<VisitFeedbackListResponse>(
+    getGetVisitFeedbackUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetVisitFeedbackQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/visit-feedback`] as const;
+};
+
+export const getGetVisitFeedbackQueryOptions = <
+  TData = Awaited<ReturnType<typeof getVisitFeedback>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVisitFeedback>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetVisitFeedbackQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getVisitFeedback>>
+  > = ({ signal }) =>
+    getVisitFeedback(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getVisitFeedback>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetVisitFeedbackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getVisitFeedback>>
+>;
+export type GetVisitFeedbackQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Recent visit feedback for staff
+ */
+
+export function useGetVisitFeedback<
+  TData = Awaited<ReturnType<typeof getVisitFeedback>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVisitFeedback>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetVisitFeedbackQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Commerce signals bundle
+ */
+export const getGetCommerceSignalsUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/commerce/signals`;
+};
+
+export const getCommerceSignals = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<CommerceSignalsBundle> => {
+  return customFetch<CommerceSignalsBundle>(
+    getGetCommerceSignalsUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetCommerceSignalsQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/commerce/signals`] as const;
+};
+
+export const getGetCommerceSignalsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCommerceSignals>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCommerceSignals>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCommerceSignalsQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCommerceSignals>>
+  > = ({ signal }) =>
+    getCommerceSignals(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCommerceSignals>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCommerceSignalsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCommerceSignals>>
+>;
+export type GetCommerceSignalsQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Commerce signals bundle
+ */
+
+export function useGetCommerceSignals<
+  TData = Awaited<ReturnType<typeof getCommerceSignals>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCommerceSignals>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCommerceSignalsQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Commerce snapshot for billing
+ */
+export const getGetCommerceSnapshotUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/commerce/snapshot`;
+};
+
+export const getCommerceSnapshot = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<CommerceSnapshot> => {
+  return customFetch<CommerceSnapshot>(getGetCommerceSnapshotUrl(businessId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCommerceSnapshotQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/commerce/snapshot`] as const;
+};
+
+export const getGetCommerceSnapshotQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCommerceSnapshot>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCommerceSnapshot>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCommerceSnapshotQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCommerceSnapshot>>
+  > = ({ signal }) =>
+    getCommerceSnapshot(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCommerceSnapshot>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCommerceSnapshotQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCommerceSnapshot>>
+>;
+export type GetCommerceSnapshotQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Commerce snapshot for billing
+ */
+
+export function useGetCommerceSnapshot<
+  TData = Awaited<ReturnType<typeof getCommerceSnapshot>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCommerceSnapshot>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCommerceSnapshotQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Guided Liv setup flow for onboarding
+ */
+export const getGetLivSetupGuidedFlowUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/liv-setup/guided-flow`;
+};
+
+export const getLivSetupGuidedFlow = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<LivSetupGuidedFlow> => {
+  return customFetch<LivSetupGuidedFlow>(
+    getGetLivSetupGuidedFlowUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetLivSetupGuidedFlowQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/liv-setup/guided-flow`] as const;
+};
+
+export const getGetLivSetupGuidedFlowQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLivSetupGuidedFlow>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLivSetupGuidedFlow>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetLivSetupGuidedFlowQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getLivSetupGuidedFlow>>
+  > = ({ signal }) =>
+    getLivSetupGuidedFlow(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLivSetupGuidedFlow>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLivSetupGuidedFlowQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLivSetupGuidedFlow>>
+>;
+export type GetLivSetupGuidedFlowQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Guided Liv setup flow for onboarding
+ */
+
+export function useGetLivSetupGuidedFlow<
+  TData = Awaited<ReturnType<typeof getLivSetupGuidedFlow>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLivSetupGuidedFlow>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLivSetupGuidedFlowQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Owner ops Liv copilot assist
+ */
+export const getPostLivOwnerAssistUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/liv-owner/assist`;
+};
+
+export const postLivOwnerAssist = async (
+  businessId: string,
+  livStaffAssistRequest: LivStaffAssistRequest,
+  options?: RequestInit,
+): Promise<LivStaffAssistResponse> => {
+  return customFetch<LivStaffAssistResponse>(
+    getPostLivOwnerAssistUrl(businessId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(livStaffAssistRequest),
+    },
+  );
+};
+
+export const getPostLivOwnerAssistMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postLivOwnerAssist>>,
+    TError,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof postLivOwnerAssist>>,
+  TError,
+  { businessId: string; data: BodyType<LivStaffAssistRequest> },
+  TContext
+> => {
+  const mutationKey = ["postLivOwnerAssist"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof postLivOwnerAssist>>,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return postLivOwnerAssist(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PostLivOwnerAssistMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postLivOwnerAssist>>
+>;
+export type PostLivOwnerAssistMutationBody = BodyType<LivStaffAssistRequest>;
+export type PostLivOwnerAssistMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Owner ops Liv copilot assist
+ */
+export const usePostLivOwnerAssist = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postLivOwnerAssist>>,
+    TError,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof postLivOwnerAssist>>,
+  TError,
+  { businessId: string; data: BodyType<LivStaffAssistRequest> },
+  TContext
+> => {
+  return useMutation(getPostLivOwnerAssistMutationOptions(options));
+};
+
+/**
+ * @summary Setup Liv copilot assist
+ */
+export const getPostLivSetupAssistUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/liv-setup/assist`;
+};
+
+export const postLivSetupAssist = async (
+  businessId: string,
+  livStaffAssistRequest: LivStaffAssistRequest,
+  options?: RequestInit,
+): Promise<LivStaffAssistResponse> => {
+  return customFetch<LivStaffAssistResponse>(
+    getPostLivSetupAssistUrl(businessId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(livStaffAssistRequest),
+    },
+  );
+};
+
+export const getPostLivSetupAssistMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postLivSetupAssist>>,
+    TError,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof postLivSetupAssist>>,
+  TError,
+  { businessId: string; data: BodyType<LivStaffAssistRequest> },
+  TContext
+> => {
+  const mutationKey = ["postLivSetupAssist"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof postLivSetupAssist>>,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> }
+  > = (props) => {
+    const { businessId, data } = props ?? {};
+
+    return postLivSetupAssist(businessId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PostLivSetupAssistMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postLivSetupAssist>>
+>;
+export type PostLivSetupAssistMutationBody = BodyType<LivStaffAssistRequest>;
+export type PostLivSetupAssistMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Setup Liv copilot assist
+ */
+export const usePostLivSetupAssist = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postLivSetupAssist>>,
+    TError,
+    { businessId: string; data: BodyType<LivStaffAssistRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof postLivSetupAssist>>,
+  TError,
+  { businessId: string; data: BodyType<LivStaffAssistRequest> },
+  TContext
+> => {
+  return useMutation(getPostLivSetupAssistMutationOptions(options));
+};
 
 /**
  * @summary List feature flags for a business

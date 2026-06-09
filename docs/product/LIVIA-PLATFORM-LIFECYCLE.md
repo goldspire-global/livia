@@ -181,34 +181,43 @@ POST /api/businesses
   → evaluateBetaSignup(email)
   → hasCurrentPlatformLegal(user)
   → createBusiness(userId, { name, slug, vertical, jurisdiction, … })
-  → seedBusinessFromOnboardingPack(businessId)   [if seedDefaults !== false]
-  → onboarding state = afterBusinessCreatedStateWithSeed()
+  → onboarding state = afterBusinessCreatedStateForVertical(vertical)   [empty studio — a1 only]
+  → seedVerticalStarterPack(businessId)   [if starterPack === true — all verticals]
+  → seedBusinessFromOnboardingPack(businessId)   [if seedDefaults === true — legacy/dev only]
   → (Track D2) presentation_preset_id = "platform-default"
   → GET /me/tenant-experience?businessId=…
   → dashboard/mobile apply theme; public API serves experienceSkin
 ```
 
-### 3.2 Pre-seeded on create (owner does not start from zero)
+### 3.2 Always applied on create
 
 | Domain | What | Source in code | Owner can edit later |
 |--------|------|----------------|----------------------|
 | **Vertical pack** | `vertical` enum | `POST` body or category inference | Rarely |
 | **Jurisdiction** | country, currency, locale, timezone, EU region | `getJurisdictionPack()` | Settings |
-| **Service menu** | 3–6 default services + prices | `vertical.defaultServices` → `createService` | Services CRUD |
-| **Staff template** | 1 stylist/artist/therapist row + service links | `vertical.defaultStaff` | Staff CRUD |
-| **Liv greeting** | AI intro line with shop name | `resolveOnboardingDefaults().aiGreeting` | Settings → Liv |
 | **Vocabulary** | client/stylist/location nouns | `businessVocabulary()` | No (vertical-driven) |
 | **Home modules** | Which widgets appear first | `getVerticalPlaybook().homeModules` | Persona + vertical |
 | **Public CTA** | “Book your visit” vs “Request a consult” | `playbook.publicCta` | Brand settings (future) |
 | **Public shell** | warm / bold / clinical / … | `publicExperienceSkin(vertical, country)` | Via preset + brand |
 | **Presentation preset** | **Platform Default (Aurora)** | `PLATFORM_DEFAULT_PRESET_ID` | Settings → Appearance |
-| **Onboarding acts** | a1, a3, a4 marked complete | `AUTO_COMPLETED_ON_CREATE_ACTS` | — |
+| **Onboarding acts** | `a1_create_business` only | `AUTO_COMPLETED_ON_CREATE_ACTS` | — |
 | **Operational policy** | cancel window, deposit defaults | jurisdiction + `parseOperationalPolicy` | Settings → Policy |
 | **Channel hints** | SMS vs WA priority copy | jurisdiction channel pack | Settings → Comms |
 | **Onboarding hints** | Vertical-specific go-live tips | `getVerticalOnboardingExtras()` | Read-only in wizard |
 | **Feature gates** | medspa, classes, design proofs routes | `withBusinessFeature(vertical)` | Automatic from vertical |
 
-**Code today:** seed path is `artifacts/api-server/src/routes/businesses.ts` + `onboarding.service.ts` + `lib/policy/src/resolve.ts`.  
+### 3.2b Opt-in starter pack (`starterPack: true`)
+
+| Domain | What | Source |
+|--------|------|--------|
+| **Service menu** | Full vertical template menu (4–7 services) | `getVerticalStarterPackServices()` → `seedVerticalStarterPack` |
+| **Staff template** | 1 owner row linked to all seeded services | `vertical.defaultStaff[0]` |
+| **Beauty retail** | Mini store on `/b` | `seedBeautyRetailTemplates` (beauty only) |
+| **Onboarding acts** | `a3`, `a4` + `servicesConfirmed` | `mergeOnboardingAfterMenuSeed` |
+
+Spec: [`VERTICAL-STARTER-PACK.md`](../engineering/VERTICAL-STARTER-PACK.md).
+
+**Code today:** `artifacts/api-server/src/routes/businesses.ts` · `vertical-starter-pack.service.ts` · `lib/policy/src/vertical-starter-packs.ts`.  
 **Track D2 adds:** persist `presentation_preset_id = platform-default` on business row (not yet in DB).
 
 ### 3.3 Owner must still configure (blocking before full app)

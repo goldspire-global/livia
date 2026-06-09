@@ -1,7 +1,7 @@
 import { getGuestBookingByToken } from "./booking-guest-access.service";
 import { policiesFromBusiness } from "./policies.service";
 import { createBookingPaymentIntent } from "./payment.service";
-import { getDashboardUrl } from "../lib/public-urls";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
 import { getStripe, isStripeConfigured, logStripeSkip } from "../lib/stripe";
 import { db, bookingsTable, businessesTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
@@ -88,7 +88,7 @@ export async function getGuestDepositPayView(
   };
 }
 
-async function applySimulatedGuestDeposit(args: {
+export async function applySimulatedGuestDeposit(args: {
   businessId: string;
   bookingId: string;
   amountMinor: number;
@@ -178,8 +178,7 @@ export async function createGuestDepositCheckout(
     description: `Deposit — ${view.serviceName}`,
   });
 
-  const base = getDashboardUrl().replace(/\/+$/, "");
-  const returnPath = `/b/${slug}/pay/${token}`;
+  const returnPath = resolveGuestTokenUrl(slug, "pay", token);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -212,8 +211,8 @@ export async function createGuestDepositCheckout(
       kind: "guest_deposit",
       guestPayToken: token,
     },
-    success_url: `${base}${returnPath}?status=success`,
-    cancel_url: `${base}${returnPath}?status=cancel`,
+    success_url: `${returnPath}?status=success`,
+    cancel_url: `${returnPath}?status=cancel`,
   });
 
   if (!session.url) {

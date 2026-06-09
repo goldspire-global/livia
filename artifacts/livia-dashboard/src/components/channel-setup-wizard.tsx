@@ -15,6 +15,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Link } from "wouter";
+import { ownerChannelIdForForm } from "@workspace/policy";
 import {
   channelConnectionStatus,
   META_PREREQUISITE_STEPS,
@@ -90,10 +91,14 @@ export function ChannelSetupWizard({
 
   useEffect(() => {
     const ch = comms?.messagingChannels;
-    setWaId(ch?.whatsapp?.phoneNumberId ?? "");
-    setWaDisplay(ch?.whatsapp?.displayPhone ?? "");
-    setIgPage(ch?.instagram?.pageId ?? "");
-    setFbPage(ch?.messenger?.pageId ?? ch?.instagram?.pageId ?? "");
+    const waIdSaved = ownerChannelIdForForm(ch?.whatsapp?.phoneNumberId);
+    setWaId(waIdSaved);
+    setWaDisplay(waIdSaved ? (ch?.whatsapp?.displayPhone?.trim() ?? "") : "");
+    setIgPage(ownerChannelIdForForm(ch?.instagram?.pageId));
+    setFbPage(
+      ownerChannelIdForForm(ch?.messenger?.pageId) ||
+        ownerChannelIdForForm(ch?.instagram?.pageId),
+    );
   }, [comms]);
 
   const filteredPriorities = useMemo(() => {
@@ -173,7 +178,7 @@ export function ChannelSetupWizard({
         title: "Test message sent — open Inbox",
         description: result.aiReplySkipped
           ? (result.aiReplySkipReason ?? "Set ANTHROPIC_API_KEY on the API server for Liv to reply.")
-          : "You should see Liv's reply with AI disclosure on the thread.",
+          : "You should see Liv's reply on the thread — customers are told they're chatting with AI.",
       });
     } catch (e) {
       toast({ title: "Test failed", description: String(e), variant: "destructive" });
@@ -296,26 +301,33 @@ export function ChannelSetupWizard({
 
       {step === "webhook" && (
         <div className="space-y-3 text-sm">
-          <p className="text-muted-foreground">
-            Meta sends customer messages to Livia once per environment. Your Livia contact usually registers this URL in the Meta Developer app — you only paste <strong>your</strong> shop IDs in the next step.
-          </p>
+          <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-3 space-y-1">
+            <p className="font-medium text-foreground">Nothing for you to do here</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Livia registers the Meta webhook on our servers when your shop goes live. Your only step is pasting{" "}
+              <strong>your</strong> WhatsApp / Page IDs on the next screen — not configuring URLs.
+            </p>
+          </div>
           {comms?.metaWebhookUrl ? (
-            <div className="rounded-md bg-muted/50 p-3 font-mono text-xs break-all space-y-2">
-              <span className="text-muted-foreground block">Webhook URL</span>
-              {comms.metaWebhookUrl}
-              <Button type="button" variant="secondary" size="sm" onClick={() => copyWebhook()}>
-                <Copy className="h-3.5 w-3.5 mr-1" />
-                Copy URL
-              </Button>
-            </div>
+            <details className="rounded-md border border-border/80 bg-muted/30 px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium text-muted-foreground list-none [&::-webkit-details-marker]:hidden">
+                For your developer or Livia support (optional)
+              </summary>
+              <div className="pt-2 font-mono text-xs break-all space-y-2">
+                <span className="text-muted-foreground block">Webhook URL</span>
+                {comms.metaWebhookUrl}
+                <Button type="button" variant="secondary" size="sm" onClick={() => copyWebhook()}>
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  Copy URL
+                </Button>
+              </div>
+            </details>
           ) : (
-            <p className="text-amber-600 text-xs">
-              Set <code>PUBLIC_BASE_URL</code> on the API server (e.g. your ngrok or production URL) to show the webhook here.
+            <p className="text-xs text-muted-foreground">
+              The webhook URL appears here on production — local setup uses the test step instead. Tap{" "}
+              <strong>Next</strong> to connect your Meta IDs.
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
-            Verify token is configured on the Livia server — support will share it when connecting live Meta.
-          </p>
         </div>
       )}
 
@@ -346,10 +358,11 @@ export function ChannelSetupWizard({
               <Input
                 value={waDisplay}
                 onChange={(e) => setWaDisplay(e.target.value)}
-                placeholder="Customer-facing number +353… (optional, for booking page)"
+                placeholder="Display number guests see (optional)"
               />
               <p className="text-xs text-muted-foreground">
                 Use the <strong>Phone number ID</strong> from WhatsApp Manager — not the display number alone.
+                Leave both fields blank until you have them from Meta; we do not pre-fill shop phone numbers.
               </p>
             </div>
           )}
@@ -471,7 +484,7 @@ export function ChannelSetupWizard({
         </Button>
         {stepIndex < WIZARD_STEPS.length - 1 ? (
           <Button type="button" size="sm" onClick={goNext}>
-            Next
+            {step === "webhook" ? "Next — connect IDs" : "Next"}
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (

@@ -21,7 +21,7 @@ export function PublicBookLivBar({
       <Button
         type="button"
         variant="secondary"
-        className={`w-full max-w-xl mx-auto pointer-events-auto min-h-[56px] shadow-lg border border-border/80 ${
+        className={`w-full max-w-6xl mx-auto pointer-events-auto min-h-[56px] shadow-lg border border-border/80 ${
           livActive ? "motion-liv-pulse" : ""
         }`}
         onClick={onOpenChat}

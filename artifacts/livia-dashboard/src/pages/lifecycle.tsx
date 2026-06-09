@@ -143,9 +143,9 @@ export default function LifecyclePage() {
                   <CardDescription className="text-xs">Transfer keys with audit trail.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Link href="/settings?tab=ownership">
+                  <Link href="/settings?tab=legal#ownership-succession">
                     <Button size="sm" className="h-8">
-                      Open ownership transfer
+                      Open ownership succession
                     </Button>
                   </Link>
                 </CardContent>

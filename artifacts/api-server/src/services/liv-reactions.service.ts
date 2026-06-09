@@ -54,6 +54,7 @@ function formatSignalCopy(args: {
   templateKey: string;
   booking?: { source?: string | null; startAt?: Date };
   conversation?: { customerName?: string | null; channel?: string };
+  twin?: { title?: string; body?: string };
 }): { title: string; body: string } {
   const source = args.booking?.source?.replace(/-/g, " ") ?? "a channel";
   const time = args.booking?.startAt
@@ -99,6 +100,24 @@ function formatSignalCopy(args: {
         title: "Morning briefing ready",
         body: "Today's Liv briefing is ready on your home screen.",
       };
+    case "payment.failed":
+      return {
+        title: "Payment failed",
+        body: "A card payment did not go through — review billing or send a new link.",
+      };
+    case "commerce.signal":
+      return {
+        title: "Commerce signal",
+        body: "Liv spotted a revenue pattern worth your attention — check Billing or ask Liv.",
+      };
+    case "twin.observation":
+    case "twin.insight":
+    case "twin.risk":
+    case "twin.opportunity":
+      return {
+        title: args.twin?.title ?? "Business insight",
+        body: args.twin?.body ?? "Liv noticed a pattern in your shop facts.",
+      };
     default:
       return { title: "Liv noticed", body: "Something changed in your shop — check Today." };
   }
@@ -119,6 +138,13 @@ export async function processLivReactionsForEvent<K extends EventName>(
     bookingId?: string;
     conversationId?: string;
     status?: string;
+    title?: string;
+    body?: string;
+    observationKey?: string;
+    riskId?: string;
+    opportunityId?: string;
+    confidence?: "high" | "medium" | "low";
+    href?: string;
   };
 
   const [biz] = await db
@@ -145,21 +171,46 @@ export async function processLivReactionsForEvent<K extends EventName>(
       templateKey: reaction.templateKey,
       booking: bookingCtx,
       conversation: conversationCtx,
+      twin: p.title && p.body ? { title: p.title, body: p.body } : undefined,
     });
 
-    const entityKey = p.bookingId ?? p.conversationId ?? name;
+    const entityKey =
+      p.bookingId ??
+      p.conversationId ??
+      p.observationKey ??
+      p.riskId ??
+      p.opportunityId ??
+      name;
     const dedupeKey = `${p.businessId}:${reaction.templateKey}:${entityKey}:${dayKey}`;
+
+    const twinPriority =
+      p.confidence === "high" ? "act" : p.confidence === "medium" ? "watch" : undefined;
 
     const inserted = await upsertLivSignal({
       businessId: p.businessId,
       kind: reaction.kind,
-      priority: priorityFor(reaction.kind, reaction.priority),
+      priority: priorityFor(reaction.kind, twinPriority ?? reaction.priority),
       title,
       body,
       dedupeKey,
       eventName: name,
-      entityType: p.bookingId ? "booking" : p.conversationId ? "conversation" : undefined,
-      entityId: p.bookingId ?? p.conversationId,
+      entityType: p.bookingId
+        ? "booking"
+        : p.conversationId
+          ? "conversation"
+          : p.observationKey
+            ? "twin_observation"
+            : p.riskId
+              ? "twin_risk"
+              : p.opportunityId
+                ? "twin_opportunity"
+                : undefined,
+      entityId:
+        p.bookingId ??
+        p.conversationId ??
+        p.observationKey ??
+        p.riskId ??
+        p.opportunityId,
       ttlHours: reaction.kind === "coach_owner" ? 168 : 72,
     });
     if (inserted) signalsCreated += 1;

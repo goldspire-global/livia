@@ -41,8 +41,9 @@ export function StaffMyDayHero({
     <Link href={`/bookings/${booking.id}`}>
       <article
         className={cn(
-          "block rounded-[20px] border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-violet-500/5 p-6 motion-hero-fade-in",
-          className,
+          "block rounded-[20px] border p-6 motion-hero-fade-in",
+          className ??
+            "border-primary/25 bg-gradient-to-br from-primary/10 via-card to-violet-500/5",
         )}
         data-testid="staff-my-day-hero"
       >

@@ -1,4 +1,6 @@
-import { ArrowRight, Building2, CalendarCheck, MessageSquare } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowRight, Building2, CalendarCheck, MessageSquare, TrendingUp } from "lucide-react";
+import type { ChainShopCommerceSlice } from "./founder-chain-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,11 +38,13 @@ export function FounderShopCard({
   shop,
   vertical,
   period,
+  commerce,
   onOpen,
 }: {
   shop: ChainShopRollup;
   vertical?: string | null;
   period: "week" | "today";
+  commerce?: ChainShopCommerceSlice;
   onOpen: () => void;
 }) {
   const inboxWaiting = shop.openConversations + shop.handedOffConversations;
@@ -89,6 +93,42 @@ export function FounderShopCard({
         <p className="text-xs text-amber-700 dark:text-amber-300 mt-3 line-clamp-2">{shop.pulseReason}</p>
       ) : null}
 
+      {commerce ? (
+        <div
+          className={cn(
+            "mt-3 rounded-lg border px-3 py-2 flex items-center justify-between gap-2 text-sm",
+            commerce.topSignal?.severity === "act"
+              ? "border-destructive/40 bg-destructive/5"
+              : commerce.topSignal?.severity === "watch"
+                ? "border-amber-500/40 bg-amber-500/5"
+                : "border-border/60 bg-muted/20",
+          )}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">30d captured</p>
+              <p className="font-semibold tabular-nums truncate">{commerce.capturedLabel}</p>
+            </div>
+          </div>
+          {commerce.topSignal && commerce.topSignal.severity !== "info" ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs shrink-0"
+              asChild
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link href={commerce.topSignal.href}>{commerce.topSignal.title}</Link>
+            </Button>
+          ) : commerce.captureRatePercent != null ? (
+            <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              {commerce.captureRatePercent}% capture
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-3 gap-2 mt-4">
         <div className="rounded-lg border border-border/60 bg-muted/30 px-2 py-2 text-center">
           <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
@@ -121,7 +161,7 @@ export function FounderShopCard({
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/60">
         <a
-          href={`/b/${shop.slug}`}
+          href={`/book/${shop.slug}`}
           target="_blank"
           rel="noreferrer"
           className="text-[11px] text-primary hover:underline"

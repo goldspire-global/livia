@@ -2,23 +2,29 @@ import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  id?: string;
   title: string;
   description?: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
   className?: string;
+  "data-testid"?: string;
 };
 
 /** Lightweight collapsible — keeps long settings pages scannable without extra deps. */
 export function SettingsDisclosure({
+  id,
   title,
   description,
   defaultOpen = false,
   children,
   className,
+  "data-testid": dataTestId,
 }: Props) {
   return (
     <details
+      id={id}
+      data-testid={dataTestId}
       className={cn(
         "group rounded-xl border border-border bg-card/40 overflow-hidden",
         className,

@@ -3,6 +3,22 @@
  * Surfaces stay thin: primary signal first, deferred modules behind disclosure or routes.
  */
 
+import {
+  ownerHomeCommerceNeedsAttention,
+  ownerHomeUncapturedDemand,
+  resolveCommerceOwnerBriefingCta,
+} from "./commerce-briefing";
+
+export {
+  ownerHomeCommerceNeedsAttention,
+  ownerHomeUncapturedDemand,
+  ownerHomeElevatedRefunds,
+  resolveCommerceOwnerBriefingCta,
+  ownerHomeLivSuggestions,
+  type OwnerLivSuggestion,
+  type CommerceBriefingInput,
+} from "./commerce-briefing";
+
 export type OwnerHomeModuleLayout =
   | { mode: "all_clear" }
   | { mode: "single"; focus: "inbox" | "pending" }
@@ -16,30 +32,105 @@ export type OwnerHomeSignals = {
   onboardingPercentComplete?: number | null;
 };
 
-export type OwnerHomeKpiId = "todayBookings" | "inboxHandoffs" | "toConfirm" | "completedToday";
+export type OwnerHomeKpiId =
+  | "todayBookings"
+  | "inboxHandoffs"
+  | "toConfirm"
+  | "completedToday"
+  | "atRiskGuests"
+  | "lowFeedback"
+  | "revenue30d"
+  | "depositsGap"
+  | "fillsDue"
+  | "colourDayBlocks"
+  | "medspaConsentQueue";
+
+export type OwnerHomeCommerceSignals = {
+  capturedMinor30d?: number;
+  captureRatePercent?: number | null;
+  paymentCount30d?: number;
+};
 
 /** KPI chips on owner home — only mount when they carry signal (no empty inbox / confirm rows). */
 export function resolveOwnerHomeKpiChips(signals: {
   todayBookings: number;
   pendingCount: number;
   handedOffCount: number;
+  atRiskCount?: number;
+  lowFeedbackCount?: number;
+  capturedMinor30d?: number;
+  paymentCount30d?: number;
+  confirmedCount?: number;
+  weekBookings?: number;
+  fillsDueCount?: number;
+  colourDayBlocks?: number;
+  medspaConsentQueueCount?: number;
 }): OwnerHomeKpiId[] {
   const chips: OwnerHomeKpiId[] = ["todayBookings"];
+  if (Math.max(0, signals.colourDayBlocks ?? 0) > 0) chips.push("colourDayBlocks");
+  if (Math.max(0, signals.medspaConsentQueueCount ?? 0) > 0) chips.push("medspaConsentQueue");
+  if (Math.max(0, signals.fillsDueCount ?? 0) > 0) chips.push("fillsDue");
   if (Math.max(0, signals.handedOffCount) > 0) chips.push("inboxHandoffs");
   if (Math.max(0, signals.pendingCount) > 0) chips.push("toConfirm");
+  if (Math.max(0, signals.lowFeedbackCount ?? 0) > 0) chips.push("lowFeedback");
+  if (Math.max(0, signals.atRiskCount ?? 0) > 0) chips.push("atRiskGuests");
+  if (
+    ownerHomeUncapturedDemand({
+      paymentCount30d: signals.paymentCount30d,
+      demandBookings: Math.max(0, signals.pendingCount) + Math.max(0, signals.confirmedCount ?? 0),
+      weekBookings: signals.weekBookings,
+    })
+  ) {
+    chips.push("depositsGap");
+  } else if (Math.max(0, signals.capturedMinor30d ?? 0) > 0) {
+    chips.push("revenue30d");
+  }
   if (Math.max(0, signals.todayBookings) > 0) chips.push("completedToday");
   return chips;
 }
 
-/** Owner briefing primary CTA — handoffs/pending only; never "open inbox" for Liv-only threads. */
+/** Owner briefing primary CTA — ops queue first, then relationship/trust nudges. */
+export function ownerHomeNeedsBriefingAction(signals: {
+  pendingCount: number;
+  handedOffCount: number;
+  atRiskCount?: number;
+  lowFeedbackCount?: number;
+  captureRatePercent?: number | null;
+  paymentCount30d?: number;
+  confirmedCount?: number;
+  weekBookings?: number;
+}): boolean {
+  return (
+    Math.max(0, signals.pendingCount) > 0 ||
+    Math.max(0, signals.handedOffCount) > 0 ||
+    Math.max(0, signals.lowFeedbackCount ?? 0) > 0 ||
+    Math.max(0, signals.atRiskCount ?? 0) > 0 ||
+    ownerHomeCommerceNeedsAttention(signals) ||
+    ownerHomeUncapturedDemand({
+      paymentCount30d: signals.paymentCount30d,
+      demandBookings: Math.max(0, signals.pendingCount) + Math.max(0, signals.confirmedCount ?? 0),
+      weekBookings: signals.weekBookings,
+    })
+  );
+}
+
+/** Owner briefing primary CTA — ops queue first, then relationship/trust nudges. */
 export function resolveOwnerHomeBriefingCta(signals: {
   pendingCount: number;
   handedOffCount: number;
+  atRiskCount?: number;
+  lowFeedbackCount?: number;
+  captureRatePercent?: number | null;
+  paymentCount30d?: number;
+  confirmedCount?: number;
+  weekBookings?: number;
   fallbackHref: string;
   fallbackLabel: string;
 }): { href: string; label: string } {
   const p = Math.max(0, signals.pendingCount);
   const h = Math.max(0, signals.handedOffCount);
+  const low = Math.max(0, signals.lowFeedbackCount ?? 0);
+  const atRisk = Math.max(0, signals.atRiskCount ?? 0);
   if (p > 0) {
     return {
       href: "/bookings?status=PENDING", // keep in sync with pending-booking-flow.PENDING_BOOKINGS_LIST_HREF
@@ -52,20 +143,53 @@ export function resolveOwnerHomeBriefingCta(signals: {
       label: h === 1 ? "Review 1 handoff" : `Review ${h} handoffs`,
     };
   }
+  if (low > 0) {
+    return {
+      href: "/dashboard",
+      label: low === 1 ? "Review 1 low score" : `Review ${low} low scores`,
+    };
+  }
+  if (atRisk > 0) {
+    return {
+      href: "/customers",
+      label: atRisk === 1 ? "Reconnect with 1 guest" : `Reconnect with ${atRisk} guests`,
+    };
+  }
+  const commerceCta = resolveCommerceOwnerBriefingCta({
+    captureRatePercent: signals.captureRatePercent,
+    paymentCount30d: signals.paymentCount30d,
+    demandBookings: p + Math.max(0, signals.confirmedCount ?? 0),
+    weekBookings: signals.weekBookings,
+  });
+  if (commerceCta) return commerceCta;
   return { href: signals.fallbackHref, label: signals.fallbackLabel };
 }
 
 /** Which inbox/pending panels to render — avoids two empty min-height cards. */
 export function resolveOwnerHomeModuleLayout(signals: {
+  /** Global pending (briefing / nav badges). */
   pendingCount: number;
   openInboxCount: number;
+  /** Pending rows surfaced on Today home — defaults to pendingCount when omitted. */
+  homePendingCount?: number;
+  /** When true, pending is already on the today schedule strip — skip the pending card. */
+  pendingSurfacedElsewhere?: boolean;
 }): OwnerHomeModuleLayout {
-  const p = Math.max(0, signals.pendingCount);
+  const homePending = Math.max(0, signals.homePendingCount ?? signals.pendingCount);
+  const showHomePending = homePending > 0 && !signals.pendingSurfacedElsewhere;
   const i = Math.max(0, signals.openInboxCount);
-  if (p === 0 && i === 0) return { mode: "all_clear" };
-  if (p > 0 && i === 0) return { mode: "single", focus: "pending" };
-  if (p === 0 && i > 0) return { mode: "single", focus: "inbox" };
+  if (!showHomePending && i === 0) return { mode: "all_clear" };
+  if (showHomePending && i === 0) return { mode: "single", focus: "pending" };
+  if (!showHomePending && i > 0) return { mode: "single", focus: "inbox" };
   return { mode: "dual" };
+}
+
+/** Owner home pending card — only when there are rows to act on today. */
+export function shouldShowOwnerPendingPanel(
+  homePendingCount: number,
+  loading?: boolean,
+): boolean {
+  return !!loading || homePendingCount > 0;
 }
 
 /** Liv mandate strip — only when attention needed or autonomy still early. */
@@ -177,3 +301,23 @@ export const STAFF_MY_DAY_TIMELINE_MAX_VISIBLE = 6;
 
 /** Settings shop tab — secondary fields behind disclosure by default. */
 export const SETTINGS_SHOP_SECONDARY_DEFAULT_OPEN = false;
+
+/**
+ * Owner/manager /dashboard — OwnerHomeRitual is the home surface.
+ * Supplemental strips (second briefing, duplicate intel, capability deck) stay off.
+ */
+export function shouldShowOperatorDashboardSupplements(): boolean {
+  return false;
+}
+
+/** Settings → Plan tab — commerce intel sits behind disclosure; plan card stays primary. */
+export const SETTINGS_BILLING_COMMERCE_DEFAULT_OPEN = false;
+
+/** Owner home — keep payments/Liv insights collapsed by default; owner opens when they want depth. */
+export function shouldExpandOwnerHomeInsightsDisclosure(_signals: {
+  hasIntelligenceContent?: boolean;
+  commerceNeedsAttention?: boolean;
+  pendingRemediationCount?: number;
+}): boolean {
+  return false;
+}

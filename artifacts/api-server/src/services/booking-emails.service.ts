@@ -14,7 +14,9 @@ import { eq } from "drizzle-orm";
 import { sendAiEmail } from "./ai-outbound.service";
 import { policiesFromBusiness } from "./policies.service";
 import { logger } from "../lib/logger";
-import { getMarketingUrl } from "../lib/public-urls.js";
+import { resolveGuestBookUrl } from "../lib/guest-public-urls";
+import { guestVisitReminderPrepSnippet, guestVerticalPrepSmsBody } from "@workspace/policy";
+import { createTwilioClient } from "@workspace/integrations-twilio";
 
 interface EnrichedBooking extends Booking {
   service: { name: string; durationMinutes: number };
@@ -39,7 +41,7 @@ function customerFirstName(c: EnrichedBooking["customer"]): string {
 }
 
 function manageUrl(business: Business, _booking: Booking): string {
-  return `${getMarketingUrl()}/b/${business.slug}`;
+  return resolveGuestBookUrl(business.slug);
 }
 
 function buildContext(args: {
@@ -52,7 +54,8 @@ function buildContext(args: {
   // text before persisting / sending so the Art. 50 disclosure is added
   // exactly once. Pre-composing here would double-print the disclosure.
   const policies = policiesFromBusiness(business);
-  const bodyText = `Hi ${customerFirstName(booking.customer)},\n\nYour booking with ${business.name} is set:\n${booking.service.name}${booking.staff ? ` with ${booking.staff.displayName}` : ""}\n${startAtFormatted} · ${booking.service.durationMinutes} min`;
+  const prep = guestVisitReminderPrepSnippet(business.vertical);
+  const bodyText = `Hi ${customerFirstName(booking.customer)},\n\nYour booking with ${business.name} is set:\n${booking.service.name}${booking.staff ? ` with ${booking.staff.displayName}` : ""}\n${startAtFormatted} · ${booking.service.durationMinutes} min${prep ? `\n\n${prep}` : ""}`;
   return {
     businessName: business.name,
     customerFirstName: customerFirstName(booking.customer),
@@ -133,6 +136,39 @@ export async function sendBookingReminderEmail(args: {
     templateKey: "booking-reminder-t24",
     render: renderBookingReminderEmail,
   });
+}
+
+/** T-24h prep SMS for allied-health, medspa, wellness (Innovation P0). */
+export async function sendBookingReminderPrepSms(args: {
+  business: Business | string;
+  booking: EnrichedBooking;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const business = await loadBusinessIfMissing(args.business);
+  if (!business) return { sent: false, reason: "no_business" };
+
+  const body = guestVerticalPrepSmsBody(business.vertical, business.name);
+  if (!body) return { sent: false, reason: "no_vertical_prep" };
+
+  const to = args.booking.customer.phone;
+  if (!to) return { sent: false, reason: "no_phone" };
+
+  const twilioSid = process.env["TWILIO_ACCOUNT_SID"];
+  const twilioToken = process.env["TWILIO_AUTH_TOKEN"];
+  if (!business.twilioPhoneNumber || !twilioSid || !twilioToken) {
+    return { sent: false, reason: "no_twilio" };
+  }
+
+  try {
+    const twilio = createTwilioClient({ accountSid: twilioSid, authToken: twilioToken });
+    await twilio.sendSms({ from: business.twilioPhoneNumber, to, body });
+    return { sent: true };
+  } catch (err) {
+    logger.error(
+      { err, bookingId: args.booking.id, businessId: business.id },
+      "Booking reminder prep SMS failed",
+    );
+    return { sent: false, reason: "send_failed" };
+  }
 }
 
 export async function sendBookingCancellationEmail(args: {

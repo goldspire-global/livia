@@ -11,9 +11,11 @@ import {
   type OnboardingState,
   validateBusinessNaming,
   defaultStructureKindForCreate,
-  resolvePresentationPreset,
+  PLATFORM_DEFAULT_PRESET_ID,
   type BusinessStructureKind,
   type TenantAttestation,
+  getSubverticalProfile,
+  suggestedTierFromSubvertical,
 } from "@workspace/policy";
 import { loadVerticalPack } from "@workspace/liv-runtime";
 import { generateId } from "../lib/id";
@@ -80,6 +82,7 @@ export async function createBusiness(
     parentBusinessId?: string;
     structureKind?: BusinessStructureKind;
     tenantAttestation?: TenantAttestation;
+    subverticalProfileId?: string;
   },
 ) {
   const id = generateId();
@@ -116,6 +119,16 @@ export async function createBusiness(
     data.structureKind ??
     defaultStructureKindForCreate({ parentBusinessId: data.parentBusinessId });
 
+  const subverticalProfile = data.subverticalProfileId
+    ? getSubverticalProfile(data.subverticalProfileId)
+    : null;
+  const packTier = data.tier ?? packDefaults.tier;
+  const suggestedTier = subverticalProfile
+    ? suggestedTierFromSubvertical(subverticalProfile)
+    : null;
+  const resolvedTier =
+    suggestedTier && (!data.tier || data.tier === packDefaults.tier) ? suggestedTier : packTier;
+
   const [biz] = await db
     .insert(businessesTable)
     .values({
@@ -143,12 +156,13 @@ export async function createBusiness(
       currency: data.currency ?? packDefaults.currency,
       locale: data.locale ?? packDefaults.locale,
       vertical,
-      tier: data.tier ?? packDefaults.tier,
-      planId: data.tier ?? packDefaults.tier,
+      subverticalProfileId: data.subverticalProfileId ?? null,
+      tier: resolvedTier,
+      planId: resolvedTier,
       euRegion: packDefaults.euRegion,
       aiGreeting: packDefaults.aiGreeting,
       logoUrl: data.logoUrl,
-      presentationPresetId: resolvePresentationPreset(vertical).id,
+      presentationPresetId: PLATFORM_DEFAULT_PRESET_ID,
       instagramHandle: data.instagramHandle,
       onboardingState: afterBusinessCreatedState(vertical) as unknown as Record<string, unknown>,
       tenantAttestation: data.tenantAttestation as unknown as Record<string, unknown> | undefined,

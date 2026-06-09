@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,21 +16,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { getApiBaseUrl } from "@/lib/api-base";
-import { getDashboardOrigin } from "@/lib/guest-surface-url";
+import {
+  GUEST_HUB_TOKEN_KEY,
+  guestVisitMobilePath,
+  openGuestBookUrl,
+} from "@/lib/guest-hub";
+import {
+  GUEST_PREFERRED_MODALITY_LABELS,
+  LIVIA_MOBILE_ENTRY_COPY,
+  type GuestPreferredModality,
+} from "@workspace/policy";
 
-const HUB_TOKEN_KEY = "livia_guest_hub_token";
+const GUEST_MODALITIES = Object.keys(GUEST_PREFERRED_MODALITY_LABELS) as GuestPreferredModality[];
 
 type HubShop = {
   businessId: string;
   businessName: string;
   slug: string;
+  imageUrl?: string | null;
+  logoUrl?: string | null;
   bookUrl: string;
+  shopRelationshipUrl?: string;
   isFavorite: boolean;
   lastServiceName: string | null;
 };
 
 type HubView = {
   phoneE164: string;
+  preferredModality?: GuestPreferredModality;
   shops: HubShop[];
   upcomingBookings: Array<{
     bookingId: string;
@@ -38,10 +51,11 @@ type HubView = {
     serviceName: string;
     startAt: string;
     visitUrl: string;
+    slug?: string;
   }>;
 };
 
-export default function MyLiviaScreen() {
+export default function MyLiviaHubScreen() {
   const colors = useColors();
   const router = useRouter();
   const api = getApiBaseUrl();
@@ -54,6 +68,8 @@ export default function MyLiviaScreen() {
   const [magicOtp, setMagicOtp] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [channel, setChannel] = useState<GuestPreferredModality>("ANY");
+  const [channelSaving, setChannelSaving] = useState(false);
 
   const loadView = useCallback(
     async (token: string) => {
@@ -68,16 +84,18 @@ export default function MyLiviaScreen() {
 
   useEffect(() => {
     void (async () => {
-      const stored = await AsyncStorage.getItem(HUB_TOKEN_KEY);
+      const stored = await AsyncStorage.getItem(GUEST_HUB_TOKEN_KEY);
       if (!stored) {
         setLoading(false);
         return;
       }
       setHubToken(stored);
       try {
-        setView(await loadView(stored));
+        const v = await loadView(stored);
+        setView(v);
+        setChannel(v.preferredModality ?? "ANY");
       } catch {
-        await AsyncStorage.removeItem(HUB_TOKEN_KEY);
+        await AsyncStorage.removeItem(GUEST_HUB_TOKEN_KEY);
         setHubToken(null);
       } finally {
         setLoading(false);
@@ -118,9 +136,11 @@ export default function MyLiviaScreen() {
       });
       if (!r.ok) throw new Error("Incorrect code");
       const j = (await r.json()) as { hubToken: string };
-      await AsyncStorage.setItem(HUB_TOKEN_KEY, j.hubToken);
+      await AsyncStorage.setItem(GUEST_HUB_TOKEN_KEY, j.hubToken);
       setHubToken(j.hubToken);
-      setView(await loadView(j.hubToken));
+      const v = await loadView(j.hubToken);
+      setView(v);
+      setChannel(v.preferredModality ?? "ANY");
       setOtpSession(null);
     } catch {
       setErr("Incorrect code");
@@ -142,8 +162,42 @@ export default function MyLiviaScreen() {
     if (r.ok) setView(await r.json());
   }
 
-  function openBookUrl(path: string) {
-    void Linking.openURL(`${getDashboardOrigin()}${path}`);
+  async function saveChannel(next: GuestPreferredModality) {
+    if (!hubToken) return;
+    setChannelSaving(true);
+    try {
+      const r = await fetch(`${api}/api/public/guest-hub/preferences`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Guest-Hub-Token": hubToken,
+        },
+        body: JSON.stringify({ preferredModality: next }),
+      });
+      if (!r.ok) throw new Error("save");
+      setChannel(next);
+      setView((v) => (v ? { ...v, preferredModality: next } : v));
+    } catch {
+      setErr("Could not save channel preference");
+    } finally {
+      setChannelSaving(false);
+    }
+  }
+
+  async function signOutGuest() {
+    await AsyncStorage.removeItem(GUEST_HUB_TOKEN_KEY);
+    setHubToken(null);
+    setView(null);
+    router.replace("/" as never);
+  }
+
+  function openVisit(visitUrl: string) {
+    const native = guestVisitMobilePath(visitUrl);
+    if (native) {
+      router.push(native as never);
+      return;
+    }
+    openGuestBookUrl(visitUrl);
   }
 
   if (loading) {
@@ -157,7 +211,7 @@ export default function MyLiviaScreen() {
   if (!hubToken || !view) {
     return (
       <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-        <Pressable onPress={() => router.back()} style={styles.back}>
+        <Pressable onPress={() => router.replace("/" as never)} style={styles.back}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </Pressable>
         <ScrollView contentContainerStyle={styles.pad}>
@@ -218,18 +272,52 @@ export default function MyLiviaScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      <Pressable onPress={() => router.back()} style={styles.back}>
+      <Pressable onPress={() => router.replace("/" as never)} style={styles.back}>
         <Feather name="arrow-left" size={22} color={colors.foreground} />
       </Pressable>
       <ScrollView contentContainerStyle={styles.pad}>
         <Text style={[type.title, { color: colors.foreground }]}>My Livia</Text>
         <Text style={[type.caption, { color: colors.mutedForeground }]}>{view.phoneE164}</Text>
 
+        <View style={[styles.card, { borderColor: colors.border }]} testID="guest-channel-card">
+          <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
+            How Liv reaches you
+          </Text>
+          <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 4 }]}>
+            Aftercare and follow-ups use your preferred channel when possible.
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+            {GUEST_MODALITIES.map((m) => (
+              <Pressable
+                key={m}
+                disabled={channelSaving}
+                onPress={() => void saveChannel(m)}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor: channel === m ? colors.primary : colors.border,
+                    backgroundColor: channel === m ? colors.primary + "18" : "transparent",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    type.caption,
+                    { color: channel === m ? colors.primary : colors.mutedForeground },
+                  ]}
+                >
+                  {GUEST_PREFERRED_MODALITY_LABELS[m]}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         {view.upcomingBookings.map((b) => (
           <Pressable
             key={b.bookingId}
             style={[styles.card, { borderColor: colors.border }]}
-            onPress={() => openBookUrl(b.visitUrl)}
+            onPress={() => openVisit(b.visitUrl)}
           >
             <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
               {b.businessName}
@@ -241,33 +329,62 @@ export default function MyLiviaScreen() {
 
         {view.shops.map((shop) => (
           <View key={shop.businessId} style={[styles.card, { borderColor: colors.border }]}>
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
-                  {shop.businessName}
-                </Text>
-                {shop.lastServiceName ? (
-                  <Text style={[type.caption, { color: colors.mutedForeground }]}>
-                    Last: {shop.lastServiceName}
+            <Pressable onPress={() => router.push(`/my-livia/${shop.slug}` as never)}>
+              <View style={styles.row}>
+                {(shop.imageUrl ?? shop.logoUrl) ? (
+                  <Image
+                    source={{ uri: (shop.imageUrl ?? shop.logoUrl)! }}
+                    style={[styles.shopAvatar, { borderColor: colors.border }]}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.shopAvatar,
+                      styles.shopAvatarFallback,
+                      { borderColor: colors.border, backgroundColor: colors.primary + "18" },
+                    ]}
+                  >
+                    <Text style={[type.caption, { color: colors.primary, fontFamily: fonts.bodyMed }]}>
+                      {(shop.businessName.trim().charAt(0) || "S").toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
+                    {shop.businessName}
                   </Text>
-                ) : null}
+                  {shop.lastServiceName ? (
+                    <Text style={[type.caption, { color: colors.mutedForeground }]}>
+                      Last: {shop.lastServiceName}
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable onPress={() => void toggleFavorite(shop.businessId, !shop.isFavorite)}>
+                  <Feather
+                    name="heart"
+                    size={20}
+                    color={shop.isFavorite ? colors.primary : colors.mutedForeground}
+                  />
+                </Pressable>
               </View>
-              <Pressable onPress={() => void toggleFavorite(shop.businessId, !shop.isFavorite)}>
-                <Feather
-                  name="heart"
-                  size={20}
-                  color={shop.isFavorite ? colors.primary : colors.mutedForeground}
-                />
-              </Pressable>
-            </View>
+            </Pressable>
             <Pressable
               style={[styles.btnSm, { borderColor: colors.border }]}
-              onPress={() => openBookUrl(shop.bookUrl)}
+              onPress={() => openGuestBookUrl(shop.bookUrl)}
             >
               <Text style={[type.caption, { color: colors.foreground }]}>Book again</Text>
             </Pressable>
           </View>
         ))}
+
+        <Pressable onPress={() => void signOutGuest()} style={{ marginTop: 16, alignSelf: "center" }}>
+          <Text style={[type.caption, { color: colors.mutedForeground }]}>Sign out of My Livia</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push("/sign-in" as never)} style={{ marginTop: 8, alignSelf: "center" }}>
+          <Text style={[type.caption, { color: colors.primary }]}>
+            {LIVIA_MOBILE_ENTRY_COPY.guestStaffLink}
+          </Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -304,5 +421,21 @@ const styles = StyleSheet.create({
     padding: 14,
     marginTop: 8,
   },
-  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  row: { flexDirection: "row", alignItems: "center", gap: 10 },
+  shopAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  shopAvatarFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
 });

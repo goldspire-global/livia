@@ -1,7 +1,9 @@
 # Vertical programs — master index
 
-**Status:** canonical (2026-06-01)  
-**Purpose:** One row per vertical — business meaning, wow thesis, demo, program doc, tier.  
+**Status:** canonical (2026-06-05)  
+**Purpose:** One row per vertical — business meaning, wow thesis, demo, program doc, GTM wave.  
+**GTM authority:** [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md) — **all nine code verticals, one parity bar**  
+**Innovation:** [`VERTICAL-INNOVATION-PROGRAM.md`](./VERTICAL-INNOVATION-PROGRAM.md)  
 **Propagation:** [`DOC-PROPAGATION-CASCADE.md`](../engineering/DOC-PROPAGATION-CASCADE.md) · `pnpm vertical:doc-check`  
 **Build sequencing:** [`LIVIA-VERTICALS-BUILD-PLAN.md`](./LIVIA-VERTICALS-BUILD-PLAN.md)
 
@@ -12,12 +14,14 @@
 | Column | Meaning |
 |--------|---------|
 | **Doc ID** | `VERTICAL_COVERAGE_REGISTRY` row |
-| **Tier** | GTM honesty — not engineering completeness |
+| **GTM Wave** | Wave 1 = founder GTM lock (same exit checklist per vertical) |
 | **Program** | Full L0–L8 dissection (playbook = L2+L3 only) |
 | **Wow (operator)** | What makes the owner say “damn” |
 | **Wow (guest)** | What makes P7 say “oouuu” on `/b` |
 
 **Rule:** Change policy/registry → update program doc + spokes → `pnpm vertical:doc-check`.
+
+**Create seed:** All verticals — empty studio by default; optional **`starterPack`** on `POST /businesses` (beauty also seeds mini store). Hub: [`VERTICAL-STARTER-PACK.md`](../engineering/VERTICAL-STARTER-PACK.md).
 
 **Excellence (what “complete” means):** [`vertical-excellence/README.md`](./vertical-excellence/README.md) — market research + honest gap audit + P0–P3 per vertical (wellness excluded from 2026-06-03 pass).
 
@@ -25,17 +29,17 @@
 
 ## Code verticals (ship in product today)
 
-| Doc | Vertical | Tier | Demo slug | Program | Operator wow | Guest wow |
-|-----|----------|------|-----------|---------|--------------|-----------|
-| V1 | Hair & barbering | heartland | `luxe-salon-spa` | [HAIR](./HAIR-VERTICAL-PROGRAM.md) | Colour-day flight plan; deposit-backed calendar; chair-rental privacy | Book favourite stylist at 11pm; one-tap reschedule; visit page with name + time |
-| V2 | Beauty & nails | heartland | `bloom-beauty-dublin` | [BEAUTY](./BEAUTY-VERTICAL-PROGRAM.md) | Inbox-first lash/DM triage; patch-test discipline without spreadsheets | Studio-branded `/b`; fill-cycle reminders; no account wall |
-| V3 | Wellness & spa | beta-full | `harbour-wellness-cork` | [WELLNESS](./WELLNESS-VERTICAL-PROGRAM.md) · [North star](./WELLNESS-NORTHSTAR-PROGRAM.md) · [Backlog](./WELLNESS-MASTER-BACKLOG.md) | **Live room board** + package ledger | Waves 1–7: gift/wallet, reports, brokers, desk, Liv ops — see `WB-###` |
-| V4 | Body art | beta-full | `ink-anchor-galway` | [BODY-ART](./BODY-ART-VERTICAL-PROGRAM.md) | Proof approve desk; deposit binds slot; consult→session pipeline | Approve design on phone; pay deposit once; healing SMS link |
-| V5 | Fitness | beta-full | `peak-fitness-dublin` | [FITNESS](./FITNESS-VERTICAL-PROGRAM.md) | Class fill + waitlist auto-notify; PT block utilisation | Join waitlist in two taps; clear class vs PT path |
-| V6 | Medspa | beta-full | `clarity-medspa-dublin` | [MEDSPA](./MEDSPA-VERTICAL-PROGRAM.md) | Consent queue before clinical time; mandate hub | Consent on book; deposit; calm clinic brand |
-| V7 | Allied health | beta-full | `motion-physio-cork` | [ALLIED-HEALTH](./ALLIED-HEALTH-VERTICAL-PROGRAM.md) | Plan rebook cadence; audit-friendly notes | Assessment vs follow-up clarity; prep SMS |
-| V10 | Pet grooming | beta-full | `paws-parlour-dublin` | [PET-GROOMING](./PET-GROOMING-VERTICAL-PROGRAM.md) | Pet-scoped day; temperament visible at chair | Book **Biscuit** not just owner; handling notes |
-| V-AD | Automotive detailing | beta-full | `shine-studio-belfast` | [AUTOMOTIVE](./AUTOMOTIVE-DETAILING-VERTICAL-PROGRAM.md) | Bay utilisation; vehicle continuity on return | Package picker; drop-off visit instructions |
+| Doc | Vertical | GTM | Demo slug | Program | Operator wow | Guest wow |
+|-----|----------|-----|-----------|---------|--------------|-----------|
+| V1 | Hair & barbering | **Wave 1** | `luxe-salon-spa` | [HAIR](./HAIR-VERTICAL-PROGRAM.md) | Colour-day flight plan; stylist-scoped book; chair-rental firewall | Subdomain book; `/my` visit; rebook same stylist |
+| V2 | Beauty (full aisle) | **Wave 1** | `bloom-beauty-dublin` | [BEAUTY](./BEAUTY-VERTICAL-PROGRAM.md) · [Innovation](./BEAUTY-INNOVATION-PROGRAM.md) | Inbox-first; fill cycle; patch-test per service; all sub-segments | Subdomain book; vertical memory; fill vs full |
+| V3 | Wellness & spa | **Wave 1** | `harbour-wellness-cork` | [WELLNESS](./WELLNESS-VERTICAL-PROGRAM.md) · [North star](./WELLNESS-NORTHSTAR-PROGRAM.md) | Room board + package ledger + couples | Package on `/my`; session grid; gift credit |
+| V4 | Body art | **Wave 1** | `ink-anchor-galway` | [BODY-ART](./BODY-ART-VERTICAL-PROGRAM.md) | Proof desk; pipeline; deposit binds slot | Proof on `/my`; healing check-in |
+| V5 | Fitness | **Wave 1** | `peak-fitness-dublin` | [FITNESS](./FITNESS-VERTICAL-PROGRAM.md) | Class waitlist promote; pack decrement | Waitlist SMS; pack on `/my` |
+| V6 | Medspa | **Wave 1** | `clarity-medspa-dublin` | [MEDSPA](./MEDSPA-VERTICAL-PROGRAM.md) | Consent queue zero; mandate hub | Intake + e-sign; calm clinic brand |
+| V7 | Allied health | **Wave 1** | `motion-physio-cork` | [ALLIED-HEALTH](./ALLIED-HEALTH-VERTICAL-PROGRAM.md) | Plan cadence; assessment types | Prep SMS; follow-up from `/my` |
+| V10 | Pet grooming | **Wave 1** | `paws-parlour-dublin` | [PET-GROOMING](./PET-GROOMING-VERTICAL-PROGRAM.md) | Pet-scoped day; temperament | Book Biscuit; pet card on `/my` |
+| V-AD | Automotive detailing | **Wave 1** | `shine-studio-belfast` | [AUTOMOTIVE](./AUTOMOTIVE-DETAILING-VERTICAL-PROGRAM.md) | Bay board; vehicle continuity | Vehicle on `/my`; drop-off flow |
 
 **Market shop (locale pack):** `copenhagen-havn-wellness` — wellness program + DK copy; see [WELLNESS](./WELLNESS-VERTICAL-PROGRAM.md) § Market.
 
@@ -67,5 +71,6 @@ See [`PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./PEOPLE-BUSINESS-CATEGORY-MANIFES
 
 | Date | Change |
 |------|--------|
+| 2026-06-05 | GTM Wave 1 lock — nine verticals one bar; innovation program; subdomain + `/my` |
 | 2026-06-01 | Full vertical program set + build plan |
 | 2026-06-03 | Vertical excellence specs (all code verticals except wellness) |

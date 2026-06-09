@@ -392,7 +392,7 @@ export async function ensureDemoGuestWaitlistOffer(businessId: string): Promise<
     staffId: staff?.id,
     startAt: start.toISOString(),
     channelType: "WEB",
-    source: "demo-waitlist-offer",
+    source: "web",
     notes: "Demo slot opened for waitlist accept",
   });
   await cancelBookingWithReason(businessId, booking.id, "Demo — slot offered to waitlist");

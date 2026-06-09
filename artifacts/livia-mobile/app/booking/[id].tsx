@@ -1,7 +1,7 @@
 import { useGetBooking, useUpdateBooking } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -29,6 +29,7 @@ import { notifyBookingRunningLate, promptRunningLateMinutes } from "@/lib/runnin
 import { OperationalScreen } from "@/components/OperationalScreen";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { useQueryClient } from "@tanstack/react-query";
+import { useInAppNotifications } from "@/hooks/useInAppNotifications";
 
 function formatDateTime(iso: string, timeZone: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -81,6 +82,18 @@ export default function BookingDetailScreen() {
   const { id, intent } = useLocalSearchParams<{ id: string; intent?: string }>();
   const { currentBusiness } = useBusiness();
   const { timeZone: tz } = useBusinessTimezone();
+  const { markReadByResource } = useInAppNotifications();
+  const businessId = currentBusiness?.id ?? "";
+  const bookingId = id ?? "";
+
+  useEffect(() => {
+    if (!businessId || !bookingId) return;
+    void markReadByResource({
+      resourceKind: "booking",
+      resourceId: bookingId,
+      businessId,
+    });
+  }, [businessId, bookingId, markReadByResource]);
 
   const { data: booking, isLoading, refetch } = useGetBooking(
     currentBusiness?.id ?? "",

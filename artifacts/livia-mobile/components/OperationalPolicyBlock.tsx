@@ -92,7 +92,7 @@ export function OperationalPolicyBlock({
       )}
       {canEditOnWeb ? (
         <Pressable
-          onPress={() => void Linking.openURL(dashboardSettingsUrl("policy", businessId))}
+          onPress={() => void Linking.openURL(dashboardSettingsUrl("legal", businessId))}
           style={[styles.btn, { borderColor: colors.primary }]}
           testID="policy-edit-on-web"
         >

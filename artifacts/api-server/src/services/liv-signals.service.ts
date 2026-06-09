@@ -22,6 +22,16 @@ function hrefForEntity(
   if (!entityType || !entityId) return null;
   if (entityType === "booking") return `/bookings/${entityId}`;
   if (entityType === "conversation") return `/inbox?conversation=${entityId}`;
+  if (entityType === "commerce") return `/settings?tab=billing`;
+  if (entityType === "payment") return `/settings?tab=billing`;
+  if (
+    entityType === "twin_risk" ||
+    entityType === "twin_opportunity" ||
+    entityType === "twin_observation" ||
+    entityType === "twin_insight"
+  ) {
+    return "/dashboard";
+  }
   return null;
 }
 
@@ -41,9 +51,19 @@ export async function listActiveLivMoments(
       ),
     )
     .orderBy(desc(livSignalsTable.createdAt))
-    .limit(limit);
+    .limit(Math.max(limit * 4, 16));
 
-  return rows.map((r) => ({
+  const seen = new Set<string>();
+  const deduped = [];
+  for (const r of rows) {
+    const key = (r.dedupeKey ?? r.title).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(r);
+    if (deduped.length >= limit) break;
+  }
+
+  return deduped.map((r) => ({
     id: r.id,
     kind: r.kind,
     priority: r.priority as LivSignalPriority,

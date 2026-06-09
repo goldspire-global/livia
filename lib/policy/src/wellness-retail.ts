@@ -14,10 +14,11 @@ export type WellnessRetailSku = {
 export const WELLNESS_RETAIL_PROGRAM = {
   title: "Post-session retail",
   subtitle:
-    "Hydration, body oils, and gift sets — sent as a calm inbox thread after checkout, not a hard sell at the desk.",
+    "Hydration, body oils, and gift sets — on your /b page and as a calm inbox thread after checkout.",
+  defaultPublicTitle: "Take the ritual home",
   inboxActionLabel: "Draft post-session thread in Inbox",
   continuityVariant: "post_session" as const,
-  note: "Full SKU inventory and Stripe checkout for retail land in Ring 2. Today: continuity + reception handoff.",
+  note: "Guest bag + pay link on /b; reception can still hand off at the desk.",
   inboxFlowHint:
     "Opens Inbox with a draft loaded — pick the guest's thread from today's session, review, and send.",
 } as const;

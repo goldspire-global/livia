@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "wouter";
+import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
 import { formatDateTime } from "@/lib/format";
@@ -38,7 +38,7 @@ function formatTtl(expiresAt: string | null): string | null {
 }
 
 export default function PublicWaitlistPage() {
-  const { slug, token } = useParams<{ slug: string; token: string }>();
+  const { slug, token } = useGuestBookTokenRoute("waitlist");
   const [data, setData] = useState<WaitlistPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

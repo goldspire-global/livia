@@ -2,6 +2,9 @@ import { Link } from "wouter";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PresentationLayoutMorph } from "@workspace/policy";
+import { ownerHomeNeedsBriefingAction } from "@workspace/policy";
+import type { AtRiskGuestPreview } from "@workspace/policy";
+import { MorphOwnerSignalsFooter } from "@/components/dashboard/morph-owner-signals-footer";
 import {
   WellnessAtriumSchedule,
   WellnessLedgerSchedule,
@@ -29,6 +32,16 @@ export type WellnessMorphTodayProps = {
   tomorrowStress?: { score: number; pendingBookings: number; roomConflicts: number } | null;
   vertical?: string | null;
   category?: string | null;
+  atRiskGuests?: AtRiskGuestPreview[];
+  recentVisitFeedback?: Array<{
+    id: string;
+    bookingId: string;
+    score: number;
+    comment: string | null;
+    createdAt: string;
+  }>;
+  lowFeedbackCount?: number;
+  signalsLoading?: boolean;
 };
 
 function greeting(firstName: string | null | undefined): string {
@@ -57,7 +70,24 @@ export function WellnessMorphTodayHome({
   tomorrowStress,
   vertical,
   category,
+  atRiskGuests,
+  recentVisitFeedback,
+  lowFeedbackCount,
+  signalsLoading,
 }: WellnessMorphTodayProps) {
+  const needsAction = ownerHomeNeedsBriefingAction({
+    pendingCount,
+    handedOffCount: handoffCount,
+    atRiskCount: atRiskGuests?.length,
+    lowFeedbackCount,
+  });
+  const signalsFooter = (
+    <MorphOwnerSignalsFooter
+      atRiskGuests={atRiskGuests}
+      recentVisitFeedback={recentVisitFeedback}
+      loading={signalsLoading}
+    />
+  );
   if (morph === "atrium") {
     return (
       <div
@@ -87,7 +117,7 @@ export function WellnessMorphTodayHome({
               <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden />
               <p className="text-sm text-foreground/90 line-clamp-2">{livLine}</p>
             </div>
-            {pendingCount > 0 ? (
+            {needsAction ? (
               <Link href={oneThingHref} className="shrink-0">
                 <Button size="sm" className="rounded-full gap-1.5">
                   {oneThingLabel}
@@ -145,6 +175,7 @@ export function WellnessMorphTodayHome({
             </>
           ) : null}
         </p>
+        {signalsFooter}
       </div>
     );
   }
@@ -169,13 +200,14 @@ export function WellnessMorphTodayHome({
           {livLine}
         </div>
         <WellnessTimelineSchedule bookings={bookings} vertical={vertical} category={category} />
-        {pendingCount > 0 ? (
+        {needsAction ? (
           <Link href={oneThingHref} className="inline-block mt-4">
             <Button variant="outline" size="sm">
               {oneThingLabel}
             </Button>
           </Link>
         ) : null}
+        {signalsFooter}
       </div>
     );
   }
@@ -211,6 +243,7 @@ export function WellnessMorphTodayHome({
           vertical={vertical}
           category={category}
         />
+        {signalsFooter}
       </div>
     );
   }

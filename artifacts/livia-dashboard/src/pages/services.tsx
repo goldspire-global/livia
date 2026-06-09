@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, majorFromMinor, minorFromMajor } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,16 +28,22 @@ import {
   BEAUTY_SERVICE_TEMPLATES,
   businessVocabulary,
   resolveVerticalKey,
+  type BeautyServiceKind,
+  BEAUTY_SERVICE_KINDS,
 } from "@workspace/policy";
 
 interface ServiceForm {
   name: string;
   description: string;
+  aftercareInstructions: string;
   category: string;
   durationMinutes: number;
-  priceMinor: number;
+  priceMajor: number;
   currency: string;
   imageUrl?: string;
+  serviceKind?: string;
+  rebookIntervalDays?: number | "";
+  requiresPatchTest?: boolean;
 }
 
 function serviceNamePlaceholder(vertical: string): string {
@@ -83,9 +89,16 @@ export default function ServicesPage() {
   const createService = useCreateService();
   const updateService = useUpdateService();
   const { register, handleSubmit, reset, watch, setValue } = useForm<ServiceForm>({
-    defaultValues: { currency: "EUR", durationMinutes: 60, imageUrl: "", category: "" },
+    defaultValues: {
+      currency: "EUR",
+      durationMinutes: 60,
+      imageUrl: "",
+      category: "",
+      requiresPatchTest: false,
+    },
   });
   const draftImageUrl = watch("imageUrl");
+  const draftCurrency = watch("currency") || business?.currency || "EUR";
 
   const svcList =
     (services as {
@@ -111,16 +124,32 @@ export default function ServicesPage() {
   const serviceLabel = vocab.serviceNoun;
   const newItemLabel = isBeauty ? `New ${serviceLabel.toLowerCase()}` : "New service";
 
+  function beautyPayload(vals: ServiceForm) {
+    if (!isBeauty) return {};
+    return {
+      serviceKind: vals.serviceKind?.trim() || null,
+      rebookIntervalDays:
+        vals.rebookIntervalDays === "" || vals.rebookIntervalDays == null
+          ? null
+          : Number(vals.rebookIntervalDays),
+      requiresPatchTest: vals.requiresPatchTest ?? false,
+    };
+  }
+
   function openEdit(svc: (typeof svcList)[number]) {
     setEditId(svc.id);
     reset({
       name: svc.name,
       description: svc.description ?? "",
+      aftercareInstructions: (svc as { aftercareInstructions?: string }).aftercareInstructions ?? "",
       category: (svc as { category?: string }).category ?? "",
       durationMinutes: svc.durationMinutes,
-      priceMinor: svc.priceMinor,
+      priceMajor: majorFromMinor(svc.priceMinor),
       currency: svc.currency || "EUR",
       imageUrl: svc.imageUrl ?? "",
+      serviceKind: (svc as { serviceKind?: string }).serviceKind ?? "",
+      rebookIntervalDays: (svc as { rebookIntervalDays?: number | null }).rebookIntervalDays ?? "",
+      requiresPatchTest: (svc as { requiresPatchTest?: boolean }).requiresPatchTest ?? false,
     });
   }
 
@@ -133,11 +162,13 @@ export default function ServicesPage() {
         data: {
           name: vals.name,
           description: vals.description || undefined,
+          aftercareInstructions: vals.aftercareInstructions?.trim() || undefined,
           category: vals.category?.trim() || undefined,
           durationMinutes: Number(vals.durationMinutes),
-          priceMinor: Number(vals.priceMinor),
+          priceMinor: minorFromMajor(Number(vals.priceMajor)),
           currency: vals.currency || "EUR",
           imageUrl: vals.imageUrl?.trim() || undefined,
+          ...beautyPayload(vals),
         },
       },
       {
@@ -160,11 +191,13 @@ export default function ServicesPage() {
         data: {
           name: vals.name,
           description: vals.description || undefined,
+          aftercareInstructions: vals.aftercareInstructions?.trim() || undefined,
           category: vals.category?.trim() || undefined,
           durationMinutes: Number(vals.durationMinutes),
-          priceMinor: Number(vals.priceMinor),
+          priceMinor: minorFromMajor(Number(vals.priceMajor)),
           currency: vals.currency || "EUR",
           imageUrl: vals.imageUrl?.trim() || undefined,
+          ...beautyPayload(vals),
         },
       },
       {
@@ -259,8 +292,11 @@ export default function ServicesPage() {
                         setValue("name", t.name);
                         setValue("category", t.category);
                         setValue("durationMinutes", t.durationMinutes);
-                        setValue("priceMinor", t.priceMinor);
+                        setValue("priceMajor", majorFromMinor(t.priceMinor));
                         if (t.description) setValue("description", t.description);
+                        if (t.serviceKind) setValue("serviceKind", t.serviceKind);
+                        setValue("rebookIntervalDays", t.rebookIntervalDays ?? "");
+                        setValue("requiresPatchTest", t.requiresPatchTest ?? false);
                       }}
                     >
                       {t.name}
@@ -294,12 +330,54 @@ export default function ServicesPage() {
                     </select>
                   </div>
                 ) : null}
+                {isBeauty ? (
+                  <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-3">
+                    <div className="space-y-2">
+                      <Label>Service kind</Label>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                        {...register("serviceKind")}
+                        data-testid="input-service-kind"
+                      >
+                        <option value="">Other</option>
+                        {BEAUTY_SERVICE_KINDS.map((k) => (
+                          <option key={k} value={k}>
+                            {k.replace(/_/g, " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Rebook interval (days)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="e.g. 14 for lash fill"
+                        {...register("rebookIntervalDays")}
+                        data-testid="input-rebook-interval"
+                      />
+                    </div>
+                    <label className="col-span-2 flex items-center gap-2 text-sm">
+                      <input type="checkbox" {...register("requiresPatchTest")} />
+                      Requires patch test before booking
+                    </label>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
                     {...register("description")}
                     placeholder="What's included..."
                     data-testid="input-description"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Aftercare instructions</Label>
+                  <Textarea
+                    {...register("aftercareInstructions")}
+                    placeholder="Post-session care Liv sends automatically (optional)"
+                    data-testid="input-aftercare-instructions"
+                    rows={3}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -319,13 +397,14 @@ export default function ServicesPage() {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-1">
                       <DollarSign className="h-3 w-3" />
-                      Price (cents) *
+                      Price ({draftCurrency}) *
                     </Label>
                     <Input
                       type="number"
                       min={0}
-                      {...register("priceMinor", { required: true, min: 0 })}
-                      placeholder="2000 = $20.00"
+                      step={0.01}
+                      {...register("priceMajor", { required: true, min: 0, valueAsNumber: true })}
+                      placeholder="65.00"
                       data-testid="input-price"
                     />
                   </div>
@@ -374,16 +453,55 @@ export default function ServicesPage() {
               <Label>Description</Label>
               <Textarea {...register("description")} />
             </div>
+            <div className="space-y-2">
+              <Label>Aftercare instructions</Label>
+              <Textarea
+                {...register("aftercareInstructions")}
+                placeholder="Post-session care Liv sends automatically"
+                rows={3}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Duration (min)</Label>
                 <Input type="number" min={5} {...register("durationMinutes", { required: true })} />
               </div>
               <div className="space-y-2">
-                <Label>Price (cents)</Label>
-                <Input type="number" min={0} {...register("priceMinor", { required: true })} />
+                <Label>Price ({draftCurrency})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  {...register("priceMajor", { required: true, min: 0, valueAsNumber: true })}
+                />
               </div>
             </div>
+            {isBeauty ? (
+              <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-3">
+                <div className="space-y-2">
+                  <Label>Service kind</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    {...register("serviceKind")}
+                  >
+                    <option value="">Other</option>
+                    {BEAUTY_SERVICE_KINDS.map((k) => (
+                      <option key={k} value={k}>
+                        {k.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Rebook interval (days)</Label>
+                  <Input type="number" min={0} {...register("rebookIntervalDays")} />
+                </div>
+                <label className="col-span-2 flex items-center gap-2 text-sm">
+                  <input type="checkbox" {...register("requiresPatchTest")} />
+                  Requires patch test
+                </label>
+              </div>
+            ) : null}
             {bid ? (
               <ServiceImageField
                 businessId={bid}

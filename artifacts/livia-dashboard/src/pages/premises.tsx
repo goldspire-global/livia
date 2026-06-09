@@ -61,6 +61,10 @@ export default function PremisesPage() {
   const [coSlug, setCoSlug] = useState("");
   const [coLabel, setCoLabel] = useState("");
   const [coVertical, setCoVertical] = useState<string>("beauty");
+  const [inviteOpen, setInviteOpen] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLabel, setInviteLabel] = useState("");
+  const [lastInvitePath, setLastInvitePath] = useState<string | null>(null);
 
   async function reload() {
     setLoading(true);
@@ -95,6 +99,34 @@ export default function PremisesPage() {
       void reload();
     } catch {
       toast({ title: "Could not create premises", variant: "destructive" });
+    }
+  }
+
+  async function handleInviteCoOwner(premisesId: string) {
+    if (!business?.id || !inviteEmail.trim() || !inviteLabel.trim()) return;
+    try {
+      const result = await customFetch<{
+        acceptPath: string;
+        token: string;
+      }>(`/api/premises/${premisesId}/co-tenant-invites`, {
+        method: "POST",
+        body: JSON.stringify({
+          invitingBusinessId: business.id,
+          invitedEmail: inviteEmail.trim(),
+          publicLabel: inviteLabel.trim(),
+        }),
+      });
+      const fullPath = result.acceptPath;
+      setLastInvitePath(fullPath);
+      toast({
+        title: "Invite created",
+        description: `Share ${fullPath} with the other owner — they accept with their own Livia account.`,
+      });
+      setInviteOpen(null);
+      setInviteEmail("");
+      setInviteLabel("");
+    } catch {
+      toast({ title: "Could not create invite", variant: "destructive" });
     }
   }
 
@@ -223,7 +255,7 @@ export default function PremisesPage() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 truncate">{t.name}</p>
                     </div>
-                    <Link href={`/b/${t.slug}`}>
+                    <Link href={`/book/${t.slug}`}>
                       <Button variant="outline" size="sm" className="w-full sm:w-auto">
                         Booking page
                       </Button>
@@ -273,10 +305,58 @@ export default function PremisesPage() {
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" size="sm" onClick={() => setCoTenantOpen(p.id)}>
-                  Add co-tenant (new business at this address)
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setCoTenantOpen(p.id)}>
+                    Add co-tenant (you own both)
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setInviteOpen(p.id)}>
+                    Invite separate owner
+                  </Button>
+                </div>
               )}
+              {inviteOpen === p.id ? (
+                <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                  <p className="text-sm font-medium">Invite another owner by email</p>
+                  <p className="text-xs text-muted-foreground">
+                    They keep their own tenant and clients — only the shared address page links you.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Owner email</Label>
+                      <Input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="spa.owner@example.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Customer-facing label</Label>
+                      <Input
+                        value={inviteLabel}
+                        onChange={(e) => setInviteLabel(e.target.value)}
+                        placeholder="e.g. Harbour Light Spa"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => void handleInviteCoOwner(p.id)}>
+                      Send invite link
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setInviteOpen(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              {lastInvitePath ? (
+                <p className="text-xs text-muted-foreground">
+                  Last invite:{" "}
+                  <Link href={lastInvitePath} className="text-primary hover:underline">
+                    {lastInvitePath}
+                  </Link>
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         ))

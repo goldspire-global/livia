@@ -9,28 +9,38 @@ export type VerticalOnboardingExtra = {
 
 export const VERTICAL_ONBOARDING_EXTRAS: Record<BusinessVertical, VerticalOnboardingExtra> = {
   hair: {
+    createBusinessHint:
+      "Optional: start with a template service menu, or build your own from scratch.",
     goLiveExtras: ["Deposit policy matches how you take walk-ins vs colour clients."],
     postGoLive: ["Point Instagram bio link to your public booking page."],
   },
   beauty: {
+    createBusinessHint:
+      "Optional: start with a template treatment menu and mini store, or build your own from scratch.",
     goLiveExtras: ["Patch test / allergy notes in service descriptions if you do nails or lashes."],
     postGoLive: ["Enable WhatsApp if most bookings come from DMs."],
   },
   "body-art": {
-    createBusinessHint: "Design proof workflow is in Bookings after go-live.",
+    createBusinessHint:
+      "Optional: start with a template service menu, or build your own from scratch. Design proof workflow is in Bookings after go-live.",
     goLiveExtras: ["Consultation service is seeded — use it before long tattoo sessions."],
     postGoLive: ["Share design proof links from the booking timeline."],
   },
   wellness: {
+    createBusinessHint:
+      "Optional: start with a template session menu, or build your own from scratch.",
     goLiveExtras: ["Session length buffers in Settings → Policy if you stack rooms."],
     postGoLive: [],
   },
   fitness: {
+    createBusinessHint:
+      "Optional: start with a template session menu, or build your own from scratch.",
     goLiveExtras: ["Class capacity and waitlist: enable in Services if you run group sessions."],
     postGoLive: ["Staff borrow workflow if instructors cover each other's classes."],
   },
   medspa: {
-    createBusinessHint: "Medical intake and procedure consent apply on your public booking page.",
+    createBusinessHint:
+      "Optional template procedure menu on create. Medical intake and procedure consent apply on your public booking page.",
     goLiveExtras: [
       "Review procedure catalog and consent copy (Settings → vertical / medspa).",
       "Marketing SMS stays separate from clinical reminders (jurisdiction footer).",
@@ -38,14 +48,20 @@ export const VERTICAL_ONBOARDING_EXTRAS: Record<BusinessVertical, VerticalOnboar
     postGoLive: ["Slot waitlist offers fire when a cancellation frees a popular procedure."],
   },
   "allied-health": {
+    createBusinessHint:
+      "Optional: start with a template session menu, or build your own from scratch.",
     goLiveExtras: ["Longer cancel windows and documentation habits — set in operational policy."],
     postGoLive: [],
   },
   "pet-grooming": {
+    createBusinessHint:
+      "Optional: start with a template groom menu, or build your own from scratch.",
     goLiveExtras: ["Pet notes on customer profile — use after first booking."],
     postGoLive: ["Continuity SMS thread works well for pickup timing."],
   },
   "automotive-detailing": {
+    createBusinessHint:
+      "Optional: start with a template service menu, or build your own from scratch.",
     goLiveExtras: ["Vehicle size / package tiers reflected in service durations."],
     postGoLive: [],
   },

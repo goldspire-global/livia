@@ -1,5 +1,25 @@
 /** B2C public booking helpers — kept in sync with dashboard public-booking-helpers. */
 
+export type PublicSlotRow = {
+  startAt: string;
+  available?: boolean;
+};
+
+export function dedupePublicSlotsByStartAt<T extends PublicSlotRow>(slots: T[]): T[] {
+  const byStart = new Map<string, T>();
+  for (const slot of slots) {
+    const prev = byStart.get(slot.startAt);
+    if (!prev) {
+      byStart.set(slot.startAt, slot);
+      continue;
+    }
+    if (slot.available !== false && prev.available === false) {
+      byStart.set(slot.startAt, slot);
+    }
+  }
+  return [...byStart.values()].sort((a, b) => a.startAt.localeCompare(b.startAt));
+}
+
 export function guessMedspaProcedureCode(
   serviceName: string,
   procedures: { code: string; label: string }[],

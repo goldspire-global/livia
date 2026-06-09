@@ -12,8 +12,10 @@ import { dayOfWeekInTz, dayBoundsInTz, zonedDateTimeToUtc } from "../lib/tz";
 import { resolveResourceForService, resourceCapacityAvailable } from "./booking-resources.service";
 import { isDateClosedForBusiness } from "./country-pack.service";
 import { getBusinessById } from "./businesses.service";
+import { dedupeSlotsByStartAt } from "../lib/slot-dedupe";
+import { minimumBeautySlotMinutes, type BeautyServiceKind } from "@workspace/policy";
 
-type Slot = {
+export type Slot = {
   startAt: string;
   endAt: string;
   staffId: string | null;
@@ -21,6 +23,8 @@ type Slot = {
   resourceId: string | null;
   available: boolean;
 };
+
+export { dedupeSlotsByStartAt };
 
 export async function getAvailableSlots(opts: {
   businessId: string;
@@ -49,7 +53,17 @@ export async function getAvailableSlots(opts: {
     opts.resourceId,
   );
 
-  const durationMs = (service.durationMinutes + service.bufferAfterMinutes) * 60_000;
+  const beautyMin =
+    biz?.vertical === "beauty"
+      ? minimumBeautySlotMinutes({
+          serviceKind: (service.serviceKind as BeautyServiceKind | null) ?? null,
+          category: service.category,
+          name: service.name,
+          requiresPatchTest: service.requiresPatchTest,
+        })
+      : 0;
+  const effectiveDurationMinutes = Math.max(service.durationMinutes, beautyMin);
+  const durationMs = (effectiveDurationMinutes + service.bufferAfterMinutes) * 60_000;
   const bufferBeforeMs = service.bufferBeforeMinutes * 60_000;
 
   const { start: dayStart, end: dayEnd } = dayBoundsInTz(date, timezone);
@@ -198,5 +212,5 @@ export async function getAvailableSlots(opts: {
     }
   }
 
-  return slots;
+  return dedupeSlotsByStartAt(slots);
 }

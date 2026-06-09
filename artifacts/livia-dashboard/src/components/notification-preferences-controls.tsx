@@ -39,12 +39,22 @@ const TOGGLES: { key: keyof NotificationPrefs; label: string; hint: string }[] =
   {
     key: "pushInboxHandoff",
     label: "Human handoff",
-    hint: "When a thread is marked for your team (Liv paused).",
+    hint: "When you've taken over a thread from Liv.",
   },
   {
     key: "pushLivBookingViaChannel",
     label: "Liv booked via chat",
     hint: "Highlight when Liv closes a booking from a DM thread.",
+  },
+  {
+    key: "pushTwinRisk",
+    label: "Twin risks",
+    hint: "When Liv detects a business risk from your shop facts.",
+  },
+  {
+    key: "pushTwinOpportunity",
+    label: "Twin opportunities",
+    hint: "When Liv spots upside in revenue, trust, or operations.",
   },
 ];
 

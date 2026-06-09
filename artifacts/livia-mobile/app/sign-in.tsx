@@ -41,6 +41,7 @@ import {
 } from "@/lib/demo-sign-in";
 import { persistDemoSession } from "@/lib/demo-session";
 import { setDevPersonaOverride } from "@/hooks/usePersona";
+import { LIVIA_MOBILE_ENTRY_COPY } from "@workspace/policy";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -506,6 +507,22 @@ export default function SignInScreen() {
           )}
         </Animated.View>
 
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => {
+            haptics.selection();
+            router.replace("/" as never);
+          }}
+          style={styles.guestEntry}
+          testID="sign-in-back-to-gateway"
+        >
+          <Text style={[styles.guestEntryText, { color: colors.mutedForeground }]}>
+            <Text style={{ color: colors.primary, fontFamily: fonts.bodySemi }}>
+              ← {LIVIA_MOBILE_ENTRY_COPY.staffBackLink}
+            </Text>
+          </Text>
+        </TouchableOpacity>
+
         <Text style={[styles.legal, { color: colors.mutedForeground }]}>
           By continuing you agree to Livia's Terms & Privacy Policy.
         </Text>
@@ -706,6 +723,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyMed,
     letterSpacing: 1,
     textTransform: "uppercase",
+  },
+  guestEntry: {
+    alignItems: "center",
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    gap: 4,
+  },
+  guestEntryText: {
+    textAlign: "center",
+    fontSize: 13.5,
+    fontFamily: fonts.body,
+  },
+  guestEntryHint: {
+    textAlign: "center",
+    fontSize: 11.5,
+    fontFamily: fonts.body,
+    maxWidth: 300,
   },
   legal: {
     textAlign: "center",

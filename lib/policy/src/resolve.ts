@@ -5,7 +5,13 @@ import {
   resolveVerticalFromCategory,
   VERTICAL_PACKS,
 } from "./verticals";
-import { parseOperationalPolicy, type OperationalPolicy } from "./operational-policy";
+import { parseOperationalPolicy } from "./operational-policy";
+import {
+  computeBookingTermsBlock,
+  resolveBookingTermsBlock,
+  resolveHouseRulesBlock,
+  resolvePrivacyNoticeBlock,
+} from "./guest-policies";
 import type {
   BusinessPolicyInput,
   BusinessTier,
@@ -28,16 +34,16 @@ export function resolveBusinessPolicies(
     ? `Deposit: ${op.depositPercent}% required to confirm online bookings.`
     : jurisdiction.depositPolicySummary;
 
-  const bookingTermsBlock = [
-    jurisdiction.bookingTermsIntro,
-    depositSummary,
-    `Free cancellation up to ${cancelHours} hours before your appointment unless otherwise stated.`,
-    op.noShowStrikeThreshold > 0
-      ? `Repeated no-shows may require a deposit for future bookings.`
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const bookingTermsBlock = resolveBookingTermsBlock({
+    country: input.country,
+    operational: op,
+  });
+  const privacyNoticeBlock = resolvePrivacyNoticeBlock({
+    businessName: input.name,
+    country: input.country,
+    operational: op,
+  });
+  const houseRulesBlock = resolveHouseRulesBlock({ operational: op });
 
   return {
     jurisdiction,
@@ -47,6 +53,12 @@ export function resolveBusinessPolicies(
     locale: input.locale || jurisdiction.defaultLocale,
     timezone: input.timezone || jurisdiction.defaultTimezone,
     bookingTermsBlock,
+    bookingTermsTemplate: computeBookingTermsBlock({
+      country: input.country,
+      operational: { ...op, bookingTermsCustom: undefined },
+    }),
+    privacyNoticeBlock,
+    houseRulesBlock,
     depositPolicySummary: depositSummary,
     aiDisclosure: jurisdiction.aiDisclosure,
     operational: {

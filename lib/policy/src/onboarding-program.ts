@@ -14,9 +14,11 @@ export const BLOCKING_ONBOARDING_ACTS: OnboardingActId[] = [
   "a8_public_link",
 ];
 
-/** Seeded on create — no click-through required. */
-export const AUTO_COMPLETED_ON_CREATE_ACTS: OnboardingActId[] = [
-  "a1_create_business",
+/** Auto-completed on POST /businesses before any opt-in seed. */
+export const AUTO_COMPLETED_ON_CREATE_ACTS: OnboardingActId[] = ["a1_create_business"];
+
+/** Acts completed when `starterPack: true` or legacy `seedDefaults: true` seeds menu + staff. */
+export const AUTO_COMPLETED_ON_MENU_SEED_ACTS: OnboardingActId[] = [
   "a3_service_menu",
   "a4_team",
 ];
@@ -116,22 +118,18 @@ export function mergePercentWithBlocking(state: OnboardingState): OnboardingStat
   };
 }
 
-/** Onboarding after POST /businesses — menu act blocked for beauty/hair heartland. */
+/** Onboarding after POST /businesses — menu never auto-completed; use starterPack opt-in to seed. */
 export function afterBusinessCreatedStateForVertical(
   vertical: BusinessVertical,
 ): OnboardingState {
   const needsMenu = verticalRequiresMenuSetup(vertical);
-  const completed = [
-    "a1_create_business",
-    "a4_team",
-    ...(needsMenu ? [] : (["a3_service_menu"] as OnboardingActId[])),
-  ] as OnboardingActId[];
+  const completed = [...AUTO_COMPLETED_ON_CREATE_ACTS];
   return mergePercentWithBlocking({
     currentAct: needsMenu ? "a3_service_menu" : "a2_shop_profile",
     completedActs: completed,
     percentComplete: 0,
     checklist: onboardingChecklistSchema.parse({
-      servicesConfirmed: !needsMenu,
+      servicesConfirmed: false,
     }),
     updatedAt: new Date().toISOString(),
   });
@@ -142,9 +140,37 @@ export function afterBusinessCreatedState(vertical?: BusinessVertical): Onboardi
   return afterBusinessCreatedStateForVertical(vertical ?? "hair");
 }
 
-/** Generic demo seed — menu auto-completed (not beauty/hair heartland). */
-export function afterBusinessCreatedStateWithSeed(): OnboardingState {
-  return afterBusinessCreatedStateForVertical("fitness");
+/** Merge menu + team acts after starterPack or legacy seedDefaults seeding. */
+export function mergeOnboardingAfterMenuSeed(
+  state: OnboardingState,
+  vertical: BusinessVertical,
+): OnboardingState {
+  const completed = new Set(state.completedActs);
+  for (const act of AUTO_COMPLETED_ON_MENU_SEED_ACTS) completed.add(act);
+  return mergePercentWithBlocking({
+    ...state,
+    currentAct: verticalRequiresMenuSetup(vertical) ? "a2_shop_profile" : state.currentAct,
+    completedActs: [...completed],
+    checklist: onboardingChecklistSchema.parse({
+      ...state.checklist,
+      servicesConfirmed: true,
+    }),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/** Onboarding after opt-in starter pack — menu + owner staff seeded. */
+export function afterBusinessCreatedStateWithStarterPack(
+  vertical: BusinessVertical = "fitness",
+): OnboardingState {
+  return mergeOnboardingAfterMenuSeed(afterBusinessCreatedStateForVertical(vertical), vertical);
+}
+
+/** Post seedDefaults or starterPack — menu + team acts complete. */
+export function afterBusinessCreatedStateWithSeed(
+  vertical: BusinessVertical = "fitness",
+): OnboardingState {
+  return afterBusinessCreatedStateWithStarterPack(vertical);
 }
 
 export function nextRecommendedAct(state: OnboardingState): OnboardingActId {
@@ -156,4 +182,17 @@ export function nextRecommendedAct(state: OnboardingState): OnboardingActId {
     if (!completed.has(act)) return act;
   }
   return "a12_go_live";
+}
+
+/** Prefer capability-readiness hints when acts are still incomplete. */
+export function nextRecommendedActWithReadiness(
+  state: OnboardingState | null | undefined,
+  readinessActHints: OnboardingActId[] = [],
+): OnboardingActId {
+  if (!state) return readinessActHints[0] ?? "a2_shop_profile";
+  const completed = new Set(state.completedActs ?? []);
+  for (const act of readinessActHints) {
+    if (!completed.has(act)) return act;
+  }
+  return nextRecommendedAct(state);
 }

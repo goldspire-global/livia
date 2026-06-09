@@ -67,7 +67,10 @@ export function buildLivSystemPrompt(args: {
   if (coreOverride) {
     merged = `${coreOverride}\n\n${merged}`;
   }
-  const policyBlock = `\n\nBooking terms (legal):\n${args.policies.bookingTermsBlock}\n\nVocabulary: ${args.policies.vertical.livVocabularyHint}\n`;
+  const privacyLine = args.policies.privacyNoticeBlock?.trim()
+    ? `\nPrivacy notice (guest-facing):\n${args.policies.privacyNoticeBlock.trim()}`
+    : "";
+  const policyBlock = `\n\nBooking terms (legal):\n${args.policies.bookingTermsBlock}${privacyLine}\n\nVocabulary: ${args.policies.vertical.livVocabularyHint}\n`;
   return `${merged}${policyBlock}`;
 }
 

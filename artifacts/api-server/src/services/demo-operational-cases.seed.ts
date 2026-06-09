@@ -19,6 +19,11 @@ export async function ensureDemoOperationalCases(
 ): Promise<void> {
   if (slug === "luxe-salon-spa") {
     await ensureSeanRefundProposal(businessId, bookingKeys.sean_today);
+    await ensureDemoCommerceDepositProposal(businessId);
+    const { syncCommerceIntelligenceLoop } = await import("./commerce-signals.service");
+    await syncCommerceIntelligenceLoop(businessId);
+    const { runTwinIntelligenceDaily } = await import("./twin-intelligence-daily.service");
+    await runTwinIntelligenceDaily(businessId);
   }
   await ensureDefaultShiftTemplates(businessId);
 }
@@ -88,6 +93,34 @@ async function ensureSeanRefundProposal(businessId: string, bookingId: string | 
       conversationId: conv.id,
       reason: "Late cancellation — Sean Kelly deposit refund",
       customerName: "Sean Kelly",
+    },
+  });
+}
+
+async function ensureDemoCommerceDepositProposal(businessId: string) {
+  const [existing] = await db
+    .select({ id: livActionProposalsTable.id })
+    .from(livActionProposalsTable)
+    .where(
+      and(
+        eq(livActionProposalsTable.businessId, businessId),
+        eq(livActionProposalsTable.action, "collect_deposit"),
+        eq(livActionProposalsTable.status, "pending"),
+      ),
+    )
+    .limit(1);
+  if (existing) return;
+
+  await createLivProposalIfNeeded({
+    businessId,
+    action: "collect_deposit",
+    resourceKind: "commerce_signal",
+    resourceId: "uncaptured_demand",
+    metadata: {
+      signalId: "uncaptured_demand",
+      href: "/settings?tab=billing",
+      title: "Turn on deposits",
+      body: "Demo: bookings are flowing but deposits are not wired — approve to open billing.",
     },
   });
 }

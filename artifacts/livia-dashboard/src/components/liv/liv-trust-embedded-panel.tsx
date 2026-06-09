@@ -4,6 +4,7 @@ import { usePersona } from "@/lib/persona";
 import { canEditLiv, canViewComms } from "@/lib/settings-persona";
 import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import LivPromptControls from "@/components/liv-prompt-controls";
+import LivMandateControls from "@/components/liv-mandate-controls";
 import OperationalPolicyControls from "@/components/operational-policy-controls";
 import CommunicationsControls from "@/components/communications-controls";
 
@@ -19,6 +20,18 @@ export function LivTrustEmbeddedPanel() {
 
   return (
     <div className="space-y-3" data-testid="liv-trust-embedded">
+      <div id="liv-mandate" className="scroll-mt-20">
+        <SettingsDisclosure
+          title="Trust & autonomy"
+          description="Mandate rung, refund cap, and blocked actions."
+          defaultOpen={false}
+        >
+          <div className="pt-2">
+            <LivMandateControls />
+          </div>
+        </SettingsDisclosure>
+      </div>
+
       <SettingsDisclosure
         title="Liv voice & prompts"
         description="Greeting, tone, and what Liv knows about your shop."

@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { generateId } from "../lib/id";
+import { logEvent } from "./events.service";
 import {
   sendAiEmail,
   sendAiInstagram,
@@ -170,6 +171,32 @@ export async function appendMessage(input: {
     .update(conversationsTable)
     .set({ lastMessageAt: new Date(), updatedAt: new Date() })
     .where(eq(conversationsTable.id, input.conversationId));
+
+  void (async () => {
+    const [conv] = await db
+      .select({ businessId: conversationsTable.businessId })
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, input.conversationId))
+      .limit(1);
+    if (!conv?.businessId || input.role === "SYSTEM") return;
+    if (input.role === "USER") {
+      await logEvent({
+        type: "MESSAGE_RECEIVED",
+        businessId: conv.businessId,
+        userId: input.authorUserId ?? undefined,
+        entityType: "conversation",
+        entityId: input.conversationId,
+      });
+    } else if (input.role === "ASSISTANT") {
+      await logEvent({
+        type: "MESSAGE_SENT",
+        businessId: conv.businessId,
+        userId: input.authorUserId ?? undefined,
+        entityType: "conversation",
+        entityId: input.conversationId,
+      });
+    }
+  })().catch(() => undefined);
 
   return row;
 }

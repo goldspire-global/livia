@@ -14,6 +14,7 @@ import { logEvent } from "./events.service";
 import { EventType } from "@workspace/db";
 import { recordProviderDlq } from "./stripe-events.service";
 import { withBoundedProviderRetry } from "../lib/provider-retry";
+import { materializePaymentFailedSignal } from "./commerce-signals.service";
 
 export class PaymentInvariantError extends Error {
   constructor(message: string) {
@@ -69,11 +70,12 @@ export async function getPaymentLedgerForBooking(businessId: string, bookingId: 
 
 export async function createBookingPaymentIntent(args: {
   businessId: string;
-  bookingId: string;
+  bookingId?: string | null;
   customerId?: string | null;
   amountMinor: number;
   currency?: string;
   description?: string;
+  metadata?: Record<string, unknown>;
 }): Promise<{
   paymentIntentRecordId: string;
   clientSecret: string | null;
@@ -95,17 +97,17 @@ export async function createBookingPaymentIntent(args: {
       id: recordId,
       businessId: args.businessId,
       customerId: args.customerId ?? null,
-      bookingId: args.bookingId,
+      bookingId: args.bookingId ?? null,
       amountMinor: args.amountMinor,
       currency,
       status: "PENDING",
-      metadata: { simulated: true, description: args.description ?? null },
+      metadata: { simulated: true, description: args.description ?? null, ...(args.metadata ?? {}) },
     });
     await logEvent({
       businessId: args.businessId,
       type: EventType.PAYMENT_INTENT_CREATED,
-      entityType: "booking",
-      entityId: args.bookingId,
+      entityType: args.bookingId ? "booking" : "payment",
+      entityId: args.bookingId ?? recordId,
       context: { paymentIntentRecordId: recordId, simulated: true, amountMinor: args.amountMinor },
     });
     return {
@@ -129,11 +131,12 @@ export async function createBookingPaymentIntent(args: {
           currency: currency.toLowerCase(),
           metadata: {
             businessId: args.businessId,
-            bookingId: args.bookingId,
+            bookingId: args.bookingId ?? "",
             customerId: args.customerId ?? "",
             paymentIntentRecordId: recordId,
+            ...(args.metadata ?? {}),
           },
-          description: args.description ?? `Booking ${args.bookingId}`,
+          description: args.description ?? (args.bookingId ? `Booking ${args.bookingId}` : "Retail order"),
           automatic_payment_methods: { enabled: true },
         }),
     );
@@ -153,19 +156,19 @@ export async function createBookingPaymentIntent(args: {
     id: recordId,
     businessId: args.businessId,
     customerId: args.customerId ?? null,
-    bookingId: args.bookingId,
+    bookingId: args.bookingId ?? null,
     providerPaymentIntentId: pi.id,
     amountMinor: args.amountMinor,
     currency,
     status: mapStripePiStatus(pi.status),
-    metadata: { stripeStatus: pi.status },
+    metadata: { stripeStatus: pi.status, ...(args.metadata ?? {}) },
   });
 
   await logEvent({
     businessId: args.businessId,
     type: EventType.PAYMENT_INTENT_CREATED,
-    entityType: "booking",
-    entityId: args.bookingId,
+    entityType: args.bookingId ? "booking" : "payment",
+    entityId: args.bookingId ?? recordId,
     context: {
       paymentIntentRecordId: recordId,
       providerPaymentIntentId: pi.id,
@@ -244,6 +247,12 @@ export async function upsertPaymentFromStripeIntent(
         entityId: bookingId,
         context: { providerPaymentIntentId: pi.id, status: pi.status },
       });
+      void materializePaymentFailedSignal({
+        businessId,
+        paymentId: pi.id,
+        amountMinor: pi.amount,
+        currency: pi.currency.toUpperCase(),
+      });
     }
     return { paymentId: null, businessId };
   }
@@ -296,7 +305,30 @@ export async function upsertPaymentFromStripeIntent(
     metadata: { providerPaymentIntentId: pi.id },
   });
 
-  if (bookingId && businessId) {
+  const retailOrderId = pi.metadata?.retailOrderId ?? null;
+  const kind = pi.metadata?.kind ?? "";
+
+  if (kind === "guest_combined" && bookingId && businessId) {
+    const depositMinor = Math.max(0, Number(pi.metadata?.depositMinor ?? 0));
+    if (depositMinor > 0) {
+      const [row] = await db
+        .select({ depositPaidEurCents: bookingsTable.depositPaidEurCents })
+        .from(bookingsTable)
+        .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)))
+        .limit(1);
+      const nextPaid = (row?.depositPaidEurCents ?? 0) + depositMinor;
+      await db
+        .update(bookingsTable)
+        .set({ depositPaidEurCents: nextPaid, updatedAt: new Date() })
+        .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)));
+    }
+    if (retailOrderId) {
+      const { markRetailOrderPaid } = await import("./beauty-retail.service");
+      await markRetailOrderPaid(retailOrderId, businessId);
+    }
+    const { confirmBookingAfterStripePayment } = await import("./wellness-ops.service");
+    void confirmBookingAfterStripePayment(businessId, bookingId).catch(() => undefined);
+  } else if (bookingId && businessId && kind === "guest_deposit") {
     await db
       .update(bookingsTable)
       .set({
@@ -306,6 +338,11 @@ export async function upsertPaymentFromStripeIntent(
       .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)));
     const { confirmBookingAfterStripePayment } = await import("./wellness-ops.service");
     void confirmBookingAfterStripePayment(businessId, bookingId).catch(() => undefined);
+  }
+
+  if (kind === "retail_order" && retailOrderId) {
+    const { markRetailOrderPaid } = await import("./beauty-retail.service");
+    await markRetailOrderPaid(retailOrderId, businessId);
   }
 
   await logEvent({
@@ -438,6 +475,13 @@ export async function issueRefundForPayment(args: {
       providerRefundId: `demo-refund-${refundId.slice(-8)}`,
     });
     await syncPaymentRefundStatus(payment.id);
+    await logEvent({
+      type: "REFUND_CREATED",
+      businessId: args.businessId,
+      entityType: "payment",
+      entityId: payment.id,
+      context: { refundId, amountMinor: args.amountMinor, bookingId: args.bookingId ?? payment.bookingId },
+    });
     return { refundId, status: "SUCCEEDED", providerRefundId: null };
   }
 
@@ -497,6 +541,13 @@ export async function issueRefundForPayment(args: {
 
   if (stripeRefund.status === "succeeded") {
     await syncPaymentRefundStatus(payment.id);
+    await logEvent({
+      type: "REFUND_CREATED",
+      businessId: args.businessId,
+      entityType: "payment",
+      entityId: payment.id,
+      context: { refundId, amountMinor: args.amountMinor, providerRefundId: stripeRefund.id },
+    });
   }
 
   return {

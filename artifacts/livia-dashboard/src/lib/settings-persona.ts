@@ -27,7 +27,6 @@ export function settingsTabsForPersona(persona: PersonaKind): SettingsTabId[] {
         "liv",
         "comms",
         "billing",
-        "ownership",
         "legal",
       ];
     case "manager":
@@ -72,7 +71,7 @@ export const SETTINGS_TAB_LABELS: Record<SettingsTabId, string> = {
   comms: "Channels",
   team: "Team",
   billing: "Plan",
-  ownership: "Ownership",
+  ownership: "Ownership succession",
   integrations: "Integrations",
   legal: "Legal",
 };

@@ -4,7 +4,7 @@
 **Audience:** founder, product, design, engineering, GTM, agents  
 **Authority:** When category language conflicts with older docs (“salon OS”, “salon hires”), **this doc wins** for *product definition*. GTM wedge (IE hair) remains in [`SCOPE-MORATORIUM.md`](./SCOPE-MORATORIUM.md) until Gate 2 unlock.
 
-**Reads with:** [`../LIVIA-ALIGNMENT.md`](../LIVIA-ALIGNMENT.md) · [`LIVIA-GLOBAL-PRODUCT-SYSTEM.md`](./LIVIA-GLOBAL-PRODUCT-SYSTEM.md) · [`../livia-positioning.md`](../livia-positioning.md) · [`APPOINTMENT-BUSINESS-PLATFORM.md`](./APPOINTMENT-BUSINESS-PLATFORM.md)
+**Reads with:** [`MASTER-BLUEPRINT-INDEX.md`](./MASTER-BLUEPRINT-INDEX.md) · [`../LIVIA-ALIGNMENT.md`](../LIVIA-ALIGNMENT.md) · [`LIVIA-GLOBAL-PRODUCT-SYSTEM.md`](./LIVIA-GLOBAL-PRODUCT-SYSTEM.md) · [`../livia-positioning.md`](../livia-positioning.md)
 
 ---
 

@@ -16,6 +16,7 @@ import {
 import { getBetaSignupMode } from "../lib/beta-signup-gate";
 import { getBusinessesForUser } from "../services/businesses.service";
 import { getChainRollupForOwner, getOrgShapeSignalsForOwner } from "../services/chain-rollup.service";
+import { getTenantCapabilities } from "../services/capability-resolution.service";
 import { resolveOrgShapeProfile } from "@workspace/policy";
 import { getBrandPortfolioForOwner } from "../services/brand-portfolio.service";
 import { getFranchiseRollupForOwner } from "../services/franchise-rollup.service";
@@ -28,6 +29,7 @@ import {
   listInAppNotificationsForUser,
   markAllInAppNotificationsRead,
   markInAppNotificationRead,
+  markInAppNotificationsReadByResource,
 } from "../services/in-app-notifications.service";
 import { getTenantExperienceForBusiness } from "../services/tenant-experience.service";
 import { getOpsPortalUrl, isPlatformExecEmail } from "../lib/platform-exec";
@@ -242,6 +244,29 @@ router.get("/me/chain-rollup/export.csv", requireAuth, async (req, res): Promise
   res.send(csv);
 });
 
+/** Resolved capability graph for a tenant — defaults to first owned business. */
+router.get("/me/capabilities", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+  const businesses = await getBusinessesForUser(userId);
+  const bid = businessId ?? businesses[0]?.id;
+  if (!bid) {
+    sendError(res, req, 404, "No business on account");
+    return;
+  }
+  const role = await resolveMembership(userId, bid);
+  if (!role || role === "STAFF") {
+    sendError(res, req, 403, "Forbidden");
+    return;
+  }
+  const payload = await getTenantCapabilities(bid);
+  if (!payload) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  res.json(payload);
+});
+
 /** Org-admin / multi-location Liv ritual line (portfolio scope). */
 router.get("/me/liv-presence", requireAuth, async (req, res): Promise<void> => {
   const userId = getUserId(req);
@@ -397,6 +422,26 @@ router.post("/me/notifications/read-all", requireAuth, async (req, res): Promise
   const businessId =
     typeof req.body?.businessId === "string" ? req.body.businessId : undefined;
   const updated = await markAllInAppNotificationsRead(userId, businessId);
+  res.json({ updated });
+});
+
+router.post("/me/notifications/read-by-resource", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const resourceKind =
+    typeof req.body?.resourceKind === "string" ? req.body.resourceKind : undefined;
+  const resourceId =
+    typeof req.body?.resourceId === "string" ? req.body.resourceId : undefined;
+  const businessId =
+    typeof req.body?.businessId === "string" ? req.body.businessId : undefined;
+  if (!resourceKind || !resourceId) {
+    sendError(res, req, 400, "resourceKind and resourceId are required");
+    return;
+  }
+  const updated = await markInAppNotificationsReadByResource(userId, {
+    resourceKind,
+    resourceId,
+    businessId,
+  });
   res.json({ updated });
 });
 

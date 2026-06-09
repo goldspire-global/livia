@@ -55,6 +55,9 @@ import dayPackagesRouter from "./day-packages";
 import careSeriesRouter from "./care-series";
 import franchisePolicyRouter from "./franchise";
 import wellnessRouter from "./wellness";
+import beautyRouter from "./beauty";
+import hairRouter from "./hair";
+import alliedHealthRouter from "./allied-health";
 
 const router: IRouter = Router();
 
@@ -112,6 +115,9 @@ router.use(dayPackagesRouter);
 router.use(careSeriesRouter);
 router.use(franchisePolicyRouter);
 router.use(wellnessRouter);
+router.use(beautyRouter);
+router.use(hairRouter);
+router.use(alliedHealthRouter);
 router.use(partnerApiRouter);
 router.use(devRouter);
 

@@ -162,6 +162,15 @@ export async function executeLivProposalAction(args: {
         break;
       }
 
+      case "collect_deposit": {
+        const href =
+          typeof meta.href === "string" ? meta.href : "/settings?tab=billing";
+        const title = typeof meta.title === "string" ? meta.title : "Turn on deposits";
+        effects.push(`commerce:open_billing:${href}`);
+        effects.push(`ack:${title}`);
+        break;
+      }
+
       default:
         effects.push(`${args.action}:logged`);
         break;

@@ -6,10 +6,26 @@ import { replyDomainError } from "../lib/domain-errors";
 import { markOnboardingTestBooking } from "../services/onboarding-progress.service";
 import { getBusinessBySlug } from "../services/businesses.service";
 import { listServices } from "../services/services.service";
+import { getServiceById } from "../services/services.service";
 import { listStaff } from "../services/staff.service";
 import { getAvailableSlots } from "../services/slots.service";
-import { findOrCreateCustomer } from "../services/customers.service";
-import { createBooking } from "../services/bookings.service";
+import { findOrCreateCustomer, updateCustomer } from "../services/customers.service";
+import {
+  attachPetsToBooking,
+  findOrCreatePetByName,
+  listPetsForCustomer,
+} from "../services/pets.service";
+import {
+  createDesignProof,
+  updateDesignProofStatus,
+} from "../services/design-proofs.service";
+import { joinSlotWaitlist } from "../services/waitlist.service";
+import {
+  listPublicFitnessClasses,
+  publicEnrollInClass,
+} from "../services/fitness-public.service";
+import { createBooking, getBookingById } from "../services/bookings.service";
+import { createCouplesBookingPair } from "../services/wellness-couples.service";
 import { buildPublicNextSteps } from "../services/booking-continuity.service";
 import { readPublicFeaturedServiceIds } from "../lib/business-public-featured";
 import { logEvent } from "../services/events.service";
@@ -23,6 +39,10 @@ import {
   getVerticalPlaybook,
   resolvePresentationPreset,
   PLATFORM_DEFAULT_PRESET_ID,
+  validateBeautyPatchTestGate,
+  validateFitnessParqGate,
+  guestManageVisitPath,
+  guestBookPath,
 } from "@workspace/policy";
 import type { BusinessVertical } from "@workspace/policy";
 import type { Service } from "@workspace/db";
@@ -44,14 +64,24 @@ import {
   acceptGuestWaitlistOfferByToken,
   getGuestWaitlistOfferByToken,
 } from "../services/waitlist-guest-access.service";
-import { db, visitFeedbackTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, visitFeedbackTable, bookingsTable, customersTable } from "@workspace/db";
+import { and, eq, sql } from "drizzle-orm";
 import { socialProofForVertical } from "../lib/public-social-proof";
 import { inferDemoServiceImageUrl, publicExperienceSkin } from "../lib/experience-skin";
 import { resolvePublicServiceImageUrl } from "@workspace/policy";
 import { getSignInAppearanceHintForEmail } from "../services/sign-in-appearance-hint.service";
 import { purchaseWellnessGiftPackage } from "../services/wellness-gift.service";
 import { isWellnessGiftPublicBookEnabled } from "@workspace/policy";
+import {
+  createPublicRetailOrder,
+  createRetailOrderCheckout,
+  getRetailOrderByToken,
+  listActiveRetailProducts,
+  resolveRetailOrderLines,
+} from "../services/beauty-retail.service";
+import { parseBeautyRetailStoreSettings } from "@workspace/policy";
+import { getDashboardUrl } from "../lib/public-urls";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
 
 const router: IRouter = Router();
 
@@ -60,7 +90,7 @@ function toPublicServiceDto(row: Service, vertical?: BusinessVertical | null) {
     resolvePublicServiceImageUrl(row.name, undefined, row.imageUrl) ??
     inferDemoServiceImageUrl(row.name, vertical ?? undefined) ??
     null;
-  return {
+  const base = {
     id: row.id,
     name: row.name,
     description: row.description,
@@ -71,6 +101,15 @@ function toPublicServiceDto(row: Service, vertical?: BusinessVertical | null) {
     imageUrl,
     sortOrder: row.sortOrder,
   };
+  if (vertical === "beauty") {
+    return {
+      ...base,
+      serviceKind: row.serviceKind ?? null,
+      rebookIntervalDays: row.rebookIntervalDays ?? null,
+      requiresPatchTest: row.requiresPatchTest ?? false,
+    };
+  }
+  return base;
 }
 
 async function enforcePublicBookingRateLimit(req: Request, res: Response): Promise<boolean> {
@@ -127,6 +166,13 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
     getPublicDayPackages(biz.id),
   ]);
 
+  const retailSettings = parseBeautyRetailStoreSettings(biz.retailStore);
+  const { isPublicRetailVertical } = await import("@workspace/policy");
+  const retailProducts =
+    isPublicRetailVertical(biz.vertical) && retailSettings.enabled
+      ? await listActiveRetailProducts(biz.id)
+      : [];
+
   const policies = policiesFromBusiness(biz);
   const aiDisclosure = policies.aiDisclosure;
 
@@ -152,6 +198,7 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
     aiDisclosureChatFirstMessage: aiDisclosure.chatFirstMessage(biz.name),
     aiDisclosureFooterLine: aiDisclosure.chatFooterLine,
     bookingTermsBlock: policies.bookingTermsBlock,
+    privacyNoticeBlock: policies.privacyNoticeBlock,
     depositPolicySummary: policies.depositPolicySummary,
     vertical: biz.vertical,
     bookingGuards: getBookingGuardsForVertical(biz.vertical as BusinessVertical),
@@ -188,6 +235,24 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
       };
     })(),
     socialProof: socialProofForVertical(biz.vertical),
+    retailStore:
+      isPublicRetailVertical(biz.vertical)
+        ? {
+            settings: retailSettings,
+            products: retailProducts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              priceMinor: p.priceMinor,
+              currency: p.currency,
+              sku: p.sku,
+              imageUrl: p.imageUrl,
+              category: p.category,
+              stockQuantity: p.stockQuantity,
+              inStock: p.stockQuantity == null || p.stockQuantity > 0,
+            })),
+          }
+        : undefined,
   });
 }
 
@@ -237,6 +302,63 @@ router.post("/public/b/:slug/day-packages/:packageId/book", async (req, res): Pr
 
 router.get("/public/b/:slug", getPublicBusinessProfile);
 
+router.get("/public/b/:slug/guest-context", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const phone = typeof req.query.phone === "string" ? req.query.phone.trim() : "";
+  if (!phone || phone.length < 6) {
+    sendError(res, req, 400, "phone query is required");
+    return;
+  }
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  try {
+    if (biz.vertical === "beauty") {
+      const { resolvePublicBeautyGuestContext } = await import("../services/beauty-ops.service");
+      res.json(await resolvePublicBeautyGuestContext(biz.id, phone));
+      return;
+    }
+    if (biz.vertical === "hair") {
+      const { resolvePublicHairGuestContext } = await import("../services/hair-ops.service");
+      res.json(await resolvePublicHairGuestContext(biz.id, phone));
+      return;
+    }
+    if (biz.vertical === "pet-grooming") {
+      const { normalizePhoneE164 } = await import("@workspace/policy");
+      const normalized = normalizePhoneE164(phone) ?? phone;
+      const [customer] = await db
+        .select({ id: customersTable.id })
+        .from(customersTable)
+        .where(
+          and(eq(customersTable.businessId, biz.id), eq(customersTable.phone, normalized)),
+        )
+        .limit(1);
+      if (!customer) {
+        res.json({ recognized: false });
+        return;
+      }
+      const pets = await listPetsForCustomer(biz.id, customer.id);
+      res.json({
+        recognized: true,
+        pets: pets.map((p) => ({
+          id: p.id,
+          name: p.name,
+          species: p.species,
+          breed: p.breed,
+        })),
+      });
+      return;
+    }
+    res.json({ recognized: false });
+  } catch (e) {
+    logRouteError(req, e, "public guest-context");
+    sendError(res, req, 500, safeClientMessage(e));
+  }
+});
+
 router.get("/public/b/:slug/manifest.webmanifest", async (req, res): Promise<void> => {
   const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
   const biz = await getBusinessBySlug(slug);
@@ -248,7 +370,7 @@ router.get("/public/b/:slug/manifest.webmanifest", async (req, res): Promise<voi
   const proto = (req.get("x-forwarded-proto") ?? req.protocol ?? "http").split(",")[0]!.trim();
   const origin = `${proto}://${host}`;
   const accent = biz.brandAccentHex?.trim() || "#6366f1";
-  const scope = `${origin}/b/${slug}/`;
+  const scope = `${origin}/book/${slug}/`;
   const icons = biz.logoUrl
     ? [{ src: biz.logoUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" }]
     : [{ src: `${origin}/favicon.svg`, sizes: "any", type: "image/svg+xml", purpose: "any" }];
@@ -257,7 +379,7 @@ router.get("/public/b/:slug/manifest.webmanifest", async (req, res): Promise<voi
     name: biz.name,
     short_name: biz.name.slice(0, 12),
     description: `Book with ${biz.name}`,
-    start_url: `${origin}/b/${slug}`,
+    start_url: `${origin}/book/${slug}`,
     scope,
     display: "standalone",
     background_color: "#ffffff",
@@ -342,7 +464,7 @@ router.post("/public/b/:slug/gift-package", async (req, res): Promise<void> => {
     }
     res.status(201).json({
       ...result,
-      bookUrl: `/b/${biz.slug}`,
+      bookUrl: guestBookPath(biz.slug),
     });
   } catch (e) {
     if (e instanceof Error && e.message === "INVALID_PRESET") {
@@ -350,6 +472,137 @@ router.post("/public/b/:slug/gift-package", async (req, res): Promise<void> => {
       return;
     }
     logRouteError(req, e, "public gift package");
+    sendError(res, req, 500, safeClientMessage(e));
+  }
+});
+
+router.get("/public/b/:slug/classes", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  if (biz.vertical !== "fitness") {
+    res.json({ classes: [] });
+    return;
+  }
+  try {
+    const { ensureFitnessShowcaseClasses } = await import("../services/fitness-demo-depth");
+    await ensureFitnessShowcaseClasses(biz.id).catch(() => undefined);
+    res.json({ classes: await listPublicFitnessClasses(biz.id) });
+  } catch (e) {
+    logRouteError(req, e, "public classes");
+    sendError(res, req, 500, safeClientMessage(e));
+  }
+});
+
+router.post("/public/b/:slug/classes/:sessionId/enroll", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const sessionId = Array.isArray(req.params.sessionId)
+    ? req.params.sessionId[0]
+    : req.params.sessionId;
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  if (biz.vertical !== "fitness") {
+    sendError(res, req, 400, "Class enroll is only for fitness studios");
+    return;
+  }
+  const {
+    customerFirstName,
+    customerLastName,
+    customerEmail,
+    customerPhone,
+    saveToMyLivia,
+  } = req.body ?? {};
+  if (!customerFirstName) {
+    sendError(res, req, 400, "customerFirstName is required");
+    return;
+  }
+  try {
+    const customer = await findOrCreateCustomer(biz.id, {
+      firstName: String(customerFirstName),
+      lastName: customerLastName ? String(customerLastName) : undefined,
+      email: customerEmail ? String(customerEmail) : undefined,
+      phone: customerPhone ? String(customerPhone) : undefined,
+    });
+    const result = await publicEnrollInClass(biz.id, sessionId, customer.id);
+    if ("error" in result) {
+      sendError(res, req, 409, result.error === "full" ? "Class is full" : "Session not found");
+      return;
+    }
+    if (saveToMyLivia !== false && customerPhone) {
+      void ensureGuestVaultLinkFromBook(
+        String(customerPhone),
+        biz.id,
+        new Date(),
+        biz.country?.slice(0, 2) ?? "IE",
+      ).catch(() => undefined);
+    }
+    res.status(201).json({
+      enrollmentId: result.enrollment.id,
+      status: result.enrollment.status,
+      waitlistPosition: result.enrollment.waitlistPosition,
+    });
+  } catch (e) {
+    logRouteError(req, e, "public class enroll");
+    sendError(res, req, 500, safeClientMessage(e));
+  }
+});
+
+router.post("/public/b/:slug/waitlist/join", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  const {
+    serviceId,
+    staffId,
+    customerFirstName,
+    customerLastName,
+    customerEmail,
+    customerPhone,
+    notes,
+  } = req.body ?? {};
+  if (!serviceId) {
+    sendError(res, req, 400, "serviceId is required");
+    return;
+  }
+  if (!customerPhone && !customerEmail) {
+    sendError(res, req, 400, "phone or email is required");
+    return;
+  }
+  try {
+    let customerId: string | undefined;
+    if (customerFirstName && (customerPhone || customerEmail)) {
+      const customer = await findOrCreateCustomer(biz.id, {
+        firstName: String(customerFirstName),
+        lastName: customerLastName ? String(customerLastName) : undefined,
+        email: customerEmail ? String(customerEmail) : undefined,
+        phone: customerPhone ? String(customerPhone) : undefined,
+      });
+      customerId = customer.id;
+    }
+    const entry = await joinSlotWaitlist({
+      businessId: biz.id,
+      serviceId: String(serviceId),
+      preferredStaffId: staffId ? String(staffId) : undefined,
+      customerId,
+      phone: customerPhone ? String(customerPhone) : undefined,
+      email: customerEmail ? String(customerEmail) : undefined,
+      notes: notes ? String(notes) : undefined,
+    });
+    res.status(201).json({ waitlistId: entry.id, status: entry.status });
+  } catch (e) {
+    logRouteError(req, e, "public waitlist join");
     sendError(res, req, 500, safeClientMessage(e));
   }
 });
@@ -364,6 +617,8 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
     serviceId, staffId, startAt,
     customerFirstName, customerLastName, customerEmail, customerPhone,
     notes, channelType, guardAnswers, medspaConsent, saveToMyLivia,
+    partnerFirstName, partnerLastName, partnerEmail, partnerPhone,
+    rememberStylist, petIds, consultReferenceUrl,
   } = req.body;
 
   if (!serviceId || !startAt || !customerFirstName) {
@@ -378,6 +633,10 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       phone: customerPhone,
     });
 
+    if (staffId && rememberStylist !== false) {
+      await updateCustomer(biz.id, customer.id, { preferredStaffId: String(staffId) });
+    }
+
     const guards = getBookingGuardsForVertical(biz.vertical as BusinessVertical);
     const guardNote =
       guardAnswers && typeof guardAnswers === "object"
@@ -385,18 +644,116 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
         : "";
     const mergedNotes = [notes, guardNote].filter(Boolean).join("\n\n") || undefined;
 
-    const usePackage =
-      biz.vertical === "wellness" && req.body?.usePackageCredit === true;
-    const booking = await createBooking(biz.id, {
-      serviceId,
-      customerId: customer.id,
-      staffId,
-      startAt,
-      channelType: channelType ?? "WEB",
-      source: "web",
-      notes: mergedNotes,
-      usePackageCredit: usePackage,
-    });
+    if (biz.vertical === "beauty") {
+      const service = await getServiceById(biz.id, serviceId);
+      if (service) {
+        const gate = validateBeautyPatchTestGate({
+          service: {
+            requiresPatchTest: service.requiresPatchTest,
+            serviceKind: service.serviceKind as import("@workspace/policy").BeautyServiceKind | null,
+            category: service.category,
+          },
+          customerPatchTestAt: customer.patchTestCompletedAt,
+          guardAnswers:
+            guardAnswers && typeof guardAnswers === "object"
+              ? (guardAnswers as Record<string, string>)
+              : undefined,
+        });
+        if (!gate.ok) {
+          sendError(res, req, 422, gate.message);
+          return;
+        }
+      }
+    }
+
+    if (biz.vertical === "fitness") {
+      const [priorRow] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(bookingsTable)
+        .where(
+          and(eq(bookingsTable.businessId, biz.id), eq(bookingsTable.customerId, customer.id)),
+        );
+      const parqGate = validateFitnessParqGate({
+        isFirstBooking: (priorRow?.count ?? 0) === 0,
+        guardAnswers:
+          guardAnswers && typeof guardAnswers === "object"
+            ? (guardAnswers as Record<string, string>)
+            : undefined,
+      });
+      if (!parqGate.ok) {
+        sendError(res, req, 422, parqGate.message);
+        return;
+      }
+    }
+
+    const guardMap =
+      guardAnswers && typeof guardAnswers === "object"
+        ? (guardAnswers as Record<string, string>)
+        : {};
+    const isCouplesBook =
+      biz.vertical === "wellness" && guardMap.couples_or_shared === "couples";
+
+    let booking: Awaited<ReturnType<typeof createBooking>>;
+    if (isCouplesBook) {
+      if (!String(partnerFirstName ?? "").trim()) {
+        sendError(res, req, 400, "partnerFirstName is required for couples bookings");
+        return;
+      }
+      if (!String(partnerPhone ?? "").trim() && !String(partnerEmail ?? "").trim()) {
+        sendError(res, req, 400, "Partner phone or email is required for couples bookings");
+        return;
+      }
+      const partnerCustomer = await findOrCreateCustomer(biz.id, {
+        firstName: String(partnerFirstName).trim(),
+        lastName: partnerLastName ? String(partnerLastName) : undefined,
+        email: partnerEmail ? String(partnerEmail) : undefined,
+        phone: partnerPhone ? String(partnerPhone) : undefined,
+      });
+      const service = await getServiceById(biz.id, serviceId);
+      if (!service) {
+        sendError(res, req, 400, "Service not found");
+        return;
+      }
+      const start = new Date(startAt);
+      const end = new Date(
+        start.getTime() + (service.durationMinutes + service.bufferAfterMinutes) * 60_000,
+      );
+      const pair = await createCouplesBookingPair(biz.id, {
+        primary: {
+          customerId: customer.id,
+          serviceId,
+          staffId,
+          startAt: start,
+          endAt: end,
+        },
+        partner: {
+          customerId: partnerCustomer.id,
+          displayName: [partnerCustomer.firstName, partnerCustomer.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim(),
+        },
+      });
+      const primary = await getBookingById(biz.id, pair.primaryBookingId);
+      if (!primary) {
+        sendError(res, req, 500, "Could not load couples booking");
+        return;
+      }
+      booking = primary;
+    } else {
+      const usePackage =
+        biz.vertical === "wellness" && req.body?.usePackageCredit === true;
+      booking = await createBooking(biz.id, {
+        serviceId,
+        customerId: customer.id,
+        staffId,
+        startAt,
+        channelType: channelType ?? "WEB",
+        source: "web",
+        notes: mergedNotes,
+        usePackageCredit: usePackage,
+      });
+    }
 
     await logEvent({
       type: EventType.BOOKING_CREATED,
@@ -429,6 +786,46 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       });
     }
 
+    if (biz.vertical === "pet-grooming") {
+      const linkedPetIds: string[] = Array.isArray(petIds)
+        ? petIds.map(String).filter(Boolean)
+        : [];
+      const guardMap =
+        guardAnswers && typeof guardAnswers === "object"
+          ? (guardAnswers as Record<string, string>)
+          : {};
+      const petName = guardMap.pet_name?.trim();
+      if (petName) {
+        const pet = await findOrCreatePetByName(biz.id, customer.id, {
+          name: petName,
+          species: guardMap.pet_species?.trim() || "dog",
+          breed: guardMap.pet_breed?.trim(),
+          behaviourNotes: guardMap.behaviour_notes?.trim(),
+        });
+        linkedPetIds.push(pet.id);
+      }
+      if (linkedPetIds.length > 0) {
+        await attachPetsToBooking(booking.id, linkedPetIds);
+      }
+    }
+
+    if (biz.vertical === "body-art") {
+      const service = await getServiceById(biz.id, serviceId);
+      const isConsult =
+        /consult/i.test(service?.name ?? "") || /consult/i.test(service?.category ?? "");
+      const refUrl =
+        typeof consultReferenceUrl === "string" ? consultReferenceUrl.trim() : "";
+      if (isConsult && refUrl) {
+        const proof = await createDesignProof(biz.id, {
+          customerId: customer.id,
+          bookingId: booking.id,
+          imageUrl: refUrl,
+          note: "Guest reference on consult book",
+        });
+        await updateDesignProofStatus(biz.id, proof.id, "pending_review");
+      }
+    }
+
     void emitBookingCreated({
       id: booking.id,
       businessId: biz.id,
@@ -453,7 +850,7 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
     });
 
     const guestToken = await ensureBookingGuestAccess(biz.id, booking.id);
-    const visitPath = `/b/${biz.slug}/visit/${encodeURIComponent(guestToken)}`;
+    const visitPath = guestManageVisitPath(biz.slug, booking.id);
 
     const nextSteps = buildPublicNextSteps({
       vertical: biz.vertical,
@@ -480,7 +877,11 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       );
     }
 
-    void markOnboardingTestBooking(biz.id).catch(() => undefined);
+    void markOnboardingTestBooking({
+      businessId: biz.id,
+      bookingId: booking.id,
+      source: "public",
+    }).catch(() => undefined);
 
     res.status(201).json({
       bookingId: booking.id,
@@ -519,12 +920,21 @@ router.get("/public/b/:slug/visit/:token", async (req, res): Promise<void> => {
     .limit(1);
 
   const { customerId: _cid, ...publicView } = view;
+  const { guestVisitDepositLine } = await import("@workspace/policy");
   res.json({
     ...publicView,
     startAt: view.startAt.toISOString(),
     endAt: view.endAt.toISOString(),
     feedbackSubmitted: !!existing,
     feedbackScore: existing?.score ?? null,
+    depositLine: guestVisitDepositLine({
+      vertical: view.vertical,
+      status: view.status,
+      depositPaidEurCents: view.depositPaidEurCents,
+      priceMinor: view.priceMinor,
+      currency: view.currency,
+      pendingReason: view.pendingReason,
+    }),
   });
 });
 
@@ -631,7 +1041,11 @@ router.post("/public/b/:slug/proof/:token/decision", async (req, res): Promise<v
     sendError(res, req, 409, "Proof is no longer awaiting review");
     return;
   }
-  res.json({ ok: true, status: result.row?.status ?? decision });
+  res.json({
+    ok: true,
+    status: result.row?.status ?? decision,
+    depositBind: result.depositBind ?? null,
+  });
 });
 
 router.get("/public/b/:slug/intake/:token", async (req, res): Promise<void> => {
@@ -719,6 +1133,119 @@ router.post("/public/b/:slug/pay/:token/checkout", async (req, res): Promise<voi
   } catch (err) {
     sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
   }
+});
+
+router.post("/public/b/:slug/pay/:token/checkout-combined", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const body = req.body as { items?: { productId: string; quantity: number }[] };
+  const { createGuestCombinedCheckout } = await import("../services/guest-combined-checkout.service");
+  try {
+    const result = await createGuestCombinedCheckout({
+      slug,
+      payToken: token,
+      items: body.items ?? [],
+    });
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
+  }
+});
+
+router.get("/public/b/:slug/shop/:token", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const hit = await getRetailOrderByToken(slug, token);
+  if (!hit) {
+    sendError(res, req, 404, "Order not found");
+    return;
+  }
+  const { order, product, business } = hit;
+  const lines = await resolveRetailOrderLines(order);
+  res.json({
+    orderId: order.id,
+    status: order.status,
+    quantity: order.quantity,
+    amountMinor: order.amountMinor,
+    currency: order.currency,
+    productName: lines.length === 1 ? lines[0]!.productName : `${lines.length} items`,
+    productDescription:
+      lines.length === 1 ? lines[0]!.productDescription : product.description,
+    productImageUrl: lines.length === 1 ? lines[0]!.productImageUrl : product.imageUrl,
+    lines,
+    lineCount: lines.length,
+    businessName: business.name,
+    slug: business.slug,
+    vertical: business.vertical,
+    logoUrl: business.logoUrl,
+    checkoutAvailable: order.status !== "PAID",
+  });
+});
+
+router.post("/public/b/:slug/shop/:token/checkout", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  try {
+    const result = await createRetailOrderCheckout(slug, token);
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
+  }
+});
+
+router.post("/public/b/:slug/retail/order", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const biz = await getBusinessBySlug(slug);
+  if (!biz) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  const settings = parseBeautyRetailStoreSettings(biz.retailStore);
+  if (!settings.enabled) {
+    sendError(res, req, 403, "Store is not available");
+    return;
+  }
+  const { productId, items, guestName, guestEmail, guestPhone, quantity } = req.body ?? {};
+  const hasItems = Array.isArray(items) && items.length > 0;
+  if (!hasItems && !productId) {
+    sendError(res, req, 400, "productId or items is required");
+    return;
+  }
+  const created = await createPublicRetailOrder({
+    businessId: biz.id,
+    productId: hasItems ? undefined : productId,
+    items: hasItems ? items : undefined,
+    guestName,
+    guestEmail,
+    guestPhone,
+    quantity,
+  });
+  if (!created) {
+    sendError(res, req, 404, "Product not found or out of stock");
+    return;
+  }
+  res.status(201).json({
+    orderId: created.order.id,
+    payToken: created.payToken,
+    payUrl: resolveGuestTokenUrl(slug, "shop", created.payToken),
+    amountMinor: created.order.amountMinor,
+    currency: created.order.currency,
+    lineCount: created.lines.length,
+    productName:
+      created.lines.length === 1
+        ? created.lines[0]!.product.name
+        : `${created.lines.length} items`,
+  });
 });
 
 router.get("/public/vertical-coverage", async (_req, res): Promise<void> => {

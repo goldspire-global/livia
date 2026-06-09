@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, Loader2, RefreshCw, Lock } from "lucide-react";
 import {
   getWedgeDemoStory,
+  isMarketingDemoWedgeUnlocked,
   listWedgeDemoVerticalsForDisplay,
   type BusinessVertical,
 } from "@workspace/policy";
@@ -47,9 +48,6 @@ export function DemoGuidedExperience({
   onEnterAs,
 }: Props) {
   const verticals = listWedgeDemoVerticalsForDisplay();
-  // Gate the guided demo path to currently-designed vertical(s).
-  // Unlock more by extending this set as vertical demo stories are signed off.
-  const unlocked = useMemo(() => new Set<BusinessVertical>(["beauty"]), []);
   const [vertical, setVertical] = useState<BusinessVertical | null>(null);
   const [tenant, setTenant] = useState<DemoBusinessTenant | null>(null);
   const [phase, setPhase] = useState<Phase>("vertical");
@@ -161,7 +159,7 @@ export function DemoGuidedExperience({
                 const s = getWedgeDemoStory(v);
                 if (!s) return null;
                 const count = tenants.filter((t) => verticalGroupKey(t.vertical) === v).length;
-                const isUnlocked = unlocked.has(v);
+                const isUnlocked = isMarketingDemoWedgeUnlocked(v);
                 return (
                   <button
                     key={v}

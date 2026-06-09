@@ -17,6 +17,9 @@ import { livBriefingRefresh } from "./liv-briefing-refresh";
 import { postVisitFeedback } from "./post-visit-feedback";
 import { aftercareFollowup } from "./aftercare-followup";
 import { refundLadderWorkflow } from "./refund-ladder";
+import { commerceIntelligenceDaily } from "./commerce-intelligence-daily";
+import { commerceWeeklyDigest } from "./commerce-weekly-digest";
+import { twinObservationsDaily } from "./twin-observations-daily";
 
 export const workflowFunctions = [
   bookingReminderT24,
@@ -38,4 +41,7 @@ export const workflowFunctions = [
   postVisitFeedback,
   aftercareFollowup,
   refundLadderWorkflow,
+  commerceIntelligenceDaily,
+  commerceWeeklyDigest,
+  twinObservationsDaily,
 ];

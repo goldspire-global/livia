@@ -77,16 +77,20 @@ export async function updateDesignProofStatus(
       ),
     )
     .returning();
-  if (row && status === "approved" && isInngestWorkflowsEnabled()) {
-    void inngest.send({
-      name: "livia/design-proof.approved",
-      data: {
-        businessId,
-        proofId: row.id,
-        customerId: row.customerId,
-        bookingId: row.bookingId,
-      },
-    });
+  if (row && status === "approved") {
+    const { bindDepositAfterProofApproval } = await import("./body-art-proof-deposit.service");
+    await bindDepositAfterProofApproval(businessId, row.id).catch(() => null);
+    if (isInngestWorkflowsEnabled()) {
+      void inngest.send({
+        name: "livia/design-proof.approved",
+        data: {
+          businessId,
+          proofId: row.id,
+          customerId: row.customerId,
+          bookingId: row.bookingId,
+        },
+      });
+    }
   }
   if (row && status === "pending_review") {
     await ensureDesignProofGuestAccess(businessId, proofId);

@@ -42,7 +42,7 @@ Public `/b/{slug}` uses the **same** `presentation_preset_id` and brand fields a
 | Liv | `a6_liv` |
 | Public link | `a8_public_link` |
 
-Auto-completed on create (seeded): `a1`, `a3`, `a4`.
+Auto-completed on create: `a1` only. With **`starterPack: true`** (or legacy `seedDefaults: true`): also `a3`, `a4`.
 
 Test booking is an **activation** step, not an app-store hard lock.
 

@@ -12,10 +12,14 @@ export type LivRuntimeProfile =
 
 export type LivToolRisk = "low" | "medium" | "high";
 
+export type LivCopilotMode = "setup" | "ops";
+
 export type RegisteredLivTool = LivToolDefinition & {
   id: string;
   risk: LivToolRisk;
   profiles: LivRuntimeProfile[];
+  /** When omitted, tool is ops-only (backward compatible). */
+  livModes?: LivCopilotMode[];
   requiresDirectBooking?: boolean;
   entitlements?: string[];
 };
@@ -40,6 +44,28 @@ export const LIV_TOOL_WELLNESS_PACKAGE_BOOK = "wellness_propose_package_book";
 export const LIV_TOOL_WELLNESS_EOD_CLOSE = "wellness_eod_close";
 export const LIV_TOOL_WELLNESS_DUTY_SOLVER = "wellness_duty_solver";
 export const LIV_TOOL_WELLNESS_REROOM = "wellness_reroom";
+
+export const LIV_TOOL_GET_ACTIVATION_STATUS = "get_activation_status";
+export const LIV_TOOL_GET_BUSINESS_TWIN = "get_business_twin";
+export const LIV_TOOL_GET_COMMERCE_SNAPSHOT = "get_commerce_snapshot";
+export const LIV_TOOL_GET_COMMERCE_SIGNALS = "get_commerce_signals";
+export const LIV_TOOL_LIST_CAPABILITY_BLOCKERS = "list_capability_blockers";
+export const LIV_TOOL_GET_OWNER_INTELLIGENCE = "get_owner_intelligence";
+export const LIV_TOOL_LIST_PRESENTATION_PRESETS = "list_presentation_presets";
+export const LIV_TOOL_GET_SETUP_CHECKLIST = "get_setup_checklist";
+export const LIV_TOOL_GET_TENANT_EXPERIENCE = "get_tenant_experience";
+export const LIV_TOOL_PREVIEW_PRESENTATION = "preview_presentation";
+export const LIV_TOOL_APPLY_PRESENTATION_PRESET = "apply_presentation_preset";
+export const LIV_TOOL_PATCH_LIV_PERSONA = "patch_liv_persona";
+export const LIV_TOOL_PATCH_BRAND_ASSETS = "patch_brand_assets";
+export const LIV_TOOL_EXPLAIN_OPERATIONAL_POLICY = "explain_operational_policy";
+export const LIV_TOOL_PROPOSE_POLICY_PATCH = "propose_policy_patch";
+export const LIV_TOOL_PATCH_BUSINESS_HOURS = "patch_business_hours";
+export const LIV_TOOL_CONFIRM_PUBLIC_LINK = "confirm_public_link";
+export const LIV_TOOL_PATCH_OPERATIONAL_POLICY = "patch_operational_policy";
+export const LIV_TOOL_INVITE_STAFF = "invite_staff";
+export const LIV_TOOL_ASSIGN_SERVICE = "assign_service";
+export const LIV_TOOL_START_CHANNEL_CONNECT = "start_channel_connect";
 
 const CATALOG: RegisteredLivTool[] = [
   {
@@ -320,14 +346,328 @@ const CATALOG: RegisteredLivTool[] = [
     description: "Propose rerooming after a cancellation with turnover-aware open lanes.",
     input_schema: { type: "object", properties: {}, required: [] },
   },
+  {
+    id: LIV_TOOL_GET_ACTIVATION_STATUS,
+    name: LIV_TOOL_GET_ACTIVATION_STATUS,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Get V1 activation status — sacred metric (first booking), setup progress, time-to-first-booking.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_BUSINESS_TWIN,
+    name: LIV_TOOL_GET_BUSINESS_TWIN,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup", "ops"],
+    description:
+      "Read Business Twin — domain health scores, headline, and prioritized recommendations. Use before advising owner on setup or day strategy.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_COMMERCE_SNAPSHOT,
+    name: LIV_TOOL_GET_COMMERCE_SNAPSHOT,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup", "ops"],
+    description:
+      "Read 30-day commerce snapshot — captured revenue, payment count, capture rate, refunds. Use when advising on deposits, Stripe, or revenue health.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_COMMERCE_SIGNALS,
+    name: LIV_TOOL_GET_COMMERCE_SIGNALS,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup", "ops"],
+    description:
+      "Read structured commerce signals (uncaptured demand, low capture, refunds). Prefer over raw snapshot when coaching owner strategy.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_LIST_CAPABILITY_BLOCKERS,
+    name: LIV_TOOL_LIST_CAPABILITY_BLOCKERS,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup", "ops"],
+    description:
+      "List capability readiness blockers and health score. Use before advising on setup or which capability to fix next.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_OWNER_INTELLIGENCE,
+    name: LIV_TOOL_GET_OWNER_INTELLIGENCE,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["ops"],
+    description:
+      "Unified owner intelligence — commerce signals, capability health, Twin top recommendation, remediation tasks, and Liv prompts. Prefer this first when coaching owner strategy on Today.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_LIST_PRESENTATION_PRESETS,
+    name: LIV_TOOL_LIST_PRESENTATION_PRESETS,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "List presentation presets allowed for this vertical (skin / atmosphere). Read-only — use Settings to apply.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_SETUP_CHECKLIST,
+    name: LIV_TOOL_GET_SETUP_CHECKLIST,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Get blocking onboarding acts, activation steps, and next recommended setup action.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_GET_TENANT_EXPERIENCE,
+    name: LIV_TOOL_GET_TENANT_EXPERIENCE,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Read tenant experience bundle — vocabulary, onboarding welcome, presentation preset, public link.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_PREVIEW_PRESENTATION,
+    name: LIV_TOOL_PREVIEW_PRESENTATION,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Preview a presentation preset (dashboard + public paths). Does not apply — owner confirms before apply_presentation_preset.",
+    input_schema: {
+      type: "object",
+      properties: {
+        presentationPresetId: { type: "string", description: "Preset id from list_presentation_presets." },
+        brandAccentHex: { type: "string", description: "Optional #RRGGBB accent for preview." },
+      },
+      required: ["presentationPresetId"],
+    },
+  },
+  {
+    id: LIV_TOOL_APPLY_PRESENTATION_PRESET,
+    name: LIV_TOOL_APPLY_PRESENTATION_PRESET,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Apply a presentation preset after owner preview. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        presentationPresetId: { type: "string" },
+        brandAccentHex: { type: "string", description: "Optional #RRGGBB" },
+        confirm: { type: "string", description: "Must be true after owner approves preview." },
+      },
+      required: ["presentationPresetId", "confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_PATCH_LIV_PERSONA,
+    name: LIV_TOOL_PATCH_LIV_PERSONA,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description: "Patch Liv persona fields (tone, greeting, knowledge, booking flags). Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        aiTone: { type: "string" },
+        aiGreeting: { type: "string" },
+        aiKnowledge: { type: "string" },
+        aiEnabled: { type: "string", description: "true or false" },
+        aiCanBookDirectly: { type: "string", description: "true or false" },
+        confirm: { type: "string", description: "Must be true before applying." },
+      },
+      required: ["confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_PATCH_BRAND_ASSETS,
+    name: LIV_TOOL_PATCH_BRAND_ASSETS,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description: "Patch brand logo URL, cover image URL, and/or accent hex. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        logoUrl: { type: "string" },
+        coverImageUrl: { type: "string" },
+        brandAccentHex: { type: "string", description: "#RRGGBB or empty to clear" },
+        confirm: { type: "string" },
+      },
+      required: ["confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_EXPLAIN_OPERATIONAL_POLICY,
+    name: LIV_TOOL_EXPLAIN_OPERATIONAL_POLICY,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description: "Explain current operational policy (deposits, cancel window, continuity) in plain language.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    id: LIV_TOOL_PROPOSE_POLICY_PATCH,
+    name: LIV_TOOL_PROPOSE_POLICY_PATCH,
+    risk: "high",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Propose operational policy changes (read-only diff). Owner applies via Settings — does not write.",
+    input_schema: {
+      type: "object",
+      properties: {
+        depositRequired: { type: "string" },
+        depositPercent: { type: "string" },
+        cancelWindowHours: { type: "string" },
+        bookingContinuityEnabled: { type: "string" },
+        lateGraceMinutes: { type: "string" },
+      },
+      required: [],
+    },
+  },
+  {
+    id: LIV_TOOL_PATCH_BUSINESS_HOURS,
+    name: LIV_TOOL_PATCH_BUSINESS_HOURS,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Replace business-wide opening hours (availability rules). Pass rules as JSON array [{dayOfWeek:0-6,startTime,endTime}]. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        rulesJson: {
+          type: "string",
+          description:
+            'JSON array e.g. [{"dayOfWeek":1,"startTime":"09:00","endTime":"18:00"}] — Mon=1, Sun=0',
+        },
+        staffId: { type: "string", description: "Optional staff member; omit for business default" },
+        confirm: { type: "string" },
+      },
+      required: ["rulesJson", "confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_CONFIRM_PUBLIC_LINK,
+    name: LIV_TOOL_CONFIRM_PUBLIC_LINK,
+    risk: "medium",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Mark the public booking link step complete after owner confirms they have the /b link. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        confirm: { type: "string", description: "Must be true after owner confirms link." },
+      },
+      required: ["confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_PATCH_OPERATIONAL_POLICY,
+    name: LIV_TOOL_PATCH_OPERATIONAL_POLICY,
+    risk: "high",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Apply operational policy changes (deposits, cancel window, continuity). Use propose_policy_patch first. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        depositRequired: { type: "string" },
+        depositPercent: { type: "string" },
+        cancelWindowHours: { type: "string" },
+        bookingContinuityEnabled: { type: "string" },
+        lateGraceMinutes: { type: "string" },
+        confirm: { type: "string" },
+      },
+      required: ["confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_INVITE_STAFF,
+    name: LIV_TOOL_INVITE_STAFF,
+    risk: "high",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Invite a teammate by email (Clerk invitation). role: ADMIN or STAFF. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        email: { type: "string" },
+        role: { type: "string", description: "ADMIN or STAFF" },
+        deskRole: { type: "string", description: "Optional: manager or reception" },
+        confirm: { type: "string" },
+      },
+      required: ["email", "role", "confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_ASSIGN_SERVICE,
+    name: LIV_TOOL_ASSIGN_SERVICE,
+    risk: "high",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Replace which services a staff member can perform. Pass serviceIdsJson as JSON array of service ids. Requires confirm: true.",
+    input_schema: {
+      type: "object",
+      properties: {
+        staffId: { type: "string" },
+        serviceIdsJson: { type: "string", description: 'JSON array e.g. ["svc_abc","svc_def"]' },
+        confirm: { type: "string" },
+      },
+      required: ["staffId", "serviceIdsJson", "confirm"],
+    },
+  },
+  {
+    id: LIV_TOOL_START_CHANNEL_CONNECT,
+    name: LIV_TOOL_START_CHANNEL_CONNECT,
+    risk: "low",
+    profiles: ["tenant_staff"],
+    livModes: ["setup"],
+    description:
+      "Read-only handoff for SMS/WhatsApp/Instagram setup — returns Settings comms path and connection status. No tokens in chat.",
+    input_schema: {
+      type: "object",
+      properties: {
+        channel: {
+          type: "string",
+          description: "Optional focus: sms, whatsapp, instagram, or all",
+        },
+      },
+      required: [],
+    },
+  },
 ];
 
 export type ResolveLivToolsInput = {
   profile: LivRuntimeProfile;
   canBookDirectly: boolean;
+  /** setup = configure shop; ops = run the day (default). */
+  livMode?: LivCopilotMode;
   extraToolIds?: string[];
   entitlements?: string[];
 };
+
+function toolMatchesLivMode(tool: RegisteredLivTool, livMode: LivCopilotMode): boolean {
+  const modes = tool.livModes ?? ["ops"];
+  return modes.includes(livMode);
+}
 
 export function listRegisteredTools(): RegisteredLivTool[] {
   return [...CATALOG];
@@ -336,9 +676,11 @@ export function listRegisteredTools(): RegisteredLivTool[] {
 export function resolveLivTools(input: ResolveLivToolsInput): LivToolDefinition[] {
   const entitlements = new Set(input.entitlements ?? []);
   const extraIds = new Set(input.extraToolIds ?? []);
+  const livMode = input.livMode ?? "ops";
 
   return CATALOG.filter((t) => {
     if (!t.profiles.includes(input.profile)) return false;
+    if (!toolMatchesLivMode(t, livMode)) return false;
     if (t.requiresDirectBooking && !input.canBookDirectly) return false;
     if (t.entitlements?.length && !t.entitlements.every((e) => entitlements.has(e))) return false;
     if (t.id.startsWith("wellness_") && !extraIds.has(t.id)) return false;

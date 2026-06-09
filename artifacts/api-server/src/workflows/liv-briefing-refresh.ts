@@ -8,11 +8,17 @@ import {
 } from "../services/morning-briefing.service";
 import { logger } from "../lib/logger";
 
-const BOOKING_EVENTS = [
+const REFRESH_EVENTS = [
   "booking.created",
   "booking.confirmed",
   "booking.cancelled",
   "booking.no-show",
+  "payment.failed",
+  "commerce.signal.detected",
+  "twin.observation.generated",
+  "twin.insight.generated",
+  "twin.risk.detected",
+  "twin.opportunity.detected",
 ] as const;
 
 /**
@@ -28,7 +34,7 @@ export const livBriefingRefresh = inngest.createFunction(
       key: "event.data.businessId",
     },
   },
-  BOOKING_EVENTS.map((event) => ({ event })),
+  REFRESH_EVENTS.map((event) => ({ event })),
   async ({ event, step }) => {
     const data = event.data as { businessId: string; bookingId?: string };
 

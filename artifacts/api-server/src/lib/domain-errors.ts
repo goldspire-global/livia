@@ -28,6 +28,11 @@ const DOMAIN_ERRORS: Record<string, { status: number; message: string; code?: st
     message: "Complete a test booking (public page or New booking) before going live.",
     code: "GO_LIVE_REQUIRES_TEST_BOOKING",
   },
+  CHAIR_RENTAL_CUSTOMER_FIREWALL: {
+    status: 403,
+    message: "Chair-rental host cannot access renter guest records.",
+    code: "CHAIR_RENTAL_CUSTOMER_FIREWALL",
+  },
 };
 
 export function replyDomainError(req: Request, res: Response, err: unknown): boolean {

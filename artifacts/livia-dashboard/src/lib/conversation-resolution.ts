@@ -13,9 +13,9 @@ export function resolutionSummary(resolution: ConversationResolution | null | un
         ? `Refunded · booking cancelled`
         : "Refund issued · booking cancelled";
     case "cancel_no_refund":
-      return "Refund denied · appointment cancelled";
+      return "Appointment cancelled · no refund";
     case "close_no_action":
-      return "Refund denied · appointment kept";
+      return "Case closed";
     case "reschedule":
       return "Rescheduled";
     default:

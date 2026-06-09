@@ -25,6 +25,11 @@ export const servicesTable = pgTable(
     requiredResourceId: text("required_resource_id").references(() => bookingResourcesTable.id, {
       onDelete: "set null",
     }),
+    serviceKind: text("service_kind"),
+    rebookIntervalDays: integer("rebook_interval_days"),
+    requiresPatchTest: boolean("requires_patch_test").notNull().default(false),
+    aftercareInstructions: text("aftercare_instructions"),
+    linkedRetailProductId: text("linked_retail_product_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

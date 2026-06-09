@@ -17,7 +17,11 @@ assert.equal(seeded.currentAct, "a2_shop_profile");
 const bloom = afterBusinessCreatedStateForVertical("beauty");
 assert.equal(bloom.currentAct, "a3_service_menu");
 assert.ok(!bloom.completedActs.includes("a3_service_menu"));
+assert.ok(!bloom.completedActs.includes("a4_team"));
 assert.equal(bloom.checklist.servicesConfirmed, false);
+
+const emptyHair = afterBusinessCreatedStateForVertical("hair");
+assert.deepEqual(emptyHair.completedActs, ["a1_create_business"]);
 
 const partial = {
   ...seeded,

@@ -43,6 +43,8 @@ export const customersTable = pgTable(
     // GDPR consent ledger: { marketing: bool; sms: bool; whatsapp: bool;
     //   voiceRecording: bool; aiAgentInteraction: bool; updatedAt: ISO; basis: enum }
     consent: jsonb("consent"),
+    patchTestCompletedAt: timestamp("patch_test_completed_at", { withTimezone: true }),
+    beautyPreferences: jsonb("beauty_preferences").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -30,6 +30,11 @@ export async function createService(
     currency?: string;
     imageUrl?: string;
     sortOrder?: number;
+    serviceKind?: string | null;
+    rebookIntervalDays?: number | null;
+    requiresPatchTest?: boolean;
+    aftercareInstructions?: string | null;
+    linkedRetailProductId?: string | null;
   },
 ) {
   let currency = data.currency;
@@ -53,6 +58,11 @@ export async function createService(
       currency,
       imageUrl: data.imageUrl,
       sortOrder: data.sortOrder ?? 0,
+      serviceKind: data.serviceKind ?? null,
+      rebookIntervalDays: data.rebookIntervalDays ?? null,
+      requiresPatchTest: data.requiresPatchTest ?? false,
+      aftercareInstructions: data.aftercareInstructions ?? null,
+      linkedRetailProductId: data.linkedRetailProductId ?? null,
     })
     .returning();
   return s;

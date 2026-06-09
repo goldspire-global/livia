@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sparkles, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api-fetch";
 import { useBusiness } from "@/lib/business-context";
+import { dedupeLivMomentsByTitle } from "@workspace/policy";
 import { cn } from "@/lib/utils";
 
 type LivMoment = {
@@ -42,7 +43,7 @@ export function LivMomentsStrip({ className }: { className?: string }) {
     refetchInterval: 60_000,
   });
 
-  const moments = data?.data ?? [];
+  const moments = dedupeLivMomentsByTitle(data?.data ?? [], 2);
   if (moments.length === 0) return null;
 
   return (
@@ -52,7 +53,7 @@ export function LivMomentsStrip({ className }: { className?: string }) {
         Liv moments
       </div>
       <ul className="space-y-2">
-        {moments.slice(0, 4).map((m) => (
+        {moments.map((m) => (
           <li key={m.id}>
             {m.href ? (
               <Link

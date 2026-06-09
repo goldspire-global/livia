@@ -26,8 +26,10 @@ export function buildLivPromptFromTemplate(ctx: LivPromptContext): string {
   const { business, policies, services, staff, pack, knownCustomer, today } = ctx;
   const greeting =
     business.aiGreeting ?? `Hi! I'm Liv, the AI assistant for ${business.name}. I can help you book an appointment.`;
-  const knowledgeSection = business.aiKnowledge?.trim()
-    ? `\n\nIMPORTANT BUSINESS NOTES (always honor these):\n${business.aiKnowledge.trim()}\n`
+  const houseRules =
+    policies.houseRulesBlock?.trim() || business.aiKnowledge?.trim() || "";
+  const knowledgeSection = houseRules
+    ? `\n\nIMPORTANT BUSINESS NOTES (always honor these):\n${houseRules}\n`
     : "";
   const canBookDirectly = (business.aiCanBookDirectly ?? "true") === "true";
   const customerSection =

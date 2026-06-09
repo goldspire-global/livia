@@ -32,7 +32,7 @@ const RAIL: {
   { id: "compass", label: "Compass", icon: Compass, active: false },
   { id: "messages", label: "Messages", icon: MessageSquare, active: false },
   { id: "profile", label: "Profile", icon: User, active: false },
-  { id: "vault", label: "Vault", icon: Vault, active: false, locked: true },
+  { id: "vault", label: "My Livia", icon: Vault, active: false, locked: true },
   { id: "settings", label: "Settings", icon: Settings, active: false },
 ];
 
@@ -140,8 +140,8 @@ export function GatewayG1Hero() {
         Pick <span className="text-primary italic">your</span> world
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-white/65 sm:text-base">
-        Explore the Livia ecosystem through curated experiences. Each world is a trade. Each trade is
-        a universe.
+        Choose a trade to explore as a studio owner, or open My Livia below to try the guest
+        experience.
       </p>
     </div>
   );

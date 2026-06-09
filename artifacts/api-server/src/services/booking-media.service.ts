@@ -1,5 +1,5 @@
 import { and, eq, desc } from "drizzle-orm";
-import { db, mediaAssetsTable, bookingsTable } from "@workspace/db";
+import { db, mediaAssetsTable, bookingsTable, EventType } from "@workspace/db";
 import { generateId } from "../lib/id";
 import { logEvent } from "./events.service";
 
@@ -43,11 +43,11 @@ export async function attachBookingMedia(
     .returning();
 
   await logEvent({
-    type: "BOOKING_MEDIA_ATTACHED",
+    type: EventType.PORTFOLIO_ITEM_ATTACHED,
     businessId,
     entityType: "booking",
     entityId: bookingId,
-    context: { mediaId: id, url: input.url },
+    context: { mediaId: id, url: input.url, kind: input.kind ?? "image" },
   });
 
   return row;

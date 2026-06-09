@@ -5,33 +5,38 @@
 **Canonical demo:** `bloom-beauty-dublin` · owner `owner-bloom@demo.livia-hq.com` (legacy `owner-bloom@livia.io`) · default preset **`beauty-noir-dusk`** (P0 dark mock — not flat black; atmospheric charcoal per target)  
 **Reads with:** [`vertical-playbooks/beauty.md`](./vertical-playbooks/beauty.md) · [`EXPERIENCE-ARCHITECTURE.md`](../design/EXPERIENCE-ARCHITECTURE.md) · [`assets/w4-tenant/beauty/README.md`](../design/assets/w4-tenant/beauty/README.md)  
 **Excellence spec (L9–L15, research + P0–P3 roadmap):** [`vertical-excellence/beauty.md`](./vertical-excellence/beauty.md)  
-**Inspiration:** [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · **Smoke:** [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md)  
+**Inspiration:** [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · **Innovation program:** [`BEAUTY-INNOVATION-PROGRAM.md`](./BEAUTY-INNOVATION-PROGRAM.md) · **Smoke:** [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md)  
 **Doc propagation:** [`DOC-PROPAGATION-CASCADE.md`](../engineering/DOC-PROPAGATION-CASCADE.md) — `pnpm vertical:doc-check` must pass when this file or beauty spokes change.
 
 ---
 
 ## P0 — menu / treatments discoverability (2026-06-03)
 
-**Shipped (wellness-parity pass):** Treatments in sidebar nav · beauty onboarding blocks auto-complete menu · quick-add templates on `/services` · `beauty-inbox-nav` announcement · beauty booking/pending copy · [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md).
+**Shipped (wellness-parity pass):** Treatments in sidebar nav · empty studio on create (menu act stays open) · quick-add templates on `/services` · `beauty-inbox-nav` announcement · beauty booking/pending copy · [`BEAUTY-VERTICAL-INSPIRATION.md`](./BEAUTY-VERTICAL-INSPIRATION.md) · [`BEAUTY-FOUNDER-SMOKE.md`](../operations/BEAUTY-FOUNDER-SMOKE.md).
 
 **Shipped (wow / layout morph — 2026-06-03):** Four native presets map to distinct owner **Today** shells (`split-inbox` · `atrium` · `menu-card` · `cockpit`) via `BeautyMorphTodayHome` — switch preset in Settings → Guest look and reload `/dashboard` to see layout change, not palette only. Policy: `BEAUTY_MORPH_BY_CSS` in `presentation-surface.ts`.
 
-**Still open (P1):** per-service patch-test flag · fill-cycle SMS · client beauty preference tab · studio setup hub route. See [`vertical-excellence/beauty.md`](./vertical-excellence/beauty.md).
+**Shipped (P1 — 2026-06-07):** per-service `requiresPatchTest` on services + API gate · fill-cycle radar + owner SMS nudge + cron sweep · client beauty profile tab · `/studio-setup` hub · `/b` guest-context (phone → patch test + fill hints) · beauty aftercare SMS workflow · **platform-wide opt-in starter pack** on create (`starterPack` — beauty: 7 treatments + mini store; same pattern for all 9 verticals — [`VERTICAL-STARTER-PACK.md`](../engineering/VERTICAL-STARTER-PACK.md)).
+
+**Still open (P2):** manager Bloom UAT sign-off · screen-card PNG capture queue · northstar pixel tighten post Bucket C.
 
 ---
 
 ## L0 — What Livia means for beauty (category)
 
-Beauty & nails on Livia is a **people-business OS**, not a salon clone or medspa EHR.
+Beauty on Livia is a **people-business OS for the full retail aisle**, not a lash-only wedge or medspa EHR.
 
 | Principle | Beauty expression |
 |-----------|-------------------|
-| **Category** | Short stacked services, fill cycles, patch-test discipline, retail attach (R2) — see [`PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) |
+| **Category** | All beauty sub-segments: lash, nail, brow, wax, facial, spray tan, PMU-light, mobile, multi-service — see [`GTM-VERTICAL-DEPTH-PROGRAM.md`](./GTM-VERTICAL-DEPTH-PROGRAM.md) |
 | **Liv's job** | Triage DMs, confirm bookings, reminders, rebook windows — **no** diagnosis or treatment advice |
-| **Brand forward** | Client sees **Bloom**, not Livia, on `/b` and SMS |
-| **Not** | Clinical consent stack (that's medspa V6); hair colour formulas as first-class objects (that's hair V1) |
+| **Brand forward** | Client sees **Bloom**, not Livia, on `{slug}.livia-hq.com` and SMS |
+| **Relationship** | Returning clients manage visits on **`/my`** — not the public book surface |
+| **Not** | Clinical injectables/laser (medspa); colour-salon formulas as first-class (hair vertical) |
 
-**One sentence:** *Livia is the calm back office + link-in-bio booking engine for lash, nail, and brow studios — inbox-first when clients message, `/b` when they're ready to book.*
+**One sentence:** *Livia is the calm back office + branded book link for every beauty sub-segment — inbox-first when clients message, subdomain book when they're new, `/my` when they're yours.*
+
+**Innovation:** [`BEAUTY-INNOVATION-PROGRAM.md`](./BEAUTY-INNOVATION-PROGRAM.md) · [`VERTICAL-INNOVATION-PROGRAM.md`](./VERTICAL-INNOVATION-PROGRAM.md) § Beauty
 
 ### Wow — operator
 
@@ -77,8 +82,8 @@ Policy hub: `lib/policy` · API: `tenant-experience`, guards, vocabulary · Surf
 
 **Gaps (L1):**
 
-- [ ] Service-level “requires patch test” flag (guard is vertical-wide today; playbook mentions badge on colour services only)
-- [ ] Fill-cycle / rebook window copy in continuity templates (beauty-specific, not hair inheritance)
+- [x] Service-level `requiresPatchTest` + category default (Lashes/Brows/Colour)
+- [x] Fill-cycle rebook SMS (`beauty-fill-cycle-rebook`) + beauty continuity copy
 
 ---
 

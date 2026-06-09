@@ -18,6 +18,7 @@ export function mobileRouteFromLivHref(href: string | null): string | null {
   if (href.includes("approvals") || href.includes("pending")) return "/(tabs)/approvals";
   if (href.includes("chain") || href.includes("glance")) return "/(tabs)/shops";
   if (href.includes("my-day")) return "/(tabs)/my-day";
+  if (href.includes("dashboard") || href.includes("billing")) return "/(tabs)/index";
 
   return null;
 }

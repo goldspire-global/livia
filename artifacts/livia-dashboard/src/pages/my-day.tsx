@@ -14,7 +14,9 @@ import { StaffMyDayLoading } from "@/components/staff/staff-my-day-loading";
 import { StaffMyDayHero, type StaffMyDayBooking } from "@/components/staff/staff-my-day-hero";
 import { StaffMyDayTimeline } from "@/components/staff/staff-my-day-timeline";
 import { StaffMyDayQuickActions } from "@/components/staff/staff-my-day-quick-actions";
-import { shouldShowStaffMyDayTimeline } from "@workspace/policy";
+import { shouldShowStaffMyDayTimeline, staffWalkInHint } from "@workspace/policy";
+import { useOperationalChrome } from "@/lib/operational-chrome";
+import { cn } from "@/lib/utils";
 
 interface MyDayResponse {
   staffId: string | null;
@@ -33,6 +35,8 @@ export default function MyDayPage() {
   const { formatTime } = useFormat();
   const bid = business?.id ?? "";
   const vertical = (business as { vertical?: string } | null)?.vertical ?? null;
+  const op = useOperationalChrome(vertical);
+  const walkInHint = staffWalkInHint(persona);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["my-day", bid, viewingAsStaffId, ownStaffId],
@@ -63,7 +67,10 @@ export default function MyDayPage() {
 
   return (
     <div
-      className="max-w-xl mx-auto w-full pb-28 md:pb-6 space-y-4"
+      className={cn(
+        "max-w-xl mx-auto w-full pb-28 md:pb-6 space-y-4",
+        op.native && (op.constellation ? "constellation-my-day-page" : "beauty-operational-page"),
+      )}
       data-testid="staff-my-day-page"
     >
       <div className="flex items-center gap-2">
@@ -97,15 +104,23 @@ export default function MyDayPage() {
         <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start">
           <div className="space-y-4">
             {next ? (
-              <StaffMyDayHero booking={next} formatTime={formatTime} vertical={vertical} />
+              <StaffMyDayHero
+                booking={next}
+                formatTime={formatTime}
+                vertical={vertical}
+                className={op.staffHero()}
+              />
             ) : emptyChair ? (
               <section
-                className="rounded-[20px] border border-dashed border-border/80 bg-muted/20 px-5 py-8 text-center"
+                className={cn(
+                  "rounded-[20px] border px-5 py-8 text-center",
+                  op.staffEmptyChair("border-dashed border-border/80 bg-muted/20"),
+                )}
                 data-testid="staff-my-day-empty"
               >
                 <p className="text-lg font-medium">Your day is open</p>
                 <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                  Walk-ins welcome — check the floor calendar or ask front desk.
+                  {walkInHint ?? "Walk-ins welcome — check the floor calendar or ask front desk."}
                 </p>
               </section>
             ) : (

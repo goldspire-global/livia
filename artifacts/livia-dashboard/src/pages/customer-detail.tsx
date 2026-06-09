@@ -11,32 +11,24 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { formatDateTime } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Mail, Phone, Calendar, Pencil } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { customFetch } from "@workspace/api-client-react";
-import { CustomerTimeline } from "@/components/customer-timeline";
+import { GuestRelationshipPanel } from "@/components/customers/guest-relationship-panel";
 import { LivMemoryPanel } from "@/components/customers/liv-memory-panel";
+import { GuestHistoryPanel } from "@/components/customers/guest-history-panel";
 import { CustomerPetsPanel } from "@/components/customer-pets-panel";
 import { CareSeriesPanel } from "@/components/customers/care-series-panel";
 import { useForm } from "react-hook-form";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { invalidateOperationalState } from "@/lib/operational-cache";
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "text-[hsl(var(--chart-4))]",
-  CONFIRMED: "text-primary",
-  COMPLETED: "text-[hsl(var(--chart-3))]",
-  CANCELLED: "text-destructive",
-  NO_SHOW: "text-muted-foreground",
-};
+import { BeautyClientPanel } from "@/components/beauty/beauty-client-panel";
+import { AlliedClinicalNotesPanel } from "@/components/allied-health/allied-clinical-notes-panel";
 
 interface CustomerForm {
   firstName: string;
@@ -53,12 +45,11 @@ export default function CustomerDetailPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [mergeIdentityId, setMergeIdentityId] = useState("");
-  const [merging, setMerging] = useState(false);
 
   const bid = business?.id ?? "";
   const cid = customerId ?? "";
   const vertical = (business as { vertical?: string } | null)?.vertical;
+  const isBeauty = vertical === "beauty";
   const showCareSeries =
     vertical === "allied-health" || vertical === "wellness" || vertical === "physio";
   const canEdit = effectiveRole === "OWNER" || effectiveRole === "ADMIN";
@@ -96,6 +87,8 @@ export default function CustomerDetailPage() {
       startAt: string;
       service?: { name?: string };
     }>;
+    patchTestCompletedAt?: string | null;
+    beautyPreferences?: unknown;
   } | null;
 
   function startEdit() {
@@ -137,27 +130,19 @@ export default function CustomerDetailPage() {
     );
   }
 
-  async function mergeIdentity() {
-    if (!bid || !cid || !mergeIdentityId.trim()) return;
-    setMerging(true);
-    try {
-      await customFetch(`/api/businesses/${bid}/customers/${cid}/merge-identity`, {
-        method: "POST",
-        body: JSON.stringify({ identityId: mergeIdentityId.trim() }),
-      });
-      invalidateOperationalState(qc, bid);
-      qc.invalidateQueries({ queryKey: getGetCustomerQueryKey(bid, cid) });
-      setMergeIdentityId("");
-      toast({ title: "Channel linked to this client" });
-    } catch (e) {
-      toast({
-        title: "Merge failed",
-        description: e instanceof Error ? e.message : undefined,
-        variant: "destructive",
-      });
-    } finally {
-      setMerging(false);
-    }
+  function saveBeautyFields(data: Record<string, unknown>) {
+    if (!bid || !cid) return;
+    updateCustomer.mutate(
+      { businessId: bid, customerId: cid, data: data as never },
+      {
+        onSuccess: () => {
+          invalidateOperationalState(qc, bid);
+          qc.invalidateQueries({ queryKey: getGetCustomerQueryKey(bid, cid) });
+          toast({ title: "Beauty profile saved" });
+        },
+        onError: () => toast({ title: "Could not save beauty profile", variant: "destructive" }),
+      },
+    );
   }
 
   function toggleBlock() {
@@ -339,32 +324,27 @@ export default function CustomerDetailPage() {
             </CardContent>
           </Card>
 
-          {canEdit ? (
-            <SettingsDisclosure
-              title="Merge duplicate channel"
-              description="Advanced — link a stray channel identity to this client."
-              defaultOpen={false}
-            >
-              <div className="flex gap-2 pt-1">
-                <Input
-                  placeholder="Channel identity id"
-                  value={mergeIdentityId}
-                  onChange={(e) => setMergeIdentityId(e.target.value)}
-                  data-testid="input-merge-identity"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={merging || !mergeIdentityId.trim()}
-                  onClick={() => void mergeIdentity()}
-                >
-                  {merging ? "Merging…" : "Merge"}
-                </Button>
-              </div>
-            </SettingsDisclosure>
+          <GuestRelationshipPanel
+            businessId={bid}
+            customerId={cid}
+            customerPhone={c.phone}
+          />
+
+          {isBeauty ? (
+            <BeautyClientPanel
+              customer={{
+                patchTestCompletedAt: c.patchTestCompletedAt,
+                beautyPreferences: c.beautyPreferences,
+              }}
+              canEdit={canEdit}
+              saving={updateCustomer.isPending}
+              onSavePatchTest={(iso) => saveBeautyFields({ patchTestCompletedAt: iso })}
+              onSavePreferences={(prefs) => saveBeautyFields({ beautyPreferences: prefs })}
+            />
           ) : null}
 
           {showCareSeries ? <CareSeriesPanel customerId={cid} canEdit={canEdit} /> : null}
+          {vertical === "allied-health" ? <AlliedClinicalNotesPanel customerId={cid} /> : null}
 
           <CustomerPetsPanel
             businessId={bid}
@@ -379,37 +359,12 @@ export default function CustomerDetailPage() {
             vertical={(business as { vertical?: string } | null)?.vertical}
             category={(business as { category?: string } | null)?.category}
           />
-          <CustomerTimeline businessId={bid} customerId={cid} />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Booking history
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {!c.recentBookings || c.recentBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-4 py-6 text-center">No bookings yet</p>
-              ) : (
-                <div className="divide-y divide-border max-h-64 overflow-y-auto">
-                  {c.recentBookings.map((booking) => (
-                    <Link key={booking.id} href={`/bookings/${booking.id}`}>
-                      <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                        <div>
-                          <p className="font-medium text-sm">{booking.service?.name ?? "—"}</p>
-                          <p className="text-xs text-muted-foreground">{formatDateTime(booking.startAt)}</p>
-                        </div>
-                        <span className={`text-xs font-semibold ${STATUS_COLORS[booking.status] ?? ""}`}>
-                          {booking.status}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <GuestHistoryPanel
+            businessId={bid}
+            customerId={cid}
+            recentBookings={c.recentBookings}
+          />
 
           {canEdit && (
             <Link href={`/bookings?create=1&customerId=${cid}`}>

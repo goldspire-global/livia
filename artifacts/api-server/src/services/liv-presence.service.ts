@@ -9,6 +9,12 @@ import { getDashboardSummary } from "./dashboard.service";
 import { getMyDay } from "./my-day.service";
 import { getChainRollupForOwner } from "./chain-rollup.service";
 import { listActiveLivMoments, type LivMoment } from "./liv-signals.service";
+import {
+  resolveCommerceOwnerBriefingCta,
+  resolveOwnerPresenceIntelLine,
+  type OwnerPresenceIntelSlice,
+} from "@workspace/policy";
+import { getOwnerIntelligenceBundle } from "./owner-intelligence.service";
 import type { LivSignalPriority } from "@workspace/liv-runtime";
 
 export type LivPresenceContext =
@@ -42,6 +48,11 @@ export type LivPresencePayload = {
   moments?: LivMoment[];
   /** Derived urgency for UI chrome. */
   pulse?: LivSignalPriority;
+  /** Commerce + Twin when queue is clear (owner surfaces). */
+  intel?: OwnerPresenceIntelSlice & {
+    commerceHref?: string;
+    remediationActCount?: number;
+  };
   generatedAt: string;
 };
 
@@ -80,6 +91,7 @@ function buildStatsLine(args: {
   open: number;
   myDayNext?: { startAt: string; customerName: string | null } | null;
   myDayTodayCount?: number;
+  commerceCta?: { label: string } | null;
 }): string {
   const shop = shopPrefix(args.businessName);
 
@@ -121,6 +133,10 @@ function buildStatsLine(args: {
     return `${shop}${args.today} appointment${args.today === 1 ? "" : "s"} today — you're on track.`;
   }
 
+  if (args.context === "owner_today" && args.commerceCta) {
+    return `${shop}${args.commerceCta.label} — calendar and inbox are clear for now.`;
+  }
+
   return `${shop}Quiet morning — inbox and calendar are clear.`;
 }
 
@@ -143,7 +159,9 @@ export async function getLivPresenceForBusiness(args: {
     return null;
   }
 
-  const [briefing, summary, openConversations, moments] = await Promise.all([
+  const ownerIntelContext = context === "owner_today" || context === "manager_today";
+
+  const [briefing, summary, openConversations, moments, ownerIntel] = await Promise.all([
     ["owner_today", "manager_today", "reception_today"].includes(context)
       ? getMorningBriefing(businessId)
       : Promise.resolve(null),
@@ -154,7 +172,18 @@ export async function getLivPresenceForBusiness(args: {
       ? countOpenConversations(businessId)
       : Promise.resolve(0),
     listActiveLivMoments(businessId, 6),
+    ownerIntelContext ? getOwnerIntelligenceBundle(businessId) : Promise.resolve(null),
   ]);
+
+  const intelSlice: OwnerPresenceIntelSlice | undefined = ownerIntel
+    ? {
+        twinHeadline: ownerIntel.twinHeadline,
+        twinSubline: ownerIntel.twinSubline,
+        commerceTopSignal: ownerIntel.commerce.topSignal,
+        remediationActCount: ownerIntel.remediationTasks.filter((t) => t.severity === "act")
+          .length,
+      }
+    : undefined;
 
   if (context === "staff_today") {
     const myDay = await getMyDay(businessId, staffId ?? null);
@@ -197,12 +226,29 @@ export async function getLivPresenceForBusiness(args: {
   const content = briefing?.content as MorningBriefingContent | undefined;
   const livSummary = content?.summary?.trim();
 
-  const pulse = derivePulse(moments, pending, open);
+  const intelLine = resolveOwnerPresenceIntelLine({ pending, open, intel: intelSlice });
+  const commerceActPulse =
+    (intelSlice?.remediationActCount ?? 0) > 0 ||
+    intelSlice?.commerceTopSignal?.severity === "act";
+  const pulse = commerceActPulse
+    ? "act"
+    : derivePulse(moments, pending, open);
+
+  const intelPayload = intelSlice
+    ? {
+        ...intelSlice,
+        commerceHref: ownerIntel?.commerce.topSignal?.href ?? "/settings?tab=billing",
+      }
+    : undefined;
 
   if (livSummary) {
+    const line =
+      intelLine && context === "owner_today" && pending === 0 && open === 0
+        ? `${shopPrefix(biz.name)}${intelLine}`
+        : livSummary;
     return {
       context,
-      line: livSummary,
+      line,
       source: content?.source === "liv" ? "liv" : "stats",
       businessId,
       businessName: biz.name,
@@ -218,27 +264,44 @@ export async function getLivPresenceForBusiness(args: {
       signals: { todayBookings: today, pendingBookings: pending, openConversations: open },
       moments,
       pulse,
+      intel: intelPayload,
       generatedAt,
     };
   }
 
-  const line = buildStatsLine({
-    context,
-    businessName: biz.name,
-    today,
-    pending,
-    open,
-  });
+  const commerceCta =
+    context === "owner_today" && summary?.commerce
+      ? resolveCommerceOwnerBriefingCta({
+          capturedMinor30d: summary.commerce.capturedMinor30d,
+          captureRatePercent: summary.commerce.captureRatePercent,
+          paymentCount30d: summary.commerce.paymentCount30d,
+          demandBookings: pending + (summary.confirmedCount ?? 0),
+          weekBookings: summary.weekBookings ?? 0,
+        })
+      : null;
+
+  const line =
+    intelLine && context === "owner_today"
+      ? `${shopPrefix(biz.name)}${intelLine}`
+      : buildStatsLine({
+          context,
+          businessName: biz.name,
+          today,
+          pending,
+          open,
+          commerceCta,
+        });
 
   return {
     context,
     line,
-    source: "stats",
+    source: intelLine ? "liv" : "stats",
     businessId,
     businessName: biz.name,
     signals: { todayBookings: today, pendingBookings: pending, openConversations: open },
     moments,
     pulse,
+    intel: intelPayload,
     generatedAt,
   };
 }
@@ -254,6 +317,7 @@ export async function getLivPresenceForOrgAdmin(ownerId: string): Promise<LivPre
   const pending = chain.shops.reduce((n, s) => n + s.pendingBookings, 0);
   const open = chain.shops.reduce((n, s) => n + s.openConversations, 0);
   const actShops = chain.shops.filter((s) => s.pulseStatus === "act").length;
+  const commerceAct = chain.commerceSummary?.shopsWithActSignal ?? 0;
 
   return {
     context: "org_admin_portfolio",
@@ -264,7 +328,23 @@ export async function getLivPresenceForOrgAdmin(ownerId: string): Promise<LivPre
       pendingBookings: pending,
       openConversations: open,
     },
-    pulse: actShops > 0 ? "act" : chain.shopsNeedingAttention > 0 ? "watch" : "info",
+    pulse:
+      commerceAct > 0 || actShops > 0
+        ? "act"
+        : chain.shopsNeedingAttention > 0
+          ? "watch"
+          : "info",
+    intel: {
+      remediationActCount: commerceAct,
+      commerceTopSignal:
+        commerceAct > 0 && chain.commerceAlerts?.[0]
+          ? {
+              title: chain.commerceAlerts[0].message,
+              href: chain.commerceAlerts[0].href,
+              severity: chain.commerceAlerts[0].severity,
+            }
+          : null,
+    },
     generatedAt: new Date().toISOString(),
   };
 }

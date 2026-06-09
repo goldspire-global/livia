@@ -70,6 +70,8 @@ export const businessesTable = pgTable(
     timezone: text("timezone").notNull().default("Europe/Dublin"),
     // Composable monetisation primitives (ADR 0018).
     vertical: businessVerticalEnum("vertical").notNull().default("hair"),
+    /** GTM D0 — sub-segment profile from @workspace/policy subvertical-profiles */
+    subverticalProfileId: text("subvertical_profile_id"),
     tier: businessTierEnum("tier").notNull().default("solo"),
     euRegion: businessEuRegionEnum("eu_region").notNull().default("fra"),
     logoUrl: text("logo_url"),
@@ -107,11 +109,25 @@ export const businessesTable = pgTable(
     messagingChannels: jsonb("messaging_channels").$type<Record<string, unknown>>(),
     /** Deposit, buffers, strikes — see @workspace/policy operational-policy */
     operationalPolicy: jsonb("operational_policy").$type<Record<string, unknown>>(),
+    /** Per-tenant capability instances — see @workspace/policy capability-instances */
+    capabilityInstances: jsonb("capability_instances")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     parentBusinessId: text("parent_business_id"),
     structureKind: businessStructureKindEnum("structure_kind").notNull().default("standalone"),
     livPackConfig: jsonb("liv_pack_config").$type<Record<string, unknown>>(),
     /** Up to 4 service ids pinned to the top grid on public /b (order preserved). */
     publicFeaturedServiceIds: jsonb("public_featured_service_ids").$type<string[]>(),
+    /** Mini-store config — products live in retail_products. */
+    retailStore: jsonb("retail_store")
+      .$type<{
+        enabled?: boolean;
+        title?: string;
+        postSessionSuggest?: boolean;
+      }>()
+      .notNull()
+      .default({ enabled: false, title: "Take home", postSessionSuggest: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

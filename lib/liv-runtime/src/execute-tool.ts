@@ -16,6 +16,27 @@ import {
   LIV_TOOL_WELLNESS_DUTY_SOLVER,
   LIV_TOOL_WELLNESS_EOD_CLOSE,
   LIV_TOOL_WELLNESS_REROOM,
+  LIV_TOOL_GET_ACTIVATION_STATUS,
+  LIV_TOOL_GET_BUSINESS_TWIN,
+  LIV_TOOL_GET_COMMERCE_SNAPSHOT,
+  LIV_TOOL_GET_COMMERCE_SIGNALS,
+  LIV_TOOL_LIST_CAPABILITY_BLOCKERS,
+  LIV_TOOL_GET_OWNER_INTELLIGENCE,
+  LIV_TOOL_LIST_PRESENTATION_PRESETS,
+  LIV_TOOL_GET_SETUP_CHECKLIST,
+  LIV_TOOL_GET_TENANT_EXPERIENCE,
+  LIV_TOOL_PREVIEW_PRESENTATION,
+  LIV_TOOL_APPLY_PRESENTATION_PRESET,
+  LIV_TOOL_PATCH_LIV_PERSONA,
+  LIV_TOOL_PATCH_BRAND_ASSETS,
+  LIV_TOOL_EXPLAIN_OPERATIONAL_POLICY,
+  LIV_TOOL_PROPOSE_POLICY_PATCH,
+  LIV_TOOL_PATCH_BUSINESS_HOURS,
+  LIV_TOOL_CONFIRM_PUBLIC_LINK,
+  LIV_TOOL_PATCH_OPERATIONAL_POLICY,
+  LIV_TOOL_INVITE_STAFF,
+  LIV_TOOL_ASSIGN_SERVICE,
+  LIV_TOOL_START_CHANNEL_CONNECT,
 } from "./registry";
 
 export type LivSlot = {
@@ -80,6 +101,62 @@ export type LivToolDeps = {
     hour: number;
   }) => Promise<Record<string, unknown>>;
   wellnessReroom?: () => Promise<Record<string, unknown>>;
+  getActivationStatus?: () => Promise<Record<string, unknown>>;
+  getBusinessTwin?: () => Promise<Record<string, unknown>>;
+  getCommerceSnapshot?: () => Promise<Record<string, unknown>>;
+  getCommerceSignals?: () => Promise<Record<string, unknown>>;
+  listCapabilityBlockers?: () => Promise<Record<string, unknown>>;
+  getOwnerIntelligence?: () => Promise<Record<string, unknown>>;
+  listPresentationPresets?: () => Promise<Record<string, unknown>>;
+  getSetupChecklist?: () => Promise<Record<string, unknown>>;
+  getTenantExperience?: () => Promise<Record<string, unknown>>;
+  previewPresentation?: (input: {
+    presentationPresetId: string;
+    brandAccentHex?: string;
+  }) => Promise<Record<string, unknown>>;
+  applyPresentationPreset?: (input: {
+    presentationPresetId: string;
+    brandAccentHex?: string;
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  patchLivPersona?: (input: {
+    aiTone?: string;
+    aiGreeting?: string;
+    aiKnowledge?: string;
+    aiEnabled?: boolean;
+    aiCanBookDirectly?: boolean;
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  patchBrandAssets?: (input: {
+    logoUrl?: string;
+    coverImageUrl?: string;
+    brandAccentHex?: string | null;
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  explainOperationalPolicy?: () => Promise<Record<string, unknown>>;
+  proposePolicyPatch?: (input: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  patchBusinessHours?: (input: {
+    rules: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+    staffId?: string;
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  confirmPublicLink?: (input: { confirm: boolean }) => Promise<Record<string, unknown>>;
+  patchOperationalPolicy?: (input: {
+    partial: Record<string, unknown>;
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  inviteStaff?: (input: {
+    email: string;
+    role: "ADMIN" | "STAFF";
+    deskRole?: "manager" | "reception";
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  assignService?: (input: {
+    staffId: string;
+    serviceIds: string[];
+    confirm: boolean;
+  }) => Promise<Record<string, unknown>>;
+  startChannelConnect?: (input: { channel?: string }) => Promise<Record<string, unknown>>;
 };
 
 export type LivToolResult = {
@@ -337,6 +414,277 @@ export async function executeLivTool(args: {
     }
     const out = await deps.wellnessReroom();
     return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_ACTIVATION_STATUS) {
+    if (!deps.getActivationStatus) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getActivationStatus();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_BUSINESS_TWIN) {
+    if (!deps.getBusinessTwin) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getBusinessTwin();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_COMMERCE_SNAPSHOT) {
+    if (!deps.getCommerceSnapshot) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getCommerceSnapshot();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_COMMERCE_SIGNALS) {
+    if (!deps.getCommerceSignals) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getCommerceSignals();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_LIST_CAPABILITY_BLOCKERS) {
+    if (!deps.listCapabilityBlockers) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.listCapabilityBlockers();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_OWNER_INTELLIGENCE) {
+    if (!deps.getOwnerIntelligence) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getOwnerIntelligence();
+    return { result: { ok: true, bundle: out } };
+  }
+
+  if (toolName === LIV_TOOL_LIST_PRESENTATION_PRESETS) {
+    if (!deps.listPresentationPresets) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.listPresentationPresets();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_SETUP_CHECKLIST) {
+    if (!deps.getSetupChecklist) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getSetupChecklist();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_GET_TENANT_EXPERIENCE) {
+    if (!deps.getTenantExperience) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.getTenantExperience();
+    return { result: { ok: true, experience: out } };
+  }
+
+  if (toolName === LIV_TOOL_PREVIEW_PRESENTATION) {
+    if (!deps.previewPresentation) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.previewPresentation({
+      presentationPresetId: String(toolInput.presentationPresetId ?? ""),
+      brandAccentHex: toolInput.brandAccentHex ? String(toolInput.brandAccentHex) : undefined,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_APPLY_PRESENTATION_PRESET) {
+    if (!deps.applyPresentationPreset) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const out = await deps.applyPresentationPreset({
+      presentationPresetId: String(toolInput.presentationPresetId ?? ""),
+      brandAccentHex: toolInput.brandAccentHex ? String(toolInput.brandAccentHex) : undefined,
+      confirm,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_PATCH_LIV_PERSONA) {
+    if (!deps.patchLivPersona) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const parseBool = (v: unknown): boolean | undefined => {
+      if (v === undefined || v === null || v === "") return undefined;
+      if (v === true) return true;
+      if (v === false) return false;
+      const s = String(v).toLowerCase();
+      if (s === "true") return true;
+      if (s === "false") return false;
+      return undefined;
+    };
+    const out = await deps.patchLivPersona({
+      confirm,
+      aiTone: toolInput.aiTone ? String(toolInput.aiTone) : undefined,
+      aiGreeting: toolInput.aiGreeting ? String(toolInput.aiGreeting) : undefined,
+      aiKnowledge: toolInput.aiKnowledge ? String(toolInput.aiKnowledge) : undefined,
+      aiEnabled: parseBool(toolInput.aiEnabled),
+      aiCanBookDirectly: parseBool(toolInput.aiCanBookDirectly),
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_PATCH_BRAND_ASSETS) {
+    if (!deps.patchBrandAssets) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const out = await deps.patchBrandAssets({
+      confirm,
+      logoUrl: toolInput.logoUrl ? String(toolInput.logoUrl) : undefined,
+      coverImageUrl: toolInput.coverImageUrl ? String(toolInput.coverImageUrl) : undefined,
+      brandAccentHex:
+        toolInput.brandAccentHex === null || toolInput.brandAccentHex === ""
+          ? null
+          : toolInput.brandAccentHex
+            ? String(toolInput.brandAccentHex)
+            : undefined,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_EXPLAIN_OPERATIONAL_POLICY) {
+    if (!deps.explainOperationalPolicy) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.explainOperationalPolicy();
+    return { result: { ok: true, ...out } };
+  }
+
+  if (toolName === LIV_TOOL_PROPOSE_POLICY_PATCH) {
+    if (!deps.proposePolicyPatch) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.proposePolicyPatch(toolInput);
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_PATCH_BUSINESS_HOURS) {
+    if (!deps.patchBusinessHours) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    let rules: Array<{ dayOfWeek: number; startTime: string; endTime: string }> = [];
+    try {
+      const raw = toolInput.rulesJson ?? toolInput.rules;
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!Array.isArray(parsed)) throw new Error("rules must be an array");
+      rules = parsed.map((r: Record<string, unknown>) => ({
+        dayOfWeek: Number(r.dayOfWeek),
+        startTime: String(r.startTime),
+        endTime: String(r.endTime),
+      }));
+    } catch {
+      return { result: { ok: false, error: "INVALID_RULES_JSON" } };
+    }
+    const out = await deps.patchBusinessHours({
+      confirm,
+      rules,
+      staffId: toolInput.staffId ? String(toolInput.staffId) : undefined,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_CONFIRM_PUBLIC_LINK) {
+    if (!deps.confirmPublicLink) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const out = await deps.confirmPublicLink({ confirm });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_PATCH_OPERATIONAL_POLICY) {
+    if (!deps.patchOperationalPolicy) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const { confirm: _c, ...partial } = toolInput;
+    const out = await deps.patchOperationalPolicy({ partial, confirm });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_INVITE_STAFF) {
+    if (!deps.inviteStaff) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    const role = String(toolInput.role ?? "").toUpperCase();
+    if (role !== "ADMIN" && role !== "STAFF") {
+      return { result: { ok: false, error: "INVALID_ROLE" } };
+    }
+    const desk = String(toolInput.deskRole ?? "").toLowerCase();
+    const out = await deps.inviteStaff({
+      confirm,
+      email: String(toolInput.email ?? "").trim(),
+      role: role as "ADMIN" | "STAFF",
+      deskRole:
+        desk === "reception" || desk === "manager"
+          ? (desk as "manager" | "reception")
+          : undefined,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_ASSIGN_SERVICE) {
+    if (!deps.assignService) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const confirm =
+      toolInput.confirm === true ||
+      String(toolInput.confirm ?? "").toLowerCase() === "true";
+    let serviceIds: string[] = [];
+    try {
+      const raw = toolInput.serviceIdsJson ?? toolInput.serviceIds;
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!Array.isArray(parsed)) throw new Error("serviceIds must be an array");
+      serviceIds = parsed.map((id) => String(id));
+    } catch {
+      return { result: { ok: false, error: "INVALID_SERVICE_IDS_JSON" } };
+    }
+    const out = await deps.assignService({
+      confirm,
+      staffId: String(toolInput.staffId),
+      serviceIds,
+    });
+    return { result: out };
+  }
+
+  if (toolName === LIV_TOOL_START_CHANNEL_CONNECT) {
+    if (!deps.startChannelConnect) {
+      return { result: { ok: false, error: "NOT_CONFIGURED" } };
+    }
+    const out = await deps.startChannelConnect({
+      channel: toolInput.channel ? String(toolInput.channel) : undefined,
+    });
+    return { result: out };
   }
 
   return { result: { ok: false, error: "UNKNOWN_TOOL" } };

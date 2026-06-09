@@ -17,7 +17,7 @@ A lash/nail/brow owner who signs up today should feel, within **15 minutes**:
 4. **Clients rebook on rhythm** — 2-week lash fill, 3-week nail maintenance — Liv nudges, not generic “come back sometime.”
 5. **It looks like my brand** — Bloom on `/b`, not Livia; preset matches my studio aesthetic.
 
-**Today (honest):** Steps 4–5 are partially there; **step 1 is broken in UX** (menu exists in code but is effectively hidden); steps 2–3 are thin (vertical-wide patch-test question only).
+**Today (honest, 2026-06-05):** Menu discoverability and P1 patch/fill shipped; **GTM Wave 1** requires all sub-segments in §2.1 onboardable with innovation P0 from [`VERTICAL-INNOVATION-PROGRAM.md`](../VERTICAL-INNOVATION-PROGRAM.md). Remaining gaps: fill vs full classifier, combos, contraindication profile, `/my` relationship shell.
 
 ---
 
@@ -120,8 +120,8 @@ Industry tools (Fresha, GlossGenius, Bella Booking, SuiteCal, Booking Pro AI) co
    - Beauty sidebar: icon + `beautyNav` styling; badge when menu &lt; 3 active services.
 
 2. **Blocking onboarding act: “Build your menu”**  
-   - Remove `a3_service_menu` from `AUTO_COMPLETED_ON_CREATE_ACTS`.  
-   - Block app unlock until ≥1 active service OR explicit “use demo menu” for sandbox only.  
+   - **Done (2026-06-07):** `a3_service_menu` not auto-completed on create; opt-in `starterPack` seeds template menu.  
+   - Block app unlock until ≥1 active service OR explicit starter pack / demo seed.  
    - Inline panel: “Add your first treatment” not just “Edit full menu”.
 
 3. **Beauty-native services page**  

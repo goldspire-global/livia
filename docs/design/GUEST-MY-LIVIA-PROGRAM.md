@@ -1,14 +1,17 @@
 # Guest hub — My Livia (`/my`) program
 
-**Status:** draft (2026-06)  
+**Status:** canonical (2026-06-05) — **GTM Wave 1 P0**  
 **Surface:** W6 — `guest.public.hub` · route `/my`  
+**Authority:** [`product/GTM-VERTICAL-DEPTH-PROGRAM.md`](../product/GTM-VERTICAL-DEPTH-PROGRAM.md) §4–5  
 **Registry:** `lib/policy/src/platform-surface-registry.ts`
 
 ---
 
 ## What it is
 
-End clients’ **cross-business portal** on Livia: phone OTP sign-in, upcoming visits, favourite shops, rebook links to each studio’s `/b/{slug}`. Separate from tenant W4, but should feel like the same product family as noir-dusk `/b` and owner dashboard.
+End clients’ **cross-business relationship vault** on Livia: phone OTP sign-in, upcoming visits, favourites, **vertical-tailored manage-visit flows per shop** — not redirects to the public book surface.
+
+**Book (acquisition)** lives on `{slug}.livia-hq.com`. **`/my` (relationship)** is where returning guests reschedule, message, see package credits, proof status, pet/vehicle memory, and rebook rhythm.
 
 **Code today:** `artifacts/livia-dashboard/src/pages/my-livia.tsx` · `guest-hub.service.ts` · `GuestHubShell`
 
@@ -16,14 +19,15 @@ End clients’ **cross-business portal** on Livia: phone OTP sign-in, upcoming v
 
 ## Gap vs rest of Livia (founder UAT notes)
 
-| Area | Today | Target |
+| Area | Today | Target (D1) |
 |------|--------|--------|
-| **Visual** | Generic `public-booking-shell` | Presentation-aware where shop has beauty preset; Livia wordmark + calm guest typography |
-| **Shops list** | Flat cards | Vertical-aware logos, last service, “Book again” CTA per shop |
-| **Upcoming** | Single hero + list | Match `/b` visit link patterns; running-late / reschedule deep links |
-| **Liv** | Static strip + optional chat | Policy-backed guest copy; hand off to shop `/b` for booking changes |
-| **Trust** | Minimal footer | Same trust strip patterns as public book (cancel window, secure booking) |
-| **Mobile** | Web responsive | PWA add-to-home (guest) parity with `/b` |
+| **Visit manage** | Redirect to `/b/.../visit` | `/my/{slug}/visit/{id}` vertical morph — **no book-surface redirect** |
+| **Visual** | Generic shell | Inherit favourite shop preset accent (read-only) |
+| **Shops list** | Flat cards | Sub-segment label, last service, book vs manage CTAs |
+| **Upcoming** | Links to `/b` visit | In-hub: running late, reschedule, message shop |
+| **Liv** | Rules router to `/b` | Route to shop thread or book subdomain when appropriate |
+| **Vertical morph** | None | Beauty fill, wellness pack, proof status, pet card, vehicle card |
+| **Mobile** | Web responsive | PWA add-to-home (guest) |
 
 ---
 
@@ -37,8 +41,8 @@ End clients’ **cross-business portal** on Livia: phone OTP sign-in, upcoming v
 
 ### P1 — Presentation inheritance
 
-- When rebook opens `/b/{slug}`, guest already gets shop skin
-- Optional: `/my` header accent from **last visited** or **favourite** shop’s saved preset (read-only)
+- Rebook opens `{slug}.livia-hq.com` with shop skin
+- `/my` header accent from favourite shop preset (read-only)
 
 ### P2 — Features
 

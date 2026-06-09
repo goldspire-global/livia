@@ -2,22 +2,24 @@
 
 Read this before large edits or refactors.
 
-**Progress (one page):** [`docs/LIVIA-STATUS.md`](docs/LIVIA-STATUS.md) — engineering R1–R3 done in repo; **UX polish + launch gates still open**.
+**Progress (one page):** [`docs/LIVIA-STATUS.md`](docs/LIVIA-STATUS.md) — R1–R3 engineering done; **Era 1 activation proof open**. Blueprint: [`docs/product/MASTER-BLUEPRINT-INDEX.md`](docs/product/MASTER-BLUEPRINT-INDEX.md).
 
 ## Must read first
 
 1. [`docs/LIVIA-STATUS.md`](docs/LIVIA-STATUS.md) — **top-level progress**
-2. [`docs/product/LIVIA-DOCUMENTATION-PROGRAM.md`](docs/product/LIVIA-DOCUMENTATION-PROGRAM.md) — doc program (G-DOC passed)
-3. [`docs/product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](docs/product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) — **category — not salon-shaped**
-4. [`docs/design/UI-UX-MASTER-PROGRAM.md`](docs/design/UI-UX-MASTER-PROGRAM.md) — **UX authority**
-5. [`docs/product/LIVIA-WIDE-BUILD-PLAN.md`](docs/product/LIVIA-WIDE-BUILD-PLAN.md) — vision + build sequencing
-6. [`docs/product/LIVIA-BUILD-PLAN-V2.md`](docs/product/LIVIA-BUILD-PLAN-V2.md) — phase checklists (historical)
-7. [`docs/product/LIVIA-FINAL-BUILD-PLAN.md`](docs/product/LIVIA-FINAL-BUILD-PLAN.md) — master build scope (locks)
-8. [`docs/LIVIA-ALIGNMENT.md`](docs/LIVIA-ALIGNMENT.md)
-9. [`docs/PLATFORM-TERMINOLOGY.md`](docs/PLATFORM-TERMINOLOGY.md)
-10. [`docs/START-HERE.md`](docs/START-HERE.md)
-11. [`docs/DOC-CANONICAL-INDEX.md`](docs/DOC-CANONICAL-INDEX.md)
-12. [`docs/product/VERTICAL-PROGRAMS-INDEX.md`](docs/product/VERTICAL-PROGRAMS-INDEX.md) — per-vertical L0–L8 + [`LIVIA-VERTICALS-BUILD-PLAN.md`](docs/product/LIVIA-VERTICALS-BUILD-PLAN.md)
+2. [`docs/product/MASTER-BLUEPRINT-INDEX.md`](docs/product/MASTER-BLUEPRINT-INDEX.md) — **architecture authority (Volumes 0–H)**
+3. [`docs/product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](docs/product/LIVIA-MASTER-EXECUTION-PLAN-V3.md) — **what to build when**
+4. [`docs/product/V1-PRODUCT-DEFINITION.md`](docs/product/V1-PRODUCT-DEFINITION.md) — **V1 scope — sacred metric: first booking**
+5. [`docs/engineering/CURSOR-ENGINEERING-CONSTITUTION.md`](docs/engineering/CURSOR-ENGINEERING-CONSTITUTION.md) — **agent rules**
+6. [`docs/product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](docs/product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) — category — not salon-shaped
+7. [`docs/design/UI-UX-MASTER-PROGRAM.md`](docs/design/UI-UX-MASTER-PROGRAM.md) — UX authority
+8. [`docs/product/LIVIA-WIDE-BUILD-PLAN.md`](docs/product/LIVIA-WIDE-BUILD-PLAN.md) — vision + org shapes
+9. [`docs/product/LIVIA-FINAL-BUILD-PLAN.md`](docs/product/LIVIA-FINAL-BUILD-PLAN.md) — R1–R3 scope locks
+10. [`docs/LIVIA-ALIGNMENT.md`](docs/LIVIA-ALIGNMENT.md)
+11. [`docs/PLATFORM-TERMINOLOGY.md`](docs/PLATFORM-TERMINOLOGY.md)
+12. [`docs/START-HERE.md`](docs/START-HERE.md)
+13. [`docs/DOC-CANONICAL-INDEX.md`](docs/DOC-CANONICAL-INDEX.md)
+14. [`docs/product/VERTICAL-PROGRAMS-INDEX.md`](docs/product/VERTICAL-PROGRAMS-INDEX.md) — per-vertical L0–L8 + [`LIVIA-VERTICALS-BUILD-PLAN.md`](docs/product/LIVIA-VERTICALS-BUILD-PLAN.md)
 
 ## Before you edit (narrow task + system-wide vision)
 

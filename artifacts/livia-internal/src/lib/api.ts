@@ -713,6 +713,15 @@ export type OpsOnboardingChecklist = {
   }>;
 };
 
+export type PlatformActivationRollup = {
+  refreshedAt: string;
+  totalBusinesses: number;
+  activatedCount: number;
+  activationRate: number;
+  medianTimeToFirstBookingMs: number | null;
+  medianTimeToFirstBookingLabel: string | null;
+};
+
 export type ExternalLogResult = {
   backend: "loki" | "openobserve" | "none";
   configured: boolean;
@@ -785,6 +794,10 @@ export async function getMonitoringFlows() {
 
 export async function getMonitoringOnboarding() {
   return internalFetch<OpsOnboardingChecklist>("/internal/ops/monitoring/onboarding");
+}
+
+export async function getMonitoringActivation() {
+  return internalFetch<PlatformActivationRollup>("/internal/ops/monitoring/activation");
 }
 
 export async function getMonitoringReport() {

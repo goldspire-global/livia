@@ -66,7 +66,9 @@ Demo password: `LIVIA_DEMO_PASSWORD` (default: `LiviaDemo2026!`). Internal UI: p
 | 1.10 | `/audit` | Audit log entries |
 | 1.11 | Chain → click another shop card “open today” | URL → `/dashboard`, tenant switched |
 
-**Credentials (fallback):** `demo-founder@livia.io` / `LIVIA_DEMO_PASSWORD`
+**Credentials (fallback):** `org-admin@demo.livia-hq.com` / `LIVIA_DEMO_PASSWORD`
+
+**Full dual-entry UAT (guest + operator + mobile):** [`FINAL-UAT-WALKTHROUGH.md`](./FINAL-UAT-WALKTHROUGH.md)
 
 ---
 
@@ -78,7 +80,7 @@ Demo password: `LIVIA_DEMO_PASSWORD` (default: `LiviaDemo2026!`). Internal UI: p
 | 2.2 | `/my-day` (if linked staff) or `/bookings` | Today’s appointments |
 | 2.3 | `/customers` | Customer list with history |
 
-**Credentials:** `demo-owner@livia.io`
+**Credentials:** `owner-conorcuts@demo.livia-hq.com`
 
 ---
 
@@ -86,10 +88,10 @@ Demo password: `LIVIA_DEMO_PASSWORD` (default: `LiviaDemo2026!`). Internal UI: p
 
 | Persona | Email | Landing | Check |
 |---------|-------|---------|-------|
-| Manager | demo-admin@livia.io | `/inbox` | Can view inbox, not owner-only billing |
-| Senior stylist | demo-staff-senior@livia.io | `/my-day` | Own column / day view |
-| Junior (Conor’s) | demo-staff-junior@livia.io | `/my-day` | Conor’s Cut staff |
-| Reception | demo-frontdesk@livia.io | `/bookings` | Front-desk booking view |
+| Manager | manager@demo.livia-hq.com | `/inbox` | Can view inbox, not owner-only billing |
+| Senior stylist | staff-lara@demo.livia-hq.com | `/my-day` | Own column / day view |
+| Junior (Conor’s) | staff-mo@demo.livia-hq.com | `/my-day` | Conor’s Cut staff |
+| Reception | desk@demo.livia-hq.com | `/bookings` | Front-desk booking view |
 
 Use **demo launcher** one-tap sign-in when possible.
 

@@ -1,7 +1,7 @@
 import { db, bookingsTable, businessesTable } from "@workspace/db";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { enrichBookingsBatch } from "./bookings.service";
-import { getDashboardUrl } from "../lib/public-urls";
+import { resolveGuestBookUrl } from "../lib/guest-public-urls";
 
 const AUTOMATION_STEPS = [
   { id: "created", label: "Booking saved with web source" },
@@ -54,10 +54,8 @@ export async function getPublicIntakeFeed(businessId: string) {
 
   const recent = await enrichBookingsBatch(recentRaw, { businessId });
 
-  const dashboardBase = getDashboardUrl();
-
   return {
-    publicUrl: biz?.slug ? `${dashboardBase}/b/${biz.slug}` : null,
+    publicUrl: biz?.slug ? resolveGuestBookUrl(biz.slug) : null,
     businessName: biz?.name ?? null,
     todayCount: todayRow?.count ?? 0,
     weekCount: weekRow?.count ?? 0,

@@ -8,6 +8,12 @@ export function invalidateOperationalState(qc: QueryClient, businessId: string) 
   void qc.invalidateQueries({ queryKey: ["my-day", businessId] });
   void qc.invalidateQueries({ queryKey: ["inbox", businessId] });
   void qc.invalidateQueries({ queryKey: ["dashboard-summary", businessId] });
+  invalidateCommerceIntelligence(qc, businessId);
+}
+
+export function invalidateCommerceIntelligence(qc: QueryClient, businessId: string) {
+  void qc.invalidateQueries({ queryKey: ["owner-intelligence", businessId] });
+  void qc.invalidateQueries({ queryKey: ["commerce-signals", businessId] });
 }
 
 export const OPERATIONAL_REFETCH_MS = 45_000;

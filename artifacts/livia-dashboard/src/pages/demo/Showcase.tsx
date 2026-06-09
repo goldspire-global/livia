@@ -81,7 +81,7 @@ function AlertBanner({ persona }: { persona: Persona }) {
     persona.alertKind === "system" ? <AlertTriangle className="h-3.5 w-3.5" /> :
     <Bell className="h-3.5 w-3.5" />;
   const label =
-    persona.alertKind === "ai" ? "Liv just acted" :
+    persona.alertKind === "ai" ? "Update from Liv" :
     persona.alertKind === "money" ? "Money moved" :
     persona.alertKind === "deposit" ? "Deposit collected" :
     persona.alertKind === "system" ? "Heads up" :

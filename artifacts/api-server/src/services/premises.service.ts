@@ -1,7 +1,9 @@
+import { randomBytes } from "node:crypto";
 import {
   db,
   premisesTable,
   premisesTenantsTable,
+  premisesCoTenantInvitesTable,
   businessesTable,
   businessMembershipsTable,
 } from "@workspace/db";
@@ -301,4 +303,82 @@ export async function listBusinessIdsAtPremises(premisesId: string): Promise<str
     .from(premisesTenantsTable)
     .where(eq(premisesTenantsTable.premisesId, premisesId));
   return rows.map((r) => r.businessId);
+}
+
+/** Invite another owner to link their business at shared premises (separate PII). */
+export async function createPremisesCoTenantInvite(
+  ownerUserId: string,
+  premisesId: string,
+  input: { invitingBusinessId: string; invitedEmail: string; publicLabel: string },
+) {
+  const [prem] = await db.select().from(premisesTable).where(eq(premisesTable.id, premisesId));
+  if (!prem || prem.ownerUserId !== ownerUserId) {
+    throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+  }
+  await assertOwnerMembership(ownerUserId, input.invitingBusinessId);
+
+  const token = randomBytes(18).toString("base64url");
+  const id = generateId();
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+  await db.insert(premisesCoTenantInvitesTable).values({
+    id,
+    premisesId,
+    invitingBusinessId: input.invitingBusinessId,
+    invitedEmail: input.invitedEmail.trim().toLowerCase(),
+    publicLabel: input.publicLabel.trim(),
+    token,
+    status: "pending",
+    expiresAt,
+  });
+
+  return { id, token, expiresAt: expiresAt.toISOString(), acceptPath: `/premises/invite/${token}` };
+}
+
+export async function acceptPremisesCoTenantInvite(
+  userId: string,
+  token: string,
+  businessId: string,
+) {
+  const [invite] = await db
+    .select()
+    .from(premisesCoTenantInvitesTable)
+    .where(eq(premisesCoTenantInvitesTable.token, token))
+    .limit(1);
+  if (!invite || invite.status !== "pending" || invite.expiresAt.getTime() < Date.now()) {
+    throw Object.assign(new Error("INVITE_INVALID"), { code: "NOT_FOUND" });
+  }
+
+  await assertOwnerMembership(userId, businessId);
+
+  const [existing] = await db
+    .select()
+    .from(premisesTenantsTable)
+    .where(
+      and(
+        eq(premisesTenantsTable.premisesId, invite.premisesId),
+        eq(premisesTenantsTable.businessId, businessId),
+      ),
+    );
+
+  if (!existing) {
+    await db.insert(premisesTenantsTable).values({
+      id: generateId(),
+      premisesId: invite.premisesId,
+      businessId,
+      publicLabel: invite.publicLabel,
+      sortOrder: 30,
+      isPrimary: false,
+    });
+  }
+
+  await db
+    .update(premisesCoTenantInvitesTable)
+    .set({
+      status: "accepted",
+      acceptedBusinessId: businessId,
+    })
+    .where(eq(premisesCoTenantInvitesTable.id, invite.id));
+
+  return getPremisesDetail(invite.premisesId);
 }

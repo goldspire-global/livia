@@ -8,10 +8,12 @@ import AxeBuilder from "@axe-core/playwright";
 import {
   assertHealthyPage,
   demoCanSignIn,
+  demoCanSignInOrgAdmin,
   demoHasBusiness,
   dismissPlatformTour,
   ensureDemoProvisioned,
   signInBusiness,
+  signInOrgAdmin,
 } from "../helpers/demo-auth";
 
 const LUXE = process.env.E2E_DEMO_SLUG ?? "luxe-salon-spa";
@@ -32,6 +34,7 @@ test.describe("Founder UAT P0", () => {
   test.describe.configure({ mode: "serial", timeout: 120_000 });
 
   test.beforeAll(async ({ request }) => {
+    test.setTimeout(300_000);
     await ensureDemoProvisioned(request);
   });
 
@@ -170,5 +173,80 @@ test.describe("Founder UAT P0", () => {
       await expect(panel).toBeVisible();
       await expect(page.getByTestId("public-b-preview-frame")).toBeVisible();
     });
+
+    test("commerce intelligence — deposit proposal + billing remediation", async ({ page }) => {
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      await assertHealthyPage(page, "/dashboard");
+      const proposals = page.getByTestId("liv-proposals-panel");
+      const hub = page.getByTestId("owner-operator-intelligence-stack");
+      const ownerStack = page.getByTestId("owner-intelligence-stack");
+      const legacyHub = page.getByTestId("owner-intelligence-hub");
+      await expect(proposals.or(hub).or(ownerStack).or(legacyHub)).toBeVisible({ timeout: 25_000 });
+
+      await page.goto("/settings?tab=billing", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("settings-page")).toBeVisible();
+      const remediation = page.getByTestId("billing-remediation-strip");
+      const commercePanel = page.getByTestId("commerce-signals-panel");
+      await expect(remediation.or(commercePanel)).toBeVisible({ timeout: 15_000 });
+    });
+
+    test("owner liv assist fab — opens ops sheet", async ({ page }) => {
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      await assertHealthyPage(page, "/dashboard");
+      const fab = page.getByTestId("owner-liv-assist-fab");
+      await expect(fab).toBeVisible({ timeout: 20_000 });
+      await fab.click();
+      await expect(page.getByTestId("owner-liv-ops-panel")).toBeVisible({ timeout: 10_000 });
+    });
+
+    test("toolkit — liv hub with ops or activity feed", async ({ page }) => {
+      await page.goto("/toolkit", { waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("toolkit-page")).toBeVisible();
+      await expect(page.getByTestId("liv-command-hub")).toBeVisible();
+      const feed = page.getByTestId("activity-feed-panel");
+      const ops = page.getByTestId("owner-liv-ops-panel");
+      await expect(feed.or(ops)).toBeVisible({ timeout: 15_000 });
+    });
+
+    test("twin observations — owner intelligence surfaces", async ({ page }) => {
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      await assertHealthyPage(page, "/dashboard");
+      const stack = page.getByTestId("owner-intelligence-stack");
+      const opStack = page.getByTestId("owner-operator-intelligence-stack");
+      const obsStrip = page.getByTestId("twin-observations-strip");
+      const riskStrip = page.getByTestId("twin-risks-strip");
+      const proposals = page.getByTestId("liv-proposals-panel");
+      await expect(stack.or(opStack).or(proposals)).toBeVisible({ timeout: 25_000 });
+      if ((await obsStrip.or(riskStrip).count()) > 0) {
+        await expect(obsStrip.or(riskStrip).first()).toBeVisible();
+      }
+    });
+  });
+});
+
+test.describe("Org admin (multi-shop)", () => {
+  test.beforeEach(async ({ page, request }) => {
+    if (!(await demoCanSignInOrgAdmin(request))) {
+      test.skip(true, "Org admin demo sign-in unavailable");
+    }
+    await signInOrgAdmin(page);
+  });
+
+  test("chain portfolio — commerce + shop cards", async ({ page }) => {
+    await page.goto("/chain", { waitUntil: "domcontentloaded" });
+    await assertHealthyPage(page, "/chain");
+    await expect(page.getByTestId("founder-chain-page")).toBeVisible({ timeout: 25_000 });
+    const commerce = page.getByTestId("chain-commerce-panel");
+    const shopCard = page.locator('[data-testid^="founder-shop-card-"]').first();
+    await expect(commerce.or(shopCard)).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("capability readiness on dashboard", async ({ page }) => {
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await assertHealthyPage(page, "/dashboard");
+    const panel = page.getByTestId("capability-readiness-panel");
+    const stack = page.getByTestId("owner-intelligence-stack");
+    const opStack = page.getByTestId("owner-operator-intelligence-stack");
+    await expect(panel.or(stack).or(opStack)).toBeVisible({ timeout: 25_000 });
   });
 });

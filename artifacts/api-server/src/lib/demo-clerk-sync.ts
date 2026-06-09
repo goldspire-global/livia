@@ -6,6 +6,9 @@ import { logger } from "./logger";
 
 type ClerkClient = ReturnType<typeof createClerkClient>;
 
+const CLERK_SYNC_TTL_MS = 10 * 60_000;
+const clerkSyncAtByUserId = new Map<string, number>();
+
 export async function syncDemoClerkUser(
   clerk: ClerkClient,
   userId: string,
@@ -50,4 +53,17 @@ export async function syncDemoClerkUser(
   } catch (err) {
     logger.debug({ err, userId }, "demo.clerk delete TOTP (may not exist)");
   }
+
+  clerkSyncAtByUserId.set(userId, Date.now());
+}
+
+/** Hot path — skip redundant Clerk password/MFA sync when user was synced recently. */
+export async function syncDemoClerkUserIfStale(
+  clerk: ClerkClient,
+  userId: string,
+  opts: { email: string; password: string },
+): Promise<void> {
+  const last = clerkSyncAtByUserId.get(userId);
+  if (last && Date.now() - last < CLERK_SYNC_TTL_MS) return;
+  await syncDemoClerkUser(clerk, userId, opts);
 }

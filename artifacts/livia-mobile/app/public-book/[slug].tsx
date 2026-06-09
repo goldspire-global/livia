@@ -8,7 +8,7 @@ import {
   useGetPublicSlots,
 } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,7 +24,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
+import { PublicFitnessClassList } from "@/components/public/PublicFitnessClassList";
 import {
+  dedupePublicSlotsByStartAt,
   guessMedspaProcedureCode,
   publicCareNotes,
 } from "@/lib/public-booking-helpers";
@@ -37,6 +39,23 @@ import {
   isBeautyPublicSurface,
 } from "@/lib/beauty-public";
 import { resolvePresentationMobileColors } from "@/lib/presentation-preset-colors";
+import { getBookingGuardsForVertical, isPublicRetailVertical } from "@workspace/policy";
+import { PublicBookingGuardsFields } from "@/components/public/PublicBookingGuardsFields";
+import { PublicRetailShop } from "@/components/public/PublicRetailShop";
+import { PublicRetailCartBar } from "@/components/public/PublicRetailCartBar";
+import {
+  addToRetailCart,
+  clearRetailCart,
+  readRetailCart,
+  retailCartApiItems,
+  retailCartQty,
+  setRetailCartQty,
+  type RetailCart,
+  type RetailCartProduct,
+} from "@/lib/retail-cart";
+import { getApiBaseUrl } from "@/lib/api-base";
+import { getGuestSurfaceUrl } from "@/lib/guest-surface-url";
+import * as WebBrowser from "expo-web-browser";
 
 type Step = "services" | "slots" | "details" | "consent" | "done";
 
@@ -54,6 +73,7 @@ function formatMoney(minor: number, currency: string) {
 
 export default function PublicBookScreen() {
   const colors = useColors();
+  const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const sl = slug ?? "";
 
@@ -69,6 +89,15 @@ export default function PublicBookScreen() {
   const [consentAgreed, setConsentAgreed] = useState(false);
   const [consentSignature, setConsentSignature] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [guardAnswers, setGuardAnswers] = useState<Record<string, string>>({});
+  const [saveToMyLivia, setSaveToMyLivia] = useState(true);
+  const [partnerFirstName, setPartnerFirstName] = useState("");
+  const [partnerPhone, setPartnerPhone] = useState("");
+  const [partnerEmail, setPartnerEmail] = useState("");
+  const [retailCart, setRetailCart] = useState<RetailCart | null>(null);
+  const [retailCheckoutBusy, setRetailCheckoutBusy] = useState(false);
+  const [combinedCheckoutBusy, setCombinedCheckoutBusy] = useState(false);
+  const [guestPayToken, setGuestPayToken] = useState<string | null>(null);
 
   const { data: biz, isLoading } = useGetPublicBusiness(sl, {
     query: { enabled: !!sl } as any,
@@ -87,10 +116,15 @@ export default function PublicBookScreen() {
 
   const createBooking = useCreatePublicBooking();
 
-  const availableSlots =
-    ((slotsData as { slots?: { startAt: string; available: boolean }[] })?.slots ?? []).filter(
-      (s) => s.available,
-    );
+  const availableSlots = useMemo(
+    () =>
+      dedupePublicSlotsByStartAt(
+        ((slotsData as { slots?: { startAt: string; available: boolean }[] })?.slots ?? []).filter(
+          (s) => s.available,
+        ),
+      ),
+    [slotsData],
+  );
 
   const bEarly = biz as { vertical?: string; medspaProcedures?: MedspaProcedure[] } | undefined;
   const needsMedspaConsent =
@@ -104,12 +138,39 @@ export default function PublicBookScreen() {
     );
   }, [step, selectedService, bEarly?.medspaProcedures, medspaProcedure]);
 
+  useEffect(() => {
+    if (!sl) return;
+    void readRetailCart(sl).then(setRetailCart);
+  }, [sl]);
+
+  const bookingGuards = getBookingGuardsForVertical(
+    (bEarly?.vertical ?? "beauty") as import("@workspace/policy").BusinessVertical,
+  );
+  const isCouplesBook =
+    bEarly?.vertical === "wellness" && guardAnswers.couples_or_shared === "couples";
+
   async function submit() {
     setErr(null);
     if (!serviceId || !slot || !firstName.trim()) return;
     if (!email.trim() && !phone.trim()) {
       setErr("Add email or phone so we can reach you.");
       return;
+    }
+    for (const g of bookingGuards) {
+      if (g.required && !guardAnswers[g.id]?.trim()) {
+        setErr(`Please complete: ${g.label}`);
+        return;
+      }
+    }
+    if (isCouplesBook) {
+      if (!partnerFirstName.trim()) {
+        setErr("Add your partner's first name for a couples session.");
+        return;
+      }
+      if (!partnerPhone.trim() && !partnerEmail.trim()) {
+        setErr("Add partner phone or email.");
+        return;
+      }
     }
     if (
       needsMedspaConsent &&
@@ -119,7 +180,7 @@ export default function PublicBookScreen() {
       return;
     }
     try {
-      await createBooking.mutateAsync({
+      const result = await createBooking.mutateAsync({
         slug: sl,
         data: {
           serviceId,
@@ -128,6 +189,15 @@ export default function PublicBookScreen() {
           customerFirstName: firstName.trim(),
           customerEmail: email.trim() || undefined,
           customerPhone: phone.trim() || undefined,
+          saveToMyLivia: saveToMyLivia && Boolean(phone.trim()),
+          ...(Object.keys(guardAnswers).length ? { guardAnswers } : {}),
+          ...(isCouplesBook
+            ? {
+                partnerFirstName: partnerFirstName.trim(),
+                partnerPhone: partnerPhone.trim() || undefined,
+                partnerEmail: partnerEmail.trim() || undefined,
+              }
+            : {}),
           ...(needsMedspaConsent
             ? {
                 medspaConsent: {
@@ -138,6 +208,8 @@ export default function PublicBookScreen() {
             : {}),
         } as any,
       });
+      const guestToken = (result as { guestToken?: string | null })?.guestToken ?? null;
+      setGuestPayToken(guestToken);
       setStep("done");
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Booking failed");
@@ -207,10 +279,97 @@ export default function PublicBookScreen() {
     currency: string;
     imageUrl?: string | null;
   }>;
+  const retailEnabled =
+    isPublicRetailVertical(b.vertical) && Boolean(b.retailStore?.settings?.enabled);
+  const retailProducts = (b.retailStore?.products ?? []) as RetailCartProduct[];
+  const retailTitle = (b.retailStore?.settings?.title as string | undefined) ?? "Take home";
+  const showCartBar =
+    step === "services" && retailEnabled && retailCart && retailCart.lines.length > 0;
+
+  async function handleAddRetailToBag(product: RetailCartProduct) {
+    if (!sl) return;
+    const next = await addToRetailCart(sl, product, retailCart, 1);
+    setRetailCart(next);
+  }
+
+  async function handleChangeRetailQty(productId: string, quantity: number) {
+    if (!sl) return;
+    const next = await setRetailCartQty(sl, retailCart, productId, quantity);
+    setRetailCart(next);
+  }
+
+  async function checkoutRetailCart() {
+    if (!sl || !retailCart?.lines.length) return;
+    setRetailCheckoutBusy(true);
+    setErr(null);
+    try {
+      const api = getApiBaseUrl();
+      const r = await fetch(`${api}/api/public/b/${sl}/retail/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: retailCartApiItems(retailCart),
+          guestName: firstName.trim() || undefined,
+          guestEmail: email.trim() || undefined,
+          guestPhone: phone.trim() || undefined,
+        }),
+      });
+      const body = (await r.json().catch(() => ({}))) as {
+        payToken?: string;
+        error?: string;
+      };
+      if (!r.ok) throw new Error(body.error ?? "Could not start order");
+      await clearRetailCart(sl);
+      setRetailCart(null);
+      if (body.payToken) {
+        const url = getGuestSurfaceUrl("shop", sl, body.payToken);
+        await WebBrowser.openBrowserAsync(url);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Checkout failed");
+    } finally {
+      setRetailCheckoutBusy(false);
+    }
+  }
+
+  async function checkoutCombinedWithBooking(payToken: string) {
+    if (!sl || !retailCart?.lines.length) return;
+    setCombinedCheckoutBusy(true);
+    setErr(null);
+    try {
+      const api = getApiBaseUrl();
+      const r = await fetch(`${api}/api/public/b/${sl}/pay/${payToken}/checkout-combined`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: retailCartApiItems(retailCart) }),
+      });
+      const j = (await r.json().catch(() => ({}))) as {
+        mode?: string;
+        checkoutUrl?: string;
+        payUrl?: string;
+        error?: string;
+      };
+      if (!r.ok) throw new Error(j.error ?? "Could not start checkout");
+      await clearRetailCart(sl);
+      setRetailCart(null);
+      const url =
+        j.mode === "stripe" && j.checkoutUrl
+          ? j.checkoutUrl
+          : j.payUrl ?? getGuestSurfaceUrl("pay", sl, payToken);
+      await WebBrowser.openBrowserAsync(url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Checkout failed");
+    } finally {
+      setCombinedCheckoutBusy(false);
+    }
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: surface.background }]} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.scroll, showCartBar && { paddingBottom: 96 }]}
+        keyboardShouldPersistTaps="handled"
+      >
         {!beautyPublic || step !== "services" ? (
           b.coverImageUrl ? (
             <Image source={{ uri: b.coverImageUrl }} style={styles.cover} />
@@ -295,6 +454,41 @@ export default function PublicBookScreen() {
               <Text style={[type.title, { color: colors.foreground, marginTop: 12, fontSize: 22 }]}>You're booked</Text>
               <Text style={[type.body, { color: colors.mutedForeground, marginTop: 8, textAlign: "center" }]}>
                 We'll confirm by message if needed. See you soon.
+              </Text>
+              {guestPayToken && retailCart && retailCart.lines.length > 0 ? (
+                <View style={{ width: "100%", marginTop: 16, gap: 8 }}>
+                  <Text style={[type.label, { color: colors.foreground }]}>Your bag</Text>
+                  {retailCart.lines.map((line) => (
+                    <Text key={line.productId} style={[type.caption, { color: colors.mutedForeground }]}>
+                      {line.name} × {line.quantity}
+                    </Text>
+                  ))}
+                  <Pressable
+                    style={[
+                      styles.primaryBtn,
+                      { backgroundColor: xp.primary, borderRadius: xp.cardRadius, marginTop: 4 },
+                      combinedCheckoutBusy && { opacity: 0.6 },
+                    ]}
+                    disabled={combinedCheckoutBusy}
+                    onPress={() => void checkoutCombinedWithBooking(guestPayToken)}
+                    testID="public-combined-checkout"
+                  >
+                    <Text style={[type.body, { color: "#fff", fontFamily: fonts.bodyMed }]}>
+                      {combinedCheckoutBusy ? "Opening checkout…" : "Pay deposit + bag"}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              {err ? <Text style={{ color: "#f87171", marginTop: 8, textAlign: "center" }}>{err}</Text> : null}
+              <Pressable
+                style={[styles.primaryBtn, { backgroundColor: xp.primary, borderRadius: xp.cardRadius, marginTop: 20 }]}
+                onPress={() => router.push("/my-livia" as never)}
+                testID="public-book-open-my-livia"
+              >
+                <Text style={[type.body, { color: "#fff", fontFamily: fonts.bodyMed }]}>Open My Livia</Text>
+              </Pressable>
+              <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 8, textAlign: "center" }]}>
+                Manage visits and choose how Liv reaches you — no password.
               </Text>
             </View>
           ) : null}
@@ -428,6 +622,19 @@ export default function PublicBookScreen() {
                   No login required · Secure booking · Free cancellation 24h
                 </Text>
               ) : null}
+              {retailEnabled && retailProducts.length > 0 ? (
+                <PublicRetailShop
+                  title={retailTitle}
+                  products={retailProducts}
+                  cartQtyForProduct={(id) => retailCartQty(retailCart, id)}
+                  onAddToBag={(p) => void handleAddRetailToBag(p)}
+                  onChangeQty={(id, qty) => void handleChangeRetailQty(id, qty)}
+                  surface={surface}
+                />
+              ) : null}
+              {b.vertical === "fitness" && slug ? (
+                <PublicFitnessClassList slug={String(slug)} />
+              ) : null}
             </>
           ) : null}
 
@@ -541,6 +748,67 @@ export default function PublicBookScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
               />
+              <PublicBookingGuardsFields
+                guards={bookingGuards}
+                answers={guardAnswers}
+                onChange={(id, value) =>
+                  setGuardAnswers((prev) => ({ ...prev, [id]: value }))
+                }
+                colors={{
+                  foreground: colors.foreground,
+                  mutedForeground: colors.mutedForeground,
+                  border: colors.border,
+                  primary: xp.primary,
+                }}
+              />
+              {isCouplesBook ? (
+                <View style={{ marginTop: 12, gap: 8 }}>
+                  <Text style={[type.label, { color: colors.foreground }]}>Partner details</Text>
+                  <TextInput
+                    value={partnerFirstName}
+                    onChangeText={setPartnerFirstName}
+                    placeholder="Partner first name *"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
+                  />
+                  <TextInput
+                    value={partnerPhone}
+                    onChangeText={setPartnerPhone}
+                    placeholder="Partner phone"
+                    keyboardType="phone-pad"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
+                  />
+                  <TextInput
+                    value={partnerEmail}
+                    onChangeText={setPartnerEmail}
+                    placeholder="Partner email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
+                  />
+                </View>
+              ) : null}
+              {phone.trim() ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: 12,
+                    padding: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Text style={{ color: colors.foreground, fontSize: 13, flex: 1 }}>
+                    Save to My Livia
+                  </Text>
+                  <Switch value={saveToMyLivia} onValueChange={setSaveToMyLivia} />
+                </View>
+              ) : null}
               {err ? <Text style={{ color: "#f87171", marginTop: 8 }}>{err}</Text> : null}
               <Pressable
                 style={[
@@ -660,6 +928,14 @@ export default function PublicBookScreen() {
           ) : null}
         </View>
       </ScrollView>
+      {showCartBar && retailCart ? (
+        <PublicRetailCartBar
+          cart={retailCart}
+          checkoutBusy={retailCheckoutBusy}
+          onCheckout={() => void checkoutRetailCart()}
+          surface={surface}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

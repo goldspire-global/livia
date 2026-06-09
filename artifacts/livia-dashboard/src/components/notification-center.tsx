@@ -5,7 +5,9 @@ import {
   CalendarCheck,
   CheckCheck,
   ClipboardCheck,
+  CreditCard,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,10 @@ function FeedIcon({ type }: { type: NotificationFeedIcon }) {
       return <MessageSquare className={cn(cls, "text-emerald-600 dark:text-emerald-400")} aria-hidden />;
     case "chain":
       return <Building2 className={cn(cls, "text-violet-600 dark:text-violet-400")} aria-hidden />;
+    case "commerce":
+      return <CreditCard className={cn(cls, "text-emerald-600 dark:text-emerald-400")} aria-hidden />;
+    case "twin":
+      return <Sparkles className={cn(cls, "text-violet-600 dark:text-violet-400")} aria-hidden />;
     default:
       return <ClipboardCheck className={cn(cls, "text-amber-600 dark:text-amber-400")} aria-hidden />;
   }

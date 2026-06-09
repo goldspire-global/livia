@@ -58,12 +58,12 @@ const ROUTES_BY_PERSONA: Record<(typeof CLERK_PERSONAS)[number], string[]> = {
 };
 
 const SETTINGS_TABS_BY_PERSONA: Record<(typeof CLERK_PERSONAS)[number], string[]> = {
-  founder: ["shop", "policy", "liv", "comms", "team", "billing", "ownership", "integrations", "legal"],
-  owner: ["shop", "policy", "liv", "comms", "team", "billing", "ownership", "integrations", "legal"],
-  manager: ["shop", "policy", "liv", "comms", "team", "legal"],
-  "staff-senior": ["shop", "legal"],
-  "staff-junior": ["shop", "legal"],
-  receptionist: ["shop", "comms", "legal"],
+  founder: ["account", "shop", "appearance", "liv", "comms", "billing", "legal"],
+  owner: ["account", "shop", "appearance", "liv", "comms", "billing", "legal"],
+  manager: ["account", "comms", "shop", "appearance", "liv", "legal"],
+  "staff-senior": ["account", "shop", "legal"],
+  "staff-junior": ["account", "shop", "legal"],
+  receptionist: ["account", "comms", "shop", "legal"],
 };
 
 function slugify(route: string): string {

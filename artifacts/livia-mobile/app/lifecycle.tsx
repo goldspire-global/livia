@@ -93,7 +93,7 @@ export default function LifecycleScreen() {
           moves billing when Stripe is connected.
         </Text>
         <Pressable
-          onPress={() => openWeb(dashboardSettingsUrl("ownership", bid))}
+          onPress={() => openWeb(`${dashboardSettingsUrl("legal", bid)}#ownership-succession`)}
           style={[styles.btn, { borderColor: colors.primary }]}
         >
           <Text style={[styles.btnText, { color: colors.primary }]}>Start transfer on web</Text>

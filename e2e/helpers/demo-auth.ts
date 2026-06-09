@@ -11,7 +11,28 @@ const ERROR_PATTERNS = [
   /\[object Object\]/,
 ];
 
+async function waitForDemoApi(request: APIRequestContext, attempts = 40): Promise<boolean> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const health = await request.get(`${apiBase}/api/healthz`, { timeout: 8_000 });
+      if (health.ok()) {
+        const status = await request.get(`${apiBase}/api/demo/status`, { timeout: 8_000 });
+        if (status.ok()) return true;
+      }
+    } catch {
+      /* API still starting */
+    }
+    await new Promise((r) => setTimeout(r, 2_000));
+  }
+  return false;
+}
+
 export async function ensureDemoProvisioned(request: APIRequestContext) {
+  const apiReady = await waitForDemoApi(request);
+  if (!apiReady) {
+    throw new Error("Demo API not reachable at " + apiBase + " — run pnpm start:platform:test");
+  }
+
   const status = await request.get(`${apiBase}/api/demo/status`);
   const body = status.ok() ? ((await status.json()) as { provisioned?: boolean }) : null;
   if (!body?.provisioned) {
@@ -27,18 +48,31 @@ export async function ensureDemoProvisioned(request: APIRequestContext) {
         throw new Error(`Demo provision failed — ${detail}`);
       }
     }
+    await request
+      .post(`${apiBase}/api/demo/sync-twin-intel`, { timeout: 60_000 })
+      .catch(() => undefined);
+    await request.post(`${apiBase}/api/demo/sync-clerk`, { timeout: 180_000 }).catch(() => undefined);
     return;
   }
-  const sync = await request.post(`${apiBase}/api/demo/sync-vertical-showcase`, { timeout: 180_000 });
-  if (!sync.ok() && sync.status() !== 404) {
-    console.warn(`sync-vertical-showcase: ${sync.status()} — restart API if new verticals are missing`);
+
+  if (process.env.E2E_DEMO_FULL_SYNC === "1") {
+    const sync = await request.post(`${apiBase}/api/demo/sync-vertical-showcase`, {
+      timeout: 180_000,
+    });
+    if (!sync.ok() && sync.status() !== 404) {
+      console.warn(`sync-vertical-showcase: ${sync.status()} — restart API if new verticals are missing`);
+    }
+    for (const slug of ["peak-fitness-dublin"]) {
+      await request
+        .get(`${apiBase}/api/demo/guest-surfaces/${slug}/waitlist`)
+        .catch(() => undefined);
+    }
+    await request.post(`${apiBase}/api/demo/sync-clerk`, { timeout: 180_000 }).catch(() => undefined);
   }
-  for (const slug of ["peak-fitness-dublin"]) {
-    await request
-      .get(`${apiBase}/api/demo/guest-surfaces/${slug}/waitlist`)
-      .catch(() => undefined);
-  }
-  await request.post(`${apiBase}/api/demo/sync-clerk`, { timeout: 180_000 }).catch(() => undefined);
+
+  await request
+    .post(`${apiBase}/api/demo/sync-twin-intel`, { timeout: 60_000 })
+    .catch(() => undefined);
 }
 
 export async function demoHasBusiness(request: APIRequestContext, slug: string): Promise<boolean> {
@@ -55,6 +89,53 @@ export async function demoHasBusiness(request: APIRequestContext, slug: string):
 export async function demoCanSignIn(request: APIRequestContext, slug = "conors-cut-co"): Promise<boolean> {
   const res = await request.post(`${apiBase}/api/demo/sign-in-business`, { data: { slug } });
   return res.ok();
+}
+
+/** Org-admin persona ticket — multi-shop chain HQ. */
+export async function demoCanSignInOrgAdmin(request: APIRequestContext): Promise<boolean> {
+  const res = await request.post(`${apiBase}/api/demo/sign-in`, {
+    data: { persona: "org_admin" },
+    timeout: 30_000,
+  });
+  return res.ok();
+}
+
+export async function signInOrgAdmin(page: Page) {
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("livia.platformTour.dismissed.v1", "1");
+      window.localStorage.setItem("livia.devPersona", "org_admin");
+    } catch {
+      /* ignore */
+    }
+  });
+
+  const signInRes = await page.request.post(`${apiBase}/api/demo/sign-in`, {
+    data: { persona: "org_admin" },
+  });
+  if (!signInRes.ok()) {
+    throw new Error(
+      `org admin sign-in: ${signInRes.status()} ${(await signInRes.text()).slice(0, 200)}`,
+    );
+  }
+  const { token, landingPath = "/chain", businessId } = (await signInRes.json()) as {
+    token?: string;
+    landingPath?: string;
+    businessId?: string;
+  };
+  if (!token) throw new Error("No Clerk ticket for org admin");
+  await clerkTicketSignIn(page, token, {
+    businessId,
+    landingPath,
+    devPersona: "org_admin",
+  });
+  await ensurePlatformLegalAccepted(page);
+  await dismissPlatformTour(page);
+}
+
+/** Default wellness owner login for vertical E2E. */
+export async function demoOwnerLogin(page: Page, slug = "harbour-wellness-cork") {
+  await signInBusiness(page, slug);
 }
 
 export async function dismissPlatformTour(page: Page) {

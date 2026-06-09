@@ -434,6 +434,25 @@ export async function processPushNotificationsForEvent(
       });
       return;
     }
+    if (name === "commerce.signal.detected") {
+      const p = payload as EventPayload<"commerce.signal.detected">;
+      await notifyCommerceSignalDetected({
+        businessId: p.businessId,
+        signalId: p.signalId,
+        severity: p.severity,
+      });
+      return;
+    }
+    if (name === "payment.failed") {
+      const p = payload as EventPayload<"payment.failed">;
+      await notifyPaymentFailed({
+        businessId: p.businessId,
+        paymentId: p.paymentId,
+        amountMinor: p.amountMinor,
+        currency: p.currency,
+      });
+      return;
+    }
     if (name === "refund.proposed") {
       const p = payload as EventPayload<"refund.proposed">;
       await notifyLivProposalPending({
@@ -442,6 +461,32 @@ export async function processPushNotificationsForEvent(
         action: "process_refund",
         preview: "Refund needs your approval",
         valueMinor: p.amountEurCents,
+      });
+      return;
+    }
+    if (name === "twin.risk.detected") {
+      const p = payload as EventPayload<"twin.risk.detected">;
+      await notifyTwinRiskDetected({
+        businessId: p.businessId,
+        riskId: p.riskId,
+        domain: p.domain,
+        title: p.title,
+        body: p.body,
+        href: p.href,
+        confidence: p.confidence,
+      });
+      return;
+    }
+    if (name === "twin.opportunity.detected") {
+      const p = payload as EventPayload<"twin.opportunity.detected">;
+      await notifyTwinOpportunityDetected({
+        businessId: p.businessId,
+        opportunityId: p.opportunityId,
+        domain: p.domain,
+        title: p.title,
+        body: p.body,
+        href: p.href,
+        confidence: p.confidence,
       });
     }
   } catch (err) {
@@ -497,5 +542,172 @@ export async function notifyMorningBriefingReady(args: {
     resourceId: args.briefingId,
     dedupeKey: `morning.briefing:${args.businessId}:${args.briefingDate}`,
     audience: "operators",
+  });
+}
+
+export async function notifyCommerceSignalDetected(args: {
+  businessId: string;
+  signalId: string;
+  severity: "act" | "watch" | "info";
+  title?: string;
+  body?: string;
+}): Promise<void> {
+  if (args.severity === "info") return;
+  const ctx = await loadBusinessContext(args.businessId);
+  if (!ctx) return;
+
+  const { resolveCommerceActPlaybook } = await import("@workspace/policy");
+  const playbook = resolveCommerceActPlaybook(args.signalId);
+  const title = args.title ?? playbook?.taskTitle ?? "Commerce signal";
+  const body = args.body ?? playbook?.taskBody ?? "Review billing on Today.";
+
+  await deliverInAppNotification({
+    kind: "commerce.signal",
+    businessId: args.businessId,
+    title: `${ctx.name} · ${title}`,
+    body,
+    priority: args.severity === "act" ? "act" : "watch",
+    resourceKind: "commerce_signal",
+    resourceId: args.signalId,
+    dedupeKey: `commerce.signal:${args.businessId}:${args.signalId}`,
+    audience: "operators",
+  });
+
+  if (args.severity === "act") {
+    await notifyBusinessMembersPushForRoles({
+      businessId: args.businessId,
+      roles: ["OWNER", "ADMIN"],
+      title,
+      body,
+      data: { href: playbook?.href ?? "/settings?tab=billing", signalId: args.signalId },
+      priority: "high",
+    });
+  }
+}
+
+export async function notifyTwinRiskDetected(args: {
+  businessId: string;
+  riskId: string;
+  domain: string;
+  title: string;
+  body: string;
+  href?: string;
+  confidence?: "high" | "medium" | "low";
+}): Promise<void> {
+  const ctx = await loadBusinessContext(args.businessId);
+  if (!ctx) return;
+  if (!inAppAllowedForPrefs("twin.risk", ctx.prefs)) return;
+
+  const priority = args.confidence === "high" ? "act" : "watch";
+  const title = args.title?.trim() || "Twin risk";
+  const body = args.body?.trim() || `${args.domain} health needs a look on Today.`;
+
+  await deliverInAppNotification({
+    kind: "twin.risk",
+    businessId: args.businessId,
+    title: `${ctx.name} · ${title}`,
+    body,
+    priority,
+    resourceKind: "twin_risk",
+    resourceId: args.riskId,
+    dedupeKey: `twin.risk:${args.businessId}:${args.riskId}`,
+    audience: "operators",
+  });
+
+  if (priority === "act") {
+    await notifyBusinessMembersPushForRoles({
+      businessId: args.businessId,
+      roles: ["OWNER", "ADMIN"],
+      title: `Risk · ${title}`,
+      body,
+      data: {
+        type: "twin.risk",
+        businessId: args.businessId,
+        riskId: args.riskId,
+        href: args.href ?? "/dashboard",
+      },
+      priority: "high",
+    });
+  }
+}
+
+export async function notifyTwinOpportunityDetected(args: {
+  businessId: string;
+  opportunityId: string;
+  domain: string;
+  title: string;
+  body: string;
+  href?: string;
+  confidence?: "high" | "medium" | "low";
+}): Promise<void> {
+  const ctx = await loadBusinessContext(args.businessId);
+  if (!ctx) return;
+  if (!inAppAllowedForPrefs("twin.opportunity", ctx.prefs)) return;
+
+  const title = args.title?.trim() || "Twin opportunity";
+  const body = args.body?.trim() || `${args.domain} upside worth a look.`;
+
+  await deliverInAppNotification({
+    kind: "twin.opportunity",
+    businessId: args.businessId,
+    title: `${ctx.name} · ${title}`,
+    body,
+    priority: "watch",
+    resourceKind: "twin_opportunity",
+    resourceId: args.opportunityId,
+    dedupeKey: `twin.opportunity:${args.businessId}:${args.opportunityId}`,
+    audience: "operators",
+  });
+
+  if (args.confidence === "high") {
+    await notifyBusinessMembersPushForRoles({
+      businessId: args.businessId,
+      roles: ["OWNER", "ADMIN"],
+      title: `Opportunity · ${title}`,
+      body,
+      data: {
+        type: "twin.opportunity",
+        businessId: args.businessId,
+        opportunityId: args.opportunityId,
+        href: args.href ?? "/dashboard",
+      },
+      priority: "default",
+    });
+  }
+}
+
+export async function notifyPaymentFailed(args: {
+  businessId: string;
+  paymentId: string;
+  amountMinor?: number;
+  currency?: string;
+}): Promise<void> {
+  const ctx = await loadBusinessContext(args.businessId);
+  if (!ctx) return;
+
+  const amount =
+    args.amountMinor != null && args.currency
+      ? `${args.currency === "EUR" ? "€" : args.currency}${(args.amountMinor / 100).toFixed(2)}`
+      : "A payment";
+
+  await deliverInAppNotification({
+    kind: "payment.failed",
+    businessId: args.businessId,
+    title: `Payment failed · ${ctx.name}`,
+    body: `${amount} did not go through — review billing or send a new link.`,
+    priority: "watch",
+    resourceKind: "payment",
+    resourceId: args.paymentId,
+    dedupeKey: `payment.failed:${args.businessId}:${args.paymentId}`,
+    audience: "operators",
+  });
+
+  await notifyBusinessMembersPushForRoles({
+    businessId: args.businessId,
+    roles: ["OWNER", "ADMIN"],
+    title: "Payment failed",
+    body: `${amount} did not go through at ${ctx.name}.`,
+    data: { href: "/settings?tab=billing", paymentId: args.paymentId },
+    priority: "high",
   });
 }

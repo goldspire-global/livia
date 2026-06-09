@@ -20,7 +20,7 @@ import { ChannelSetupWizard } from "@/components/channel-setup-wizard";
 import { OnboardingLivReplyStep } from "@/components/onboarding/onboarding-liv-reply-step";
 import type { OnboardingActId } from "@/lib/onboarding-acts";
 import type { OnboardingStatePayload } from "./onboarding-wizard";
-import { getVerticalOnboardingExtras } from "@workspace/policy";
+import { getVerticalOnboardingExtras, isOwnerConfiguredChannelId } from "@workspace/policy";
 import { ONBOARDING_PREVIEW_SHOP_NAME } from "@/lib/onboarding-preview-fixtures";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -142,7 +142,10 @@ export function OnboardingActForms({
         setCommsPhone(c.twilioPhoneNumber ?? null);
         setCommsFull(c);
         const ch = c.messagingChannels as { whatsapp?: { phoneNumberId?: string }; instagram?: { pageId?: string } } | undefined;
-        if (ch?.whatsapp?.phoneNumberId || ch?.instagram?.pageId) {
+        if (
+          isOwnerConfiguredChannelId(ch?.whatsapp?.phoneNumberId) ||
+          isOwnerConfiguredChannelId(ch?.instagram?.pageId)
+        ) {
           onChecklistChange({ ...checklist, socialChannelsStarted: true });
         }
       })
@@ -330,7 +333,10 @@ export function OnboardingActForms({
                   whatsapp?: { phoneNumberId?: string };
                   instagram?: { pageId?: string };
                 };
-                if (ch?.whatsapp?.phoneNumberId || ch?.instagram?.pageId) {
+                if (
+                  isOwnerConfiguredChannelId(ch?.whatsapp?.phoneNumberId) ||
+                  isOwnerConfiguredChannelId(ch?.instagram?.pageId)
+                ) {
                   onChecklistChange({ ...checklist, socialChannelsStarted: true });
                 }
               })

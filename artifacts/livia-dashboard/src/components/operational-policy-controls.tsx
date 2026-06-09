@@ -258,12 +258,6 @@ export default function OperationalPolicyControls() {
           />
         </div>
 
-        {state.bookingTermsBlock ? (
-          <p className="text-xs text-muted-foreground border rounded-md p-3 bg-muted/40">
-            {state.bookingTermsBlock}
-          </p>
-        ) : null}
-
         <Button onClick={() => void save()} disabled={saving}>
           {saving ? "Saving…" : "Save policy"}
         </Button>

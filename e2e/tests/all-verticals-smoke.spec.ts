@@ -57,8 +57,8 @@ test.describe("All verticals smoke", () => {
           test.skip(true, `${shop.slug} not in demo world`);
           return;
         }
-        await page.goto(`/b/${shop.slug}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
-        await assertHealthyPage(page, `/b/${shop.slug}`);
+        await page.goto(`/book/${shop.slug}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
+        await assertHealthyPage(page, `/book/${shop.slug}`);
         await expect(page.locator("body")).toContainText(/book|service|appointment|session|groom|treatment/i);
       });
 
@@ -166,8 +166,8 @@ test.describe("All verticals smoke", () => {
     if (!(await demoHasBusiness(request, slug))) {
       test.skip(true, `${slug} missing`);
     }
-    await page.goto(`/b/${slug}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
-    await assertHealthyPage(page, `/b/${slug}`);
+    await page.goto(`/book/${slug}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
+    await assertHealthyPage(page, `/book/${slug}`);
     await expect(page.getByTestId("ritual-step-consent")).toBeVisible();
   });
 
@@ -193,7 +193,7 @@ test.describe("All verticals smoke", () => {
 
       const body = (await bookRes.json()) as { visitPath?: string; guestToken?: string };
       expect(body.guestToken).toBeTruthy();
-      const canonicalVisit = `/b/${shop.slug}/visit/${encodeURIComponent(body.guestToken!)}`;
+      const canonicalVisit = `/book/${shop.slug}/visit/${encodeURIComponent(body.guestToken!)}`;
       expect(body.visitPath).toMatch(/\/visit\/|\/my\?visit=/);
 
       const apiVisit = await request.get(
@@ -201,7 +201,8 @@ test.describe("All verticals smoke", () => {
       );
       expect(apiVisit.ok()).toBeTruthy();
 
-      const pagePath = body.visitPath?.includes(`/b/${shop.slug}/visit/`)
+      const pagePath = body.visitPath?.includes(`/book/${shop.slug}/visit/`) ||
+        body.visitPath?.includes(`/b/${shop.slug}/visit/`)
         ? body.visitPath!
         : canonicalVisit;
       await page.goto(pagePath, { waitUntil: "domcontentloaded", timeout: 45_000 });

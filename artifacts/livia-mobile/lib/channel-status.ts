@@ -1,4 +1,5 @@
 /** Mirrors dashboard channel-setup-guide — social channel connection flags. */
+import { isOwnerConfiguredChannelId } from "@workspace/policy";
 
 export type MessagingChannelsSnapshot = {
   whatsapp?: { phoneNumberId?: string; displayPhone?: string };
@@ -12,9 +13,9 @@ export function channelConnectionStatus(channels: MessagingChannelsSnapshot | un
   messenger: boolean;
   anySocial: boolean;
 } {
-  const whatsapp = Boolean(channels?.whatsapp?.phoneNumberId?.trim());
-  const instagram = Boolean(channels?.instagram?.pageId?.trim());
-  const messenger = Boolean(channels?.messenger?.pageId?.trim());
+  const whatsapp = isOwnerConfiguredChannelId(channels?.whatsapp?.phoneNumberId);
+  const instagram = isOwnerConfiguredChannelId(channels?.instagram?.pageId);
+  const messenger = isOwnerConfiguredChannelId(channels?.messenger?.pageId);
   return {
     whatsapp,
     instagram,

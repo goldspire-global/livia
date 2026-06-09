@@ -1,6 +1,8 @@
 import { db, channelIdentitiesTable, customersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { generateId } from "../lib/id";
+import { logEvent } from "./events.service";
+import { EventType } from "@workspace/db";
 
 type ChannelType = "WHATSAPP" | "INSTAGRAM" | "SMS" | "EMAIL" | "VOICE" | "WEB" | "APP";
 
@@ -51,6 +53,14 @@ export async function upsertChannelIdentity(args: {
     externalId: args.externalId,
     displayName: args.displayName ?? null,
     username: args.username ?? null,
+  });
+
+  await logEvent({
+    type: EventType.CHANNEL_IDENTITY_LINKED,
+    businessId: args.businessId,
+    entityType: "customer",
+    entityId: customerId,
+    context: { channelType: args.channelType, externalId: args.externalId },
   });
 
   return { customerId };

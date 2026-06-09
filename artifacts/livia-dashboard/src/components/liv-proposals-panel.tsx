@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
+import { dedupeLivProposalsForDisplay, livProposalDisplayTitle } from "@workspace/policy";
 import { customFetch } from "@workspace/api-client-react";
 import { Bot, Check, X, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBusiness } from "@/lib/business-context";
 import { useToast } from "@/hooks/use-toast";
 import { invalidateOperationalState, OPERATIONAL_REFETCH_MS } from "@/lib/operational-cache";
+import { invalidateCommerceIntelligence } from "@/lib/commerce-intelligence-cache";
+import { navigateToolkitHref } from "@/lib/toolkit-navigation";
 import { cn } from "@/lib/utils";
 
 type Proposal = {
@@ -17,27 +20,14 @@ type Proposal = {
   outcomePreview: string | null;
   reason: string | null;
   valueMinor?: number;
-  metadata?: { customerName?: string; bookingId?: string } | null;
+  resourceKind?: string | null;
+  resourceId?: string | null;
+  metadata?: { customerName?: string; bookingId?: string; title?: string } | null;
   createdAt: string;
 };
 
-const ACTION_HINTS: Record<string, string> = {
-  reply_inbox: "Inbox reply",
-  book_slot: "New booking",
-  reschedule: "Reschedule",
-  cancel_booking: "Cancellation",
-  collect_deposit: "Deposit",
-  process_refund: "Refund",
-  send_reminder: "Reminder",
-  approve_design_proof: "Design proof",
-};
-
-function proposalTitle(p: Proposal): string {
-  if (p.outcomePreview?.trim()) return p.outcomePreview;
-  const hint = ACTION_HINTS[p.action];
-  if (hint && p.metadata?.customerName) return `${hint} · ${p.metadata.customerName}`;
-  return p.action.replace(/_/g, " ");
-}
+const TOOLKIT_APPROVALS_HREF = "/toolkit#liv-approvals";
+const TOOLKIT_MANDATE_HREF = "/toolkit#liv-mandate";
 
 export function LivProposalsPanel({
   variant = "full",
@@ -50,6 +40,7 @@ export function LivProposalsPanel({
   const bid = business?.id ?? "";
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [location, navigate] = useLocation();
   const limit = maxItems ?? (variant === "home" ? 3 : undefined);
 
   const { data, isLoading, refetch } = useQuery({
@@ -59,29 +50,37 @@ export function LivProposalsPanel({
     refetchInterval: OPERATIONAL_REFETCH_MS,
   });
 
-  const rows = data?.data ?? [];
+  const rows = dedupeLivProposalsForDisplay(data?.data ?? []);
   const visible = limit ? rows.slice(0, limit) : rows;
   const overflow = limit ? Math.max(0, rows.length - limit) : 0;
+  const onToolkit = location.startsWith("/toolkit");
 
   if (!isLoading && rows.length === 0) return null;
 
   const resolve = async (proposalId: string, status: "approved" | "dismissed") => {
     try {
-      const result = await customFetch<{ execution?: { effects?: string[] } }>(
-        `/api/businesses/${bid}/liv-proposals/${proposalId}/resolve`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        },
-      );
+      const result = await customFetch<{
+        execution?: { effects?: string[] };
+        nextHref?: string | null;
+      }>(`/api/businesses/${bid}/liv-proposals/${proposalId}/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
       const effects = result.execution?.effects?.join(" · ");
       toast({
         title: status === "approved" ? "Approved — Liv applied this" : "Dismissed",
-        description: effects,
+        description:
+          status === "approved" && result.nextHref
+            ? "Opening billing to finish setup…"
+            : effects,
       });
       invalidateOperationalState(qc, bid);
+      invalidateCommerceIntelligence(qc, bid);
       void refetch();
+      if (status === "approved" && result.nextHref) {
+        navigate(result.nextHref);
+      }
     } catch (e) {
       toast({
         title: "Could not update proposal",
@@ -122,13 +121,14 @@ export function LivProposalsPanel({
             </CardDescription>
           </div>
           {isHome ? (
-            <Link
-              href="/settings?tab=liv"
+            <button
+              type="button"
               className="text-xs text-muted-foreground hover:text-primary shrink-0 flex items-center gap-0.5"
+              onClick={() => navigateToolkitHref(TOOLKIT_MANDATE_HREF, navigate)}
             >
               Mandate
               <ChevronRight className="h-3 w-3" />
-            </Link>
+            </button>
           ) : null}
         </div>
       </CardHeader>
@@ -144,7 +144,13 @@ export function LivProposalsPanel({
             data-testid={`liv-proposal-${p.id}`}
           >
             <div className="space-y-1 min-w-0 flex-1">
-              <p className="text-sm font-medium leading-snug">{proposalTitle(p)}</p>
+              <p className="text-sm font-medium leading-snug">
+                {livProposalDisplayTitle({
+                  action: p.action,
+                  outcomePreview: p.outcomePreview,
+                  metadata: p.metadata as Record<string, unknown> | null,
+                })}
+              </p>
               {p.reason ? (
                 <p className="text-xs text-muted-foreground line-clamp-2">{p.reason}</p>
               ) : null}
@@ -177,12 +183,27 @@ export function LivProposalsPanel({
             </div>
           </div>
         ))}
-        {overflow > 0 ? (
+        {overflow > 0 && !onToolkit ? (
           <p className="text-xs text-center text-muted-foreground">
-            +{overflow} more in{" "}
-            <Link href="/toolkit" className="text-primary hover:underline">
-              Liv command
-            </Link>
+            +{overflow} more —{" "}
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => navigateToolkitHref(TOOLKIT_APPROVALS_HREF, navigate)}
+            >
+              view all approvals
+            </button>
+          </p>
+        ) : null}
+        {overflow > 0 && onToolkit ? (
+          <p className="text-xs text-center text-muted-foreground">
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => navigateToolkitHref(TOOLKIT_APPROVALS_HREF, navigate)}
+            >
+              View all {rows.length} approvals below
+            </button>
           </p>
         ) : null}
       </CardContent>

@@ -136,6 +136,20 @@ const WELLNESS_GUARDS: BookingGuardField[] = [
 
 const FITNESS_GUARDS: BookingGuardField[] = [
   {
+    id: "parq_cleared",
+    label: "Physical activity readiness (PAR-Q)",
+    type: "select",
+    required: true,
+    options: [
+      { value: "yes_cleared", label: "I am cleared for exercise" },
+      {
+        value: "need_review",
+        label: "I have a condition — please review before my first session",
+      },
+    ],
+    helpText: "Required on your first visit. Bring medical clearance if you are unsure.",
+  },
+  {
     id: "fitness_goal",
     label: "Session goal (optional)",
     type: "text",
@@ -150,6 +164,7 @@ export const BOOKING_GUARDS: Partial<Record<BusinessVertical, BookingGuardField[
       id: "patch_test",
       label: "Patch test up to date (if required)?",
       type: "select",
+      required: true,
       options: [
         { value: "yes", label: "Yes" },
         { value: "no", label: "No / not sure" },

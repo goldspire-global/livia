@@ -26,6 +26,11 @@ import { getLinkedInboxCaseForBooking } from "../services/booking-linked-inbox.s
 import { listBookingMedia, attachBookingMedia } from "../services/booking-media.service";
 import { replyDomainError } from "../lib/domain-errors";
 import { markOnboardingTestBooking } from "../services/onboarding-progress.service";
+import { getBusinessById } from "../services/businesses.service";
+import { getCustomerById } from "../services/customers.service";
+import { getServiceById } from "../services/services.service";
+import { validateBeautyPatchTestGate } from "@workspace/policy";
+import type { BeautyServiceKind } from "@workspace/policy";
 
 import { sendError } from "../lib/http-errors";
 const router: IRouter = Router();
@@ -96,6 +101,28 @@ router.post(
     }
 
     try {
+      const biz = await getBusinessById(businessId);
+      if (biz?.vertical === "beauty") {
+        const [service, customer] = await Promise.all([
+          getServiceById(businessId, serviceId),
+          getCustomerById(businessId, customerId),
+        ]);
+        if (service && customer) {
+          const gate = validateBeautyPatchTestGate({
+            service: {
+              requiresPatchTest: service.requiresPatchTest,
+              serviceKind: service.serviceKind as BeautyServiceKind | null,
+              category: service.category,
+            },
+            customerPatchTestAt: customer.patchTestCompletedAt,
+          });
+          if (!gate.ok) {
+            sendError(res, req, 422, gate.message);
+            return;
+          }
+        }
+      }
+
       const booking = await createBooking(businessId, { serviceId, customerId, staffId: assignedStaffId, startAt, channelType, notes });
       await logEvent({ type: EventType.BOOKING_CREATED, businessId, userId, entityType: "booking", entityId: booking.id });
       await appendHumanAudit(businessId, userId, "human.booking.create", "booking", booking.id, {
@@ -108,6 +135,12 @@ router.post(
       void emitBookingCreated(booking as Parameters<typeof emitBookingCreated>[0]).catch(
         () => undefined,
       );
+      void markOnboardingTestBooking({
+        businessId,
+        bookingId: booking.id,
+        source: "owner-manual",
+        userId,
+      }).catch(() => undefined);
       res.status(201).json(booking);
     } catch (err: any) {
       if (err.message === "SERVICE_NOT_FOUND") {
@@ -398,6 +431,49 @@ router.get(
     const { listRecentVisitFeedback } = await import("../services/visit-feedback.service");
     const rows = await listRecentVisitFeedback(businessId);
     res.json({ data: rows });
+  },
+);
+
+router.get(
+  "/businesses/:businessId/bookings/:bookingId/aftercare",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const bookingId = getBizId(req.params.bookingId);
+    const booking = await getBookingById(businessId, bookingId);
+    if (!booking) {
+      sendError(res, req, 404, "Booking not found");
+      return;
+    }
+    const { buildAftercareBodyForBooking } = await import(
+      "../services/guest-care-aftercare.service"
+    );
+    const preview = await buildAftercareBodyForBooking(businessId, bookingId);
+    res.json({
+      status: booking.aftercareStatus ?? null,
+      sentAt: booking.aftercareSentAt?.toISOString() ?? null,
+      draftBody: booking.aftercareDraftBody ?? preview?.body ?? null,
+      mode: preview?.mode ?? null,
+    });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/bookings/:bookingId/aftercare/send",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const bookingId = getBizId(req.params.bookingId);
+    const body = typeof req.body?.body === "string" ? req.body.body : undefined;
+    const { sendAftercareForBooking } = await import("../services/guest-care-aftercare.service");
+    const result = await sendAftercareForBooking(businessId, bookingId, { forceBody: body });
+    if (!result.sent) {
+      sendError(res, req, 400, result.skipped ?? "Could not send aftercare");
+      return;
+    }
+    res.json(result);
   },
 );
 

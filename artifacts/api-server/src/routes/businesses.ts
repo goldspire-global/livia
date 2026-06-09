@@ -80,6 +80,8 @@ router.post("/businesses", requireAuth, async (req, res): Promise<void> => {
     logoUrl,
     instagramHandle,
     seedDefaults,
+    starterPack,
+    subverticalProfileId,
     parentBusinessId,
     structureKind,
     tenantAttestation: tenantAttestationRaw,
@@ -150,6 +152,10 @@ router.post("/businesses", requireAuth, async (req, res): Promise<void> => {
           ? structureKind
           : undefined,
       tenantAttestation: tenantParsed.data,
+      subverticalProfileId:
+        typeof subverticalProfileId === "string" && subverticalProfileId.trim()
+          ? subverticalProfileId.trim()
+          : undefined,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -164,7 +170,10 @@ router.post("/businesses", requireAuth, async (req, res): Promise<void> => {
     throw err;
   }
 
-  if (seedDefaults !== false) {
+  if (starterPack === true && biz.vertical) {
+    const { seedVerticalStarterPack } = await import("../services/vertical-starter-pack.service");
+    await seedVerticalStarterPack(biz.id);
+  } else if (seedDefaults === true) {
     await seedBusinessFromOnboardingPack(biz.id, {
       name: biz.name,
       country: biz.country,
@@ -345,6 +354,14 @@ router.patch(
       }
       await appendHumanAudit(id, userId, "human.presentation.update", "business", id, {
         presetId: payload.presetId,
+      });
+      await logEvent({
+        type: "PRESENTATION_PRESET_CHANGED",
+        businessId: id,
+        userId,
+        entityType: "business",
+        entityId: id,
+        context: { presetId: payload.presetId, source: "settings" },
       });
       res.json(payload);
     } catch (e) {

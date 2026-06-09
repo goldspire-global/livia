@@ -10,6 +10,7 @@ import {
 } from "@/lib/onboarding-acts";
 import { OnboardingCreateBusinessStep } from "./onboarding-create-business-step";
 import { OnboardingInlinePanel } from "./onboarding-inline-panel";
+import { OnboardingReadinessHint } from "./onboarding-readiness-hint";
 import { OnboardingActForms } from "./onboarding-act-forms";
 import { OnboardingChapterSpine } from "./onboarding-chapter-spine";
 import { OnboardingPublicLinkSplit } from "./onboarding-public-link-split";
@@ -442,6 +443,10 @@ export function OnboardingWizard({
             </p>
           ) : null}
         </>
+      ) : null}
+
+      {businessId && !previewMode ? (
+        <OnboardingReadinessHint businessId={businessId} state={state} />
       ) : null}
 
       {businessId && INLINE_PREVIEW_ACTS.includes(currentAct) ? (

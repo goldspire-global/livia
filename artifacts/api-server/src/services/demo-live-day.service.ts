@@ -90,6 +90,8 @@ export async function ensureLiveDayForBusiness(
   }
 
   await generateMorningBriefingForBusiness(businessId);
+  const { syncCommerceIntelligenceLoop } = await import("./commerce-signals.service");
+  void syncCommerceIntelligenceLoop(businessId);
 
   const enriched = await enrichBookingsBatch(
     await db

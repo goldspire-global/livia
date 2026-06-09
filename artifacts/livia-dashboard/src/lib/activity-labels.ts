@@ -7,6 +7,12 @@ import {
   CalendarPlus,
   CalendarX,
   CheckCircle2,
+  CreditCard,
+  Lightbulb,
+  Radar,
+  ShieldAlert,
+  Sparkles,
+  TrendingDown,
   UserCog,
   UserPlus,
   Users,
@@ -62,6 +68,56 @@ const BASE: Record<string, Omit<EventMeta, "label"> & { label: string | ((loc: s
     label: "Client feedback received",
     Icon: Users,
     color: "text-primary",
+  },
+  REVIEW_RECEIVED: {
+    label: "Client feedback received",
+    Icon: Users,
+    color: "text-primary",
+  },
+  PORTFOLIO_ITEM_ATTACHED: {
+    label: "Portfolio photo added",
+    Icon: Briefcase,
+    color: "text-primary",
+  },
+  PRESENTATION_PRESET_CHANGED: {
+    label: "Presentation preset updated",
+    Icon: Wrench,
+    color: "text-muted-foreground",
+  },
+  CHANNEL_IDENTITY_LINKED: {
+    label: "Channel linked to client",
+    Icon: UserPlus,
+    color: "text-primary",
+  },
+  PAYMENT_FAILED: {
+    label: "Payment failed",
+    Icon: TrendingDown,
+    color: "text-destructive",
+  },
+  COMMERCE_SIGNAL_DETECTED: {
+    label: "Commerce signal detected",
+    Icon: CreditCard,
+    color: "text-[hsl(var(--chart-4))]",
+  },
+  TWIN_OBSERVATION_GENERATED: {
+    label: "Twin observation",
+    Icon: Radar,
+    color: "text-[hsl(var(--chart-1))]",
+  },
+  TWIN_INSIGHT_GENERATED: {
+    label: "Twin insight",
+    Icon: Lightbulb,
+    color: "text-[hsl(var(--chart-2))]",
+  },
+  TWIN_RISK_DETECTED: {
+    label: "Twin risk detected",
+    Icon: ShieldAlert,
+    color: "text-destructive",
+  },
+  TWIN_OPPORTUNITY_DETECTED: {
+    label: "Twin opportunity detected",
+    Icon: Sparkles,
+    color: "text-[hsl(var(--chart-3))]",
   },
 };
 

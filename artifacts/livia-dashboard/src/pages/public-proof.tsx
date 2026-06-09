@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link } from "wouter";
+import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
+import { clientGuestBookHref } from "@/lib/guest-book-url";
 import { applyVerticalTheme } from "@/lib/vertical-theme";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,12 +26,14 @@ type ProofPayload = {
 const COMMENT_MAX = 500;
 
 export default function PublicProofPage() {
-  const { slug, token } = useParams<{ slug: string; token: string }>();
+  const { slug, token } = useGuestBookTokenRoute("proof");
   const [data, setData] = useState<ProofPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [depositPayUrl, setDepositPayUrl] = useState<string | null>(null);
+  const [sessionBookUrl, setSessionBookUrl] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   usePublicGuestPwa(slug);
@@ -70,13 +74,27 @@ export default function PublicProofPage() {
         const j = await r.json().catch(() => ({}));
         throw new Error((j as { error?: string }).error ?? "Could not submit");
       }
-      const j = (await r.json()) as { status: string };
-      setData((d) => (d ? { ...d, status: j.status } : d));
-      setMessage(
-        decision === "approved"
-          ? "Approved — the studio will be in touch to book your session."
-          : "Feedback sent — the artist will revise and send an updated proof.",
-      );
+      const j = (await r.json()) as {
+        status: string;
+        depositBind?: {
+          depositPayUrl: string | null;
+          sessionBookUrl: string;
+          message: string;
+          depositDueMinor: number;
+        } | null;
+      };
+      setData((d) => (d ? { ...d, status: j.status ?? decision } : d));
+      if (decision === "approved" && j.depositBind) {
+        setMessage(j.depositBind.message);
+        setDepositPayUrl(j.depositBind.depositPayUrl);
+        setSessionBookUrl(j.depositBind.sessionBookUrl);
+      } else {
+        setMessage(
+          decision === "approved"
+            ? "Approved — the studio will be in touch to book your session."
+            : "Feedback sent — the artist will revise and send an updated proof.",
+        );
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Try again");
     } finally {
@@ -98,7 +116,7 @@ export default function PublicProofPage() {
   }
 
   const canDecide = data.status === "pending_review";
-  const bookUrl = `/b/${data.slug}`;
+  const bookUrl = clientGuestBookHref(data.slug);
 
   return (
     <div
@@ -160,9 +178,20 @@ export default function PublicProofPage() {
         </div>
 
         {message ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm flex gap-2 mb-4 motion-glow-success">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-            {message}
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm flex flex-col gap-3 mb-4 motion-glow-success">
+            <div className="flex gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+              {message}
+            </div>
+            {depositPayUrl ? (
+              <Button asChild className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                <a href={depositPayUrl}>Pay deposit</a>
+              </Button>
+            ) : sessionBookUrl ? (
+              <Button asChild variant="secondary" className="bg-zinc-800 hover:bg-zinc-700">
+                <a href={sessionBookUrl}>Book your session</a>
+              </Button>
+            ) : null}
           </div>
         ) : null}
 

@@ -78,6 +78,11 @@ Under the hood: `scripts/with-db-target.mjs` sets `LIVIA_DB_TARGET` so `drizzle-
 | `MARKETING_URL` | `https://livia-hq.com` | Email/demo links |
 | `API_PUBLIC_URL` | `https://api.livia-hq.com` | Uploads, absolute URLs |
 | `CORS_ALLOWED_ORIGINS` | `https://app.livia-hq.com,https://livia-hq.com` | Also auto-merges surface URLs |
+| `GUEST_BOOK_HOST_SUFFIX` | `livia-hq.com` | Wildcard `*.livia-hq.com` book host — SMS/email/deep links |
+| `LIVIA_BOOK_HOST_SUFFIX` | (alias) | Same as `GUEST_BOOK_HOST_SUFFIX` |
+| `GUEST_BOOK_FORCE_PATH` | `true` (local) | Force `/book/{slug}` when wildcard DNS is unavailable |
+
+**Guest book DNS (staging/prod):** point `*.livia-hq.com` to the dashboard Vercel project; app routes `GuestSubdomainRouter` to `/book/{slug}`. Local dev omits suffix or sets `GUEST_BOOK_FORCE_PATH=true`.
 
 **Do not set on Railway** (local / E2E only): `E2E_*`, `LIVIA_DEMO_ENABLED`, `WORKFLOWS_DISABLED`, `META_DEV_SIMULATE`, `SIM_AUTH_*`.
 

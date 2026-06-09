@@ -1,7 +1,9 @@
 import React from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Linking from "expo-linking";
 import { Feather } from "@expo/vector-icons";
+import { livProposalDisplayTitle } from "@workspace/policy";
 import { aurora } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
@@ -13,6 +15,7 @@ import {
   useLivProposals,
 } from "@/hooks/useLivMandate";
 import { invalidateOperationalState } from "@/lib/operational-cache";
+import { getDashboardBaseUrl } from "@/lib/dashboard-url";
 
 const RUNG_SHORT: Record<string, string> = {
   R0: "Observe",
@@ -34,10 +37,19 @@ export function LivProposalsCard({ businessId }: { businessId: string }) {
   const onResolve = async (id: string, status: "approved" | "dismissed") => {
     haptics.impact();
     try {
-      await resolveLivProposal(businessId, id, status);
+      const result = await resolveLivProposal(businessId, id, status);
       haptics.success();
       invalidateOperationalState(qc, businessId);
       void refetch();
+      if (status === "approved" && result.nextHref) {
+        Alert.alert("Approved", "Open billing on web to finish setup?", [
+          { text: "Later", style: "cancel" },
+          {
+            text: "Open billing",
+            onPress: () => void Linking.openURL(`${getDashboardBaseUrl()}${result.nextHref}`),
+          },
+        ]);
+      }
     } catch {
       haptics.warning();
     }
@@ -79,7 +91,11 @@ export function LivProposalsCard({ businessId }: { businessId: string }) {
             style={[styles.row, { borderColor: colors.border }]}
           >
             <Text style={[styles.rowTitle, { color: colors.foreground }]} numberOfLines={2}>
-              {p.outcomePreview ?? p.action.replace(/_/g, " ")}
+              {livProposalDisplayTitle({
+                action: p.action,
+                outcomePreview: p.outcomePreview,
+                metadata: p.metadata ?? null,
+              })}
             </Text>
             {p.reason ? (
               <Text style={[styles.rowReason, { color: colors.mutedForeground }]} numberOfLines={2}>

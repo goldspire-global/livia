@@ -134,7 +134,7 @@ Public **demo gateway** (no Clerk): open `/demo` in the app after sign-in redire
 
 1. Sign in (Clerk) on mobile or dashboard.
 2. Complete onboarding: **country**, **business type**, name, slug — **or** use **Load demo workspace**.
-3. Confirm API seeded **services** and **staff** (`seedDefaults: true` or dev seed).
+3. New shops start **empty** unless you check starter pack on create (`starterPack: true`) or use demo/dev seed.
 4. Dashboard: open **Clients** → **+** → create a client.
 5. Mobile: **Inbox** lists conversations (empty until SMS/web chat traffic).
 6. Public booking: `http://localhost:5173/b/{slug}` (or your dashboard base URL).

@@ -1,4 +1,5 @@
 /** Jurisdiction-aware copy for WhatsApp / Instagram / Messenger setup. */
+import { isOwnerConfiguredChannelId } from "@workspace/policy";
 
 export type ChannelSetupJurisdiction = "IE" | "GB" | "DE" | "ES" | "IT" | "NL" | "PL" | "FR";
 
@@ -71,9 +72,9 @@ export function channelConnectionStatus(channels: MessagingChannelsSnapshot | un
   anySocial: boolean;
   allRecommended: boolean;
 } {
-  const whatsapp = Boolean(channels?.whatsapp?.phoneNumberId?.trim());
-  const instagram = Boolean(channels?.instagram?.pageId?.trim());
-  const messenger = Boolean(channels?.messenger?.pageId?.trim());
+  const whatsapp = isOwnerConfiguredChannelId(channels?.whatsapp?.phoneNumberId);
+  const instagram = isOwnerConfiguredChannelId(channels?.instagram?.pageId);
+  const messenger = isOwnerConfiguredChannelId(channels?.messenger?.pageId);
   return {
     whatsapp,
     instagram,
@@ -107,5 +108,5 @@ export const POST_CONNECT_TIPS = [
   "Add your Livia booking link to your Instagram bio (Settings → Public link in onboarding).",
   "Send yourself a test WhatsApp from a personal phone — you should see the thread in Inbox within seconds.",
   "Turn on Liv auto-book only after you have watched a few real conversations.",
-  "Use Inbox → Take over when you want to reply yourself; Resume AI when Liv should handle again.",
+  "Use Inbox → Take over when you want to reply yourself; send your message and Liv resumes the thread automatically.",
 ] as const;

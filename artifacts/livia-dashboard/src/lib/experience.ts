@@ -25,7 +25,7 @@ export function persistExperienceContext(input: EnterExperienceInput): void {
 }
 
 export function openPublicBooking(dashboardBase: string, slug: string): void {
-  window.open(`${dashboardBase}/b/${slug}`, "_blank", "noopener,noreferrer");
+  window.open(`${dashboardBase.replace(/\/+$/, "")}/book/${slug}`, "_blank", "noopener,noreferrer");
 }
 
 export function openExternal(url: string): void {

@@ -2,6 +2,8 @@ import {
   useGetBusiness,
   useListStaff,
   useUpdateBusiness,
+  useGetLivSetupGuidedFlow,
+  useGetTenantCapabilities,
   UpdateBusinessBodyAiTone,
 } from "@workspace/api-client-react";
 import { useAuth } from "@clerk/clerk-expo";
@@ -33,13 +35,15 @@ import {
   type OnboardingActId,
   type OnboardingState,
 } from "@workspace/policy";
-import { customFetch } from "@workspace/api-client-react";
 import {
   completeBlockingAct,
   DEFAULT_WEEKDAY_HOURS,
   nextBlockingAct,
   type AvailRule,
 } from "@/lib/onboarding-blocking";
+import { customFetch } from "@workspace/api-client-react";
+import { SetupGuidedFlowCard } from "@/components/SetupGuidedFlowCard";
+import { useOnboardingCapabilitySync } from "@/lib/onboarding-capability-sync";
 
 const ACT_LABELS: Record<OnboardingActId, string> = {
   a2_shop_profile: "Location profile",
@@ -80,7 +84,19 @@ export default function OnboardingSetupScreen() {
   const [aiGreeting, setAiGreeting] = useState("");
   const [avail, setAvail] = useState<AvailRule[] | null>(null);
 
-  const currentAct = useMemo(() => nextBlockingAct(state), [state]);
+  const { data: guidedFlow } = useGetLivSetupGuidedFlow(bid, {
+    query: { enabled: !!bid } as never,
+  });
+  const { data: tenantCapabilities } = useGetTenantCapabilities(bid, {
+    query: { enabled: !!bid } as never,
+  });
+  useOnboardingCapabilitySync(bid, tenantCapabilities?.onboardingAutoAdvanced);
+
+  const readinessHints = (guidedFlow?.readinessActHints ?? []) as OnboardingActId[];
+  const currentAct = useMemo(
+    () => nextBlockingAct(state, readinessHints),
+    [state, readinessHints],
+  );
   const blockingPct = blockingOnboardingPercent(state?.completedActs ?? []);
   const appUnlocked = isOnboardingAppUnlocked(state);
 
@@ -214,6 +230,14 @@ export default function OnboardingSetupScreen() {
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${blockingPct}%`, backgroundColor: accent }]} />
       </View>
+
+      <SetupGuidedFlowCard
+        businessId={bid}
+        onboardingState={state}
+        vertical={bizMeta?.vertical}
+        slug={slug}
+        sacredMetricMet={state?.checklist?.testBooking === true}
+      />
 
       {isLoading ? (
         <ActivityIndicator color={accent} style={{ marginVertical: 32 }} />

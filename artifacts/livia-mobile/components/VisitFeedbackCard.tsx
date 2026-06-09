@@ -2,33 +2,34 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch, type VisitFeedbackPreview } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { asHref } from "@/lib/navigation";
 import { fonts, type } from "@/constants/typography";
 
-type Row = {
-  id: string;
-  bookingId: string;
-  score: number;
-  comment: string | null;
-  createdAt: string;
+type Row = VisitFeedbackPreview;
+
+type Props = {
+  businessId: string;
+  /** When set, skips extra visit-feedback fetch (from dashboard summary). */
+  items?: VisitFeedbackPreview[];
 };
 
-export function VisitFeedbackCard({ businessId }: { businessId: string }) {
+export function VisitFeedbackCard({ businessId, items: itemsProp }: Props) {
   const colors = useColors();
   const haptics = useHaptics();
   const router = useRouter();
-  const [rows, setRows] = useState<Row[]>([]);
+  const [fetched, setFetched] = useState<Row[]>([]);
 
   useEffect(() => {
-    if (!businessId) return;
+    if (itemsProp !== undefined || !businessId) return;
     void customFetch<{ data: Row[] }>(`/api/businesses/${businessId}/visit-feedback`)
-      .then((r) => setRows(r.data ?? []))
-      .catch(() => setRows([]));
-  }, [businessId]);
+      .then((r) => setFetched(r.data ?? []))
+      .catch(() => setFetched([]));
+  }, [businessId, itemsProp]);
 
+  const rows = itemsProp ?? fetched;
   const low = rows.filter((r) => r.score <= 3);
   if (rows.length === 0) return null;
 

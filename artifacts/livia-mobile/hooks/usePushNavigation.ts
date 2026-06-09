@@ -36,6 +36,12 @@ function routeForPush(data: PushData | undefined): string | null {
       return data.conversationId
         ? `/conversation/${data.conversationId}`
         : "/(tabs)/inbox";
+    case "twin.risk":
+    case "twin.opportunity":
+      return "/(tabs)/index";
+    case "commerce.signal":
+    case "payment.failed":
+      return "/(tabs)/index";
     case "test":
       return "/(tabs)";
     default:

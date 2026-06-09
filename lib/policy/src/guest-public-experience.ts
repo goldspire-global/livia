@@ -29,6 +29,14 @@ const WELLNESS_HERO_TAGLINES: Record<string, string> = {
   "platform-default": "MIND · CALM · REST",
 };
 
+const BEAUTY_HERO_TAGLINES: Record<string, string> = {
+  "platform-default": "BOOK · CONFIRM · BLOOM",
+  "noir-dusk": "BEAUTY · CONFIDENCE · BLOOM",
+  "soft-studio": "SOFT · CALM · STUDIO",
+  editorial: "CURATED · TREATMENTS",
+  "premium-dark": "PREMIUM · EXPERIENCE",
+};
+
 function defaultGuestPublic(vertical: BusinessVertical): GuestPublicExperience {
   const v = businessVocabulary(vertical, null);
   const service = v.serviceNoun.toLowerCase();
@@ -41,7 +49,10 @@ function defaultGuestPublic(vertical: BusinessVertical): GuestPublicExperience {
     ],
     guardSectionTitle: "A few quick details",
     staffSelectLabel: v.teamNoun,
-    visitPrep: ["Arrive a few minutes early.", "Reply in your booking thread if plans change."],
+    visitPrep: [
+      "Allow a few minutes for check-in when you get there.",
+      "Message the studio from this page if plans change.",
+    ],
     visitGreeting: (first) =>
       first?.trim() ? `Hi ${first.trim()} — here's your visit summary.` : "Here's your visit summary.",
     confirmPendingTitle: "Booking received",
@@ -63,9 +74,9 @@ const WELLNESS_GUEST: GuestPublicExperience = {
   guardSectionTitle: "Before your session",
   staffSelectLabel: "Therapist",
   visitPrep: [
-    "Arrive 10 minutes early for a calm check-in.",
+    "Allow 10 minutes for a calm check-in.",
     "Hydrate before massage; avoid heavy meals right before bodywork.",
-    "Reply on your visit link if you're running late — we'll hold your room when we can.",
+    "Use Running late below if you're on your way — we'll hold your room when we can.",
   ],
   visitGreeting: (first) =>
     first?.trim()
@@ -80,6 +91,8 @@ const BY_VERTICAL: Partial<Record<BusinessVertical, GuestPublicExperience>> = {
   wellness: WELLNESS_GUEST,
   beauty: {
     ...defaultGuestPublic("beauty"),
+    heroTaglineByPreset: BEAUTY_HERO_TAGLINES,
+    catalogLayout: "grid-2x2",
     careNotes: [
       "Patch tests may be required 24–48h before lash or tint services — we'll confirm by message.",
       "Arrive with clean lashes/nails and no heavy oils on the treatment area.",
@@ -101,6 +114,11 @@ const BY_VERTICAL: Partial<Record<BusinessVertical, GuestPublicExperience>> = {
       "Avoid blood thinners and alcohol 24h before certain procedures unless your clinician advises otherwise.",
     ],
     guardSectionTitle: "Treatment intake",
+    visitPrep: [
+      "Complete intake and consent forms here before treatment day.",
+      "Come makeup-free for facial injectables; avoid retinoids 48h before laser unless advised.",
+      "Message the studio from this page if you need to reschedule — deposits protect high-value slots.",
+    ],
   },
   "pet-grooming": {
     ...defaultGuestPublic("pet-grooming"),
@@ -118,6 +136,15 @@ const BY_VERTICAL: Partial<Record<BusinessVertical, GuestPublicExperience>> = {
   "allied-health": {
     ...defaultGuestPublic("allied-health"),
     guardSectionTitle: "Clinical intake",
+    visitPrep: [
+      "Wear comfortable clothing you can move in — shorts or leggings work well.",
+      "Bring any referral letter or imaging your GP gave you.",
+      "Allow 5 minutes for check-in; message us if you're running late.",
+    ],
+    careNotes: [
+      "First visit? Allow time for assessment — follow-ups are shorter.",
+      "Your care plan progress lives in My Livia when you're signed in.",
+    ],
   },
   "automotive-detailing": {
     ...defaultGuestPublic("automotive-detailing"),
@@ -148,8 +175,12 @@ export function guestPublicHeroTagline(
 ): string | undefined {
   const exp = guestPublicExperience(vertical, category);
   if (!exp.heroTaglineByPreset) return undefined;
-  const preset = cssPreset ?? "harbour-light";
-  return exp.heroTaglineByPreset[preset] ?? exp.heroTaglineByPreset["harbour-light"];
+  const key = resolveVerticalKey(vertical, category);
+  const fallback =
+    key === "beauty" ? "noir-dusk" : key === "wellness" ? "harbour-light" : undefined;
+  const preset = cssPreset ?? fallback;
+  if (!preset || !exp.heroTaglineByPreset) return undefined;
+  return exp.heroTaglineByPreset[preset] ?? (fallback ? exp.heroTaglineByPreset[fallback] : undefined);
 }
 
 export function guestPublicCatalogLayout(

@@ -15,6 +15,7 @@ import { useHaptics } from "@/hooks/useHaptics";
 import { usePersona, type PersonaKind } from "@/hooks/usePersona";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
+import { useMobileOwnerIntelTabBadges } from "@/hooks/useMobileOwnerIntelTabBadges";
 import { verticalOperationalCopy } from "@workspace/policy";
 
 type TabKey =
@@ -89,6 +90,7 @@ function TabLayoutInner() {
           currentBusiness?.category,
         )
       : null;
+  const intelTabBadges = useMobileOwnerIntelTabBadges();
 
   const visible = useMemo(
     () => new Set<TabKey>(isLoading ? DEFAULT_VISIBLE : TAB_VISIBILITY[kind]),
@@ -159,6 +161,8 @@ function TabLayoutInner() {
           options={{
             title: isLoading ? t.title : ritualTitle,
             href: visible.has(t.name) ? undefined : null,
+            tabBarBadge:
+              intelTabBadges[t.name as keyof typeof intelTabBadges] ?? undefined,
             tabBarIcon: ({ color }) =>
               isIOS ? (
                 <SymbolView name={t.sf.selected as never} tintColor={color} size={22} />
