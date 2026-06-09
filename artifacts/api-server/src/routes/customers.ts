@@ -21,11 +21,6 @@ import { mergeChannelIdentity } from "../services/channel-identities.service";
 import { appendHumanAudit } from "../lib/audit";
 
 import { sendError } from "../lib/http-errors";
-import { replyDomainError } from "../lib/domain-errors";
-import {
-  assertChairRentalCustomerFirewall,
-  ChairRentalCustomerFirewallError,
-} from "../services/chair-rental-firewall.service";
 
 const router: IRouter = Router();
 const getBizId = (param: string | string[]) => Array.isArray(param) ? param[0] : param;
@@ -51,16 +46,6 @@ router.get(
       });
       res.json(result);
       return;
-    }
-
-    try {
-      await assertChairRentalCustomerFirewall(getUserId(req), businessId);
-    } catch (e) {
-      if (e instanceof ChairRentalCustomerFirewallError) {
-        replyDomainError(req, res, e);
-        return;
-      }
-      throw e;
     }
 
     const result = await listCustomers(businessId, {
@@ -105,16 +90,6 @@ router.get(
       if (!ok) {
         sendError(res, req, 404, "Customer not found");
         return;
-      }
-    } else {
-      try {
-        await assertChairRentalCustomerFirewall(getUserId(req), businessId);
-      } catch (e) {
-        if (e instanceof ChairRentalCustomerFirewallError) {
-          replyDomainError(req, res, e);
-          return;
-        }
-        throw e;
       }
     }
 
