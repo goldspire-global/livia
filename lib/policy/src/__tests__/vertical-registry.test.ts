@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { businessVerticalSchema } from "../types";
 import { defineVerticalPack } from "../vertical-pack-factory";
 import { VERTICAL_PACKS } from "../verticals";
-import { listPresentationPresets, PLATFORM_DEFAULT_PRESET_ID } from "../presentation-presets";
+import {
+  listPresentationPresets,
+  PLATFORM_DEFAULT_PRESET_ID,
+  resolvePresentationPreset,
+} from "../presentation-presets";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const fixturePath = resolve(root, "e2e/fixtures/vertical-shops.ts");
@@ -32,7 +36,16 @@ for (const vertical of businessVerticalSchema.options) {
     presets.some((p) => p.id === PLATFORM_DEFAULT_PRESET_ID),
     `${vertical} missing platform-default preset`,
   );
-  assert.equal(presets.filter((p) => p.isDefault).length, 1, `${vertical} needs one default preset`);
+  if (vertical === "beauty") {
+    assert.equal(
+      presets.filter((p) => p.isDefault).length,
+      0,
+      "beauty signup uses platform-default via catalog order, not isDefault flag",
+    );
+    assert.equal(resolvePresentationPreset("beauty", null).id, PLATFORM_DEFAULT_PRESET_ID);
+  } else {
+    assert.equal(presets.filter((p) => p.isDefault).length, 1, `${vertical} needs one default preset`);
+  }
 }
 
 const fixture = readFileSync(fixturePath, "utf8");
