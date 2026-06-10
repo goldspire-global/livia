@@ -3,7 +3,6 @@ import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -12,8 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScreenTopBar } from "@/components/ScreenTopBar";
+import { OperationalScreen } from "@/components/OperationalScreen";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -41,7 +39,6 @@ const DENY_TOGGLES: Array<{ action: LivMandateAction; label: string }> = [
 
 export default function LivMandateScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const haptics = useHaptics();
   const qc = useQueryClient();
@@ -105,20 +102,18 @@ export default function LivMandateScreen() {
   };
 
   return (
-    <ScrollView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 40, paddingHorizontal: 16 }}
+    <OperationalScreen
+      ritualPage
+      title="Liv Mandate"
+      subtitle="Autonomy rung, refund cap, and hard blocks — simulation updates as you change limits."
+      contentStyle={{ paddingBottom: 40 }}
+      actions={
+        <Pressable onPress={() => router.back()} style={styles.back}>
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
+          <Text style={{ color: colors.foreground, fontFamily: fonts.bodySemi }}>Back</Text>
+        </Pressable>
+      }
     >
-      <ScreenTopBar />
-      <Pressable onPress={() => router.back()} style={styles.back}>
-        <Feather name="arrow-left" size={20} color={colors.foreground} />
-        <Text style={{ color: colors.foreground, fontFamily: fonts.bodySemi }}>Back</Text>
-      </Pressable>
-      <Text style={[styles.title, { color: colors.foreground }]}>Liv Mandate</Text>
-      <Text style={[styles.lede, { color: colors.mutedForeground }]}>
-        Autonomy rung, refund cap, and hard blocks — simulation updates as you change limits.
-      </Text>
-
       {isLoading || !data ? (
         <ActivityIndicator style={{ marginTop: 24 }} color={aurora.violet} />
       ) : (
@@ -203,7 +198,7 @@ export default function LivMandateScreen() {
           ))}
         </>
       )}
-    </ScrollView>
+    </OperationalScreen>
   );
 }
 

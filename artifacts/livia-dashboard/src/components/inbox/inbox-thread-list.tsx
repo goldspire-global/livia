@@ -9,6 +9,7 @@ import {
   Phone,
   User as UserIcon,
 } from "lucide-react";
+import { inboxMultiChannelListHint } from "@workspace/policy";
 import { MOTION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ export type InboxThreadRow = {
   channel: string;
   status: string;
   customerName: string | null;
+  customerId?: string | null;
   aiHandled: boolean;
   lastMessage: string | null;
   summary?: string | null;
@@ -55,6 +57,7 @@ export function InboxThreadList({
   emptyTitle,
   emptySubtitle,
   beautyChrome,
+  activeChannelCountByCustomer,
 }: {
   threads: InboxThreadRow[];
   loading?: boolean;
@@ -63,6 +66,7 @@ export function InboxThreadList({
   emptyTitle: string;
   emptySubtitle: string;
   beautyChrome?: boolean;
+  activeChannelCountByCustomer?: Map<string, number>;
 }) {
   if (loading) {
     return (
@@ -91,6 +95,10 @@ export function InboxThreadList({
       {threads.map((c, i) => {
         const isActive = selectedId === c.id;
         const needsHuman = c.status === "HANDED_OFF" || (c.status === "OPEN" && !c.aiHandled);
+        const multiChannelHint =
+          c.customerId && activeChannelCountByCustomer
+            ? inboxMultiChannelListHint(activeChannelCountByCustomer.get(c.customerId) ?? 0)
+            : null;
         return (
           <button
             key={c.id}
@@ -163,6 +171,15 @@ export function InboxThreadList({
                       className="h-5 px-1.5 text-[10px] bg-[hsl(var(--chart-4))]/15 text-[hsl(var(--chart-4))] border-[hsl(var(--chart-4))]/30"
                     >
                       Needs you
+                    </Badge>
+                  ) : null}
+                  {multiChannelHint ? (
+                    <Badge
+                      variant="outline"
+                      className="h-5 px-1.5 text-[10px] bg-sky-500/10 text-sky-800 dark:text-sky-200 border-sky-500/30"
+                      data-testid="inbox-multi-channel-hint"
+                    >
+                      {multiChannelHint}
                     </Badge>
                   ) : null}
                   {c.bookingCount > 0 ? (

@@ -16,7 +16,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -26,7 +25,11 @@ import {
 } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/components/EmptyState";
+import { OperationalScreen } from "@/components/OperationalScreen";
+import { OperatorSurfaceShell } from "@/components/shell/OperatorSurfaceShell";
+import { Feather } from "@expo/vector-icons";
 import { useBusiness } from "@/contexts/BusinessContext";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { fonts, type } from "@/constants/typography";
@@ -39,6 +42,7 @@ export default function StaffDetailScreen() {
   const { currentBusiness } = useBusiness();
   const { role } = useMembership();
   const bid = currentBusiness?.id ?? "";
+  const chrome = useOperationalChrome(bid);
   const canEdit = role === "OWNER" || role === "ADMIN";
 
   const { data: staff, isLoading } = useGetStaff(bid, id ?? "", {
@@ -154,14 +158,18 @@ export default function StaffDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+      <OperatorSurfaceShell style={styles.centered}>
         <ActivityIndicator color={colors.primary} />
-      </View>
+      </OperatorSurfaceShell>
     );
   }
 
   if (!staff) {
-    return <EmptyState icon="user-x" title="Team member not found" />;
+    return (
+      <OperatorSurfaceShell>
+        <EmptyState icon="user-x" title="Team member not found" />
+      </OperatorSurfaceShell>
+    );
   }
 
   const initials = staff.displayName
@@ -172,12 +180,26 @@ export default function StaffDetailScreen() {
     .toUpperCase();
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <OperationalScreen
+      title="Team member"
+      subtitle={staff.displayName}
+      contentStyle={styles.content}
+      actions={
+        <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button">
+          <Feather name="arrow-left" size={18} color={colors.foreground} />
+        </Pressable>
+      }
     >
-      <ScrollView contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
-        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View
+          style={[
+            styles.profileCard,
+            chrome.native ? chrome.panel() : { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <View style={[styles.avatar, { backgroundColor: (staff.color ?? colors.primary) + "33" }]}>
             <Text style={[styles.initials, { color: staff.color ?? colors.primary }]}>{initials}</Text>
           </View>
@@ -317,8 +339,8 @@ export default function StaffDetailScreen() {
         )}
 
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </OperationalScreen>
   );
 }
 

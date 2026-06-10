@@ -80,12 +80,13 @@ export function GlowPressable({
           ]}
         />
       ) : null}
-      <View style={contentStyle}>{children}</View>
+      <View style={[styles.content, contentStyle]}>{children}</View>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   glow: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 20,

@@ -27,6 +27,7 @@ import { getPublicBookingUrl } from "@/lib/public-booking-url";
 import { BookingTimelineCard } from "@/components/BookingTimelineCard";
 import { notifyBookingRunningLate, promptRunningLateMinutes } from "@/lib/running-late";
 import { OperationalScreen } from "@/components/OperationalScreen";
+import { OperatorSurfaceShell } from "@/components/shell/OperatorSurfaceShell";
 import { BookingLinkedInboxBanner } from "@/components/booking/BookingLinkedInboxBanner";
 import { GlowPressable } from "@/components/ui/GlowPressable";
 import { invalidateOperationalState } from "@/lib/operational-cache";
@@ -145,17 +146,17 @@ export default function BookingDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+      <OperatorSurfaceShell style={styles.centered}>
         <ActivityIndicator color={colors.primary} />
-      </View>
+      </OperatorSurfaceShell>
     );
   }
 
   if (!booking) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <OperatorSurfaceShell>
         <EmptyState icon="alert-circle" title="Booking not found" subtitle="It may have been deleted." />
-      </View>
+      </OperatorSurfaceShell>
     );
   }
 
@@ -182,6 +183,7 @@ export default function BookingDetailScreen() {
   const customer = detail.customer;
   const staff = detail.staff;
   const service = detail.service;
+  const customerId = booking.customerId;
   const customerName = customer?.displayName ?? customer?.firstName ?? "Walk-in";
 
   const onShareBooking = async () => {
@@ -287,35 +289,33 @@ export default function BookingDetailScreen() {
         >
           {customerName}
         </Animated.Text>
+        {customer ? (
+          <View style={styles.heroClientMeta}>
+            {customer.email ? (
+              <Text style={[styles.sub, { color: colors.mutedForeground }]}>{customer.email}</Text>
+            ) : null}
+            {customer.phone ? (
+              <Text style={[styles.sub, { color: colors.mutedForeground }]}>{customer.phone}</Text>
+            ) : null}
+            {customerId ? (
+              <Pressable
+                onPress={() => router.push(`/customer/${booking.customerId}`)}
+                style={styles.profileLink}
+              >
+                <Text style={[styles.profileLinkText, { color: colors.primary }]}>Open client profile</Text>
+                <Feather name="chevron-right" size={14} color={colors.primary} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
-
-      {currentBusiness?.id ? (
-        <BookingTimelineCard businessId={currentBusiness.id} bookingId={booking.id} />
-      ) : null}
-
-      {customer && (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.border },
-            Platform.OS !== "web" && elevation.resting,
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Client</Text>
-          <Text style={[styles.value, { color: colors.foreground }]}>{customerName}</Text>
-          {customer?.email && (
-            <Text style={[styles.sub, { color: colors.mutedForeground }]}>{customer.email}</Text>
-          )}
-          {customer?.phone && (
-            <Text style={[styles.sub, { color: colors.mutedForeground }]}>{customer.phone}</Text>
-          )}
-        </View>
-      )}
 
       <View
         style={[
           styles.card,
-          { backgroundColor: colors.card, borderColor: colors.border },
+          chrome.native
+            ? chrome.panel()
+            : { backgroundColor: colors.card, borderColor: colors.border },
           Platform.OS !== "web" && elevation.resting,
         ]}
       >
@@ -329,6 +329,10 @@ export default function BookingDetailScreen() {
           </Text>
         )}
       </View>
+
+      {currentBusiness?.id ? (
+        <BookingTimelineCard businessId={currentBusiness.id} bookingId={booking.id} />
+      ) : null}
 
       {booking.status === "CONFIRMED" && currentBusiness?.id ? (
         <Pressable
@@ -461,6 +465,9 @@ const styles = StyleSheet.create({
   time: { ...type.label, fontSize: 12.5 },
   dateTime: { fontFamily: fonts.body, fontSize: 14, marginTop: 2 },
   heroName: { fontFamily: fonts.serifMedium, fontSize: 32, letterSpacing: -0.5, marginTop: 4 },
+  heroClientMeta: { gap: 2, marginTop: 6 },
+  profileLink: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6 },
+  profileLinkText: { fontFamily: fonts.bodySemi, fontSize: 13 },
   eyebrow: { ...type.eyebrow, fontSize: 10.5, marginBottom: 4 },
   value: { fontFamily: fonts.serifMedium, fontSize: 20, letterSpacing: -0.2 },
   sub: { ...type.body, fontSize: 14 },

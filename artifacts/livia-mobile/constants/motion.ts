@@ -33,7 +33,13 @@ export const SPRING_BOUNCY: WithSpringConfig = {
 export const FADE_THROUGH_MS = 180;
 
 /** Standard breathing-loop period for ambient halos (ms, full in-out cycle). */
-export const BREATH_PERIOD_MS = 4200;
+export const BREATH_PERIOD_MS = 2600;
+
+/** Constellation nebula drift — full wander cycle (ms). */
+export const NEBULA_DRIFT_MS = 14_000;
+
+/** Orbital map rotation — one full turn (ms). */
+export const ORBIT_SPIN_MS = 140_000;
 
 /** Smooth, opinionated easing for ambient breathing effects. */
 export const BREATH_TIMING: WithTimingConfig = {

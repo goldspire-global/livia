@@ -331,25 +331,21 @@ export default function SettingsPage() {
               </>
             ) : null}
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Settings className="h-4 w-4" />
-                  {vocab.locationNoun} profile
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StudioProfileForm
-                  form={generalForm}
-                  vertical={businessVertical}
-                  category={business?.category}
-                  locationNoun={vocab.locationNoun}
-                  shopEditable={shopEditable}
-                  saving={updateBusiness.isPending}
-                  onSubmit={onSubmitGeneral}
-                />
-              </CardContent>
-            </Card>
+            <SettingsDisclosure
+              title={`${vocab.locationNoun} profile`}
+              description="Name, slug, timezone, and contact — expand when you need to edit details."
+              defaultOpen={shopEditable}
+            >
+              <StudioProfileForm
+                form={generalForm}
+                vertical={businessVertical}
+                category={business?.category}
+                locationNoun={vocab.locationNoun}
+                shopEditable={shopEditable}
+                saving={updateBusiness.isPending}
+                onSubmit={onSubmitGeneral}
+              />
+            </SettingsDisclosure>
 
             {businessVertical === "wellness" && (persona === "owner" || persona === "org_admin") ? (
               <SettingsDisclosure
@@ -478,39 +474,47 @@ export default function SettingsPage() {
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <Label>Greeting message</Label>
-                    <Textarea
-                      {...aiForm.register("aiGreeting")}
-                      placeholder="Hi — I'm Liv. Ask about services, hours, or pick a time to visit."
-                      rows={2}
-                      data-testid="input-ai-greeting"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      First line shown when a customer opens the chat. Leave blank for a default.
-                    </p>
-                  </div>
+                  <SettingsDisclosure
+                    title="Greeting & optional chat notes"
+                    description="Fine-tune copy on `/b` — most teams only touch the switches above."
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-4 pt-1">
+                      <div className="space-y-2">
+                        <Label>Greeting message</Label>
+                        <Textarea
+                          {...aiForm.register("aiGreeting")}
+                          placeholder="Hi — I'm Liv. Ask about services, hours, or pick a time to visit."
+                          rows={2}
+                          data-testid="input-ai-greeting"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          First line shown when a customer opens the chat. Leave blank for a default.
+                        </p>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>Extra chat notes</Label>
-                    <Textarea
-                      {...aiForm.register("aiKnowledge")}
-                      placeholder="Optional extras only — house rules and policies belong in Legal & trust."
-                      rows={4}
-                      data-testid="input-ai-knowledge"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Booking terms and house rules are in{" "}
-                      <button
-                        type="button"
-                        className="text-primary hover:underline"
-                        onClick={() => onSettingsTabChange("legal")}
-                      >
-                        Legal &amp; trust
-                      </button>
-                      . Use this field only for optional tone or one-off chat hints.
-                    </p>
-                  </div>
+                      <div className="space-y-2">
+                        <Label>Extra chat notes</Label>
+                        <Textarea
+                          {...aiForm.register("aiKnowledge")}
+                          placeholder="Optional extras only — house rules and policies belong in Legal & trust."
+                          rows={4}
+                          data-testid="input-ai-knowledge"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Booking terms and house rules are in{" "}
+                          <button
+                            type="button"
+                            className="text-primary hover:underline"
+                            onClick={() => onSettingsTabChange("legal")}
+                          >
+                            Legal &amp; trust
+                          </button>
+                          . Use this field only for optional tone or one-off chat hints.
+                        </p>
+                      </div>
+                    </div>
+                  </SettingsDisclosure>
 
                   {livEditable && (
                   <Button
@@ -565,7 +569,13 @@ export default function SettingsPage() {
 
           {visibleTabs.includes("legal") && (
             <TabsContent value="legal" className="space-y-4 mt-0">
-              <GuestPoliciesPanel editable={shopEditable || livEditable} />
+              <SettingsDisclosure
+                title="Guest-facing policies"
+                description="Terms, privacy, and care copy guests see on `/b` and `/my`."
+                defaultOpen={shopEditable || livEditable}
+              >
+                <GuestPoliciesPanel editable={shopEditable || livEditable} />
+              </SettingsDisclosure>
 
               {(persona === "owner" || persona === "org_admin" || persona === "manager") && (
                 <SettingsDisclosure

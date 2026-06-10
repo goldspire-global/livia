@@ -107,6 +107,67 @@ export async function listCustomers(
   return { data, total: countResult?.count ?? 0, limit, offset };
 }
 
+const FREQUENT_CLIENT_CAP = 10;
+
+/** Top clients by completed/scheduled visit count — front-desk quick pick. */
+export async function listFrequentCustomers(businessId: string, limit = FREQUENT_CLIENT_CAP) {
+  const rows = await db
+    .select({
+      customerId: bookingsTable.customerId,
+      bookingCount: sql<number>`count(*)::int`,
+      lastAt: sql<Date>`max(${bookingsTable.startAt})`,
+    })
+    .from(bookingsTable)
+    .where(eq(bookingsTable.businessId, businessId))
+    .groupBy(bookingsTable.customerId)
+    .orderBy(desc(sql`count(*)`), desc(sql`max(${bookingsTable.startAt})`))
+    .limit(limit);
+
+  const ids = rows.map((r) => r.customerId);
+  if (!ids.length) return { data: [], total: 0, limit, offset: 0 };
+
+  const customers = await db
+    .select()
+    .from(customersTable)
+    .where(and(eq(customersTable.businessId, businessId), inArray(customersTable.id, ids)));
+
+  const map = new Map(customers.map((c) => [c.id, c]));
+  const data = ids.map((id) => map.get(id)).filter((c): c is NonNullable<typeof c> => !!c);
+  return { data, total: data.length, limit, offset: 0 };
+}
+
+export async function listFrequentCustomersForStaff(
+  businessId: string,
+  staffId: string | null,
+  limit = FREQUENT_CLIENT_CAP,
+) {
+  if (!staffId) return { data: [], total: 0, limit, offset: 0 };
+
+  const rows = await db
+    .select({
+      customerId: bookingsTable.customerId,
+      bookingCount: sql<number>`count(*)::int`,
+      lastAt: sql<Date>`max(${bookingsTable.startAt})`,
+    })
+    .from(bookingsTable)
+    .where(and(eq(bookingsTable.businessId, businessId), eq(bookingsTable.staffId, staffId)))
+    .groupBy(bookingsTable.customerId)
+    .orderBy(desc(sql`count(*)`), desc(sql`max(${bookingsTable.startAt})`))
+    .limit(limit);
+
+  const ids = rows.map((r) => r.customerId);
+  if (!ids.length) return { data: [], total: 0, limit, offset: 0 };
+
+  const customers = await db
+    .select()
+    .from(customersTable)
+    .where(and(eq(customersTable.businessId, businessId), inArray(customersTable.id, ids)));
+
+  const map = new Map(customers.map((c) => [c.id, c]));
+  const data = ids.map((id) => map.get(id)).filter((c): c is NonNullable<typeof c> => !!c);
+  return { data, total: data.length, limit, offset: 0 };
+}
+
 export async function getCustomerById(businessId: string, customerId: string) {
   const [c] = await db
     .select()
@@ -126,7 +187,7 @@ export async function getCustomerDetail(businessId: string, customerId: string) 
       and(eq(bookingsTable.customerId, customerId), eq(bookingsTable.businessId, businessId)),
     )
     .orderBy(desc(bookingsTable.startAt))
-    .limit(10);
+    .limit(5);
 
   const [countResult] = await db
     .select({ count: sql<number>`count(*)::int` })

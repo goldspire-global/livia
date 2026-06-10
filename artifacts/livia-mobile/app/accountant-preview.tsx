@@ -38,7 +38,7 @@ export default function AccountantPreviewScreen() {
 
   return (
     <ScrollView
-      style={[styles.root, { backgroundColor: colors.background }]}
+      style={[styles.root, { backgroundColor: "transparent" }]}
       contentContainerStyle={{
         paddingTop: insets.top + 8,
         paddingBottom: 40,

@@ -13,9 +13,9 @@ export const GUEST_HUB_COPY = {
   signInBulletHistory:
     "Upcoming visits, session packs, design proofs, and messages — together in My Livia.",
   signInVerifyCta: "Continue",
-  vaultTitle: "My Livia",
-  vaultSubtitle: "Your bookings, favourites, and how studios reach you — in one place",
-  bookingsNav: "Your bookings",
+  vaultTitle: "Manage your bookings",
+  vaultSubtitle: "Upcoming visits, favourites, and how studios reach you — in one place",
+  bookingsNav: "Your favourites",
   upcomingSection: "Coming up",
   favoritesSection: "Favourites",
   allShopsSection: "All studios",

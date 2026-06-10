@@ -11,37 +11,31 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
 import { WellnessShellAtmosphere } from "@/components/wellness/WellnessShellAtmosphere";
-import { useBusiness } from "@/contexts/BusinessContext";
 import { useMobileSkin } from "@/contexts/PresentationThemeContext";
 import { PersonaRitualHeader } from "@/components/ritual/PersonaRitualHeader";
 import { PersonaScreenHeader } from "@/components/PersonaScreenHeader";
 import { ScreenTopBar } from "@/components/ScreenTopBar";
 import { useColors } from "@/hooks/useColors";
 import { TENANT_SHELL_LAYOUT, tenantScreenBackground } from "@/lib/tenant-shell-layout";
+import { FADE_THROUGH_MS } from "@/constants/motion";
 
 type Props = {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
-  /** Slot above scroll content (e.g. persona banner) */
   headerExtra?: React.ReactNode;
-  /** Fingertip actions row — keep 1–3 items */
   actions?: React.ReactNode;
-  /** @deprecated Pass only onRefresh — pull state is local so background refetch does not yank the page. */
   refreshing?: boolean;
   onRefresh?: () => void | Promise<unknown>;
   contentStyle?: ViewStyle;
   showHalo?: boolean;
-  /** When false, children manage their own scroll (e.g. FlatList). */
   scroll?: boolean;
-  /** Use Liv ritual header (web PersonaRitualHeader parity) instead of static title */
   ritualPage?: boolean;
 };
 
 /**
- * Mobile layout contract: safe area + optional aurora + ritual header + scroll body.
- * Matches dashboard web OperationalPageShell intent.
+ * Mobile layout contract: ritual header + scroll body over root TenantPresentationShell.
  */
 export function OperationalScreen({
   eyebrow,
@@ -62,8 +56,10 @@ export function OperationalScreen({
   const skin = useMobileSkin();
   const wellnessPreset =
     skin.family === "wellness-native" ? skin.effectiveCssPreset : null;
-  const shellAtmosphere = skin.transparentScreens;
-  const screenBg = tenantScreenBackground(skin.transparentScreens, colors.background);
+  const usesRootShell = skin.transparentScreens && skin.atmosphere !== "none";
+  const screenBg = usesRootShell
+    ? "transparent"
+    : tenantScreenBackground(skin.transparentScreens, colors.background);
   const contentPad = skin.transparentScreens ? TENANT_SHELL_LAYOUT.contentPadX : 20;
   const contentGap = skin.transparentScreens ? TENANT_SHELL_LAYOUT.contentGap : 14;
   const [pullRefreshing, setPullRefreshing] = useState(false);
@@ -77,10 +73,17 @@ export function OperationalScreen({
     }
   }, [onRefresh]);
 
+  const legacyAtmosphere =
+    !usesRootShell && !skin.transparentScreens && wellnessPreset ? (
+      <WellnessShellAtmosphere cssPreset={wellnessPreset} />
+    ) : !usesRootShell && !skin.transparentScreens && showHalo ? (
+      <AuroraHalo tone="primary" size={380} style={styles.halo} intensity={0.9} />
+    ) : null;
+
   const header = (
     <>
       <ScreenTopBar />
-      <Animated.View entering={FadeInDown.duration(380).springify().damping(18)}>
+      <Animated.View entering={FadeInDown.duration(FADE_THROUGH_MS + 80).springify().damping(18)}>
         {ritualPage ? (
           <PersonaRitualHeader variant="page" title={title} subtitle={subtitle} showActions={false} />
         ) : (
@@ -95,11 +98,7 @@ export function OperationalScreen({
   if (!scroll) {
     return (
       <View style={[styles.root, { backgroundColor: screenBg }]}>
-        {!shellAtmosphere && wellnessPreset ? (
-          <WellnessShellAtmosphere cssPreset={wellnessPreset} />
-        ) : !shellAtmosphere && showHalo ? (
-          <AuroraHalo tone="primary" size={380} style={styles.halo} intensity={0.9} />
-        ) : null}
+        {legacyAtmosphere}
         <View style={[styles.staticHeader, { paddingTop: topPad + 8, paddingHorizontal: contentPad }]}>
           {header}
         </View>
@@ -110,11 +109,7 @@ export function OperationalScreen({
 
   return (
     <View style={[styles.root, { backgroundColor: screenBg }]}>
-      {!shellAtmosphere && wellnessPreset ? (
-        <WellnessShellAtmosphere cssPreset={wellnessPreset} />
-      ) : !shellAtmosphere && showHalo ? (
-        <AuroraHalo tone="primary" size={380} style={styles.halo} intensity={0.9} />
-      ) : null}
+      {legacyAtmosphere}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[

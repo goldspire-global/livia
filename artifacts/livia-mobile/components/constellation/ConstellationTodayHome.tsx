@@ -15,13 +15,13 @@ import { GlowPressable } from "@/components/ui/GlowPressable";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
+import { morphOwnerGreeting } from "@/lib/briefing-display";
 import { usePersonaBriefing } from "@/hooks/usePersonaBriefing";
 import { formatRelativeIso, useRelativeTime } from "@/hooks/useRelativeTime";
 import { openBriefingHref } from "@/lib/mobile-briefing-nav";
 import { resolveConstellationVerticalChrome } from "@/lib/constellation-preset";
 import { gatewayTheme } from "@/lib/gateway-theme";
 import { useOperationalChrome } from "@/lib/operational-chrome";
-import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import { asHref } from "@/lib/navigation";
 
 type BookingPreview = {
@@ -142,9 +142,10 @@ export function ConstellationTodayHome({
   const router = useRouter();
   const haptics = useHaptics();
   const chrome = useOperationalChrome(businessId);
-  const { greeting, ritual } = usePersonaBriefing();
-  const pack = verticalPackUi(vertical, category);
+  const { firstName, ritual } = usePersonaBriefing();
+  const greeting = morphOwnerGreeting(firstName);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const nextRelative = useRelativeTime(next?.startAt);
   const preset = resolveConstellationVerticalChrome(vertical, category);
   const accent = preset.ritualAccent;
@@ -168,7 +169,7 @@ export function ConstellationTodayHome({
 
   return (
     <View style={styles.root} testID="constellation-today-home">
-      <Animated.View entering={FadeInDown.duration(400).springify()} style={styles.greetRow}>
+      <Animated.View entering={FadeInDown.duration(260).springify()} style={styles.greetRow}>
         <View style={{ flex: 1 }}>
           <ConstellationGradientTitle>{greeting}</ConstellationGradientTitle>
           {businessName ? (
@@ -180,14 +181,7 @@ export function ConstellationTodayHome({
         <Text style={styles.dateMono}>{headerDate}</Text>
       </Animated.View>
 
-      {vertical === "beauty" || vertical === "wellness" ? (
-        <Text style={[styles.verticalBeat, { color: accent + "cc" }]} numberOfLines={1}>
-          {pack.label}
-          {vertical === "beauty" ? " · chair + inbox in one orbit" : " · rooms + reception in one orbit"}
-        </Text>
-      ) : null}
-
-      <Animated.View entering={FadeInDown.delay(60).duration(380).springify()}>
+      <Animated.View entering={FadeInDown.delay(40).duration(240).springify()}>
         <ConstellationGlassCard
           accentBar={!preset.beautyBriefing}
           accentColor={accent}
@@ -243,32 +237,6 @@ export function ConstellationTodayHome({
         </ConstellationGlassCard>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(100).duration(360).springify()} style={styles.orbitNav}>
-        <GlowPressable
-          onPress={() => router.push(asHref("/bookings"))}
-          glowColor={accent}
-          haptic="selection"
-          style={[styles.orbitLane, { borderColor: shellAccent + "44", backgroundColor: shellAccent + "10" }]}
-        >
-          <Feather name="sun" size={15} color={shellAccent} />
-          <Text style={[styles.orbitLabel, { color: shellAccent }]}>Today lane</Text>
-        </GlowPressable>
-        <GlowPressable
-          onPress={() => router.push(asHref("/inbox"))}
-          glowColor={accent}
-          haptic="selection"
-          style={[styles.orbitLane, { borderColor: shellAccent + "28", backgroundColor: shellAccent + "06" }]}
-        >
-          <Feather name="inbox" size={15} color={shellAccent} />
-          <Text style={[styles.orbitLabel, { color: shellAccent + "dd" }]}>Inbox lane</Text>
-          {handoffCount > 0 ? (
-            <View style={[styles.orbitBadge, { backgroundColor: "#f59e0b" }]}>
-              <Text style={styles.orbitBadgeText}>{handoffCount}</Text>
-            </View>
-          ) : null}
-        </GlowPressable>
-      </Animated.View>
-
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -295,7 +263,7 @@ export function ConstellationTodayHome({
       </ScrollView>
 
       {heroPending && !isLoading ? (
-        <Animated.View entering={FadeInDown.delay(140).duration(360).springify()}>
+        <Animated.View entering={FadeInDown.delay(80).duration(240).springify()}>
           <ConstellationGlassCard style={{ marginBottom: 12 }}>
             <View style={styles.focalHead}>
               <Text style={[styles.focalEyebrow, { color: "#f59e0b" }]}>
@@ -315,13 +283,31 @@ export function ConstellationTodayHome({
             {onConfirmBooking ? (
               <View style={styles.focalActions}>
                 <GlowPressable
-                  onPress={() => onConfirmBooking(heroPending.id)}
+                  onPress={() => {
+                    if (confirmingId) return;
+                    setConfirmingId(heroPending.id);
+                    void Promise.resolve(onConfirmBooking(heroPending.id)).finally(() =>
+                      setConfirmingId(null),
+                    );
+                  }}
                   glowColor={accent}
                   haptic="impact"
-                  style={[styles.confirmBtn, { backgroundColor: preset.beautyBriefing ? accent : shellAccent }]}
+                  style={[
+                    styles.confirmBtn,
+                    {
+                      backgroundColor: preset.beautyBriefing ? accent : shellAccent,
+                      opacity: confirmingId === heroPending.id ? 0.7 : 1,
+                    },
+                  ]}
                 >
-                  <Feather name="check" size={16} color={gatewayTheme.platformInk} />
-                  <Text style={styles.confirmText}>Confirm</Text>
+                  {confirmingId === heroPending.id ? (
+                    <ActivityIndicator size="small" color={gatewayTheme.platformInk} />
+                  ) : (
+                    <Feather name="check" size={16} color={gatewayTheme.platformInk} />
+                  )}
+                  <Text style={styles.confirmText}>
+                    {confirmingId === heroPending.id ? "Confirming…" : "Confirm"}
+                  </Text>
                 </GlowPressable>
                 <Pressable onPress={() => router.push(`/booking/${heroPending.id}`)} style={styles.reviewBtn}>
                   <Text style={[styles.reviewText, { color: colors.mutedForeground }]}>Review</Text>
@@ -331,7 +317,7 @@ export function ConstellationTodayHome({
           </ConstellationGlassCard>
         </Animated.View>
       ) : !isLoading && next ? (
-        <Animated.View entering={FadeInDown.delay(140).duration(360).springify()}>
+        <Animated.View entering={FadeInDown.delay(80).duration(240).springify()}>
           <GlowPressable
             onPress={() => router.push(`/booking/${next.id}`)}
             glowColor={accent}
@@ -484,13 +470,6 @@ const styles = StyleSheet.create({
     color: "rgba(247,245,240,0.45)",
     letterSpacing: 0.3,
   },
-  verticalBeat: {
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    marginBottom: 4,
-  },
   briefingTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   briefingEyebrow: {
     flex: 1,
@@ -538,27 +517,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: gatewayTheme.platformInk,
   },
-  orbitNav: { flexDirection: "row", gap: 10 },
-  orbitLane: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
-  orbitLabel: { flex: 1, fontFamily: fonts.bodySemi, fontSize: 13 },
-  orbitBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  orbitBadgeText: { fontSize: 10, fontFamily: fonts.mono, color: "#fff", fontWeight: "700" },
   kpiScroll: { marginHorizontal: -4 },
   kpiRow: { gap: 10, paddingHorizontal: 4, paddingVertical: 2 },
   kpi: {
@@ -593,6 +551,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    alignSelf: "flex-start",
   },
   confirmText: { fontFamily: fonts.bodySemi, fontSize: 13, color: gatewayTheme.platformInk },
   reviewBtn: { paddingVertical: 8, paddingHorizontal: 8 },

@@ -1621,6 +1621,45 @@ export const CreateCustomerBody = zod.object({
 });
 
 /**
+ * @summary Frequent clients by visit count (capped)
+ */
+export const ListFrequentCustomersParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const listFrequentCustomersQueryLimitDefault = 10;
+export const listFrequentCustomersQueryLimitMax = 20;
+
+export const ListFrequentCustomersQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .max(listFrequentCustomersQueryLimitMax)
+    .default(listFrequentCustomersQueryLimitDefault),
+});
+
+export const ListFrequentCustomersResponse = zod.object({
+  data: zod.array(
+    zod.object({
+      id: zod.string(),
+      businessId: zod.string(),
+      firstName: zod.string().nullish(),
+      lastName: zod.string().nullish(),
+      displayName: zod.string().nullish(),
+      email: zod.string().nullish(),
+      phone: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      tags: zod.array(zod.string()).nullish(),
+      isBlocked: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+  limit: zod.number(),
+  offset: zod.number(),
+});
+
+/**
  * @summary Get a customer with booking history
  */
 export const GetCustomerParams = zod.object({
@@ -3117,6 +3156,23 @@ export const GetConversationResponse = zod.object({
     messageCount: zod.number(),
     bookingCount: zod.number(),
   }),
+  siblingThreads: zod.array(
+    zod.object({
+      id: zod.string(),
+      channel: zod.enum([
+        "WEB",
+        "SMS",
+        "INSTAGRAM",
+        "WHATSAPP",
+        "MESSENGER",
+        "EMAIL",
+        "VOICE",
+      ]),
+      status: zod.enum(["OPEN", "HANDED_OFF", "CLOSED"]),
+      lastMessage: zod.string().nullish(),
+      lastMessageAt: zod.coerce.date(),
+    }),
+  ),
   messages: zod.array(
     zod.object({
       id: zod.string(),

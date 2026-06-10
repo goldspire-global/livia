@@ -45,6 +45,11 @@ import {
   buildWellnessPostSessionInboxDraft,
   wellnessRetailSkuById,
   inboxFloorGuidance,
+  inboxChannelLabel,
+  inboxCrossChannelOperatorNote,
+  inboxReplyDeliveredOnChannel,
+  inboxReplyPlaceholder,
+  inboxSiblingThreadsBanner,
   type InboxQueueLens,
 } from "@workspace/policy";
 import { InboxThreadList } from "@/components/inbox/inbox-thread-list";
@@ -269,8 +274,30 @@ export default function InboxPage() {
   }, [conversations, queueLens, showRitual]);
 
   const detailData = detail as
-    | { conversation: ConversationListItem; messages: ConversationMessageItem[] }
+    | {
+        conversation: ConversationListItem;
+        messages: ConversationMessageItem[];
+        siblingThreads?: Array<{
+          id: string;
+          channel: string;
+          status: string;
+          lastMessage?: string | null;
+          lastMessageAt: string;
+        }>;
+      }
     | undefined;
+
+  const activeChannelCountByCustomer = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of conversations) {
+      if (c.status === "CLOSED" || !c.customerId) continue;
+      counts.set(c.customerId, (counts.get(c.customerId) ?? 0) + 1);
+    }
+    return counts;
+  }, [conversations]);
+
+  const siblingThreads = detailData?.siblingThreads ?? [];
+  const siblingBanner = inboxSiblingThreadsBanner(siblingThreads);
 
   const selectedConversation = useMemo(() => {
     if (!selectedId) return null;
@@ -607,6 +634,7 @@ export default function InboxPage() {
             emptyTitle={emptyInboxTitle}
             emptySubtitle={emptyInboxSubtitle}
             beautyChrome={beautyChrome}
+            activeChannelCountByCustomer={activeChannelCountByCustomer}
           />
         </div>
 
@@ -799,6 +827,30 @@ export default function InboxPage() {
                 </div>
               )}
 
+              {siblingBanner ? (
+                <div
+                  className="mx-4 mt-3 rounded-lg border border-sky-500/35 bg-sky-500/10 px-3 py-2 text-xs text-foreground space-y-2"
+                  data-testid="inbox-sibling-threads-banner"
+                >
+                  <p>{siblingBanner}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {siblingThreads.map((s) => (
+                      <Button
+                        key={s.id}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px]"
+                        data-testid={`inbox-sibling-thread-${s.id}`}
+                        onClick={() => setSelectedId(s.id)}
+                      >
+                        Open {inboxChannelLabel(s.channel)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div
                 className={cn(
                   "flex-1 min-h-0 overflow-y-auto p-4 space-y-3 motion-wizard-enter inbox-messages-scroll",
@@ -932,18 +984,21 @@ export default function InboxPage() {
                       <HandHelping className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
                       <span>
                         <span className="font-medium text-foreground">You&apos;re replying.</span>{" "}
-                        Send when ready — Liv resumes this thread automatically after your message
-                        goes out on the customer&apos;s channel.
+                        Send when ready — Liv resumes this thread after your message.{" "}
+                        {inboxReplyDeliveredOnChannel(selectedConversation?.channel)}.
                       </span>
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="text-xs text-muted-foreground" data-testid="inbox-reply-channel-hint">
+                      {inboxReplyDeliveredOnChannel(selectedConversation?.channel)}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    {inboxCrossChannelOperatorNote()}
+                  </p>
                   <div className="relative">
                     <Textarea
-                      placeholder={
-                        selectedConversation?.status === "HANDED_OFF"
-                          ? "Write your reply to the customer…"
-                          : "Reply to customer…"
-                      }
+                      placeholder={inboxReplyPlaceholder(selectedConversation?.channel)}
                       value={replyDraft}
                       onChange={(e) => setReplyDraft(e.target.value)}
                       rows={

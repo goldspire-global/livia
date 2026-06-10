@@ -79,6 +79,7 @@ import type {
   ListBookingsParams,
   ListConversationsParams,
   ListCustomersParams,
+  ListFrequentCustomersParams,
   ListMyNotificationsParams,
   ListPartnerBookingsParams,
   ListServicesParams,
@@ -4092,6 +4093,127 @@ export const useCreateCustomer = <
 > => {
   return useMutation(getCreateCustomerMutationOptions(options));
 };
+
+/**
+ * @summary Frequent clients by visit count (capped)
+ */
+export const getListFrequentCustomersUrl = (
+  businessId: string,
+  params?: ListFrequentCustomersParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/businesses/${businessId}/customers/frequent?${stringifiedParams}`
+    : `/api/businesses/${businessId}/customers/frequent`;
+};
+
+export const listFrequentCustomers = async (
+  businessId: string,
+  params?: ListFrequentCustomersParams,
+  options?: RequestInit,
+): Promise<CustomerListResponse> => {
+  return customFetch<CustomerListResponse>(
+    getListFrequentCustomersUrl(businessId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListFrequentCustomersQueryKey = (
+  businessId: string,
+  params?: ListFrequentCustomersParams,
+) => {
+  return [
+    `/api/businesses/${businessId}/customers/frequent`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListFrequentCustomersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listFrequentCustomers>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  params?: ListFrequentCustomersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFrequentCustomers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getListFrequentCustomersQueryKey(businessId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listFrequentCustomers>>
+  > = ({ signal }) =>
+    listFrequentCustomers(businessId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listFrequentCustomers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListFrequentCustomersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listFrequentCustomers>>
+>;
+export type ListFrequentCustomersQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Frequent clients by visit count (capped)
+ */
+
+export function useListFrequentCustomers<
+  TData = Awaited<ReturnType<typeof listFrequentCustomers>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  params?: ListFrequentCustomersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFrequentCustomers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListFrequentCustomersQueryOptions(
+    businessId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get a customer with booking history

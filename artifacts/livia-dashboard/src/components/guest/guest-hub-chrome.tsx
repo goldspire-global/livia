@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { CalendarDays, Heart, LogOut } from "lucide-react";
+import { Heart, LogOut } from "lucide-react";
 import { GUEST_HUB_COPY } from "@workspace/policy";
 import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { PublicSurfaceFooter } from "@/components/public/public-surface-chrome";
@@ -92,32 +92,14 @@ function GuestHubTopNav({
 }
 
 function GuestHubSidebar({ favoriteShops }: { favoriteShops?: GuestHubSidebarShop[] }) {
-  const [location] = useLocation();
-  const onHome = location === "/my" || location === "/my/";
   const favorites = favoriteShops?.filter((s) => s.isFavorite) ?? [];
 
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-20 lg:self-start">
-      <nav className="rounded-xl border border-border/80 bg-card/40 p-2 space-y-0.5">
-        <Link
-          href="/my"
-          className={cn(
-            "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors",
-            onHome
-              ? "bg-primary/10 text-foreground font-medium"
-              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-          )}
-        >
-          <CalendarDays className="h-4 w-4 shrink-0" />
-          {GUEST_HUB_COPY.bookingsNav}
-        </Link>
-      </nav>
+    <aside className="hidden lg:flex lg:flex-col lg:gap-3 lg:sticky lg:top-20 lg:self-start">
+      <p className="px-1 text-sm font-medium text-foreground">{GUEST_HUB_COPY.bookingsNav}</p>
 
       {favorites.length > 0 ? (
         <div className="rounded-xl border border-border/80 bg-card/40 p-2 space-y-0.5">
-          <p className="px-3 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            {GUEST_HUB_COPY.favoritesSection}
-          </p>
           {favorites.map((shop) => (
             <Link
               key={shop.businessId}

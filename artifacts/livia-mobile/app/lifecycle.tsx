@@ -2,9 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PersonaScreenHeader } from "@/components/PersonaScreenHeader";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { OperationalScreen } from "@/components/OperationalScreen";
 import { ScreenPurpose } from "@/components/ScreenPurpose";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
@@ -23,7 +22,6 @@ const GROWTH_STEPS = [
 export default function LifecycleScreen() {
   const colors = useColors();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { currentBusiness } = useBusiness();
   const pack = verticalPackUi(
     (currentBusiness as { vertical?: string } | undefined)?.vertical,
@@ -34,25 +32,17 @@ export default function LifecycleScreen() {
   const openWeb = (url: string) => void Linking.openURL(url);
 
   return (
-    <ScrollView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={{
-        paddingTop: insets.top + 12,
-        paddingBottom: insets.bottom + 32,
-        paddingHorizontal: 16,
-        gap: 14,
-      }}
+    <OperationalScreen
+      eyebrow="For you, the business owner"
+      title="Grow & hand over"
+      subtitle={`Not for your clients — your ${pack.label.toLowerCase()} playbook: growing the team, opening another location, or selling the business.`}
+      contentStyle={{ paddingBottom: 32, gap: 14 }}
+      actions={
+        <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
+        </Pressable>
+      }
     >
-      <Pressable onPress={() => router.back()} hitSlop={12}>
-        <Feather name="arrow-left" size={22} color={colors.foreground} />
-      </Pressable>
-
-      <PersonaScreenHeader
-        eyebrow="For you, the business owner"
-        title="Grow & hand over"
-        subtitle={`Not for your clients — your ${pack.label.toLowerCase()} playbook: growing the team, opening another location, or selling the business.`}
-      />
-
       <ScreenPurpose
         icon="trending-up"
         title="What this page is for"
@@ -100,12 +90,11 @@ export default function LifecycleScreen() {
           <Feather name="external-link" size={14} color={colors.primary} />
         </Pressable>
       </View>
-    </ScrollView>
+    </OperationalScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   card: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 8 },
   cardTitle: { fontFamily: fonts.bodySemi, fontSize: 16 },
   body: { ...type.body, fontSize: 14, lineHeight: 20 },

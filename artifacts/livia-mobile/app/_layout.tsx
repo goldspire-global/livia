@@ -14,6 +14,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { useBusiness } from "@/contexts/BusinessContext";
 import { fetchOperatorSurface } from "@/lib/operator-surface";
 import {
   setAuthTokenGetter,
@@ -36,6 +37,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { BusinessProvider } from "@/contexts/BusinessContext";
 import { PresentationThemeProvider } from "@/contexts/PresentationThemeContext";
+import { TenantPresentationShell } from "@/components/shell/TenantPresentationShell";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { usePushNavigation } from "@/hooks/usePushNavigation";
 import { getApiBaseUrl } from "@/lib/api-base";
@@ -147,6 +149,13 @@ function PushRegistrationBridge() {
   return null;
 }
 
+function OperatorPresentationGate({ children }: { children: React.ReactNode }) {
+  const { isSignedIn } = useAuth();
+  const { currentBusiness } = useBusiness();
+  if (!isSignedIn || !currentBusiness?.id) return <>{children}</>;
+  return <TenantPresentationShell>{children}</TenantPresentationShell>;
+}
+
 function RootLayoutNav() {
   return (
     <BusinessProvider>
@@ -154,11 +163,14 @@ function RootLayoutNav() {
       <PushRegistrationBridge />
       <AuthGate>
         <OnboardingGate>
+        <OperatorPresentationGate>
         <Stack
           screenOptions={{
             headerBackTitle: "Back",
+            headerShown: false,
             headerStyle: { backgroundColor: "transparent" },
             headerShadowVisible: false,
+            contentStyle: { backgroundColor: "transparent" },
           }}
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -178,34 +190,35 @@ function RootLayoutNav() {
           <Stack.Screen name="my-livia/[slug]" options={{ headerShown: false }} />
           <Stack.Screen name="my-livia/[slug]/visit/[bookingId]" options={{ headerShown: false }} />
           <Stack.Screen name="guest-surface" options={{ headerShown: false }} />
-          <Stack.Screen name="booking/[id]" options={{ title: "Booking" }} />
+          <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="notifications" options={{ headerShown: false }} />
-          <Stack.Screen name="booking/new" options={{ title: "New Booking" }} />
-          <Stack.Screen name="customer/[id]" options={{ title: "Client" }} />
-          <Stack.Screen name="customer/new" options={{ title: "New Client" }} />
-          <Stack.Screen name="staff/index" options={{ title: "Staff" }} />
-          <Stack.Screen name="staff/invite" options={{ title: "Invite" }} />
-          <Stack.Screen name="staff/[id]" options={{ title: "Staff Member" }} />
-          <Stack.Screen name="services/index" options={{ title: "Services" }} />
-          <Stack.Screen name="service/new" options={{ title: "New Service" }} />
-          <Stack.Screen name="settings" options={{ title: "Settings" }} />
+          <Stack.Screen name="booking/new" options={{ headerShown: false }} />
+          <Stack.Screen name="customer/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="customer/new" options={{ headerShown: false }} />
+          <Stack.Screen name="staff/index" options={{ headerShown: false }} />
+          <Stack.Screen name="staff/invite" options={{ headerShown: false }} />
+          <Stack.Screen name="staff/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="services/index" options={{ headerShown: false }} />
+          <Stack.Screen name="service/new" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
           <Stack.Screen name="_internal/desk" options={{ title: "Overview", headerShown: false }} />
           <Stack.Screen name="founder/cockpit" options={{ headerShown: false }} />
-          <Stack.Screen name="plan" options={{ title: "Plan" }} />
-          <Stack.Screen name="design-proofs" options={{ title: "Design proofs" }} />
-          <Stack.Screen name="clinical-hub" options={{ title: "Clinical hub" }} />
-          <Stack.Screen name="liv-mandate" options={{ title: "Liv Mandate" }} />
-          <Stack.Screen name="accountant-preview" options={{ title: "Accountant preview" }} />
-          <Stack.Screen name="audit" options={{ title: "Audit" }} />
-          <Stack.Screen name="lifecycle" options={{ title: "Lifecycle" }} />
-          <Stack.Screen name="host" options={{ title: "Host floor" }} />
-          <Stack.Screen name="brands" options={{ title: "Brands" }} />
+          <Stack.Screen name="plan" options={{ headerShown: false }} />
+          <Stack.Screen name="design-proofs" options={{ headerShown: false }} />
+          <Stack.Screen name="clinical-hub" options={{ headerShown: false }} />
+          <Stack.Screen name="liv-mandate" options={{ headerShown: false }} />
+          <Stack.Screen name="accountant-preview" options={{ headerShown: false }} />
+          <Stack.Screen name="audit" options={{ headerShown: false }} />
+          <Stack.Screen name="lifecycle" options={{ headerShown: false }} />
+          <Stack.Screen name="host" options={{ headerShown: false }} />
+          <Stack.Screen name="brands" options={{ headerShown: false }} />
           <Stack.Screen name="premises" options={{ headerShown: false }} />
           <Stack.Screen name="day-packages" options={{ headerShown: false }} />
-          <Stack.Screen name="rota" options={{ title: "Team rota" }} />
-          <Stack.Screen name="time-off" options={{ title: "Request leave" }} />
+          <Stack.Screen name="rota" options={{ headerShown: false }} />
+          <Stack.Screen name="time-off" options={{ headerShown: false }} />
         </Stack>
+        </OperatorPresentationGate>
         </OnboardingGate>
       </AuthGate>
       </PresentationThemeProvider>

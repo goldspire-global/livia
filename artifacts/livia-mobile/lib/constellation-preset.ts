@@ -2,7 +2,7 @@ import { gatewayTheme } from "@/lib/gateway-theme";
 import { verticalAccentHex } from "@/lib/vertical-theme";
 
 /** Web `platform-default-constellation.css` — map watermark base opacity × 1.2 */
-export const CONSTELLATION_MAP_OPACITY = 0.216;
+export const CONSTELLATION_MAP_OPACITY = 0.28;
 
 export const CONSTELLATION_STROKE = {
   outer: 1.2,

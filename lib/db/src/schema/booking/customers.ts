@@ -45,6 +45,12 @@ export const customersTable = pgTable(
     consent: jsonb("consent"),
     patchTestCompletedAt: timestamp("patch_test_completed_at", { withTimezone: true }),
     beautyPreferences: jsonb("beauty_preferences").$type<Record<string, unknown>>(),
+    /** Last channel the guest messaged on — powers proactive "where I last messaged you" routing. */
+    lastInboundChannel: text("last_inbound_channel"),
+    lastInboundAt: timestamp("last_inbound_at", { withTimezone: true }),
+    /** Last channel Liv or staff sent on for this guest. */
+    lastOutboundChannel: text("last_outbound_channel"),
+    lastOutboundAt: timestamp("last_outbound_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

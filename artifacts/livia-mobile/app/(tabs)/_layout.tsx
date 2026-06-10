@@ -18,7 +18,6 @@ import { useTenantExperience } from "@/hooks/useTenantExperience";
 import { useMobileOwnerIntelTabBadges } from "@/hooks/useMobileOwnerIntelTabBadges";
 import { verticalOperationalCopy } from "@workspace/policy";
 import { GatewayHandoffVeil } from "@/components/gateway/GatewayHandoffVeil";
-import { TenantPresentationShell } from "@/components/shell/TenantPresentationShell";
 
 type TabKey =
   | "index"
@@ -102,7 +101,7 @@ function TabLayoutInner() {
   const tabBarBorder = frostedTabBar ? "rgba(217,195,154,0.12)" : colors.border;
 
   return (
-    <TenantPresentationShell>
+    <>
       <StatusBar style={isDark ? "light" : "dark"} />
       <GatewayHandoffVeil />
       <Tabs
@@ -195,6 +194,6 @@ function TabLayoutInner() {
       );
       })}
     </Tabs>
-    </TenantPresentationShell>
+    </>
   );
 }

@@ -39,6 +39,7 @@ export * from "./beauty-experience";
 export * from "./beauty-retail";
 export * from "./beauty-booking-rules";
 export * from "./inbox-floor-guidance";
+export * from "./inbox-channel-routing";
 export * from "./relationship";
 export * from "./presentation-promotion";
 export * from "./liv-mandate";

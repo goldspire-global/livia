@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -20,6 +19,9 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { LivMemoryCard } from "@/components/LivMemoryCard";
 import { OperationalScreen } from "@/components/OperationalScreen";
+import { OperatorSurfaceShell } from "@/components/shell/OperatorSurfaceShell";
+import { CollapsibleSettingsSection } from "@/components/settings/CollapsibleSettingsSection";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 export default function CustomerDetailScreen() {
   const colors = useColors();
   const router = useRouter();
@@ -28,7 +30,13 @@ export default function CustomerDetailScreen() {
   const { role } = useMembership();
   const canEdit = role === "OWNER" || role === "ADMIN";
   const bid = currentBusiness?.id ?? "";
+  const chrome = useOperationalChrome(bid);
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
+  type ClientSection = "relationship" | "memory" | "care" | "notes" | "bookings";
+  const [openSection, setOpenSection] = useState<ClientSection | null>("bookings");
+  const toggleSection = (id: ClientSection) => {
+    setOpenSection((prev) => (prev === id ? null : id));
+  };
   const showCareSeries = vertical === "allied-health" || vertical === "wellness";
   const [careSeries, setCareSeries] = useState<
     Array<{
@@ -74,17 +82,17 @@ export default function CustomerDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+      <OperatorSurfaceShell style={styles.centered}>
         <ActivityIndicator color={colors.primary} />
-      </View>
+      </OperatorSurfaceShell>
     );
   }
 
   if (!customer) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <OperatorSurfaceShell>
         <EmptyState icon="user-x" title="Client not found" />
-      </View>
+      </OperatorSurfaceShell>
     );
   }
 
@@ -98,6 +106,8 @@ export default function CustomerDetailScreen() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  const recentBookings = (detail.recentBookings ?? []).slice(0, 5);
 
   return (
     <OperationalScreen
@@ -156,69 +166,35 @@ export default function CustomerDetailScreen() {
       </View>
 
       {relationship ? (
-        <View
-          style={[styles.relCard, { backgroundColor: colors.card, borderColor: colors.border }, elevation.resting]}
+        <CollapsibleSettingsSection
+          id="relationship"
+          icon="heart"
+          title="Relationship"
+          subtitle={(relationship as { stageLabel?: string }).stageLabel}
+          expanded={openSection === "relationship"}
+          onToggle={() => toggleSection("relationship")}
+          chrome={chrome}
         >
-          <Text style={[styles.relTitle, { color: colors.foreground }]}>Relationship</Text>
           <Text style={[styles.relStage, { color: colors.primary }]}>
             {(relationship as { stageLabel?: string }).stageLabel}
           </Text>
           <Text style={[styles.relHeadline, { color: colors.mutedForeground }]}>
             {(relationship as { headline?: string }).headline}
           </Text>
-        </View>
+        </CollapsibleSettingsSection>
       ) : null}
 
-      {bid && id ? (
-        <LivMemoryCard businessId={bid} customerId={id} canEdit={canEdit} />
-      ) : null}
-
-      {showCareSeries && careSeries.length > 0 ? (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.border },
-            Platform.OS !== "web" && elevation.resting,
-          ]}
+      {recentBookings.length > 0 ? (
+        <CollapsibleSettingsSection
+          id="bookings"
+          icon="calendar"
+          title="Recent bookings"
+          subtitle={`Last ${recentBookings.length}`}
+          expanded={openSection === "bookings"}
+          onToggle={() => toggleSection("bookings")}
+          chrome={chrome}
         >
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Care series</Text>
-          {careSeries.map((s) => {
-            const done = (s.sessions ?? []).filter((x) => x.status === "COMPLETED").length;
-            const total = s.sessionsTotal ?? s.sessions?.length ?? 0;
-            const left = total > 0 ? Math.max(0, total - done) : null;
-            return (
-              <View key={s.id} style={{ marginTop: 8, gap: 2 }}>
-                <Text style={[styles.noteText, { color: colors.foreground, fontFamily: fonts.bodySemi }]}>
-                  {s.name}
-                </Text>
-                <Text style={[styles.noteText, { color: colors.mutedForeground, fontSize: 12 }]}>
-                  {left != null ? `${left} of ${total} session(s) remaining` : "Care series"}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      ) : null}
-
-      {customer.notes ? (
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.border },
-            Platform.OS !== "web" && elevation.resting,
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Notes</Text>
-          <Text style={[styles.noteText, { color: colors.foreground }]}>{customer.notes}</Text>
-        </View>
-      ) : null}
-
-      {detail.recentBookings && detail.recentBookings.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Recent bookings
-          </Text>
-          {detail.recentBookings.map((b, i) => (
+          {recentBookings.map((b, i) => (
             <BookingCard
               key={b.id}
               booking={b}
@@ -228,8 +204,64 @@ export default function CustomerDetailScreen() {
               onPress={() => router.push(`/booking/${b.id}`)}
             />
           ))}
-        </View>
-      )}
+        </CollapsibleSettingsSection>
+      ) : null}
+
+      {bid && id ? (
+        <CollapsibleSettingsSection
+          id="memory"
+          icon="cpu"
+          title="Liv memory"
+          subtitle="What Liv remembers between visits"
+          expanded={openSection === "memory"}
+          onToggle={() => toggleSection("memory")}
+          chrome={chrome}
+        >
+          <LivMemoryCard businessId={bid} customerId={id} canEdit={canEdit} />
+        </CollapsibleSettingsSection>
+      ) : null}
+
+      {showCareSeries && careSeries.length > 0 ? (
+        <CollapsibleSettingsSection
+          id="care"
+          icon="activity"
+          title="Care series"
+          subtitle={`${careSeries.length} active`}
+          expanded={openSection === "care"}
+          onToggle={() => toggleSection("care")}
+          chrome={chrome}
+        >
+          {careSeries.map((s) => {
+            const done = (s.sessions ?? []).filter((x) => x.status === "COMPLETED").length;
+            const total = s.sessionsTotal ?? s.sessions?.length ?? 0;
+            const left = total > 0 ? Math.max(0, total - done) : null;
+            return (
+              <View key={s.id} style={{ gap: 2 }}>
+                <Text style={[styles.noteText, { color: colors.foreground, fontFamily: fonts.bodySemi }]}>
+                  {s.name}
+                </Text>
+                <Text style={[styles.noteText, { color: colors.mutedForeground, fontSize: 12 }]}>
+                  {left != null ? `${left} of ${total} session(s) remaining` : "Care series"}
+                </Text>
+              </View>
+            );
+          })}
+        </CollapsibleSettingsSection>
+      ) : null}
+
+      {customer.notes ? (
+        <CollapsibleSettingsSection
+          id="notes"
+          icon="file-text"
+          title="Notes"
+          subtitle="Team-visible"
+          expanded={openSection === "notes"}
+          onToggle={() => toggleSection("notes")}
+          chrome={chrome}
+        >
+          <Text style={[styles.noteText, { color: colors.foreground }]}>{customer.notes}</Text>
+        </CollapsibleSettingsSection>
+      ) : null}
     </OperationalScreen>
   );
 }

@@ -1585,8 +1585,40 @@ export interface ConversationMessage {
   createdAt: string;
 }
 
+export type ConversationSiblingThreadChannel =
+  (typeof ConversationSiblingThreadChannel)[keyof typeof ConversationSiblingThreadChannel];
+
+export const ConversationSiblingThreadChannel = {
+  WEB: "WEB",
+  SMS: "SMS",
+  INSTAGRAM: "INSTAGRAM",
+  WHATSAPP: "WHATSAPP",
+  MESSENGER: "MESSENGER",
+  EMAIL: "EMAIL",
+  VOICE: "VOICE",
+} as const;
+
+export type ConversationSiblingThreadStatus =
+  (typeof ConversationSiblingThreadStatus)[keyof typeof ConversationSiblingThreadStatus];
+
+export const ConversationSiblingThreadStatus = {
+  OPEN: "OPEN",
+  HANDED_OFF: "HANDED_OFF",
+  CLOSED: "CLOSED",
+} as const;
+
+export interface ConversationSiblingThread {
+  id: string;
+  channel: ConversationSiblingThreadChannel;
+  status: ConversationSiblingThreadStatus;
+  /** @nullable */
+  lastMessage?: string | null;
+  lastMessageAt: string;
+}
+
 export interface ConversationDetail {
   conversation: ConversationListItem;
+  siblingThreads: ConversationSiblingThread[];
   messages: ConversationMessage[];
 }
 
@@ -1842,6 +1874,13 @@ export type ListCustomersParams = {
   isBlocked?: boolean;
   limit?: number;
   offset?: number;
+};
+
+export type ListFrequentCustomersParams = {
+  /**
+   * @maximum 20
+   */
+  limit?: number;
 };
 
 export type ListAtRiskGuestRelationshipsParams = {

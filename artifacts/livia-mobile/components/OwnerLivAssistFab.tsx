@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -13,22 +13,48 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
-import { ownerIntelligenceActSignalCount } from "@workspace/policy";
+import {
+  buildCompactOwnerIntelligenceRows,
+  ownerIntelligenceActSignalCount,
+} from "@workspace/policy";
 import { aurora } from "@/constants/colors";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { OwnerLivOpsCard } from "@/components/OwnerLivOpsCard";
+import * as Linking from "expo-linking";
+import { getDashboardBaseUrl } from "@/lib/dashboard-url";
 
 type IntelBundle = {
-  remediationTasks?: Array<{ severity: string }>;
-  commerce?: { topSignal?: { severity: string } | null; signals?: Array<{ severity: string }> };
-  commerceCapabilityBlockers?: unknown[];
-  twinRisks?: unknown[];
+  remediationTasks?: Array<{
+    signalId: string;
+    severity: string;
+    title: string;
+    body: string;
+    href: string;
+  }>;
+  commerce?: {
+    topSignal?: { severity: string; title: string; body: string; href: string } | null;
+    signals?: Array<{ severity: string; title: string; body: string; href: string }>;
+  };
+  commerceCapabilityBlockers?: Array<{
+    capabilityName: string;
+    blocker: string;
+    href: string;
+  }>;
+  twinRisks?: Array<{ id: string; title: string; body: string; href?: string }>;
   twinHeadline?: string | null;
 };
 
-export function OwnerLivAssistFab({ businessId }: { businessId: string }) {
+export function OwnerLivAssistFab({
+  businessId,
+  starters = [],
+  soloMode = false,
+}: {
+  businessId: string;
+  starters?: string[];
+  soloMode?: boolean;
+}) {
   const colors = useColors();
   const haptics = useHaptics();
   const insets = useSafeAreaInsets();
@@ -42,6 +68,21 @@ export function OwnerLivAssistFab({ businessId }: { businessId: string }) {
   });
 
   const actCount = ownerIntelligenceActSignalCount(data ?? undefined);
+  const actRows = useMemo(() => {
+    const { primary, more } = buildCompactOwnerIntelligenceRows(data ?? {});
+    const rows = [primary, ...more].filter(Boolean) as NonNullable<typeof primary>[];
+    const seen = new Set<string>();
+    const out: typeof rows = [];
+    for (const row of rows) {
+      if (row.severity !== "act") continue;
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      out.push(row);
+      if (out.length >= 4) break;
+    }
+    return out;
+  }, [data]);
+  const blockers = data?.commerceCapabilityBlockers ?? [];
 
   return (
     <>
@@ -76,7 +117,7 @@ export function OwnerLivAssistFab({ businessId }: { businessId: string }) {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={[styles.sheetHead, { borderColor: colors.border }]}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Owner ops with Liv</Text>
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Ask Liv</Text>
             <Pressable onPress={() => setOpen(false)} hitSlop={12}>
               <Feather name="x" size={22} color={colors.mutedForeground} />
             </Pressable>
@@ -87,7 +128,51 @@ export function OwnerLivAssistFab({ businessId }: { businessId: string }) {
             </Text>
           ) : null}
           <ScrollView contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled">
-            <OwnerLivOpsCard businessId={businessId} />
+            {actRows.length > 0 ? (
+              <View style={[styles.actBlock, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.actTitle, { color: colors.foreground }]}>Needs a yes</Text>
+                {actRows.map((row) => (
+                  <Pressable
+                    key={row.id}
+                    onPress={() => {
+                      haptics.tap();
+                      void Linking.openURL(`${getDashboardBaseUrl()}${row.href}`);
+                    }}
+                    style={styles.actRow}
+                  >
+                    <Text style={[styles.actRowTitle, { color: colors.foreground }]} numberOfLines={1}>
+                      {row.title}
+                    </Text>
+                    <Text style={[styles.actRowBody, { color: colors.mutedForeground }]} numberOfLines={2}>
+                      {row.body}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            {blockers.length > 0 ? (
+              <View style={[styles.actBlock, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.actTitle, { color: colors.foreground }]}>Finish setup</Text>
+                {blockers.slice(0, 3).map((b) => (
+                  <Pressable
+                    key={b.capabilityName}
+                    onPress={() => {
+                      haptics.tap();
+                      void Linking.openURL(`${getDashboardBaseUrl()}${b.href}`);
+                    }}
+                    style={styles.actRow}
+                  >
+                    <Text style={[styles.actRowTitle, { color: colors.foreground }]} numberOfLines={1}>
+                      {b.capabilityName}
+                    </Text>
+                    <Text style={[styles.actRowBody, { color: colors.mutedForeground }]} numberOfLines={2}>
+                      {b.blocker}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            <OwnerLivOpsCard businessId={businessId} starters={starters} soloMode={soloMode} />
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
@@ -135,5 +220,10 @@ const styles = StyleSheet.create({
   },
   sheetTitle: { fontFamily: fonts.bodySemi, fontSize: 17 },
   lede: { fontSize: 13, paddingHorizontal: 16, paddingBottom: 8, lineHeight: 18 },
-  sheetBody: { padding: 16, paddingBottom: 32 },
+  sheetBody: { padding: 16, paddingBottom: 32, gap: 12 },
+  actBlock: { borderRadius: 14, borderWidth: 1, padding: 12, gap: 8 },
+  actTitle: { fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.4, textTransform: "uppercase" },
+  actRow: { gap: 2, paddingVertical: 4 },
+  actRowTitle: { fontFamily: fonts.bodyMed, fontSize: 14 },
+  actRowBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16 },
 });

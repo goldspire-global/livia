@@ -20,6 +20,10 @@ import {
   sendAiWhatsapp,
 } from "./ai-outbound.service";
 import { listChannelIdentitiesForCustomer } from "./channel-identities.service";
+import {
+  recordCustomerInboundTouch,
+  recordCustomerOutboundTouch,
+} from "./customer-channel-touch.service";
 import { businessesTable } from "@workspace/db";
 
 export type ConversationChannel =
@@ -174,11 +178,27 @@ export async function appendMessage(input: {
 
   void (async () => {
     const [conv] = await db
-      .select({ businessId: conversationsTable.businessId })
+      .select({
+        businessId: conversationsTable.businessId,
+        customerId: conversationsTable.customerId,
+        channel: conversationsTable.channel,
+      })
       .from(conversationsTable)
       .where(eq(conversationsTable.id, input.conversationId))
       .limit(1);
     if (!conv?.businessId || input.role === "SYSTEM") return;
+    if (conv.customerId && input.role === "USER") {
+      await recordCustomerInboundTouch({
+        customerId: conv.customerId,
+        channel: conv.channel,
+      }).catch(() => undefined);
+    }
+    if (conv.customerId && input.role === "ASSISTANT") {
+      await recordCustomerOutboundTouch({
+        customerId: conv.customerId,
+        channel: conv.channel,
+      }).catch(() => undefined);
+    }
     if (input.role === "USER") {
       await logEvent({
         type: "MESSAGE_RECEIVED",
@@ -312,6 +332,53 @@ export async function sendStaffMessage(input: {
   }
 
   return row;
+}
+
+export type ConversationSiblingThread = {
+  id: string;
+  channel: ConversationChannel;
+  status: ConversationStatus;
+  lastMessage: string | null;
+  lastMessageAt: Date;
+};
+
+/** Other open threads for the same guest on a different channel. */
+export async function listSiblingOpenThreads(
+  businessId: string,
+  conversationId: string,
+  customerId: string,
+): Promise<ConversationSiblingThread[]> {
+  const rows = await db
+    .select({
+      id: conversationsTable.id,
+      channel: conversationsTable.channel,
+      status: conversationsTable.status,
+      lastMessageAt: conversationsTable.lastMessageAt,
+      lastMessage: sql<string | null>`(
+        SELECT cm.content FROM conversation_messages cm
+        WHERE cm.conversation_id = ${conversationsTable.id}
+          AND cm.role IN ('USER','ASSISTANT')
+        ORDER BY cm.created_at DESC LIMIT 1
+      )`,
+    })
+    .from(conversationsTable)
+    .where(
+      and(
+        eq(conversationsTable.businessId, businessId),
+        eq(conversationsTable.customerId, customerId),
+        sql`${conversationsTable.id} <> ${conversationId}`,
+        sql`${conversationsTable.status} IN ('OPEN', 'HANDED_OFF')`,
+      ),
+    )
+    .orderBy(desc(conversationsTable.lastMessageAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    channel: row.channel as ConversationChannel,
+    status: row.status as ConversationStatus,
+    lastMessage: row.lastMessage,
+    lastMessageAt: row.lastMessageAt,
+  }));
 }
 
 export async function attachCustomer(

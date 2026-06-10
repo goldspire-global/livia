@@ -123,7 +123,7 @@ export default defineConfig({
     },
     {
       name: "v3-preflight-auth",
-      testMatch: /v3-preflight-auth\.spec\.ts/,
+      testMatch: /(v3-preflight-auth|inbox-channel-routing)\.spec\.ts/,
       dependencies: ["founder-auth-setup"],
       timeout: 120_000,
       use: {

@@ -13,6 +13,8 @@ import {
   createCustomer,
   updateCustomer,
   listCustomersServedByStaff,
+  listFrequentCustomers,
+  listFrequentCustomersForStaff,
   isCustomerServedByStaff,
 } from "../services/customers.service";
 import { logEvent } from "../services/events.service";
@@ -70,6 +72,27 @@ router.post(
     const c = await createCustomer(businessId, req.body);
     await logEvent({ type: EventType.CUSTOMER_CREATED, businessId, userId, entityType: "customer", entityId: c.id });
     res.status(201).json(c);
+  },
+);
+
+// Access: OWNER+ADMIN+STAFF — top clients by visit count (capped).
+router.get(
+  "/businesses/:businessId/customers/frequent",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const ctx = getRoleContext(req);
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+
+    if (ctx.effectiveRole === "STAFF") {
+      const result = await listFrequentCustomersForStaff(businessId, ctx.actingStaffId, limit);
+      res.json(result);
+      return;
+    }
+
+    const result = await listFrequentCustomers(businessId, limit);
+    res.json(result);
   },
 );
 

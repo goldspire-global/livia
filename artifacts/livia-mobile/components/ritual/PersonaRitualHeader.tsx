@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LivPulse } from "@/components/brand/LivPulse";
 import { fonts, type } from "@/constants/typography";
+import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { PERSONA_ACCENT, PERSONA_LABEL } from "@/hooks/usePersona";
 import { usePersonaBriefing } from "@/hooks/usePersonaBriefing";
@@ -26,6 +27,7 @@ export function PersonaRitualHeader({
   showActions = true,
   showAlert = true,
 }: Props) {
+  const colors = useColors();
   const router = useRouter();
   const haptics = useHaptics();
   const {
@@ -48,10 +50,10 @@ export function PersonaRitualHeader({
   if (isPage) {
     return (
       <Animated.View entering={FadeInDown.duration(360).springify()} style={styles.pageWrap}>
-        <Text style={styles.pageEyebrow}>{PERSONA_LABEL[persona]}</Text>
-        <Text style={styles.pageTitle}>{title ?? ritual.homeTitle}</Text>
+        <Text style={[styles.pageEyebrow, { color: colors.mutedForeground }]}>{PERSONA_LABEL[persona]}</Text>
+        <Text style={[styles.pageTitle, { color: colors.foreground }]}>{title ?? ritual.homeTitle}</Text>
         {resolvedSubtitle ? (
-          <Text style={styles.pageSub}>{resolvedSubtitle}</Text>
+          <Text style={[styles.pageSub, { color: colors.mutedForeground }]}>{resolvedSubtitle}</Text>
         ) : null}
       </Animated.View>
     );
@@ -247,17 +249,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: "rgba(255,255,255,0.45)",
   },
   pageTitle: {
     fontFamily: fonts.serifMedium,
     fontSize: 28,
     lineHeight: 32,
-    color: "#fff",
   },
   pageSub: {
     fontSize: 13,
     lineHeight: 18,
-    color: "rgba(255,255,255,0.55)",
   },
 });

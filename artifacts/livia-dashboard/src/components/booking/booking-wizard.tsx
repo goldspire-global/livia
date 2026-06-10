@@ -6,6 +6,7 @@ import { formatDateTime, formatTime } from "@/lib/format";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import {
   useListCustomers,
+  useListFrequentCustomers,
   useListServices,
   useListStaff,
   useGetAvailableSlots,
@@ -38,6 +39,7 @@ const QUICK_STEPS = ["Client", "Schedule", "Confirm"] as const;
 type Step = (typeof STEPS)[number] | "Schedule";
 
 const PAGE_SIZE = 30;
+const FREQUENT_CLIENT_CAP = 10;
 
 type BookingWizardProps = {
   mode?: "page" | "dialog";
@@ -55,9 +57,11 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
 
   const [step, setStep] = useState<Step>("Client");
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const [customerId, setCustomerId] = useState("");
+  const [customerIds, setCustomerIds] = useState<string[]>([]);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [serviceId, setServiceId] = useState("");
+  const [serviceIds, setServiceIds] = useState<string[]>([]);
+  const customerId = customerIds[0] ?? "";
+  const serviceId = serviceIds[0] ?? "";
   const [staffId, setStaffId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -70,10 +74,10 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
     const prefillCustomer = params.get("customerId");
     const prefillService = params.get("serviceId");
     if (prefillCustomer) {
-      setCustomerId(prefillCustomer);
+      setCustomerIds([prefillCustomer]);
       if (quick) setStep("Schedule");
     }
-    if (prefillService) setServiceId(prefillService);
+    if (prefillService) setServiceIds([prefillService]);
   }, [quick]);
 
   const businessVertical = (business as { vertical?: string; category?: string } | null)?.vertical;
@@ -84,6 +88,12 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   const { data: customersData, isLoading: customersLoading } = useListCustomers(
     bid,
     { search: debouncedCustomerSearch || undefined, limit: PAGE_SIZE },
+    { query: { enabled: !!bid && step === "Client" && !!debouncedCustomerSearch } as never },
+  );
+
+  const { data: frequentData } = useListFrequentCustomers(
+    bid,
+    { limit: FREQUENT_CLIENT_CAP },
     { query: { enabled: !!bid && step === "Client" } as never },
   );
 
@@ -112,6 +122,8 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   const createBooking = useCreateBooking();
 
   const customers = (customersData as { data?: unknown[] })?.data ?? customersData ?? [];
+  const frequentClients =
+    (frequentData as { data?: { id: string; firstName?: string; lastName?: string }[] })?.data ?? [];
   const services = servicesData ?? [];
   const staff = staffData ?? [];
 
@@ -136,7 +148,7 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
       const match =
         svcList.find((s) => (s as { serviceKind?: string }).serviceKind === targetKind) ??
         svcList.find((s) => s.id === lastCompleted.serviceId);
-      if (match) setServiceId(match.id);
+      if (match) setServiceIds([match.id]);
     });
   }, [bid, customerId, verticalKey, serviceId, services]);
 
@@ -204,12 +216,12 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   const stepIndex = activeSteps.indexOf(step);
 
   function goNext() {
-    if (step === "Client" && !customerId) {
-      toast({ title: "Choose a client to continue", variant: "destructive" });
+    if (step === "Client" && customerIds.length === 0) {
+      toast({ title: "Choose at least one client to continue", variant: "destructive" });
       return;
     }
-    if (step === "Service" && !serviceId) {
-      toast({ title: "Choose a service to continue", variant: "destructive" });
+    if (step === "Service" && serviceIds.length === 0) {
+      toast({ title: "Choose at least one service to continue", variant: "destructive" });
       return;
     }
     if (step === "Schedule") {
@@ -235,15 +247,15 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
     if (prev) setStep(prev);
   }
 
-  function selectClient(id: string) {
-    setCustomerId(id);
+  function toggleClient(id: string) {
+    setCustomerIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     if (quick && step === "Client") {
       setStep("Schedule");
     }
   }
 
-  function selectService(id: string) {
-    setServiceId(id);
+  function toggleService(id: string) {
+    setServiceIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     setStaffId("");
     setSelectedSlot("");
   }
@@ -252,42 +264,51 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
   useEffect(() => {
     if (!quick || step !== "Schedule" || serviceId) return;
     const active = (services as { id: string }[]).filter(Boolean);
-    if (active.length === 1) setServiceId(active[0]!.id);
+    if (active.length === 1) setServiceIds([active[0]!.id]);
   }, [quick, step, serviceId, services]);
 
-  function handleSubmit() {
-    if (!bid || !customerId || !serviceId || !selectedSlot) {
+  async function handleSubmit() {
+    if (!bid || customerIds.length === 0 || serviceIds.length === 0 || !selectedSlot) {
       toast({ title: "Missing required fields", variant: "destructive" });
       return;
     }
-    createBooking.mutate(
-      {
-        businessId: bid,
-        data: {
-          customerId,
-          serviceId,
-          staffId: staffId || undefined,
-          startAt: selectedSlot,
-          notes: notes || undefined,
-        },
-      },
-      {
-        onSuccess: (booking: { id: string }) => {
-          invalidateOperationalState(qc, bid);
-          toast({ title: "Booking created" });
-          if (onCreated) {
-            onCreated(booking.id);
-          } else {
-            setLocation(`/bookings/${booking.id}`);
-          }
-        },
-        onError: (err: unknown) => {
-          const msg =
-            (err as { message?: string })?.message ?? "Failed to create booking";
-          toast({ title: msg, variant: "destructive" });
-        },
-      },
-    );
+    try {
+      let cursor = new Date(selectedSlot);
+      let lastBookingId = "";
+      for (const sid of serviceIds) {
+        const svc = (services as { id: string; durationMinutes?: number; bufferAfterMinutes?: number }[]).find(
+          (s) => s.id === sid,
+        );
+        const blockMs = ((svc?.durationMinutes ?? 60) + (svc?.bufferAfterMinutes ?? 0)) * 60_000;
+        for (const cid of customerIds) {
+          const booking = await createBooking.mutateAsync({
+            businessId: bid,
+            data: {
+              customerId: cid,
+              serviceId: sid,
+              staffId: staffId || undefined,
+              startAt: cursor.toISOString(),
+              notes: notes || undefined,
+            },
+          });
+          lastBookingId = (booking as { id: string }).id;
+        }
+        cursor = new Date(cursor.getTime() + blockMs);
+      }
+      invalidateOperationalState(qc, bid);
+      toast({
+        title:
+          customerIds.length * serviceIds.length > 1 ? "Bookings created" : "Booking created",
+      });
+      if (onCreated) {
+        onCreated(lastBookingId);
+      } else if (lastBookingId) {
+        setLocation(`/bookings/${lastBookingId}`);
+      }
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message ?? "Failed to create booking";
+      toast({ title: msg, variant: "destructive" });
+    }
   }
 
   const staffEmptyHint = useMemo(() => {
@@ -324,6 +345,30 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
             <CardTitle className="text-base">Who is this for?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!customerSearch && frequentClients.length > 0 ? (
+              <div className="space-y-2">
+                <Label>Frequent clients</Label>
+                <div className="flex flex-wrap gap-2">
+                  {frequentClients.slice(0, FREQUENT_CLIENT_CAP).map((c) => {
+                    const selected = customerIds.includes(c.id);
+                    return (
+                      <button
+                        key={`freq-${c.id}`}
+                        type="button"
+                        onClick={() => toggleClient(c.id)}
+                        className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                          selected
+                            ? "border-primary bg-primary/15 text-primary"
+                            : "border-border hover:bg-muted/50"
+                        }`}
+                      >
+                        {c.firstName} {c.lastName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label>Search clients</Label>
               <Input
@@ -335,32 +380,33 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
             </div>
             {customersLoading ? (
               <Skeleton className="h-32" />
-            ) : (customers as { id: string; firstName?: string; lastName?: string }[]).length === 0 ? (
+            ) : debouncedCustomerSearch &&
+              (customers as { id: string; firstName?: string; lastName?: string }[]).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
-                {customerSearch ? "No clients match — try another search." : "No clients yet."}
+                No clients match — try another search.
               </p>
-            ) : (
-              <div className="divide-y divide-border rounded-md border max-h-56 overflow-y-auto">
-                {(customers as { id: string; firstName?: string; lastName?: string; email?: string }[]).map(
-                  (c) => (
+            ) : debouncedCustomerSearch ? (
+              <div className="flex flex-wrap gap-2">
+                {(customers as { id: string; firstName?: string; lastName?: string }[]).map((c) => {
+                  const selected = customerIds.includes(c.id);
+                  return (
                     <button
                       key={c.id}
                       type="button"
                       data-testid={`booking-wizard-client-${c.id}`}
-                      onClick={() => selectClient(c.id)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/40 ${
-                        customerId === c.id ? "bg-primary/10" : ""
+                      onClick={() => toggleClient(c.id)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        selected
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border hover:bg-muted/50"
                       }`}
                     >
-                      <span className="font-medium">
-                        {c.firstName} {c.lastName}
-                      </span>
-                      {customerId === c.id && <Check className="h-4 w-4 text-primary" />}
+                      {c.firstName} {c.lastName}
                     </button>
-                  ),
-                )}
+                  );
+                })}
               </div>
-            )}
+            ) : null}
             <Link href="/customers">
               <Button type="button" variant="outline" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -379,18 +425,25 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
           <CardContent className="livia-form-stack space-y-5">
             <div className="space-y-2">
               <Label>Service</Label>
-              <Select value={serviceId} onValueChange={selectService}>
-                <SelectTrigger data-testid="select-service">
-                  <SelectValue placeholder="Select service…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(services as { id: string; name: string; durationMinutes?: number }[]).map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+              <div className="flex flex-wrap gap-2">
+                {(services as { id: string; name: string; durationMinutes?: number }[]).map((s) => {
+                  const selected = serviceIds.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => toggleService(s.id)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        selected
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                    >
                       {s.name} ({s.durationMinutes} min)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {serviceId && staff.length > 1 ? (
               <div className="space-y-2">
@@ -491,25 +544,29 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
             <CardTitle className="text-base">Which service?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Select
-              value={serviceId}
-              onValueChange={(v) => {
-                setServiceId(v);
-                setStaffId("");
-                setSelectedSlot("");
-              }}
-            >
-              <SelectTrigger data-testid="select-service">
-                <SelectValue placeholder="Select service…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(services as { id: string; name: string; durationMinutes?: number }[]).map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
+            <p className="text-sm text-muted-foreground">
+              Select one or more — multiple treatments run back-to-back from your chosen time.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(services as { id: string; name: string; durationMinutes?: number }[]).map((s) => {
+                const selected = serviceIds.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    data-testid={`booking-wizard-service-${s.id}`}
+                    onClick={() => toggleService(s.id)}
+                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      selected
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
                     {s.name} ({s.durationMinutes} min)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </button>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -622,14 +679,35 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Client</span>
               <span className="font-medium text-right">
-                {selectedCustomer
-                  ? `${selectedCustomer.firstName ?? ""} ${selectedCustomer.lastName ?? ""}`.trim()
+                {customerIds.length
+                  ? customerIds
+                      .map((id) => {
+                        const c = [
+                          ...frequentClients,
+                          ...(customers as { id: string; firstName?: string; lastName?: string }[]),
+                        ].find((x) => x.id === id);
+                        return c
+                          ? `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim()
+                          : null;
+                      })
+                      .filter(Boolean)
+                      .join(", ") || "—"
                   : "—"}
               </span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Service</span>
-              <span className="font-medium">{selectedService?.name ?? "—"}</span>
+              <span className="font-medium text-right">
+                {serviceIds.length
+                  ? serviceIds
+                      .map(
+                        (id) =>
+                          (services as { id: string; name: string }[]).find((s) => s.id === id)?.name,
+                      )
+                      .filter(Boolean)
+                      .join(" → ")
+                  : "—"}
+              </span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Team</span>
@@ -682,7 +760,7 @@ export function BookingWizard({ mode = "page", quick = false, onCreated, onCance
             type="button"
             className="ml-auto"
             disabled={createBooking.isPending}
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             data-testid="button-submit-booking"
           >
             <CalendarPlus className="h-4 w-4 mr-2" />

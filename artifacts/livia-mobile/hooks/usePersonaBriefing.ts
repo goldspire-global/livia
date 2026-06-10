@@ -9,7 +9,7 @@ import { businessVocabulary } from "@workspace/policy";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useMembership } from "@/hooks/useMembership";
 import { usePersona, type PersonaKind } from "@/hooks/usePersona";
-import { stripBusinessPrefix } from "@/lib/briefing-display";
+import { resolveBriefingFirstName, stripBusinessPrefix } from "@/lib/briefing-display";
 import {
   greetingLine,
   ownerHomeSubtitle,
@@ -112,7 +112,9 @@ export function usePersonaBriefing() {
   const { currentBusiness, businesses } = useBusiness();
   const { staffId } = useMembership();
   const bid = currentBusiness?.id ?? "";
-  const firstName = user?.firstName ?? user?.fullName?.split(" ")[0] ?? null;
+  const firstName = resolveBriefingFirstName(
+    user?.firstName ?? user?.fullName?.split(" ")[0] ?? null,
+  );
 
   const { data: chain } = useQuery({
     queryKey: ["chain-rollup-briefing"],

@@ -29,6 +29,7 @@ import {
 import { canViewDayPackages, canViewPremises } from "@/lib/settings-persona";
 import { menuItemsForPersona } from "@/lib/mobile-menu";
 import { getPublicBookingLabel } from "@/lib/public-booking-url";
+import { useMobileOwnerIntelTabBadges } from "@/hooks/useMobileOwnerIntelTabBadges";
 
 export default function MoreScreen() {
   const colors = useColors();
@@ -50,6 +51,8 @@ export default function MoreScreen() {
     activeStaffCount: typeof rawStaffCount === "number" ? rawStaffCount : 1,
   };
   const showWorkforceNav = operatorNeedsWorkforceNav(operatorSignals);
+  const intelTabBadges = useMobileOwnerIntelTabBadges();
+  const settingsBadge = intelTabBadges.more ?? 0;
 
   const menuItems = filterMobileMenuItemsByOperatorShape(
     filterMobileMenuItems(
@@ -91,28 +94,6 @@ export default function MoreScreen() {
       }
       contentStyle={{ paddingBottom: 140 }}
     >
-      <Pressable
-        onPress={() => {
-          haptics.tap();
-          router.push("/my-livia" as never);
-        }}
-        style={({ pressed }) => [
-          styles.businessCard,
-          { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.92 : 1 },
-        ]}
-      >
-        <Feather name="heart" size={18} color={colors.primary} />
-        <View style={{ flex: 1 }}>
-          <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
-            My Livia
-          </Text>
-          <Text style={[type.caption, { color: colors.mutedForeground }]}>
-            Your bookings and visits across studios
-          </Text>
-        </View>
-        <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-      </Pressable>
-
       {/* Current business card — tappable when there are others to switch to */}
       {currentBusiness && (
         <Pressable
@@ -241,6 +222,11 @@ export default function MoreScreen() {
               <Feather name={item.icon as keyof typeof Feather.glyphMap} size={18} color={colors.primary} />
             </View>
             <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
+            {item.badgeKey === "settings" && settingsBadge > 0 ? (
+              <View style={[styles.menuBadge, { backgroundColor: colors.destructive }]}>
+                <Text style={styles.menuBadgeText}>{settingsBadge}</Text>
+              </View>
+            ) : null}
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </Pressable>
         ))}
@@ -372,5 +358,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuLabel: { flex: 1, fontSize: 16, fontFamily: fonts.bodyMed },
+  menuBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  menuBadgeText: { color: "#fff", fontSize: 10, fontFamily: fonts.bodySemi },
   version: { ...type.caption, fontSize: 11.5, textAlign: "center", marginTop: 8 },
 });

@@ -7,6 +7,7 @@ import { redactObject } from "../lib/pii-redaction";
 import { handlePublicChat } from "./ai-chat.service";
 import {
   appendMessage,
+  attachCustomer,
   createConversation,
   findOpenConversationByChannelAndPhone,
   type ConversationChannel,
@@ -84,6 +85,14 @@ export async function processInboundMetaMessage(msg: InboundMetaMessage): Promis
       customerName: msg.displayName,
       customerPhone: phoneKey,
     });
+  }
+
+  if (!conversation.customerId) {
+    await attachCustomer(conversation.id, customerId, {
+      name: msg.displayName,
+      phone: channel === "WHATSAPP" ? msg.externalParticipantId : undefined,
+    });
+    conversation = { ...conversation, customerId };
   }
 
   await appendMessage({

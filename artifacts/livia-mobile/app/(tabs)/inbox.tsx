@@ -5,6 +5,7 @@ import {
   inboxScreenTitle,
   INBOX_QUEUE_LENS_LABELS,
   matchesInboxQueueLens,
+  inboxMultiChannelListHint,
   type InboxQueueLens,
 } from "@workspace/policy";
 import { Feather } from "@expo/vector-icons";
@@ -94,6 +95,15 @@ export default function InboxScreen() {
     if (!showQueue) return threads;
     return threads.filter((t) => matchesInboxQueueLens(t, queueLens));
   }, [threads, queueLens, showQueue]);
+
+  const activeChannelCountByCustomer = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const t of threads) {
+      if (t.status === "CLOSED" || !t.customerId) continue;
+      counts.set(t.customerId, (counts.get(t.customerId) ?? 0) + 1);
+    }
+    return counts;
+  }, [threads]);
 
   useEffect(() => {
     const cid = params.conversationId;
@@ -210,6 +220,11 @@ export default function InboxScreen() {
               chrome={chrome}
               formatRelative={formatRelative}
               needsYouHighlight={showQueue && queueLens === "needs_you"}
+              multiChannelHint={
+                t.customerId
+                  ? inboxMultiChannelListHint(activeChannelCountByCustomer.get(t.customerId) ?? 0)
+                  : null
+              }
             />
           ))
         )}
@@ -220,6 +235,7 @@ export default function InboxScreen() {
           onPress={() => router.push(asHref("/booking/new"))}
           glowColor={accent}
           haptic="impact"
+          contentStyle={styles.fabInner}
           style={[
             styles.fab,
             chrome.native ? chrome.primaryButton() : { backgroundColor: colors.primary },
@@ -228,7 +244,7 @@ export default function InboxScreen() {
           accessibilityRole="button"
           accessibilityLabel="New booking"
         >
-          <Feather name="plus" size={24} color="#fff" />
+          <Feather name="plus" size={22} color="#fff" />
         </GlowPressable>
       ) : null}
     </View>
@@ -252,12 +268,16 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+  },
+  fabInner: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

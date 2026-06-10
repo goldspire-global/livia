@@ -3,7 +3,6 @@ import { Feather } from "@expo/vector-icons";
 import type { PresentationLayoutMorph } from "@workspace/policy";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { InboxThreadRow } from "@/components/inbox/InboxThreadRow";
 import { fonts } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
@@ -13,7 +12,6 @@ import {
   sortInboxThreadsForMorph,
   type InboxMorphSection,
 } from "@/lib/morph-inbox-order";
-import { layoutMorphLabel } from "@/lib/presentation-morph-label";
 
 type Props = {
   morph: PresentationLayoutMorph | null;
@@ -163,17 +161,8 @@ export function MobileInboxMorphLayout({
   const colors = useColors();
   const sorted = sortInboxThreadsForMorph(threads, morph);
   const sections = groupInboxThreadsForMorph(sorted, morph);
-  const label = morph ? layoutMorphLabel(morph) : null;
-
   return (
     <View testID={morph ? `mobile-inbox-morph-${morph}` : "mobile-inbox-morph-standard"}>
-      {morph && label ? (
-        <Animated.View entering={FadeInDown.duration(300)}>
-          <Text style={[styles.morphEyebrow, { color: accent }]}>
-            {label} · inbox structure
-          </Text>
-        </Animated.View>
-      ) : null}
       {morph ? <MorphMetrics morph={morph} queueCounts={queueCounts} accent={accent} /> : null}
 
       {sections ? (

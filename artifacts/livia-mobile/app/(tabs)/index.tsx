@@ -457,7 +457,7 @@ export default function DashboardScreen() {
         ) : null}
       </Animated.View>
 
-      <ActivationMilestone />
+      {!useConstellationToday && !useMorphToday ? <ActivationMilestone /> : null}
       {showRitualHeader ? <ActivationWelcome /> : null}
 
       {isOwnerHome && isFirstRun ? <SoloOperatorFirstRun pack={operatorXp} /> : null}
@@ -880,7 +880,7 @@ export default function DashboardScreen() {
         </View>
       ) : null}
 
-      {schedulePreview.length > 0 && !isLoading ? (
+      {!useConstellationToday && schedulePreview.length > 0 && !isLoading ? (
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Later today</Text>
@@ -1034,7 +1034,11 @@ export default function DashboardScreen() {
       ) : null}
     </ScrollView>
     {(role === "OWNER" || role === "ADMIN") && currentBusiness?.id ? (
-      <OwnerLivAssistFab businessId={currentBusiness.id} />
+      <OwnerLivAssistFab
+        businessId={currentBusiness.id}
+        starters={operatorXp?.livOpsStarters ?? []}
+        soloMode={operatorXp?.soloMode}
+      />
     ) : null}
     </View>
   );

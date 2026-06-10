@@ -1007,6 +1007,30 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /businesses/{businessId}/customers/frequent:
+    get:
+      operationId: listFrequentCustomers
+      tags: [customers]
+      summary: Frequent clients by visit count (capped)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 20
+      responses:
+        "200":
+          description: Top clients ordered by booking count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /businesses/{businessId}/customers/{customerId}:
     get:
       operationId: getCustomer
@@ -4681,16 +4705,38 @@ components:
           format: date-time
       required: [id, conversationId, role, content, createdAt]
 
+    ConversationSiblingThread:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+          enum: [WEB, SMS, INSTAGRAM, WHATSAPP, MESSENGER, EMAIL, VOICE]
+        status:
+          type: string
+          enum: [OPEN, HANDED_OFF, CLOSED]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: string
+          format: date-time
+      required: [id, channel, status, lastMessageAt]
+
     ConversationDetail:
       type: object
       properties:
         conversation:
           $ref: "#/components/schemas/ConversationListItem"
+        siblingThreads:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSiblingThread"
         messages:
           type: array
           items:
             $ref: "#/components/schemas/ConversationMessage"
-      required: [conversation, messages]
+      required: [conversation, messages, siblingThreads]
 
     UpdateConversationBody:
       type: object

@@ -26,6 +26,7 @@
 | **Skin / `/b` inheritance** | [`design/SKIN-BRAND-INHERITANCE-SPEC.md`](./design/SKIN-BRAND-INHERITANCE-SPEC.md) |
 | **Mobile skin inheritance (W4m)** | [`design/MOBILE-SKIN-INHERITANCE.md`](./design/MOBILE-SKIN-INHERITANCE.md) |
 | **Web ↔ mobile continuity** | [`product/CROSS-SURFACE-CONTINUITY.md`](./product/CROSS-SURFACE-CONTINUITY.md) |
+| **Inbox channel routing** | [`product/INBOX-CHANNEL-ROUTING.md`](./product/INBOX-CHANNEL-ROUTING.md) |
 | **All vertical programs** | [`product/VERTICAL-PROGRAMS-INDEX.md`](./product/VERTICAL-PROGRAMS-INDEX.md) |
 | **Wellness north star (V4)** | [`product/WELLNESS-NORTHSTAR-PROGRAM.md`](./product/WELLNESS-NORTHSTAR-PROGRAM.md) |
 | **Wellness master backlog (full inventory)** | [`product/WELLNESS-MASTER-BACKLOG.md`](./product/WELLNESS-MASTER-BACKLOG.md) |

@@ -19,6 +19,7 @@ type Props = {
   formatRelative: (iso: string) => string;
   needsYouHighlight?: boolean;
   beautyAccent?: boolean;
+  multiChannelHint?: string | null;
 };
 
 export function InboxThreadRow({
@@ -29,6 +30,7 @@ export function InboxThreadRow({
   formatRelative,
   needsYouHighlight,
   beautyAccent,
+  multiChannelHint,
 }: Props) {
   const colors = useColors();
   const router = useRouter();
@@ -41,8 +43,10 @@ export function InboxThreadRow({
         onPress={() => router.push(`/conversation/${t.id}` as never)}
         glowColor={attention ? accent : colors.primary}
         haptic="tap"
+        contentStyle={styles.rowInner}
         style={[
           styles.row,
+          { alignSelf: "stretch" },
           chrome.native
             ? chrome.row(attention)
             : {
@@ -68,16 +72,18 @@ export function InboxThreadRow({
         </View>
         <View style={styles.rowBody}>
           <View style={styles.rowTop}>
-            <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-              {t.customerName ?? "Unknown"}
+            <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">
+              {t.customerName?.trim() || "Guest"}
             </Text>
-            <Text style={[styles.when, { color: colors.mutedForeground }]}>
+            <Text style={[styles.when, { color: colors.mutedForeground }]} numberOfLines={1}>
               {formatRelative(t.lastMessageAt)}
             </Text>
           </View>
-          <Text style={[styles.preview, { color: colors.mutedForeground }]} numberOfLines={2}>
-            {t.lastMessage ?? "—"}
-          </Text>
+          {t.lastMessage ? (
+            <Text style={[styles.preview, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {t.lastMessage}
+            </Text>
+          ) : null}
           <View style={styles.metaRow}>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>{t.channel}</Text>
             {needsYou ? (
@@ -109,9 +115,14 @@ export function InboxThreadRow({
                 </Text>
               </View>
             ) : null}
+            {multiChannelHint ? (
+              <View style={[styles.badge, { backgroundColor: accent + "18" }]}>
+                <Text style={[styles.badgeText, { color: accent }]}>{multiChannelHint}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
-        <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+        <Feather name="chevron-right" size={18} color={colors.mutedForeground} style={styles.chevron} />
       </GlowPressable>
     </Animated.View>
   );
@@ -119,13 +130,17 @@ export function InboxThreadRow({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 10,
+  },
+  rowInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    alignSelf: "stretch",
+    width: "100%",
   },
   avatar: {
     width: 44,
@@ -134,10 +149,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  rowBody: { flex: 1, gap: 4 },
-  rowTop: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  name: { fontFamily: fonts.bodyMed, fontSize: 16, flex: 1 },
-  when: { ...type.caption },
+  rowBody: { flex: 1, minWidth: 0, gap: 4 },
+  rowTop: { flexDirection: "row", alignItems: "center", gap: 8 },
+  name: { fontFamily: fonts.bodyMed, fontSize: 16, flex: 1, minWidth: 0 },
+  when: { ...type.caption, flexShrink: 0 },
+  chevron: { flexShrink: 0 },
   preview: { ...type.body, fontSize: 14, lineHeight: 20 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   meta: { ...type.caption, fontSize: 11 },

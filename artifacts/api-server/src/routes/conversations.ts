@@ -11,6 +11,7 @@ import {
   listConversationsForBusiness,
   getConversation,
   listMessagesForConversation,
+  listSiblingOpenThreads,
   updateConversationStatus,
   sendStaffMessage,
   type ConversationStatus,
@@ -55,8 +56,20 @@ router.get(
       [...messages].reverse().find((m) => m.role === "USER" || m.role === "ASSISTANT")?.content ??
       null;
 
+    const siblingThreads =
+      conv.customerId != null
+        ? await listSiblingOpenThreads(businessId, conversationId, conv.customerId)
+        : [];
+
     res.json({
       conversation: { ...conv, lastMessage, messageCount, bookingCount },
+      siblingThreads: siblingThreads.map((s) => ({
+        id: s.id,
+        channel: s.channel,
+        status: s.status,
+        lastMessage: s.lastMessage,
+        lastMessageAt: s.lastMessageAt.toISOString(),
+      })),
       messages: messages.map((m) => ({
         id: m.id,
         conversationId: m.conversationId,

@@ -344,9 +344,6 @@ export default function MyLiviaPage() {
 
       {heroBooking ? (
         <section className="space-y-3" data-testid="guest-hub-upcoming">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            {GUEST_HUB_COPY.bookingsNav}
-          </h2>
           <GuestHubUpcomingHero
             businessName={heroBooking.businessName}
             serviceName={heroBooking.serviceName}

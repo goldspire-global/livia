@@ -202,6 +202,8 @@ export async function sendAftercareForBooking(
     hasContinuityThread: Boolean(booking.continuityConversationId),
     hasPhone: Boolean(cust.phone),
     hasEmail: Boolean(cust.email),
+    lastInboundChannel: cust.lastInboundChannel,
+    lastInboundAt: cust.lastInboundAt,
   });
 
   const body = built.body;

@@ -19,6 +19,7 @@ import Svg, {
   RadialGradient,
   Stop,
 } from "react-native-svg";
+import { ORBIT_SPIN_MS } from "@/constants/motion";
 import { CONSTELLATION_MAP_OPACITY, CONSTELLATION_STROKE } from "@/lib/constellation-preset";
 
 const MAP_STARS = [
@@ -114,19 +115,19 @@ export function ConstellationOrbitalMap() {
 
   useEffect(() => {
     orbitSpin.value = withRepeat(
-      withTiming(360, { duration: 280_000, easing: Easing.linear }),
+      withTiming(360, { duration: ORBIT_SPIN_MS, easing: Easing.linear }),
       -1,
       false,
     );
     counterSpin.value = withRepeat(
-      withTiming(-360, { duration: 420_000, easing: Easing.linear }),
+      withTiming(-360, { duration: ORBIT_SPIN_MS * 1.4, easing: Easing.linear }),
       -1,
       false,
     );
     breathe.value = withRepeat(
       withSequence(
-        withTiming(1.06, { duration: 9000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0.94, { duration: 9000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1.08, { duration: 5200, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.92, { duration: 5200, easing: Easing.inOut(Easing.sin) }),
       ),
       -1,
       false,

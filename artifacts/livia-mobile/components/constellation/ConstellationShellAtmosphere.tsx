@@ -12,7 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { ConstellationOrbitalMap } from "@/components/constellation/ConstellationOrbitalMap";
 import { gatewayTheme } from "@/lib/gateway-theme";
-import { BREATH_PERIOD_MS } from "@/constants/motion";
+import { BREATH_PERIOD_MS, NEBULA_DRIFT_MS } from "@/constants/motion";
 
 const STARS: Array<{ x: string; y: string; size: number; opacity: number; champagne?: boolean; twinkle?: boolean }> = [
   { x: "4%", y: "8%", size: 2, opacity: 0.6, twinkle: true },
@@ -60,8 +60,8 @@ function ShellStar({
       delayMs,
       withRepeat(
         withSequence(
-          withTiming(1.35, { duration: 2800, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0.7, { duration: 2800, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1.5, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.65, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
         ),
         -1,
         false,
@@ -107,16 +107,16 @@ export function ConstellationShellAtmosphere() {
     );
     violetDrift.value = withRepeat(
       withSequence(
-        withTiming(1, { duration: 22_000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0, { duration: 22_000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: NEBULA_DRIFT_MS, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: NEBULA_DRIFT_MS, easing: Easing.inOut(Easing.sin) }),
       ),
       -1,
       false,
     );
     cyanDrift.value = withRepeat(
       withSequence(
-        withTiming(1, { duration: 28_000, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0, { duration: 28_000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: NEBULA_DRIFT_MS + 4000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: NEBULA_DRIFT_MS + 4000, easing: Easing.inOut(Easing.sin) }),
       ),
       -1,
       false,
@@ -124,7 +124,7 @@ export function ConstellationShellAtmosphere() {
   }, [breath, violetDrift, cyanDrift]);
 
   const nebulaStyle = useAnimatedStyle(() => ({
-    opacity: 0.78 + breath.value * 0.16,
+    opacity: 0.88 + breath.value * 0.22,
   }));
 
   const violetStyle = useAnimatedStyle(() => ({
@@ -163,21 +163,21 @@ export function ConstellationShellAtmosphere() {
       ))}
       <Animated.View style={[styles.nebulaViolet, nebulaStyle, violetStyle]}>
         <LinearGradient
-          colors={["rgba(139,92,246,0.34)", "rgba(139,92,246,0.1)", "transparent"]}
+          colors={["rgba(139,92,246,0.48)", "rgba(139,92,246,0.16)", "transparent"]}
           locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
       <Animated.View style={[styles.nebulaCyan, nebulaStyle, cyanStyle]}>
         <LinearGradient
-          colors={["rgba(6,182,212,0.26)", "rgba(6,182,212,0.08)", "transparent"]}
+          colors={["rgba(6,182,212,0.38)", "rgba(6,182,212,0.12)", "transparent"]}
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
       <Animated.View style={[styles.nebulaCyanLower, nebulaStyle, cyanStyle]}>
         <LinearGradient
-          colors={["rgba(6,182,212,0.22)", "rgba(6,182,212,0.05)", "transparent"]}
+          colors={["rgba(6,182,212,0.32)", "rgba(6,182,212,0.1)", "transparent"]}
           locations={[0, 0.55, 1]}
           style={StyleSheet.absoluteFill}
         />

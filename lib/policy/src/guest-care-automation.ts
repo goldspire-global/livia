@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 import type { BusinessVertical } from "./types";
 import { beautyAftercareSmsBody } from "./beauty-booking-rules";
 import { parseOperationalPolicy, type OperationalPolicy } from "./operational-policy";
+import { resolveEffectivePreferredModality } from "./inbox-channel-routing";
 
 export const aftercareModeSchema = z.enum(["auto", "liv_draft", "manual_only"]);
 export type AftercareMode = z.infer<typeof aftercareModeSchema>;
@@ -168,8 +169,15 @@ export function resolveOutboundChannel(args: {
   hasContinuityThread: boolean;
   hasPhone: boolean;
   hasEmail: boolean;
+  /** When preferredModality is ANY, fresh last inbound steers proactive sends. */
+  lastInboundChannel?: string | null;
+  lastInboundAt?: Date | string | null;
 }): "SMS" | "EMAIL" | "THREAD" {
-  const pref = args.preferredModality;
+  const pref = resolveEffectivePreferredModality({
+    preferredModality: args.preferredModality,
+    lastInboundChannel: args.lastInboundChannel,
+    lastInboundAt: args.lastInboundAt,
+  }) as GuestPreferredModality;
   if (pref === "EMAIL" && args.hasEmail) return "EMAIL";
   if (pref === "WHATSAPP" || pref === "SMS" || pref === "VOICE") {
     if (args.hasPhone) return "SMS";
