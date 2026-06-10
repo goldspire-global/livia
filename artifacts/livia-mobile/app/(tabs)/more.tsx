@@ -31,7 +31,7 @@ export default function MoreScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const haptics = useHaptics();
-  const { businesses, currentBusiness, setCurrentBusiness } = useBusiness();
+  const { businesses, currentBusiness, setCurrentBusiness, isDemoAccount } = useBusiness();
   const { signOut } = useAuth();
   const { kind: currentPersona } = usePersona();
   const tier = (currentBusiness as { tier?: string } | undefined)?.tier;
@@ -54,7 +54,7 @@ export default function MoreScreen() {
     showDayPackages:
       canViewDayPackages(currentPersona) &&
       (vertical === "wellness" || vertical === "medspa"),
-    isDemo: false,
+    isDemo: isDemoAccount,
   }),
     tenantCaps?.platformCapabilities,
   );
@@ -67,6 +67,7 @@ export default function MoreScreen() {
 
   return (
     <OperationalScreen
+      ritualPage
       title="More"
       subtitle={
         currentBusiness?.name

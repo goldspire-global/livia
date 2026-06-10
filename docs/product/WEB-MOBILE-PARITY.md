@@ -1,6 +1,6 @@
 # Web ↔ mobile parity matrix
 
-**Updated:** 2026-05-31  
+**Updated:** 2026-06-05  
 **Captures:** `pnpm e2e:full-visual-audit` (web + mobile) · `e2e/visual-captures/web/<persona>/` · `e2e/visual-captures/mobile/`
 
 **Status summary:** Core ops surfaces **OK** (2026-05-25). R3 Wave 2: settings logo URL + presentation readout on mobile. Remaining gaps: billing/team web-first depth, full preset morph on mobile, premium motion on Today entry.
@@ -73,14 +73,14 @@ Web uses sidebar ritual nav; mobile uses bottom tabs + **More** for staff/servic
 | Running late | Today + booking detail sheet | Today quick actions + booking (CONFIRMED) | **OK** (2026-05-25) |
 | Leave request | Staff profile → Leave; manager Rota | More → Request leave (`/time-off`) | **OK** (2026-05-25) |
 | Vertical accent (Today) | `vertical-theme.ts` on app shell | Today vertical line uses `verticalAccentHex` | **OK** (2026-05-25) |
-| Presentation preset + surface morph | `data-presentation` + `data-surface` (staging) | `MobilePresentationCard` readout + web handoff | **Partial** (2026-05-31) — morph [`SURFACE-AND-BREAKPOINTS.md`](../design/SURFACE-AND-BREAKPOINTS.md) |
+| Presentation preset + surface morph | `data-presentation` + `data-surface` (staging) | `resolveMobileSkin()` + Settings preset PATCH + morph homes | **Partial** (2026-06-05) — contract [`MOBILE-SKIN-INHERITANCE.md`](../design/MOBILE-SKIN-INHERITANCE.md); Inbox/Bookings morph TBD |
 | Public booking theme | `/b/:slug` vertical hero | Same web surface (mobile browser) | **OK** (2026-05-25) |
 | Guest visit link (late, feedback, receipt) | `/b/:slug/visit/:token` | Web only (SMS link) | **OK** (2026-05-25) |
 | Visit feedback on Today | `VisitFeedbackStrip` | `VisitFeedbackCard` on Today | **OK** (2026-05-25) |
 | Cross-shop alerts | Chain page `chain-alerts` | Glance alerts list + Today founder strip | **OK** (2026-05-25) |
 | Hiring / job board | **Removed** | **Removed** | **N/A** |
 | Liv command (ex-toolkit) | `/toolkit` | — | Web-first |
-| Onboarding / second shop | `/onboarding?intent=second-shop` | `/onboarding` | **Partial** |
+| Onboarding / second shop | `/onboarding?intent=second-shop` | `/onboarding` + `onboarding-setup` + presentation pick | **OK** (2026-06-05) — `OnboardingGate` mirrors web |
 | Public booking | `/b/:slug` | Browser | **OK** — not native |
 | Demo portal | `/demo` Clerk + live DB | `/demo` showcase · live via **sign-in** + Demo guide | **OK** (different UX, same data) |
 

@@ -134,5 +134,12 @@ export async function seedCiDemoWorld(): Promise<Awaited<ReturnType<typeof getDe
     // Guest-token E2E can sync showcase; do not fail entire CI seed.
   }
 
+  try {
+    const { seedDemoGuestHub } = await import("./demo-guest-hub.seed");
+    await seedDemoGuestHub();
+  } catch {
+    // Guest hub links are best-effort in CI when showcase slugs are partial.
+  }
+
   return getDemoPortalStatus();
 }

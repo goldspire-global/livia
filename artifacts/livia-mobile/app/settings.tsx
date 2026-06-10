@@ -43,6 +43,7 @@ import { getPublicBookingLabel } from "@/lib/public-booking-url";
 import { dpaUrl, privacyPolicyUrl, termsOfServiceUrl } from "@/lib/marketing-legal-urls";
 import { LivCapabilitiesCard } from "@/components/LivCapabilitiesCard";
 import { BillingSummaryCard } from "@/components/BillingSummaryCard";
+import { CrossSurfaceContinueCard } from "@/components/CrossSurfaceContinueCard";
 import { MobilePresentationCard } from "@/components/MobilePresentationCard";
 import { dashboardSettingsUrl } from "@/lib/dashboard-url";
 
@@ -157,6 +158,7 @@ export default function SettingsScreen() {
 
   return (
       <OperationalScreen
+        ritualPage
         title="Settings"
         subtitle={`${currentBusiness?.name ?? "Workspace"} · ${PERSONA_LABEL[persona]}`}
         contentStyle={{ paddingBottom: 48, gap: 14 }}
@@ -242,7 +244,11 @@ export default function SettingsScreen() {
             </View>
 
             {bid ? (
-              <MobilePresentationCard businessId={bid} canEditOnWeb={canEditShopFields} />
+              <MobilePresentationCard businessId={bid} canEdit={canEditShopFields} />
+            ) : null}
+
+            {bid && canEditShopFields ? (
+              <CrossSurfaceContinueCard businessId={bid} variant="appearance" />
             ) : null}
 
             {showTeam && (

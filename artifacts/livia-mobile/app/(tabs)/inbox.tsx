@@ -19,13 +19,14 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/EmptyState";
+import { InboxThreadRow } from "@/components/inbox/InboxThreadRow";
 import { OperationalScreen } from "@/components/OperationalScreen";
-import { resolveTenantAccentHex } from "@/lib/vertical-theme";
+import { GlowPressable } from "@/components/ui/GlowPressable";
+import { usePresentationAccent } from "@/contexts/PresentationThemeContext";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
-import { aurora } from "@/constants/colors";
-import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
@@ -33,6 +34,10 @@ import { useColors } from "@/hooks/useColors";
 import { usePersona } from "@/hooks/usePersona";
 import { asHref } from "@/lib/navigation";
 import { OPERATIONAL_REFETCH_MS } from "@/lib/operational-cache";
+import { useOperationalChrome } from "@/lib/operational-chrome";
+import { useTenantPresentation } from "@/contexts/PresentationThemeContext";
+import { tenantScreenBackground } from "@/lib/tenant-shell-layout";
+import { useHaptics } from "@/hooks/useHaptics";
 
 const QUEUE_LENSES: InboxQueueLens[] = [
   "needs_you",
@@ -61,13 +66,11 @@ export default function InboxScreen() {
   const businessId = currentBusiness?.id ?? "";
   const bizMeta = currentBusiness as { vertical?: string; category?: string } | undefined;
   const { data: tenantExperience } = useTenantExperience(businessId || undefined);
-  const tenantAccent =
-    (tenantExperience as { presentation?: { brandAccentHex?: string | null } } | null | undefined)
-      ?.presentation?.brandAccentHex ??
-    (tenantExperience as { publicAppearance?: { brandAccentHex?: string | null } } | null | undefined)
-      ?.publicAppearance?.brandAccentHex;
-  const accent = resolveTenantAccentHex(bizMeta?.vertical, bizMeta?.category, tenantAccent);
+  const accent = usePresentationAccent();
   const { layout: beautyLayout } = useBeautyMobileLayout();
+  const chrome = useOperationalChrome(businessId || undefined);
+  const presentation = useTenantPresentation();
+  const haptics = useHaptics();
 
   const showQueue = persona === "manager" || persona === "owner" || persona === "org_admin";
   const canQuickBook =
@@ -105,13 +108,14 @@ export default function InboxScreen() {
     : "Tap a thread to open the full conversation — take over, reply, or return to Liv.";
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View style={[styles.root, { backgroundColor: tenantScreenBackground(presentation.isConstellation, colors.background) }]}>
       <OperationalScreen
-        eyebrow="Liv conversations"
+        ritualPage
         title={screenTitle}
         subtitle={lede}
-        refreshing={isRefetching}
-        onRefresh={() => refetch()}
+        onRefresh={() => {
+          void refetch();
+        }}
         contentStyle={{ paddingBottom: 120 }}
       >
         {showQueue ? (
@@ -121,33 +125,46 @@ export default function InboxScreen() {
             contentContainerStyle={styles.chipRow}
             style={styles.chipScroll}
           >
-            {QUEUE_LENSES.map((lens) => {
+            {QUEUE_LENSES.map((lens, i) => {
               const active = queueLens === lens;
               const count = queueCounts[lens];
               return (
-                <Pressable
+                <Animated.View
                   key={lens}
-                  onPress={() => setQueueLens(lens)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: active ? colors.primary + "22" : colors.card,
-                      borderColor: active ? colors.primary : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
+                  entering={FadeInDown.delay(i * 40).duration(300).springify()}
                 >
-                  <Text
+                  <GlowPressable
+                    onPress={() => {
+                      haptics.selection();
+                      setQueueLens(lens);
+                    }}
+                    glowColor={accent}
+                    haptic="selection"
                     style={[
-                      styles.chipText,
-                      { color: active ? colors.primary : colors.mutedForeground },
+                      styles.chip,
+                      chrome.native
+                        ? chrome.chip(active)
+                        : {
+                            backgroundColor: active ? colors.primary + "22" : colors.card,
+                            borderColor: active ? colors.primary : colors.border,
+                          },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
-                    {INBOX_QUEUE_LENS_LABELS[lens].short}
-                    {count > 0 ? ` (${count})` : ""}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.chipText,
+                        chrome.native
+                          ? chrome.chipText(active)
+                          : { color: active ? colors.primary : colors.mutedForeground },
+                      ]}
+                    >
+                      {INBOX_QUEUE_LENS_LABELS[lens].short}
+                      {count > 0 ? ` (${count})` : ""}
+                    </Text>
+                  </GlowPressable>
+                </Animated.View>
               );
             })}
           </ScrollView>
@@ -172,103 +189,41 @@ export default function InboxScreen() {
             onAction={canQuickBook ? () => router.push(asHref("/booking/new")) : undefined}
           />
         ) : (
-          filtered.map((t) => {
+          filtered.map((t, i) => {
             const needsYou = t.status === "OPEN" && !t.aiHandled;
             const beautyAccent =
               beautyLayout && needsYou && (showQueue ? queueLens === "needs_you" : true);
             return (
-            <Pressable
-              key={t.id}
-              onPress={() => router.push(`/conversation/${t.id}` as never)}
-              style={({ pressed }) => [
-                styles.row,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: beautyAccent
-                    ? colors.primary + "55"
-                    : showQueue && queueLens === "needs_you" && needsYou
-                      ? aurora.violet + "66"
-                      : colors.border,
-                  borderLeftWidth: beautyAccent ? 3 : 1,
-                  borderLeftColor: beautyAccent ? colors.primary : undefined,
-                  opacity: pressed ? 0.92 : 1,
-                },
-                elevation.resting,
-              ]}
-            >
-              <View style={[styles.avatar, { backgroundColor: accent + "22" }]}>
-                <Feather name="message-circle" size={18} color={accent} />
-              </View>
-              <View style={styles.rowBody}>
-                <View style={styles.rowTop}>
-                  <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-                    {t.customerName ?? "Unknown"}
-                  </Text>
-                  <Text style={[styles.when, { color: colors.mutedForeground }]}>
-                    {formatRelative(t.lastMessageAt)}
-                  </Text>
-                </View>
-                <Text style={[styles.preview, { color: colors.mutedForeground }]} numberOfLines={2}>
-                  {t.lastMessage ?? "—"}
-                </Text>
-                <View style={styles.metaRow}>
-                  <Text style={[styles.meta, { color: colors.mutedForeground }]}>
-                    {t.channel}
-                  </Text>
-                  {t.status === "OPEN" && !t.aiHandled ? (
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor: (beautyLayout ? colors.primary : aurora.violet) + "22",
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          { color: beautyLayout ? colors.primary : aurora.violet },
-                        ]}
-                      >
-                        Needs you
-                      </Text>
-                    </View>
-                  ) : t.aiHandled && t.status === "OPEN" ? (
-                    <View style={[styles.badge, { backgroundColor: aurora.cyan + "22" }]}>
-                      <Text style={[styles.badgeText, { color: aurora.cyan }]}>Liv on</Text>
-                    </View>
-                  ) : t.status === "HANDED_OFF" ? (
-                    <View style={[styles.badge, { backgroundColor: colors.muted + "33" }]}>
-                      <Text style={[styles.badgeText, { color: colors.mutedForeground }]}>
-                        Taken over
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              </View>
-              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-            </Pressable>
+              <InboxThreadRow
+                key={t.id}
+                thread={t}
+                index={i}
+                accent={accent}
+                chrome={chrome}
+                formatRelative={formatRelative}
+                needsYouHighlight={showQueue && queueLens === "needs_you"}
+                beautyAccent={beautyAccent ?? undefined}
+              />
             );
           })
         )}
       </OperationalScreen>
 
       {canQuickBook ? (
-        <Pressable
+        <GlowPressable
           onPress={() => router.push(asHref("/booking/new"))}
-          style={({ pressed }) => [
+          glowColor={accent}
+          haptic="impact"
+          style={[
             styles.fab,
-            {
-              backgroundColor: colors.primary,
-              bottom: insets.bottom + 72,
-              opacity: pressed ? 0.9 : 1,
-            },
+            chrome.native ? chrome.primaryButton() : { backgroundColor: colors.primary },
+            { bottom: insets.bottom + 72 },
           ]}
           accessibilityRole="button"
           accessibilityLabel="New booking"
         >
           <Feather name="plus" size={24} color="#fff" />
-        </Pressable>
+        </GlowPressable>
       ) : null}
     </View>
   );
@@ -285,32 +240,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: { fontFamily: fonts.bodyMed, fontSize: 13 },
-  empty: { ...type.body, marginTop: 12 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowBody: { flex: 1, gap: 4 },
-  rowTop: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  name: { fontFamily: fonts.bodyMed, fontSize: 16, flex: 1 },
-  when: { ...type.caption },
-  preview: { ...type.body, fontSize: 14, lineHeight: 20 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
-  meta: { ...type.caption, fontSize: 11 },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  badgeText: { fontFamily: fonts.bodyMed, fontSize: 10 },
   fab: {
     position: "absolute",
     right: 20,

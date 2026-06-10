@@ -1,107 +1,138 @@
 /**
- * Mobile demo gateway · launcher
- *
- * Public route — no Clerk required (see app/_layout.tsx AuthGate bypass).
- * Mirrors the dashboard `/demo` showcase but with phone-first chrome.
- * Per ADR 0011 (mobile-flagship), this surface is where Livia is *alive*
- * — the per-persona rituals (lock-screen countdown, widget, wallet pass,
- * haptic walk-in tap) feel native here in a way the desktop can't match.
+ * Mobile demo gateway · G1 worlds (parity with dashboard /demo + g1-wedge-web.target.png).
  */
 
 import { Feather } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { asHref } from "@/lib/navigation";
-import React from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Link, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AuroraHalo } from "@/components/brand/AuroraHalo";
-import { aurora } from "@/constants/colors";
-import { fonts, type } from "@/constants/typography";
-import { useColors } from "@/hooks/useColors";
-
-interface PersonaCard {
-  id: string;
-  displayName: string;
-  roleLabel: string;
-  tease: string;
-  accent: string;
-  icon: keyof typeof Feather.glyphMap;
-}
-
-const PERSONAS: PersonaCard[] = [
-  { id: "org_admin",    displayName: "Aoife Brennan",    roleLabel: "Org admin · 3 locations", tease: "Every location before the first coffee. One glance.", accent: "#d9c39a", icon: "star" },
-  { id: "owner",        displayName: "Sarah Kavanagh",   roleLabel: "Single-shop owner",  tease: "The cockpit. Your day, alive in one screen.",       accent: aurora.cyan,  icon: "grid" },
-  { id: "manager",      displayName: "Áine Connolly",    roleLabel: "Manager · ADMIN",       tease: "Approvals queue. No money, just judgement calls.",  accent: aurora.violet,icon: "shield" },
-  { id: "staff",        displayName: "Lara McCarthy",    roleLabel: "Staff · your chair",    tease: "Your day. Just yours. Countdown to the next chair.", accent: aurora.mint,  icon: "sun" },
-  { id: "receptionist", displayName: "Bríd Murphy",      roleLabel: "Front desk",            tease: "The desk view. Every chair, every staff, one wall.", accent: "#818cf8",   icon: "headphones" },
-];
+import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
+import { MobileDemoGuestShortcut } from "@/components/demo/MobileDemoGuestShortcut";
+import { MobileDemoReadinessStrip } from "@/components/demo/MobileDemoReadinessStrip";
+import { MobileDemoWedgeGrid } from "@/components/demo/MobileDemoWedgeGrid";
+import { GatewayG1Ambient } from "@/components/gateway/GatewayG1Ambient";
+import { fonts } from "@/constants/typography";
+import { useHaptics } from "@/hooks/useHaptics";
+import { useDemoWorldStatus } from "@/hooks/useDemoWorldStatus";
+import { fetchDemoCatalog } from "@/lib/demo-portal";
+import { gatewayTheme } from "@/lib/gateway-theme";
+import { asHref } from "@/lib/navigation";
 
 export default function MobileDemoLauncher() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const haptics = useHaptics();
+  const { provisioned, tenants, loading, error, busy, refresh, setup, repair } = useDemoWorldStatus();
+  const [devPassword, setDevPassword] = useState<string | undefined>();
+
+  useEffect(() => {
+    void fetchDemoCatalog()
+      .then((cat) => setDevPassword(cat.sharedPassword ?? cat.devPassword))
+      .catch(() => undefined);
+  }, []);
+
+  const handleSetup = useCallback(async () => {
+    haptics.tap();
+    try {
+      const result = await setup();
+      Alert.alert(
+        result.mode === "full" ? "Demo world created" : "Quick sync done",
+        result.mode === "full"
+          ? `${result.businesses.length} businesses seeded — pick a world next.`
+          : "Branding and live-day data refreshed.",
+      );
+    } catch (e: unknown) {
+      Alert.alert("Setup failed", e instanceof Error ? e.message : "Is the API running?");
+    }
+  }, [haptics, setup]);
+
+  const handleRepair = useCallback(async () => {
+    haptics.tap();
+    try {
+      const result = await repair();
+      Alert.alert("Demo repaired", `${result.businesses.length} businesses ready.`);
+    } catch (e: unknown) {
+      Alert.alert("Repair failed", e instanceof Error ? e.message : "Check API logs");
+    }
+  }, [haptics, repair]);
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]} testID="mobile-demo-launcher">
-      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <AuroraHalo tone="primary" size={440} intensity={0.8} style={{ top: -100, left: -60 }} />
-      </View>
+    <View style={styles.root} testID="mobile-demo-launcher">
+      <GatewayG1Ambient />
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32, paddingHorizontal: 20 }}
+        contentContainerStyle={{
+          paddingTop: insets.top + 16,
+          paddingBottom: insets.bottom + 32,
+          paddingHorizontal: 20,
+        }}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* Hero */}
-        <View style={[styles.tag, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <View style={[styles.tagDot, { backgroundColor: aurora.cyan }]} />
-          <Text style={[styles.tagText, { color: aurora.cyan }]}>Livia · the demo gateway</Text>
-        </View>
-        <Text style={[styles.h1, { color: colors.text, fontFamily: fonts.serif }]}>
-          Same building.
-        </Text>
-        <Text style={[styles.h1Italic, { color: colors.mutedForeground, fontFamily: fonts.serifItalic }]}>
-          A different ritual at every door.
-        </Text>
-        <Text style={[styles.lede, { color: colors.mutedForeground }]}>
-          Pick a persona. Step into their morning. The data is the same — the room
-          is theirs.
-        </Text>
-
-        {/* Cards */}
-        <View style={{ gap: 12, marginTop: 28 }}>
-          {PERSONAS.map((p) => (
-            <Link key={p.id} href={asHref(`/demo/${p.id}`)} asChild>
-              <Pressable
-                testID={`mobile-demo-card-${p.id}`}
-                style={({ pressed }) => [
-                  styles.card,
-                  { borderColor: p.accent + "55", backgroundColor: colors.card, opacity: pressed ? 0.85 : 1 },
-                ]}
-              >
-                <View style={[styles.cardHaloMini, { backgroundColor: p.accent }]} />
-                <View style={[styles.cardIcon, { borderColor: p.accent + "55", backgroundColor: p.accent + "1a" }]}>
-                  <Feather name={p.icon} size={18} color={p.accent} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.cardName, { color: colors.text, fontFamily: fonts.serif }]}>
-                    {p.displayName}
-                  </Text>
-                  <Text style={[styles.cardRole, { color: colors.mutedForeground }]}>{p.roleLabel}</Text>
-                  <Text style={[styles.cardTease, { color: colors.text + "cc" }]}>{p.tease}</Text>
-                </View>
-                <Feather name="chevron-right" size={18} color={p.accent} />
-              </Pressable>
-            </Link>
-          ))}
+        <View style={styles.topRow}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={styles.back}
+            testID="mobile-demo-back-entry"
+          >
+            <Feather name="arrow-left" size={18} color="rgba(255,255,255,0.55)" />
+            <Text style={styles.backText}>Home</Text>
+          </Pressable>
+          <View style={styles.badges}>
+            <View style={styles.badgePrimary}>
+              <Feather name="lock" size={10} color={gatewayTheme.primaryChampagne} />
+              <Text style={styles.badgePrimaryText}>Demo gateway</Text>
+            </View>
+            <Text style={styles.badgeG1}>G1 locked</Text>
+          </View>
         </View>
 
-        <Text style={[styles.footnote, { color: colors.mutedForeground }]}>
-          Public showcase. No sign-in needed. The full architecture lives in
-          docs/personas.md and docs/demo-gateway.md.
+        <View style={styles.hero}>
+          <LiviaWordmark size="lg" color="#fff" />
+          <Text style={styles.h1}>
+            Pick <Text style={styles.h1Italic}>your</Text> world
+          </Text>
+          <Text style={styles.lede}>
+            Choose a trade to explore as a studio owner, or open My Livia below to try the guest
+            experience.
+          </Text>
+          <Text style={styles.signInHint}>
+            {devPassword ? (
+              <>
+                Shared password: <Text style={styles.signInStrong}>{devPassword}</Text>
+                {" · "}
+              </>
+            ) : null}
+            <Text style={styles.signInLink} onPress={() => router.push("/sign-in" as never)}>
+              Sign in with your own account
+            </Text>
+          </Text>
+        </View>
+
+        <MobileDemoReadinessStrip
+          provisioned={provisioned}
+          businessCount={tenants.length}
+          loading={loading}
+          error={error}
+          busy={busy}
+          onSetup={() => void handleSetup()}
+          onRetry={() => void refresh()}
+          onRepair={() => void handleRepair()}
+        />
+
+        <MobileDemoWedgeGrid />
+
+        <MobileDemoGuestShortcut />
+
+        <Link href={asHref("/demo-guide")} asChild>
+          <Pressable style={styles.guideLink}>
+            <Text style={styles.guideText}>Demo account emails & spotlight shops → Demo guide</Text>
+          </Pressable>
+        </Link>
+
+        <Text style={styles.footer}>
+          <Text style={styles.footerStrong}>One platform.</Text>{" "}
+          <Text style={styles.footerItalic}>Infinite</Text> possibilities.
         </Text>
       </ScrollView>
     </View>
@@ -109,20 +140,86 @@ export default function MobileDemoLauncher() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  halo: { position: "absolute", top: -120, left: -120, width: 360, height: 360, borderRadius: 360 },
-  halo2: { position: "absolute", bottom: -120, right: -120, width: 320, height: 320, borderRadius: 320 },
-  tag: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, marginBottom: 16 },
-  tagDot: { width: 6, height: 6, borderRadius: 6 },
-  tagText: { fontSize: 10, fontFamily: fonts.mono, letterSpacing: 1, textTransform: "uppercase" },
-  h1: { fontSize: 36, lineHeight: 40, letterSpacing: -0.5 },
-  h1Italic: { fontSize: 28, lineHeight: 34, fontStyle: "italic", marginTop: 2, marginBottom: 16 },
-  lede: { fontSize: 14, lineHeight: 20, maxWidth: 360 },
-  card: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 16, padding: 14, overflow: "hidden", position: "relative" },
-  cardHaloMini: { position: "absolute", top: -40, right: -40, width: 120, height: 120, borderRadius: 120, opacity: 0.18 },
-  cardIcon: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  cardName: { fontSize: 18, marginBottom: 1 },
-  cardRole: { fontSize: 11, fontFamily: fonts.mono, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.6 },
-  cardTease: { fontSize: 13, lineHeight: 18 },
-  footnote: { fontSize: 11, fontFamily: fonts.mono, marginTop: 28, lineHeight: 16, opacity: 0.7 },
+  root: { flex: 1, backgroundColor: gatewayTheme.g1Background },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  back: { flexDirection: "row", alignItems: "center", gap: 6 },
+  backText: { fontSize: 12, fontFamily: fonts.mono, color: "rgba(255,255,255,0.55)" },
+  badges: { alignItems: "flex-end", gap: 6 },
+  badgePrimary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderColor: `${gatewayTheme.primaryChampagne}66`,
+    backgroundColor: `${gatewayTheme.primaryChampagne}1a`,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  badgePrimaryText: {
+    fontSize: 9,
+    fontFamily: fonts.mono,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: gatewayTheme.primaryChampagne,
+  },
+  badgeG1: {
+    fontSize: 9,
+    fontFamily: fonts.mono,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: gatewayTheme.aurumChampagne,
+    borderWidth: 1,
+    borderColor: `${gatewayTheme.aurumChampagne}66`,
+    backgroundColor: `${gatewayTheme.aurumChampagne}1a`,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  hero: { alignItems: "flex-start", gap: 10, marginBottom: 4 },
+  h1: {
+    fontFamily: fonts.serifMedium,
+    fontSize: 38,
+    lineHeight: 42,
+    letterSpacing: -0.5,
+    color: "#fff",
+  },
+  h1Italic: {
+    fontFamily: fonts.serifItalic,
+    color: gatewayTheme.primaryChampagne,
+  },
+  lede: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "rgba(255,255,255,0.65)",
+    maxWidth: 380,
+  },
+  signInHint: { fontSize: 12, lineHeight: 18, color: "rgba(255,255,255,0.45)" },
+  signInStrong: { color: "rgba(255,255,255,0.72)" },
+  signInLink: { color: gatewayTheme.primaryChampagne },
+  guideLink: { marginTop: 16, paddingVertical: 8 },
+  guideText: {
+    fontSize: 12,
+    fontFamily: fonts.mono,
+    color: "rgba(255,255,255,0.45)",
+    textDecorationLine: "underline",
+  },
+  footer: {
+    marginTop: 24,
+    textAlign: "center",
+    fontSize: 13,
+    fontFamily: fonts.serif,
+    color: "rgba(255,255,255,0.5)",
+    alignSelf: "center",
+  },
+  footerStrong: { color: "rgba(255,255,255,0.72)" },
+  footerItalic: {
+    fontFamily: fonts.serifItalic,
+    color: gatewayTheme.primaryChampagne,
+  },
 });

@@ -20,6 +20,7 @@ import {
   OnboardingArrivalOverlay,
   ONBOARDING_ARRIVAL_STORAGE_KEY,
 } from "./onboarding-arrival-overlay";
+import { CrossSurfaceContinueCard } from "./cross-surface-continue-card";
 import { playCelebrationChime } from "@/lib/celebrate";
 import { isOnboardingPortalExperienceEnabled } from "@/lib/onboarding-portal-enabled";
 import { ONBOARDING_PREVIEW_SHOP_NAME } from "@/lib/onboarding-preview-fixtures";
@@ -553,6 +554,7 @@ export function OnboardingWizard({
           <>
             {arrivalSlot}
             {preBusinessProgress}
+            {businessId ? <CrossSurfaceContinueCard className="mt-4" /> : null}
           </>
         }
         footer={footerNav}

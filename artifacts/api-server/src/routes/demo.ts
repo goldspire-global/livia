@@ -143,6 +143,21 @@ router.post("/demo/repair-db", async (req, res): Promise<void> => {
   }
 });
 
+/** Re-seed demo guest Mary vault links (idempotent). */
+router.post("/demo/sync-guest-hub", async (req, res): Promise<void> => {
+  const requestId = (req as Request & { id?: string }).id;
+  try {
+    const { seedDemoGuestHub } = await import("../services/demo-guest-hub.seed");
+    const guestHub = await seedDemoGuestHub();
+    logger.info({ event: "demo.guest_hub.sync.ok", request_id: requestId, ...guestHub }, "Guest hub seeded");
+    res.json({ ok: true, ...guestHub });
+  } catch (e: unknown) {
+    const err = e as Error;
+    logger.error({ event: "demo.guest_hub.sync.failed", request_id: requestId, err }, "Guest hub seed failed");
+    sendError(res, req, 500, err.message ?? "Guest hub seed failed");
+  }
+});
+
 /** Fast sync — branding + service images only (~3–8s). No Clerk. */
 router.post("/demo/sync", async (req, res): Promise<void> => {
   const requestId = (req as Request & { id?: string }).id;

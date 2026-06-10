@@ -2,8 +2,8 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import * as Notifications from "expo-notifications";
 import { useInAppNotifications } from "@/hooks/useInAppNotifications";
+import { isPushSupportedInThisBuild, loadNotificationsModule } from "@/lib/push-notifications";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 
@@ -15,8 +15,12 @@ export function NotificationBell() {
   const { unreadCount } = useInAppNotifications();
 
   useEffect(() => {
-    if (Platform.OS === "web") return;
-    void Notifications.setBadgeCountAsync(unreadCount).catch(() => undefined);
+    if (!isPushSupportedInThisBuild()) return;
+    void (async () => {
+      const Notifications = await loadNotificationsModule();
+      if (!Notifications) return;
+      await Notifications.setBadgeCountAsync(unreadCount).catch(() => undefined);
+    })();
   }, [unreadCount]);
 
   return (

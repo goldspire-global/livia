@@ -24,6 +24,8 @@
 | **Category (people-business OS)** | [`product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md`](./product/PEOPLE-BUSINESS-CATEGORY-MANIFESTO.md) |
 | **UI/UX authority** | [`design/UI-UX-MASTER-PROGRAM.md`](./design/UI-UX-MASTER-PROGRAM.md) |
 | **Skin / `/b` inheritance** | [`design/SKIN-BRAND-INHERITANCE-SPEC.md`](./design/SKIN-BRAND-INHERITANCE-SPEC.md) |
+| **Mobile skin inheritance (W4m)** | [`design/MOBILE-SKIN-INHERITANCE.md`](./design/MOBILE-SKIN-INHERITANCE.md) |
+| **Web ↔ mobile continuity** | [`product/CROSS-SURFACE-CONTINUITY.md`](./product/CROSS-SURFACE-CONTINUITY.md) |
 | **All vertical programs** | [`product/VERTICAL-PROGRAMS-INDEX.md`](./product/VERTICAL-PROGRAMS-INDEX.md) |
 | **Wellness north star (V4)** | [`product/WELLNESS-NORTHSTAR-PROGRAM.md`](./product/WELLNESS-NORTHSTAR-PROGRAM.md) |
 | **Wellness master backlog (full inventory)** | [`product/WELLNESS-MASTER-BACKLOG.md`](./product/WELLNESS-MASTER-BACKLOG.md) |

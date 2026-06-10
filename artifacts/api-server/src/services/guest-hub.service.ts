@@ -12,7 +12,7 @@ import {
   servicesTable,
   staffTable,
 } from "@workspace/db";
-import { eq, and, desc, gte, inArray } from "drizzle-orm";
+import { eq, and, desc, gte, inArray, sql } from "drizzle-orm";
 import {
   guestOtpCodeMatches,
   normalizeGuestHubPhone,
@@ -23,6 +23,12 @@ import { ensureBookingGuestAccess } from "./booking-guest-access.service";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Match customer.phone whether stored as +353871000001 or +353 87 100 0001. */
+function customerPhoneMatchesE164(phoneE164: string) {
+  const digits = phoneE164.replace(/\D/g, "");
+  return sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${digits}`;
+}
 
 function sessionToken(): string {
   return randomBytes(24).toString("base64url");
@@ -173,7 +179,7 @@ export async function getGuestHubView(hubToken: string) {
           .leftJoin(staffTable, eq(bookingsTable.staffId, staffTable.id))
           .where(
             and(
-              eq(customersTable.phone, session.phoneE164),
+              customerPhoneMatchesE164(session.phoneE164),
               inArray(bookingsTable.businessId, businessIds),
               gte(bookingsTable.startAt, now),
               inArray(bookingsTable.status, ["PENDING", "CONFIRMED"]),
@@ -197,7 +203,7 @@ export async function getGuestHubView(hubToken: string) {
           .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
           .where(
             and(
-              eq(customersTable.phone, session.phoneE164),
+              customerPhoneMatchesE164(session.phoneE164),
               inArray(bookingsTable.businessId, businessIds),
               inArray(bookingsTable.status, ["PENDING", "CONFIRMED", "COMPLETED"]),
             ),

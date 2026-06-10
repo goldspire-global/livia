@@ -27,6 +27,7 @@ import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { useBusinessTimezone } from "@/hooks/useBusinessTimezone";
+import { useTenantExperience } from "@/hooks/useTenantExperience";
 import {
   bookingDurationMinutes,
   staffClientFirstName,
@@ -171,6 +172,7 @@ export default function MyDayScreen() {
   const { currentBusiness } = useBusiness();
   const bid = currentBusiness?.id ?? "";
   const vertical = (currentBusiness as { vertical?: string } | null)?.vertical ?? null;
+  const { data: tenantExperience } = useTenantExperience(bid || undefined);
   const { formatTime, formatLongDateNow } = useBusinessTimezone();
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
@@ -244,16 +246,16 @@ export default function MyDayScreen() {
       {vertical === "wellness" ? (
         <WellnessBreathField
           cssPreset={
-            (currentBusiness as { experienceSkin?: { presentation?: string } } | null)?.experienceSkin
-              ?.presentation ?? "platform-default"
+            (
+              tenantExperience as { presentation?: { cssPreset?: string } } | null | undefined
+            )?.presentation?.cssPreset ?? "harbour-light"
           }
         />
       ) : null}
       <OperationalScreen
-        eyebrow={formatLongDateNow(clock)}
+        ritualPage
         title="My chair"
         subtitle={subtitle}
-        refreshing={isRefetching}
         onRefresh={() => {
           haptics.tap();
           refetch();

@@ -1,0 +1,79 @@
+# Android Expo Go — cold open → gateway → guest / operator / demo.
+# Prereqs: pnpm dev:mobile, adb reverse tcp:3000 + tcp:8083, API up.
+# Do not use launchApp — Maestro stopApp:true flakes on Windows adb; openLink is enough.
+appId: host.exp.exponent
+---
+- openLink: exp://127.0.0.1:8083
+- waitForAnimationToEnd:
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "app-entry-gateway"
+    timeout: 180000
+- takeScreenshot: e2e/visual-captures/mobile/01-entry-gateway
+
+- tapOn:
+    id: "entry-gateway-guest"
+- extendedWaitUntil:
+    visible:
+      id: "guest-hub-send-code"
+    timeout: 30000
+- takeScreenshot: e2e/visual-captures/mobile/02-my-livia-sign-in
+- back
+
+- extendedWaitUntil:
+    visible:
+      id: "app-entry-gateway"
+    timeout: 30000
+- tapOn:
+    id: "entry-gateway-operator"
+- extendedWaitUntil:
+    visible:
+      id: "email-input"
+    timeout: 30000
+- takeScreenshot: e2e/visual-captures/mobile/03-sign-in
+- tapOn:
+    id: "sign-in-back-to-gateway"
+- extendedWaitUntil:
+    visible:
+      id: "app-entry-gateway"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: "entry-gateway-demo"
+    commands:
+      - tapOn:
+          id: "entry-gateway-demo"
+      - extendedWaitUntil:
+          visible:
+            id: "mobile-demo-launcher"
+          timeout: 30000
+      - takeScreenshot: e2e/visual-captures/mobile/04-demo-g1-launcher
+      - tapOn:
+          id: "mobile-demo-wedge-beauty"
+      - extendedWaitUntil:
+          visible:
+            id: "mobile-demo-wedge-beauty"
+          timeout: 30000
+      - takeScreenshot: e2e/visual-captures/mobile/05-demo-wedge-beauty
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "mobile-demo-launcher"
+          timeout: 20000
+      - tapOn:
+          id: "mobile-demo-back-entry"
+
+- tapOn:
+    id: "entry-gateway-operator"
+- runFlow:
+    when:
+      visible:
+        id: "email-input"
+    file: sign-in-demo-steps.yaml
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 90000
+- takeScreenshot: e2e/visual-captures/mobile/06-owner-today

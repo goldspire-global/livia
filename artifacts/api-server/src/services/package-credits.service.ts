@@ -5,7 +5,7 @@ import {
   businessesTable,
   guestShopLinksTable,
 } from "@workspace/db";
-import { eq, and, gt, or, isNull, asc, inArray } from "drizzle-orm";
+import { eq, and, gt, or, isNull, asc, inArray, sql } from "drizzle-orm";
 import { generateId } from "../lib/id";
 
 export async function listPackageCredits(businessId: string, customerId?: string) {
@@ -94,13 +94,14 @@ export async function listGuestPackageCreditsForGuest(
   const businessIds = [...new Set(links.map((l) => l.businessId))];
   if (!businessIds.length) return [];
 
+  const phoneDigits = phoneE164.replace(/\D/g, "");
   const customerRows = await db
     .select({ id: customersTable.id })
     .from(customersTable)
     .where(
       and(
         inArray(customersTable.businessId, businessIds),
-        eq(customersTable.phone, phoneE164),
+        sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`,
       ),
     );
 

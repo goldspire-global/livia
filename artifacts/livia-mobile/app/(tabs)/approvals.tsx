@@ -105,14 +105,13 @@ export default function ApprovalsScreen() {
 
   return (
     <OperationalScreen
-      eyebrow="Pending confirmations"
+      ritualPage
       title="Approvals"
       subtitle={
         mandateData?.mandate.rung
           ? `Mandate ${mandateData.mandate.rung}: Liv auto-handles routine work inside your rules. This queue is bookings and actions that still need you.`
           : "Liv approves routine bookings automatically. This queue is edge cases — policy flags, deposits, or anything she is not sure about yet."
       }
-      refreshing={isRefetching}
       onRefresh={() => {
         haptics.tap();
         refetch();

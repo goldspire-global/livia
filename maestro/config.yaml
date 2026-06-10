@@ -1,0 +1,5 @@
+# Maestro workspace — run from repo root via scripts/maestro-visual-capture.mjs
+disableRetries: true
+platform:
+  android:
+    disableAnimations: true

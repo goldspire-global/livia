@@ -37,6 +37,7 @@ export function useColors() {
       ? { primaryForeground: presentation.primaryForeground }
       : {}),
     ...(presentation.border ? { border: presentation.border } : {}),
+    ...(presentation.muted ? { muted: presentation.muted } : {}),
     ...(presentation.mutedForeground ? { mutedForeground: presentation.mutedForeground } : {}),
     ...(presentation.colorScheme ? { colorScheme: presentation.colorScheme } : {}),
   };

@@ -926,6 +926,10 @@ export async function provisionDemoWorld(opts?: {
     logger.info({ chainLinks }, "demo.chain_hierarchy.linked");
   }
 
+  const { seedDemoGuestHub } = await import("./demo-guest-hub.seed");
+  const guestHub = await seedDemoGuestHub();
+  logger.info(guestHub, "demo.guest_hub.seeded");
+
   logger.info({ businesses: businesses.map((b) => b.slug) }, "Demo world provisioned");
 
   return {
@@ -952,6 +956,11 @@ export async function syncDemoWorld(): Promise<{
     bookingsAdded?: number;
     presetsUpdated?: number;
     warnings?: string[];
+  guestHub?: {
+    guestId: string;
+    shopsLinked: number;
+    upcomingEnsured: number;
+  } | null;
   passwordHint: string;
   businesses: Array<{ slug: string; id: string; name: string }>;
 }> {
@@ -1026,6 +1035,17 @@ export async function syncDemoWorld(): Promise<{
     "demo.sync.completed",
   );
 
+  let guestHub: Awaited<
+    ReturnType<typeof import("./demo-guest-hub.seed").seedDemoGuestHub>
+  > | null = null;
+  try {
+    const { seedDemoGuestHub } = await import("./demo-guest-hub.seed");
+    guestHub = await seedDemoGuestHub();
+    logger.info(guestHub, "demo.guest_hub.synced");
+  } catch (err) {
+    logger.warn({ err }, "demo.guest_hub.sync_failed");
+  }
+
   const refreshed = await getDemoPortalStatus();
   return {
     mode: "sync",
@@ -1036,6 +1056,8 @@ export async function syncDemoWorld(): Promise<{
     servicesUpdated,
     liveDaysRefreshed,
     bookingsAdded,
+    presetsUpdated,
+    guestHub,
     passwordHint: publicDemoPasswordHint(),
     businesses: refreshed.businesses.map((b) => ({
       slug: b.slug,

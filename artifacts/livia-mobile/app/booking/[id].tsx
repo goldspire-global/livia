@@ -27,9 +27,14 @@ import { getPublicBookingUrl } from "@/lib/public-booking-url";
 import { BookingTimelineCard } from "@/components/BookingTimelineCard";
 import { notifyBookingRunningLate, promptRunningLateMinutes } from "@/lib/running-late";
 import { OperationalScreen } from "@/components/OperationalScreen";
+import { BookingLinkedInboxBanner } from "@/components/booking/BookingLinkedInboxBanner";
+import { GlowPressable } from "@/components/ui/GlowPressable";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInAppNotifications } from "@/hooks/useInAppNotifications";
+import { useOperationalChrome } from "@/lib/operational-chrome";
+import { canMarkNoShow, noShowUnavailableHint } from "@/lib/booking-appointment-window";
+import { bookingExperienceCopy } from "@workspace/policy";
 
 function formatDateTime(iso: string, timeZone: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -85,6 +90,10 @@ export default function BookingDetailScreen() {
   const { markReadByResource } = useInAppNotifications();
   const businessId = currentBusiness?.id ?? "";
   const bookingId = id ?? "";
+  const chrome = useOperationalChrome(businessId || undefined);
+  const bizVertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
+  const bizCategory = (currentBusiness as { category?: string } | undefined)?.category;
+  const bookingCopy = bookingExperienceCopy(bizVertical, bizCategory);
 
   useEffect(() => {
     if (!businessId || !bookingId) return;
@@ -150,7 +159,21 @@ export default function BookingDetailScreen() {
     );
   }
 
-  const actions = STATUS_ACTIONS[booking.status] ?? [];
+  const linkedInboxCase = (booking as { linkedInboxCase?: {
+    conversationId: string;
+    status: string;
+    caseIntent?: string | null;
+    summary?: string | null;
+    resolution?: { outcome?: string; refundMinor?: number | null; at?: string } | null;
+  } | null }).linkedInboxCase;
+
+  const actions = (STATUS_ACTIONS[booking.status] ?? []).filter((a) => {
+    if (a.next !== "NO_SHOW") return true;
+    return canMarkNoShow(booking.startAt, booking.status);
+  });
+  const noShowHidden =
+    (STATUS_ACTIONS[booking.status] ?? []).some((a) => a.next === "NO_SHOW") &&
+    !canMarkNoShow(booking.startAt, booking.status);
   const detail = booking as typeof booking & {
     customer?: { displayName?: string | null; firstName?: string | null; email?: string | null; phone?: string | null } | null;
     staff?: { displayName?: string | null } | null;
@@ -175,8 +198,9 @@ export default function BookingDetailScreen() {
 
   return (
     <OperationalScreen
-      title="Booking"
-      subtitle={`${customerName} · ${service?.name ?? "Appointment"}`}
+      ritualPage
+      title={bookingCopy.detailPageTitle ?? "Booking"}
+      subtitle={`${customerName} · ${service?.name ?? bookingCopy.serviceFieldLabel ?? "Appointment"}`}
       contentStyle={styles.content}
       actions={
         <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button">
@@ -184,6 +208,12 @@ export default function BookingDetailScreen() {
         </Pressable>
       }
     >
+      <BookingLinkedInboxBanner
+        bookingStatus={booking.status}
+        linkedCase={linkedInboxCase}
+        cancelPending={isPending}
+        onCancelBooking={() => void handleStatusChange("CANCELLED")}
+      />
 
       {intent === "reschedule" ? (
         <Pressable
@@ -219,7 +249,9 @@ export default function BookingDetailScreen() {
       <View
         style={[
           styles.heroCard,
-          { backgroundColor: colors.card, borderColor: colors.border },
+          chrome.native
+            ? chrome.panel()
+            : { backgroundColor: colors.card, borderColor: colors.border },
           Platform.OS !== "web" && elevation.resting,
         ]}
       >
@@ -343,17 +375,24 @@ export default function BookingDetailScreen() {
         </View>
       ) : null}
 
+      {noShowHidden ? (
+        <Text style={[styles.noShowHint, { color: colors.mutedForeground }]}>
+          {noShowUnavailableHint(booking.startAt)}
+        </Text>
+      ) : null}
+
       {actions.length > 0 && (
         <View style={styles.actions}>
           {actions.map((a) => (
-            <Pressable
+            <GlowPressable
               key={a.next}
-              style={({ pressed }) => [
+              glowColor={a.danger ? colors.destructive : colors.primary}
+              haptic={a.danger ? "impact" : "tap"}
+              style={[
                 styles.actionBtn,
                 {
                   backgroundColor: a.danger ? colors.destructive : colors.primary,
                   opacity: isPending ? 0.6 : 1,
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
                 },
                 !a.danger && elevation.floating,
               ]}
@@ -380,7 +419,7 @@ export default function BookingDetailScreen() {
                   </Text>
                 </>
               )}
-            </Pressable>
+            </GlowPressable>
           ))}
         </View>
       )}
@@ -427,6 +466,7 @@ const styles = StyleSheet.create({
   sub: { ...type.body, fontSize: 14 },
   noteText: { ...type.body, lineHeight: 22 },
   actions: { gap: 10, marginTop: 4 },
+  noShowHint: { ...type.caption, lineHeight: 18, marginTop: 4 },
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",

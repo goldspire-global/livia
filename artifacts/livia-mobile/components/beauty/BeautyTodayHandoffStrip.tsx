@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { GlowPressable } from "@/components/ui/GlowPressable";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -28,24 +30,27 @@ export function BeautyTodayHandoffStrip({
   if (!line) return null;
 
   return (
-    <Pressable
-      onPress={() => {
-        haptics.tap();
-        router.push(asHref(handoffCount > 0 ? "/inbox" : "/bookings"));
-      }}
-      style={({ pressed }) => [
-        styles.strip,
-        {
-          backgroundColor: colors.primary + "18",
-          borderColor: colors.primary + "55",
-          opacity: pressed ? 0.92 : 1,
-        },
-      ]}
-      accessibilityRole="button"
-    >
-      <Text style={[styles.text, { color: colors.primary }]}>{line}</Text>
-      <Feather name="arrow-right" size={16} color={colors.primary} />
-    </Pressable>
+    <Animated.View entering={FadeInDown.duration(360).springify()}>
+      <GlowPressable
+        onPress={() => {
+          haptics.tap();
+          router.push(asHref(handoffCount > 0 ? "/inbox" : "/bookings"));
+        }}
+        glowColor={colors.primary}
+        haptic="tap"
+        style={[
+          styles.strip,
+          {
+            backgroundColor: colors.primary + "18",
+            borderColor: colors.primary + "55",
+          },
+        ]}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.text, { color: colors.primary }]}>{line}</Text>
+        <Feather name="arrow-right" size={16} color={colors.primary} />
+      </GlowPressable>
+    </Animated.View>
   );
 }
 

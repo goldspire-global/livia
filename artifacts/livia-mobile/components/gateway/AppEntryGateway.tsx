@@ -1,46 +1,42 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AuroraHalo } from "@/components/brand/AuroraHalo";
+import { GatewayG1Ambient } from "@/components/gateway/GatewayG1Ambient";
 import { LiviaWordmark } from "@/components/brand/LiviaWordmark";
+import { GlowPressable } from "@/components/ui/GlowPressable";
 import { aurora } from "@/constants/colors";
 import { elevation } from "@/constants/elevation";
 import { fonts, type } from "@/constants/typography";
 import { useColors } from "@/hooks/useColors";
-import { useHaptics } from "@/hooks/useHaptics";
 import { isDemoLoginEnabled } from "@/hooks/usePersona";
+import { gatewayTheme } from "@/lib/gateway-theme";
 import { LIVIA_MOBILE_ENTRY_COPY } from "@workspace/policy";
 
 export function AppEntryGateway() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const haptics = useHaptics();
   const copy = LIVIA_MOBILE_ENTRY_COPY;
+  const gold = gatewayTheme.primaryChampagne;
 
   function goOperator() {
-    haptics.tap();
     router.push("/sign-in" as never);
   }
 
   function goGuest() {
-    haptics.tap();
     router.push("/my-livia" as never);
   }
 
   function goDemo() {
-    haptics.tap();
     router.push("/demo" as never);
   }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]} testID="app-entry-gateway">
-      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-        <AuroraHalo tone="primary" size={480} intensity={0.85} style={{ top: -100, left: -60 }} />
-        <AuroraHalo tone="ambient" size={320} intensity={0.45} style={{ bottom: 80, right: -80 }} />
-      </View>
+      <GatewayG1Ambient />
 
       <ScrollView
         contentContainerStyle={[
@@ -49,77 +45,84 @@ export function AppEntryGateway() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.brand}>
+        <Animated.View entering={FadeInDown.duration(420).springify().damping(18)} style={styles.brand}>
           <LiviaWordmark size="lg" color={colors.foreground} />
-          <Text style={[styles.kicker, { color: colors.primary }]}>{copy.kicker}</Text>
+          <Text style={[styles.kicker, { color: gold }]}>{copy.kicker}</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>{copy.title}</Text>
-        </View>
+        </Animated.View>
 
         <View style={styles.cards}>
-          <Pressable
-            onPress={goGuest}
-            testID="entry-gateway-guest"
-            style={({ pressed }) => [
-              styles.card,
-              elevation.floating,
-              {
-                backgroundColor: colors.card + "f2",
-                borderColor: colors.primary + "55",
-              },
-              pressed && styles.cardPressed,
-            ]}
-          >
-            <View style={[styles.iconWrap, { backgroundColor: colors.primary + "22" }]}>
-              <Feather name="calendar" size={22} color={colors.primary} />
-            </View>
-            <View style={styles.cardText}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>{copy.guestTitle}</Text>
-              <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>{copy.guestBody}</Text>
-              <Text style={[styles.cardCta, { color: colors.primary }]}>{copy.guestCta} →</Text>
-              <Text style={[styles.cardHint, { color: colors.mutedForeground }]}>{copy.guestPhoneHint}</Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={goOperator}
-            testID="entry-gateway-operator"
-            style={({ pressed }) => [
-              styles.card,
-              elevation.floating,
-              {
-                backgroundColor: colors.card + "f2",
-                borderColor: colors.border,
-              },
-              pressed && styles.cardPressed,
-            ]}
-          >
-            <View style={[styles.iconWrap, { backgroundColor: aurora.violet + "22" }]}>
-              <Feather name="briefcase" size={22} color={aurora.violet} />
-            </View>
-            <View style={styles.cardText}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>{copy.operatorTitle}</Text>
-              <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>{copy.operatorBody}</Text>
-              <Text style={[styles.cardCta, { color: aurora.violet }]}>{copy.operatorCta} →</Text>
-            </View>
-          </Pressable>
-
-          {isDemoLoginEnabled ? (
-            <Pressable
-              onPress={goDemo}
-              testID="entry-gateway-demo"
-              style={({ pressed }) => [
-                styles.demoLink,
-                pressed && styles.cardPressed,
+          <Animated.View entering={FadeInDown.delay(80).duration(400).springify()}>
+            <GlowPressable
+              onPress={goGuest}
+              testID="entry-gateway-guest"
+              glowColor={gold}
+              haptic="impact"
+              style={[
+                styles.card,
+                elevation.floating,
+                {
+                  backgroundColor: colors.card + "f2",
+                  borderColor: gold + "55",
+                },
               ]}
             >
-              <Text style={[styles.demoLinkTitle, { color: colors.foreground }]}>
-                {copy.demoTitle}
-              </Text>
-              <Text style={[styles.demoLinkBody, { color: colors.mutedForeground }]}>
-                {copy.demoBody}
-              </Text>
-              <Text style={[styles.cardCta, { color: colors.primary }]}>{copy.demoCta} →</Text>
-            </Pressable>
+              <View style={[styles.iconWrap, { backgroundColor: gold + "22" }]}>
+                <Feather name="calendar" size={22} color={gold} />
+              </View>
+              <View style={styles.cardText}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>{copy.guestTitle}</Text>
+                <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>{copy.guestBody}</Text>
+                <Text style={[styles.cardCta, { color: gold }]}>{copy.guestCta} →</Text>
+                <Text style={[styles.cardHint, { color: colors.mutedForeground }]}>{copy.guestPhoneHint}</Text>
+              </View>
+            </GlowPressable>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(140).duration(400).springify()}>
+            <GlowPressable
+              onPress={goOperator}
+              testID="entry-gateway-operator"
+              glowColor={aurora.violet}
+              haptic="impact"
+              style={[
+                styles.card,
+                elevation.floating,
+                {
+                  backgroundColor: colors.card + "f2",
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={[styles.iconWrap, { backgroundColor: aurora.violet + "22" }]}>
+                <Feather name="briefcase" size={22} color={aurora.violet} />
+              </View>
+              <View style={styles.cardText}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>{copy.operatorTitle}</Text>
+                <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>{copy.operatorBody}</Text>
+                <Text style={[styles.cardCta, { color: aurora.violet }]}>{copy.operatorCta} →</Text>
+              </View>
+            </GlowPressable>
+          </Animated.View>
+
+          {isDemoLoginEnabled ? (
+            <Animated.View entering={FadeInDown.delay(200).duration(400).springify()}>
+              <GlowPressable
+                onPress={goDemo}
+                testID="entry-gateway-demo"
+                glowColor={gold}
+                haptic="tap"
+                style={styles.demoLink}
+              >
+                <Text style={[styles.demoLinkTitle, { color: colors.foreground }]}>
+                  {copy.demoTitle}
+                </Text>
+                <Text style={[styles.demoLinkBody, { color: colors.mutedForeground }]}>
+                  {copy.demoBody}
+                </Text>
+                <Text style={[styles.cardCta, { color: gold }]}>{copy.demoCta} →</Text>
+              </GlowPressable>
+            </Animated.View>
           ) : null}
         </View>
       </ScrollView>
@@ -163,10 +166,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 14,
     alignItems: "flex-start",
-  },
-  cardPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.99 }],
   },
   iconWrap: {
     width: 44,

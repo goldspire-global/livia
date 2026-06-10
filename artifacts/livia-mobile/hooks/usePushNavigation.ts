@@ -1,6 +1,6 @@
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { isPushSupportedInThisBuild, loadNotificationsModule } from "@/lib/push-notifications";
 
 type PushData = {
   type?: string;
@@ -49,27 +49,40 @@ function routeForPush(data: PushData | undefined): string | null {
   }
 }
 
-/** Deep-link when the user taps a push notification (N1). */
+/** Deep-link when the user taps a push notification (N1). No-op in Expo Go. */
 export function usePushNavigation() {
   const router = useRouter();
 
   useEffect(() => {
-    function handle(data: PushData | undefined) {
-      const path = routeForPush(data);
-      if (path) router.push(path as never);
-    }
+    if (!isPushSupportedInThisBuild()) return;
 
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as PushData | undefined;
-      handle(data);
-    });
+    let sub: { remove: () => void } | undefined;
+    let cancelled = false;
 
-    void Notifications.getLastNotificationResponseAsync().then((last) => {
-      if (!last) return;
-      const data = last.notification.request.content.data as PushData | undefined;
-      handle(data);
-    });
+    void (async () => {
+      const Notifications = await loadNotificationsModule();
+      if (!Notifications || cancelled) return;
 
-    return () => sub.remove();
+      function handle(data: PushData | undefined) {
+        const path = routeForPush(data);
+        if (path) router.push(path as never);
+      }
+
+      sub = Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response.notification.request.content.data as PushData | undefined;
+        handle(data);
+      });
+
+      const last = await Notifications.getLastNotificationResponseAsync();
+      if (last) {
+        const data = last.notification.request.content.data as PushData | undefined;
+        handle(data);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      sub?.remove();
+    };
   }, [router]);
 }

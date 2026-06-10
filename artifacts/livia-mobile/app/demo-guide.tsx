@@ -87,7 +87,7 @@ export default function DemoGuideScreen() {
       <ScreenPurpose
         icon="log-in"
         title="How to demo Livia for real"
-        body="1) pnpm demo:provision (or web /demo). 2) Sign in on mobile with demo email + password — not /demo mock cards. 3) Today: Liv moments + stuck continuity. 4) Client detail: Liv memory. 5) Settings: Liv capabilities. 6) Inbox: Ask Liv chips."
+        body="1) Home → Walk the demo → Set up demo world. 2) Pick a trade world (Beauty, Wellness, …). 3) Walk into live demo as owner/manager/staff — real Clerk sign-in, Constellation skin. 4) Or use demo emails below on Sign in. 5) Guest path: My Livia (+353 87 100 0001)."
       />
 
       <Text style={[styles.section, { color: colors.mutedForeground }]}>DEMO ACCOUNTS</Text>

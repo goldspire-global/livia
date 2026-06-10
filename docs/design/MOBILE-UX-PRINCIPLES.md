@@ -1,6 +1,6 @@
 # Mobile UX principles (Livia tenant app)
 
-**Updated:** 2026-05-31  
+**Updated:** 2026-06-05  
 **App:** `artifacts/livia-mobile` (Expo)  
 **Guest P7:** [`PUBLIC-B-SURFACE-SPEC.md`](../product/PUBLIC-B-SURFACE-SPEC.md) — **mobile web `/b` is primary** for end customers; tenant Expo app is for operators (P2–P6).
 
@@ -95,9 +95,24 @@ Single-shop owners never see rollup noise — plain shop list only when `busines
 
 ---
 
+## Appearance inheritance
+
+Mobile is **not** a shrunken dashboard, but it **is** the same shop skin as web:
+
+- **Inherits:** preset id, brand accent, vertical vocabulary (`GET /me/tenant-experience` → `resolveMobileSkin()`).
+- **Native:** tab shell, morph homes, haptics, sheets — see [`MOBILE-SKIN-INHERITANCE.md`](./MOBILE-SKIN-INHERITANCE.md).
+- **Edit on device:** Settings → Shop appearance (preset chips + accent); logo/cover → web.
+
+Use `useMobileSkin()` — not scattered `isConstellation` checks — for chrome and atmosphere.
+
+**Onboarding:** Owners can create a shop and finish blocking acts on mobile (`onboarding-setup`). Preset picker uses the same `PATCH /presentation` as web; `OnboardingGate` sends incomplete owners to setup (demo tenants skip).
+
+---
+
 ## Motion & brand
 
-- Aurora halo on hero screens only (Today, Glance) — not on every list.
+- Shell atmosphere (Constellation map, wellness breath, aurora halo) lives in `TenantPresentationShell` — all tabs inherit.
+- Aurora halo on non-constellation heroes only when atmosphere is `aurora-halo` — not on every list.
 - Haptics on tab change, pull-to-refresh, destructive actions.
 - Persona accent stripe on stack headers via `PersonaScreenHeader`.
 

@@ -1,6 +1,5 @@
 import {
   ListBookingsStatus,
-  customFetch,
   useGetBusiness,
   useGetDashboardSummary,
   useGetTenantCapabilities,
@@ -8,7 +7,6 @@ import {
   useListConversations,
   useUpdateBooking,
 } from "@workspace/api-client-react";
-import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
@@ -37,7 +35,6 @@ import { ActivationWelcome } from "@/components/ActivationWelcome";
 import { ActivationMilestone } from "@/components/ActivationMilestone";
 import { BookingCard } from "@/components/BookingCard";
 import { AuroraHalo } from "@/components/brand/AuroraHalo";
-import { LivPulse } from "@/components/brand/LivPulse";
 import { Shimmer } from "@/components/brand/Shimmer";
 import { EmptyState } from "@/components/EmptyState";
 import { QuickActionsSheet } from "@/components/QuickActionsSheet";
@@ -67,11 +64,17 @@ import {
   OwnerMobileRevenueStat,
 } from "@/components/OwnerMobileBriefing";
 import { getDashboardBaseUrl } from "@/lib/dashboard-url";
+import { PersonaRitualHeader } from "@/components/ritual/PersonaRitualHeader";
 import { ScreenTopBar } from "@/components/ScreenTopBar";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { resolveTenantAccentHex } from "@/lib/vertical-theme";
 import { useOnboardingCapabilitySync } from "@/lib/onboarding-capability-sync";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
+import {
+  useMobileSkin,
+  usePresentationAccent,
+  useTenantPresentation,
+} from "@/contexts/PresentationThemeContext";
+import { resolveMobileOwnerTodayVariant } from "@/lib/resolve-mobile-skin";
 import { useChainRollup } from "@/hooks/useChainRollup";
 import { VerticalTodayInsights } from "@/components/VerticalTodayInsights";
 import { VerticalHomeShortcuts } from "@/components/VerticalHomeShortcuts";
@@ -81,24 +84,24 @@ import { ActivityFeedCard } from "@/components/ActivityFeedCard";
 import { OwnerLivAssistFab } from "@/components/OwnerLivAssistFab";
 import { CapabilityReadinessCard } from "@/components/CapabilityReadinessCard";
 import { BeautyTodayHandoffStrip } from "@/components/beauty/BeautyTodayHandoffStrip";
+import { MobileTodayMorphStrip } from "@/components/today/MobileTodayMorphStrip";
+import { GlowPressable } from "@/components/ui/GlowPressable";
+import { WellnessShellAtmosphere } from "@/components/wellness/WellnessShellAtmosphere";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { isBeautyPublicSurface } from "@/lib/beauty-public";
 import { useBeautyMobileLayout } from "@/hooks/useBeautyMobileLayout";
-
-function timeOfDayGreeting(nowMs: number, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    hour: "numeric",
-    hour12: false,
-    timeZone,
-  }).formatToParts(new Date(nowMs));
-  const h = Number(parts.find((p) => p.type === "hour")?.value ?? new Date(nowMs).getHours());
-  if (h < 5) return "Still up";
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  if (h < 21) return "Good evening";
-  return "Good night";
-}
+import {
+  beautyNativeMorphForVertical,
+  wellnessNativeMorphForVertical,
+} from "@/lib/presentation-layout";
+import { usePersonaBriefing } from "@/hooks/usePersonaBriefing";
+import { BeautyMorphTodayHome } from "@/components/beauty/BeautyMorphTodayHome";
+import { WellnessMorphTodayHome } from "@/components/wellness/WellnessMorphTodayHome";
+import { MorphOwnerSignalsFooter } from "@/components/today/MorphOwnerSignalsFooter";
+import { ConstellationTodayHome } from "@/components/constellation/ConstellationTodayHome";
+import { TENANT_SHELL_LAYOUT, tenantScreenBackground } from "@/lib/tenant-shell-layout";
+import { useManualRefresh } from "@/lib/manual-refresh";
 
 function formatTimeInBusinessTz(iso: string, timeZone: string) {
   return new Date(iso).toLocaleTimeString(undefined, {
@@ -165,11 +168,10 @@ export default function DashboardScreen() {
     data: summary,
     isLoading,
     refetch,
-    isRefetching,
   } = useGetDashboardSummary(currentBusiness?.id ?? "", {
     query: {
       enabled: !!currentBusiness?.id,
-      refetchInterval: 12_000,
+      refetchInterval: 30_000,
       refetchOnWindowFocus: true,
     } as any,
   });
@@ -230,42 +232,30 @@ export default function DashboardScreen() {
 
   const pendingCount = summary?.pendingCount ?? 0;
 
-  const { data: livPresence } = useQuery({
-    queryKey: ["liv-presence", currentBusiness?.id, role],
-    queryFn: () =>
-      customFetch<{
-        line: string;
-        source: string;
-        intel?: { commerceHref?: string; commerceTopSignal?: { title: string } };
-      }>(`/api/businesses/${currentBusiness!.id}/liv-presence?context=${
-        role === "ADMIN" ? "manager_today" : "owner_today"
-      }`),
-    enabled: !!currentBusiness?.id && (role === "OWNER" || role === "ADMIN"),
-    staleTime: 90_000,
-  });
-
-  const presenceLine =
-    livPresence?.line ??
-    (pendingCount > 0
-      ? `${pendingCount} booking${pendingCount === 1 ? "" : "s"} need confirmation — tap Pending`
-      : "All confirmations caught up");
-
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
   const pack = verticalPackUi(vertical, (bizDetail as { category?: string } | undefined)?.category);
-  const tenantAccent =
-    (tenantExperience as { presentation?: { brandAccentHex?: string | null } } | null | undefined)
-      ?.presentation?.brandAccentHex ??
-    (tenantExperience as { publicAppearance?: { brandAccentHex?: string | null } } | null | undefined)
-      ?.publicAppearance?.brandAccentHex;
-  const verticalAccent = resolveTenantAccentHex(
-    vertical,
-    (bizDetail as { category?: string } | undefined)?.category,
-    tenantAccent,
-  );
   const beautyPreset = (
     tenantExperience as { presentation?: { cssPreset?: string; label?: string } } | null | undefined
   )?.presentation;
-  const beautyOwner = isBeautyPublicSurface(vertical, beautyPreset?.cssPreset);
+  const tenantPresentation = useTenantPresentation();
+  const mobileSkin = useMobileSkin();
+  const presentationAccent = usePresentationAccent();
+  const effectivePreset = tenantPresentation.effectiveCssPreset;
+  const beautyOwner = isBeautyPublicSurface(vertical, effectivePreset);
+  const { livLine: morphLivLine, livPulse, isLoading: briefingLoading } = usePersonaBriefing();
+  const layoutMorph = tenantPresentation.layoutMorph;
+  const ownerTodayVariant = resolveMobileOwnerTodayVariant(mobileSkin, persona, layoutMorph);
+  const useMorphToday =
+    ownerTodayVariant === "beauty-morph" || ownerTodayVariant === "wellness-morph";
+  const useConstellationToday = ownerTodayVariant === "constellation";
+  const beautyMorph = beautyNativeMorphForVertical(vertical, layoutMorph);
+  const wellnessMorph = wellnessNativeMorphForVertical(vertical, layoutMorph);
+  const headerDateStr = new Date(clock).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: businessTz,
+  });
   const { layout: beautyLayout, lightChrome: beautyLight } = useBeautyMobileLayout();
 
   const { data: convData } = useListConversations(
@@ -273,15 +263,20 @@ export default function DashboardScreen() {
     undefined,
     {
       query: {
-        enabled: !!currentBusiness?.id && beautyLayout === "premium-glow",
+        enabled: !!currentBusiness?.id && (beautyLayout === "premium-glow" || useConstellationToday),
         staleTime: 60_000,
       } as never,
     },
   );
-  const handoffCount = useMemo(() => {
-    const threads = Array.isArray(convData) ? convData : [];
-    return threads.filter((t) => t.status === "OPEN" && !t.aiHandled).length;
-  }, [convData]);
+  const inboxThreads = useMemo(() => (Array.isArray(convData) ? convData : []), [convData]);
+  const handoffCount = useMemo(
+    () => inboxThreads.filter((t) => t.status === "OPEN" && !t.aiHandled).length,
+    [inboxThreads],
+  );
+  const handoffThreads = useMemo(
+    () => inboxThreads.filter((t) => t.status === "OPEN" && !t.aiHandled),
+    [inboxThreads],
+  );
 
   const { data: pendingData } = useListBookings(
     currentBusiness?.id ?? "",
@@ -294,8 +289,9 @@ export default function DashboardScreen() {
 
   const schedulePreview = useMemo(() => {
     const list = summary?.upcomingBookings ?? [];
-    return list.filter((b) => b.id !== next?.id).slice(0, 2);
-  }, [summary?.upcomingBookings, next?.id]);
+    const cap = useConstellationToday ? 3 : 2;
+    return list.filter((b) => b.id !== next?.id && b.id !== pendingPreview[0]?.id).slice(0, cap);
+  }, [summary?.upcomingBookings, next?.id, pendingPreview, useConstellationToday]);
 
   const goPending = () => {
     haptics.tap();
@@ -306,28 +302,19 @@ export default function DashboardScreen() {
     }
   };
 
-  // Halo pulse intensifies during pull-to-refresh — replaces the stock spinner
-  // feel by tying the refresh state to the always-present aurora.
-  const haloIntensity = useSharedValue(0.85);
-  useEffect(() => {
-    haloIntensity.value = withTiming(isRefetching ? 1.4 : 0.85, { duration: 320 });
-  }, [isRefetching, haloIntensity]);
-  const refreshHaloStyle = useAnimatedStyle(() => ({
-    opacity: haloIntensity.value,
-    transform: [{ scale: 0.9 + haloIntensity.value * 0.1 }],
-  }));
+  const { refreshing: pullRefreshing, onRefresh: onPullRefresh } = useManualRefresh(refetch);
 
   if (!currentBusiness) {
     if (bizLoading || businesses.length > 0) {
       return (
-        <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPad }]}>
+        <View style={[styles.root, { backgroundColor: tenantScreenBackground(tenantPresentation.isConstellation, colors.background), paddingTop: topPad }]}>
           <ActivityIndicator color={colors.primary} style={{ marginTop: 48 }} />
         </View>
       );
     }
     if (demoBusinessPending) {
       return (
-        <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPad, paddingHorizontal: 24 }]}>
+        <View style={[styles.root, { backgroundColor: tenantScreenBackground(tenantPresentation.isConstellation, colors.background), paddingTop: topPad, paddingHorizontal: 24 }]}>
           <Text style={[type.body, { color: colors.foreground, marginTop: 48 }]}>
             Loading your demo shop…
           </Text>
@@ -341,6 +328,24 @@ export default function DashboardScreen() {
     }
     return null;
   }
+
+  const confirmPendingBooking = async (bookingId: string) => {
+    if (!currentBusiness?.id) return;
+    try {
+      await updateBooking({
+        businessId: currentBusiness.id,
+        bookingId,
+        data: { status: "CONFIRMED" },
+      });
+      haptics.success();
+      invalidateOperationalState(qc, currentBusiness.id);
+      refetch();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      haptics.warning();
+      Alert.alert("Error", e?.message ?? "Could not confirm booking");
+    }
+  };
 
   const advanceNext = async () => {
     if (!currentBusiness?.id || !next) return;
@@ -367,68 +372,63 @@ export default function DashboardScreen() {
     }
   };
 
+  const screenBg = tenantScreenBackground(tenantPresentation.isConstellation, colors.background);
+  const contentGap = tenantPresentation.isConstellation
+    ? TENANT_SHELL_LAYOUT.contentGap
+    : 18;
+
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View style={[styles.root, { backgroundColor: screenBg }]}>
     <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: topPad + 12 }]}
+      style={styles.scroll}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: topPad + 12, gap: contentGap },
+      ]}
       contentInsetAdjustmentBehavior="automatic"
       refreshControl={
         <RefreshControl
-          refreshing={isRefetching}
+          refreshing={pullRefreshing}
           onRefresh={() => {
             haptics.tap();
-            refetch();
+            void onPullRefresh();
           }}
-          tintColor="transparent"
-          colors={["transparent"]}
-          progressBackgroundColor="transparent"
+          tintColor={colors.primary}
         />
       }
       showsVerticalScrollIndicator={false}
     >
-      {!beautyLight ? (
-        <Animated.View pointerEvents="none" style={[styles.glowWrap, refreshHaloStyle]}>
+      {!tenantPresentation.isConstellation && tenantPresentation.isWellnessNative ? (
+        <Animated.View pointerEvents="none" style={styles.glowWrap}>
+          <WellnessShellAtmosphere cssPreset={effectivePreset} />
+        </Animated.View>
+      ) : !tenantPresentation.isConstellation && !beautyLight ? (
+        <Animated.View pointerEvents="none" style={styles.glowWrap}>
           <AuroraHalo tone="primary" size={420} style={{ top: -160, left: -100 }} intensity={1} />
         </Animated.View>
       ) : null}
 
       <ActivationMilestone />
-      <ActivationWelcome />
+      {!useConstellationToday ? <ActivationWelcome /> : null}
 
-      {/* Header */}
       <Animated.View style={[styles.headerBlock, headStyle]}>
         <ScreenTopBar />
-        <View style={styles.presence}>
-          <LivPulse size={9} state="idle" />
-          <Text style={[styles.presenceText, { color: colors.mutedForeground }]}>
-            {presenceLine}
-          </Text>
-        </View>
-
-        <Text style={[styles.greeting, { color: colors.mutedForeground }]}>
-          {timeOfDayGreeting(clock, businessTz)} ·{" "}
-          {new Date(clock).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            timeZone: businessTz,
-          })}
-        </Text>
-        <Text
-          style={[
-            styles.bizName,
-            { color: colors.foreground },
-            beautyOwner && { fontFamily: fonts.serif, letterSpacing: 0.3 },
-          ]}
-          numberOfLines={1}
-        >
-          {currentBusiness?.name ?? "Loading…"}
-        </Text>
-        <Text style={[styles.verticalLine, { color: verticalAccent }]} numberOfLines={2}>
-          {pack.label} · {pack.ownerTodayLine}
-          {beautyOwner && beautyPreset?.label ? ` · ${beautyPreset.label}` : ""}
-        </Text>
+        {!useConstellationToday ? (
+          <>
+            <PersonaRitualHeader variant="home" showActions />
+            <Text style={[styles.verticalLine, { color: presentationAccent }]} numberOfLines={2}>
+              {pack.label} · {pack.ownerTodayLine}
+              {beautyOwner && beautyPreset?.label ? ` · ${beautyPreset.label}` : ""}
+              {" · "}
+              {new Date(clock).toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+                timeZone: businessTz,
+              })}
+            </Text>
+          </>
+        ) : null}
       </Animated.View>
 
 
@@ -457,6 +457,88 @@ export default function DashboardScreen() {
           {rollup ? <ChainCommerceCard rollup={rollup} /> : null}
         </>
       ) : null}
+
+      {useConstellationToday ? (
+        <ConstellationTodayHome
+          businessId={currentBusiness.id}
+          businessName={currentBusiness.name}
+          businessTz={businessTz}
+          vertical={vertical}
+          category={(bizDetail as { category?: string } | undefined)?.category}
+          headerDate={headerDateStr}
+          livLine={morphLivLine}
+          livLoading={briefingLoading}
+          livPulse={livPulse}
+          pendingCount={pendingCount}
+          handoffCount={handoffCount}
+          todayCount={summary?.todayBookings ?? 0}
+          completedToday={summary?.completedTodayCount ?? 0}
+          isLoading={isLoading}
+          heroPending={pendingPreview[0] ?? null}
+          next={next ?? null}
+          schedulePreview={schedulePreview}
+          inboxThreads={handoffThreads}
+          onPending={goPending}
+          onNewBooking={handleNewBooking}
+          onConfirmBooking={confirmPendingBooking}
+        />
+      ) : useMorphToday && beautyMorph ? (
+        <BeautyMorphTodayHome
+          morph={beautyMorph}
+          accent={presentationAccent}
+          vertical={vertical}
+          category={(bizDetail as { category?: string } | undefined)?.category}
+          cssPreset={effectivePreset}
+          livLine={morphLivLine}
+          pendingCount={pendingCount}
+          handoffCount={handoffCount}
+          pendingPreview={pendingPreview}
+          pendingHidden={pendingHidden}
+          next={next ?? null}
+          nextRelative={nextRelative}
+          nextTimeLabel={next ? formatTimeInBusinessTz(next.startAt, businessTz) : undefined}
+          todayCount={summary?.todayBookings ?? 0}
+          confirmedCount={summary?.confirmedCount ?? 0}
+          completedToday={summary?.completedTodayCount ?? 0}
+          isLoading={isLoading}
+          businessTz={currentBusiness?.timezone}
+          businessName={currentBusiness?.name}
+          onPending={goPending}
+          onNewBooking={handleNewBooking}
+          onNextLongPress={() => setNextActionsOpen(true)}
+        />
+      ) : useMorphToday && wellnessMorph ? (
+        <WellnessMorphTodayHome
+          morph={wellnessMorph}
+          accent={presentationAccent}
+          vertical={vertical}
+          category={(bizDetail as { category?: string } | undefined)?.category}
+          cssPreset={effectivePreset}
+          livLine={morphLivLine}
+          pendingCount={pendingCount}
+          handoffCount={handoffCount}
+          pendingPreview={pendingPreview}
+          pendingHidden={pendingHidden}
+          upcoming={schedulePreview}
+          next={next ?? null}
+          nextRelative={nextRelative}
+          todayCount={summary?.todayBookings ?? 0}
+          completedToday={summary?.completedTodayCount ?? 0}
+          isLoading={isLoading}
+          businessTz={currentBusiness?.timezone}
+          businessName={currentBusiness?.name}
+          headerDate={headerDateStr}
+          onPending={goPending}
+          onNewBooking={handleNewBooking}
+          onInbox={() => router.push(asHref("/inbox"))}
+        />
+      ) : (
+        <>
+      <MobileTodayMorphStrip
+        vertical={vertical}
+        category={(bizDetail as { category?: string } | undefined)?.category}
+        cssPreset={beautyPreset?.cssPreset}
+      />
 
       {beautyLayout === "premium-glow" ? (
         <BeautyTodayHandoffStrip handoffCount={handoffCount} pendingCount={pendingCount} />
@@ -575,7 +657,8 @@ export default function DashboardScreen() {
         </View>
       ) : null}
 
-      {(summary as { atRiskGuests?: Array<{ customerId: string; displayName: string; headline: string; stage: string }> } | undefined)
+      {!useMorphToday &&
+      (summary as { atRiskGuests?: Array<{ customerId: string; displayName: string; headline: string; stage: string }> } | undefined)
         ?.atRiskGuests?.length ? (
         <View
           style={[
@@ -603,7 +686,7 @@ export default function DashboardScreen() {
 
       {/* Next-up hero card — only when something is coming up */}
       {!isLoading && next ? (
-        <Pressable
+        <GlowPressable
           onPress={() => {
             haptics.tap();
             router.push(`/booking/${next.id}`);
@@ -613,7 +696,8 @@ export default function DashboardScreen() {
             setNextActionsOpen(true);
           }}
           delayLongPress={350}
-          style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.99 : 1 }] }]}
+          glowColor={aurora.cyan}
+          haptic="tap"
         >
           <View
             style={[
@@ -643,12 +727,11 @@ export default function DashboardScreen() {
               {next.staff?.displayName ? `  ·  ${next.staff.displayName}` : ""}
             </Text>
           </View>
-        </Pressable>
+        </GlowPressable>
       ) : null}
 
-      {/* Primary CTA — solid cyan (gradients reserved for AI moments per ADR 0007) */}
       <Animated.View style={[ctaStyle, { alignSelf: "flex-start" }]}>
-        <Pressable
+        <GlowPressable
           onPress={handleNewBooking}
           onPressIn={() => {
             ctaScale.value = withSpring(0.96, { damping: 14, stiffness: 280 });
@@ -657,6 +740,8 @@ export default function DashboardScreen() {
             ctaScale.value = withSpring(1, { damping: 14, stiffness: 280 });
           }}
           testID="new-booking-button"
+          glowColor={colors.primary}
+          haptic="impact"
           style={[
             styles.ctaBtn,
             { backgroundColor: colors.primary },
@@ -667,7 +752,7 @@ export default function DashboardScreen() {
           <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>
             New booking
           </Text>
-        </Pressable>
+        </GlowPressable>
       </Animated.View>
 
       {(role === "OWNER" || role === "ADMIN") && !isLoading ? (
@@ -733,8 +818,22 @@ export default function DashboardScreen() {
           </>
         )}
       </View>
+        </>
+      )}
 
-      {(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount ? (
+      {(role === "OWNER" || role === "ADMIN") && !isLoading && useMorphToday ? (
+        <OwnerMobileBriefingChips
+          pendingCount={pendingCount}
+          handedOffCount={handoffCount}
+          atRiskCount={(summary as { atRiskGuests?: unknown[] } | undefined)?.atRiskGuests?.length ?? 0}
+          lowFeedbackCount={(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount ?? 0}
+          confirmedCount={summary?.confirmedCount ?? 0}
+          weekBookings={summary?.weekBookings ?? 0}
+          commerce={(summary as { commerce?: { capturedLabel?: string; captureRatePercent?: number | null; paymentCount30d?: number; capturedMinor30d?: number } })?.commerce}
+        />
+      ) : null}
+
+      {(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount && !useMorphToday ? (
         <View
           style={[
             styles.feedbackAlert,
@@ -769,7 +868,7 @@ export default function DashboardScreen() {
         </View>
       ) : null}
 
-      {(role === "OWNER" || role === "ADMIN") && currentBusiness?.id ? (
+      {!useConstellationToday && (role === "OWNER" || role === "ADMIN") && currentBusiness?.id ? (
         <View style={styles.livSection}>
           <Text style={[styles.livSectionTitle, { color: colors.mutedForeground }]}>
             Liv & insights
@@ -797,14 +896,52 @@ export default function DashboardScreen() {
           <LivIncidentsCard businessId={currentBusiness.id} />
           <LivProposalsCard businessId={currentBusiness.id} />
           <StuckContinuityCard businessId={currentBusiness.id} />
-          <OwnerIntelligenceHub businessId={currentBusiness.id} />
+          {useMorphToday ? (
+            <MorphOwnerSignalsFooter
+              businessId={currentBusiness.id}
+              atRiskGuests={(summary as { atRiskGuests?: Array<{ customerId: string; displayName: string; headline: string; stage: string }> } | undefined)?.atRiskGuests}
+              recentVisitFeedback={summary?.recentVisitFeedback}
+              lowFeedbackCount={(summary as { lowFeedbackCount?: number } | undefined)?.lowFeedbackCount}
+              atRiskBlock={
+                (summary as { atRiskGuests?: Array<{ customerId: string; displayName: string; headline: string; stage: string }> } | undefined)
+                  ?.atRiskGuests?.length ? (
+                  <View
+                    style={[
+                      styles.atRiskBlock,
+                      { borderColor: colors.warning + "55", backgroundColor: colors.warning + "12" },
+                    ]}
+                  >
+                    <Text style={[styles.atRiskEyebrow, { color: colors.warning }]}>Guests to reconnect</Text>
+                    {(summary as { atRiskGuests: Array<{ customerId: string; displayName: string; headline: string; stage: string }> }).atRiskGuests.map((g) => (
+                      <Pressable
+                        key={g.customerId}
+                        onPress={() => router.push(`/customer/${g.customerId}`)}
+                        style={styles.atRiskRow}
+                      >
+                        <Text style={[styles.atRiskName, { color: colors.foreground }]} numberOfLines={1}>
+                          {g.displayName}
+                        </Text>
+                        <Text style={[styles.atRiskHint, { color: colors.mutedForeground }]} numberOfLines={2}>
+                          {g.headline}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null
+              }
+            />
+          ) : (
+            <>
+              <OwnerIntelligenceHub businessId={currentBusiness.id} />
+              <VisitFeedbackCard
+                businessId={currentBusiness.id}
+                items={summary?.recentVisitFeedback}
+              />
+            </>
+          )}
           <CapabilityReadinessCard businessId={currentBusiness.id} />
           <OwnerLivOpsCard businessId={currentBusiness.id} />
           <ActivityFeedCard businessId={currentBusiness.id} />
-          <VisitFeedbackCard
-            businessId={currentBusiness.id}
-            items={summary?.recentVisitFeedback}
-          />
           <VerticalHomeShortcuts />
           <VerticalTodayInsights businessId={currentBusiness.id} />
         </View>
@@ -836,7 +973,11 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingBottom: 140, gap: 18 },
+  scroll: { backgroundColor: "transparent" },
+  content: {
+    paddingHorizontal: TENANT_SHELL_LAYOUT.contentPadX,
+    paddingBottom: TENANT_SHELL_LAYOUT.tabBarClearance + 52,
+  },
   livSection: { gap: 12, marginTop: 4 },
   livSectionTitle: {
     fontFamily: fonts.bodyMed,

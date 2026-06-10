@@ -1,7 +1,6 @@
-appId: ${MAESTRO_APP_ID}
+appId: host.exp.exponent
 ---
-# Optional demo sign-in — skip when already authenticated
-- launchApp
+# Optional demo sign-in — skip when already authenticated (caller must have app open)
 - runFlow:
     when:
       visible:

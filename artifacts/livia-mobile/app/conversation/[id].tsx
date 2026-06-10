@@ -36,6 +36,9 @@ import { asHref } from "@/lib/navigation";
 import { useMembership } from "@/hooks/useMembership";
 import { inboxLivSuggestions } from "@/lib/liv-inbox-suggestions";
 import { useInAppNotifications } from "@/hooks/useInAppNotifications";
+import { useHaptics } from "@/hooks/useHaptics";
+import { GlowPressable } from "@/components/ui/GlowPressable";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 function roleLabel(role: ConversationMessage["role"]): string {
   switch (role) {
@@ -61,6 +64,7 @@ export default function ConversationScreen() {
   const { currentBusiness } = useBusiness();
   const businessId = currentBusiness?.id ?? "";
   const { markReadByResource } = useInAppNotifications();
+  const haptics = useHaptics();
   const businessTz = resolveBusinessTimeZone(currentBusiness);
 
   useEffect(() => {
@@ -242,15 +246,16 @@ export default function ConversationScreen() {
             ) : null}
           </View>
         ) : (
-          messages.map((m) => (
-            <View
+          messages.map((m, i) => (
+            <Animated.View
               key={m.id}
+              entering={FadeInDown.delay(Math.min(i * 30, 240)).duration(280).springify()}
               style={[
                 styles.bubble,
                 {
                   backgroundColor:
                     m.role === "USER" ? colors.card : m.role === "ASSISTANT" ? aurora.cyan + "18" : colors.muted,
-                  borderColor: colors.border,
+                  borderColor: m.role === "ASSISTANT" ? aurora.cyan + "44" : colors.border,
                   alignSelf: m.role === "USER" ? "flex-start" : "flex-end",
                 },
               ]}
@@ -259,7 +264,7 @@ export default function ConversationScreen() {
                 {roleLabel(m.role)} · {formatTimeInZone(m.createdAt, businessTz)}
               </Text>
               <Text style={[styles.msg, { color: colors.foreground }]}>{m.content}</Text>
-            </View>
+            </Animated.View>
           ))
         )}
       </ScrollView>
@@ -281,10 +286,13 @@ export default function ConversationScreen() {
         {(convStatus === "OPEN" || convStatus === "HANDED_OFF") && canAskLiv ? (
           <View style={styles.chipRow}>
             {livSuggestionChips.map((s) => (
-                <Pressable
+                <GlowPressable
                   key={s}
                   disabled={livAssisting}
+                  glowColor={aurora.cyan}
+                  haptic="selection"
                   onPress={async () => {
+                    haptics.tap();
                     setLivAssisting(true);
                     try {
                       const token = await getToken();
@@ -306,12 +314,18 @@ export default function ConversationScreen() {
                       setLivAssisting(false);
                     }
                   }}
-                  style={[styles.chip, { borderColor: colors.border }]}
+                  style={[
+                    styles.chip,
+                    {
+                      borderColor: aurora.cyan + "44",
+                      backgroundColor: aurora.cyan + "10",
+                    },
+                  ]}
                 >
                   <Text style={[styles.chipText, { color: colors.foreground }]} numberOfLines={2}>
                     {s}
                   </Text>
-                </Pressable>
+                </GlowPressable>
               ))}
           </View>
         ) : null}

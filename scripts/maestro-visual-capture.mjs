@@ -32,17 +32,85 @@ function resolveJavaHome() {
   return null;
 }
 
+function resolveAdbPath() {
+  const local = path.join(process.env.LOCALAPPDATA ?? "", "Android", "Sdk", "platform-tools", "adb.exe");
+  if (fs.existsSync(local)) return local;
+  const onPath = which("adb");
+  return onPath && fs.existsSync(onPath) ? onPath : null;
+}
+
+function listAndroidDeviceIds(adbPath) {
+  if (!adbPath) return [];
+  const r = spawnSync(adbPath, ["devices"], { encoding: "utf8", shell: false });
+  if (r.status !== 0) return [];
+  return (r.stdout ?? "")
+    .split(/\r?\n/)
+    .filter((line) => /\tdevice\s*$/.test(line) && !line.startsWith("List of devices"))
+    .map((line) => line.split("\t")[0])
+    .filter(Boolean);
+}
+
+function hasAndroidDeviceConnected(adbPath) {
+  return listAndroidDeviceIds(adbPath).length > 0;
+}
+
+function runAdb(adbPath, args) {
+  return spawnSync(adbPath, args, { encoding: "utf8", shell: false });
+}
+
+/** Stabilize emulator adb + reverse Metro/API before Maestro (avoids launchApp flake). */
+function androidPreflight(adbPath, expoUrl) {
+  if (!adbPath || !hasAndroidDeviceConnected(adbPath)) return;
+
+  if (process.env.MAESTRO_ADB_RESET === "1") {
+    console.log("Restarting adb server (MAESTRO_ADB_RESET=1)…");
+    runAdb(adbPath, ["kill-server"]);
+    runAdb(adbPath, ["start-server"]);
+  }
+
+  for (const port of [3000, 8083]) {
+    const r = runAdb(adbPath, ["reverse", `tcp:${port}`, `tcp:${port}`]);
+    if (r.status !== 0) {
+      console.warn(`adb reverse tcp:${port} failed: ${(r.stderr ?? r.stdout ?? "").trim()}`);
+    }
+  }
+
+  const pkg = runAdb(adbPath, ["shell", "pm", "list", "packages", "host.exp.exponent"]);
+  if (!(pkg.stdout ?? "").includes("host.exp.exponent")) {
+    console.error("Expo Go (host.exp.exponent) not installed on the emulator. Install from Play Store.");
+    process.exit(1);
+  }
+
+  // Maestro openLink handles cold open; only verify reverse + package here.
+}
+
+/** Expo Go: Android `host.exp.exponent` · iOS `host.exp.Exponent` · dev build `io.livia.app` */
+function resolveMaestroAppId(adbPath) {
+  if (process.env.MAESTRO_APP_ID) return process.env.MAESTRO_APP_ID;
+  if (hasAndroidDeviceConnected(adbPath)) return "host.exp.exponent";
+  return "io.livia.app";
+}
+
 const javaHome = resolveJavaHome();
+const adbPath = resolveAdbPath();
+const maestroAppId = resolveMaestroAppId(adbPath);
+const androidUdid =
+  process.env.MAESTRO_UDID ?? listAndroidDeviceIds(adbPath)[0] ?? null;
 const env = {
   ...process.env,
   ...(javaHome ? { JAVA_HOME: javaHome } : {}),
-  MAESTRO_APP_ID: process.env.MAESTRO_APP_ID ?? "io.livia.app",
+  MAESTRO_APP_ID: maestroAppId,
+  MAESTRO_EXPO_URL: process.env.MAESTRO_EXPO_URL ?? "exp://127.0.0.1:8083",
   MAESTRO_DEMO_EMAIL: process.env.MAESTRO_DEMO_EMAIL ?? "demo-owner@livia.io",
   MAESTRO_DEMO_PASSWORD: process.env.MAESTRO_DEMO_PASSWORD ?? "LiviaDemo2026!",
+  // Windows emulators often need >15s for Maestro's Android driver (default 15000ms).
+  MAESTRO_DRIVER_STARTUP_TIMEOUT:
+    process.env.MAESTRO_DRIVER_STARTUP_TIMEOUT ?? "120000",
 };
 
 /** Order: sign-in base → personas → vertical glance passes */
-const flows = [
+const defaultFlows = [
+  "capture-cold-open-gateway.yaml",
   "capture-owner-tabs.yaml",
   "capture-founder-more.yaml",
   "capture-founder-verticals.yaml",
@@ -50,6 +118,9 @@ const flows = [
   "capture-persona-staff.yaml",
   "capture-persona-receptionist.yaml",
 ];
+const flows = process.env.MAESTRO_FLOWS
+  ? process.env.MAESTRO_FLOWS.split(",").map((f) => f.trim()).filter(Boolean)
+  : defaultFlows;
 
 function which(cmd) {
   const r = spawnSync(process.platform === "win32" ? "where" : "which", [cmd], {
@@ -89,6 +160,12 @@ if (!maestroBin) {
   process.exit(1);
 }
 console.log(`Using Maestro: ${maestroBin}`);
+console.log(
+  `MAESTRO_APP_ID: ${maestroAppId}${adbPath ? ` (adb: ${adbPath})` : ""}${androidUdid ? ` · device: ${androidUdid}` : ""}`,
+);
+
+const expoUrl = env.MAESTRO_EXPO_URL;
+androidPreflight(adbPath, expoUrl);
 
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -98,16 +175,39 @@ for (const flow of flows) {
     console.error(`Missing flow: ${flowPath}`);
     process.exit(1);
   }
-  console.log(`\n▶ maestro test ${flow}`);
-  const r = spawnSync(maestroBin, ["test", flowPath], {
-    cwd: root,
-    env,
-    stdio: "inherit",
-    shell: process.platform === "win32",
-  });
-  if (r.status !== 0) {
+  // Relative path avoids Windows shell splitting `Personal Projects` in absolute paths.
+  const flowArg = path.join("maestro", "flows", flow);
+  console.log(`\n▶ maestro test ${flowArg}`);
+  // shell: true so Windows .bat inherits env; relative flowArg avoids path-with-spaces split.
+  const configArg = path.join("maestro", "config.yaml");
+  const maxAttempts = Number(process.env.MAESTRO_ATTEMPTS ?? "3");
+  let lastStatus = 1;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (attempt > 1) {
+      console.log(`Retry ${attempt}/${maxAttempts} after driver/adb flake…`);
+      androidPreflight(adbPath, env.MAESTRO_EXPO_URL);
+    }
+    const args = ["test", "--config", configArg];
+    if (androidUdid) args.push("--udid", androidUdid);
+    if (attempt > 1) args.push("--reinstall-driver");
+    args.push(flowArg);
+    const r = spawnSync(
+      maestroBin,
+      args,
+      {
+        cwd: root,
+        env,
+        stdio: "inherit",
+        shell: true,
+        windowsHide: true,
+      },
+    );
+    lastStatus = r.status ?? 1;
+    if (lastStatus === 0) break;
+  }
+  if (lastStatus !== 0) {
     console.error(`Flow failed: ${flow}`);
-    process.exit(r.status ?? 1);
+    process.exit(lastStatus);
   }
 }
 

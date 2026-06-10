@@ -31,7 +31,8 @@ This spec resolves inheritance **direction**, **editable fields**, and **preview
 | Marketing | W1 | Aurora editorial (fixed) | Prospects |
 | Gateway / demo | W2 | Aurora gateway (fixed) | Sign-in, demo |
 | Internal ops | W3 | Ops amber (fixed) | Livia Inc staff |
-| Tenant app | W4 | **Preset × brand** per business | Owner, staff |
+| Tenant app (web) | W4 | **Preset × brand** per business | Owner, staff |
+| Tenant app (native) | W4m | **Same preset × brand** as W4 — native Layer 5 renderer | Owner, staff |
 | Public guest | W5 | **Same tenant record as W4** × vertical template | P7 customers |
 | Guest hub | W6 | Liv Guest chrome (platform) × person vault | P7 cross-shop (R2) |
 
@@ -106,7 +107,9 @@ Persona layer (4) does **not** apply to P7 — guest flows use **customer typolo
 | **Logo / cover / accent** | Brand layer on top of that preset — both surfaces |
 | **Live `/b` iframe** | Preview of the guest page; saving preset also morphs the dashboard you are in |
 
-**Owner-facing truth:** *Changing Appearance updates how your studio looks to you and to clients on your booking link.*
+**Owner-facing truth:** *Changing Appearance updates how your studio looks to you, on the mobile team app, and to clients on your booking link.*
+
+**Native mobile (W4m):** Inherits preset + accent via the same business row and `GET /me/tenant-experience`. Layout and shell are **native** — see [`MOBILE-SKIN-INHERITANCE.md`](./MOBILE-SKIN-INHERITANCE.md). Mobile Settings can PATCH `/api/businesses/:id/presentation`; logo/cover and live `/b` preview remain web-first.
 
 **Not true today:** picking a preset that only changes `/b` while the dashboard stays on Platform Default or another preset.
 

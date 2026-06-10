@@ -86,6 +86,6 @@ export const LIVIA_MOBILE_ENTRY_COPY = {
   staffBackLink: "Not staff? Back to home",
   guestStaffLink: "Work at a studio? Sign in",
   demoTitle: "Walk the demo",
-  demoBody: "Try owner, manager, staff, and guest flows — same showcase as the web demo.",
+  demoBody: "Pick a trade world, set up once, then sign in as owner or staff — same G1 flow as web /demo.",
   demoCta: "Open demo gateway",
 } as const;

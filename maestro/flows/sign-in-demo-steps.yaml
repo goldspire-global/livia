@@ -1,4 +1,4 @@
-appId: ${MAESTRO_APP_ID}
+appId: host.exp.exponent
 ---
 - tapOn:
     id: "email-input"

@@ -23,6 +23,7 @@ This document is the **canonical architecture** for those decisions. Implementat
 | [`PLATFORM-SURFACES-UX-REDESIGN.md`](./PLATFORM-SURFACES-UX-REDESIGN.md) | Marketing, internal, gateway — 3 concepts per screen |
 | [`PRESENTATION-PRESETS-AND-ROLLOUT.md`](./PRESENTATION-PRESETS-AND-ROLLOUT.md) | 36 presets, API, staging Phases 0–8 |
 | [`SURFACE-AND-BREAKPOINTS.md`](./SURFACE-AND-BREAKPOINTS.md) | Phone / tablet / desktop morph |
+| [`MOBILE-SKIN-INHERITANCE.md`](./MOBILE-SKIN-INHERITANCE.md) | W4m native renderer — inherit preset, native morph |
 | [`PERSONA-VERTICAL-SURFACE-MATRIX.md`](./PERSONA-VERTICAL-SURFACE-MATRIX.md) | Full P×V×surface tables |
 | [`CHANNEL-UX-CONTRACT.md`](./CHANNEL-UX-CONTRACT.md) | M2/M3/M4 (non-visual Liv) |
 | [`PRODUCT-UX-SYSTEM.md`](./PRODUCT-UX-SYSTEM.md) | Engineering layout contract |

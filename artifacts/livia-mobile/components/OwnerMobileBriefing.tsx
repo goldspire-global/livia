@@ -1,11 +1,14 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { ownerHomeLivSuggestions } from "@workspace/policy";
 import { useColors } from "@/hooks/useColors";
+import { useOperationalChrome } from "@/lib/operational-chrome";
 import { fonts } from "@/constants/typography";
-import { getDashboardBaseUrl } from "@/lib/dashboard-url";
-import * as Linking from "expo-linking";
+import { GlowPressable } from "@/components/ui/GlowPressable";
+import { openBriefingHref } from "@/lib/mobile-briefing-nav";
+import { useBusiness } from "@/contexts/BusinessContext";
 
 type CommerceSlice = {
   capturedMinor30d?: number;
@@ -32,6 +35,9 @@ export function OwnerMobileBriefingChips({
   commerce?: CommerceSlice;
 }) {
   const colors = useColors();
+  const router = useRouter();
+  const { currentBusiness } = useBusiness();
+  const chrome = useOperationalChrome(currentBusiness?.id);
   const suggestions = ownerHomeLivSuggestions({
     pendingCount,
     handedOffCount,
@@ -48,10 +54,6 @@ export function OwnerMobileBriefingChips({
 
   if (suggestions.length === 0) return null;
 
-  const openHref = (href: string) => {
-    void Linking.openURL(`${getDashboardBaseUrl()}${href}`);
-  };
-
   return (
     <ScrollView
       horizontal
@@ -60,15 +62,22 @@ export function OwnerMobileBriefingChips({
       style={styles.wrap}
     >
       {suggestions.map((s) => (
-        <Pressable
+        <GlowPressable
           key={s.id}
-          onPress={() => openHref(s.href)}
-          style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.card }]}
+          onPress={() => openBriefingHref(s.href, router)}
+          glowColor={colors.primary}
+          haptic="selection"
+          style={[
+            styles.chip,
+            chrome.native
+              ? chrome.chip()
+              : { borderColor: colors.border, backgroundColor: colors.card },
+          ]}
           accessibilityRole="button"
         >
           <Text style={[styles.chipText, { color: colors.foreground }]}>{s.label}</Text>
           <Feather name="arrow-right" size={12} color={colors.mutedForeground} />
-        </Pressable>
+        </GlowPressable>
       ))}
     </ScrollView>
   );
@@ -82,12 +91,21 @@ export function OwnerMobileRevenueStat({
   onPress?: () => void;
 }) {
   const colors = useColors();
+  const chrome = useOperationalChrome();
   if (!commerce?.capturedLabel || (commerce.paymentCount30d ?? 0) <= 0) return null;
 
   return (
-    <Pressable
+    <GlowPressable
       onPress={onPress}
-      style={[styles.revenueCard, { borderColor: colors.border, backgroundColor: colors.card }]}
+      glowColor={colors.success}
+      haptic="tap"
+      disabled={!onPress}
+      style={[
+        styles.revenueCard,
+        chrome.native
+          ? chrome.panel()
+          : { borderColor: colors.border, backgroundColor: colors.card },
+      ]}
       accessibilityRole={onPress ? "button" : "text"}
     >
       <Text style={[styles.revenueLabel, { color: colors.mutedForeground }]}>Revenue (30d)</Text>
@@ -97,7 +115,7 @@ export function OwnerMobileRevenueStat({
           {commerce.captureRatePercent}% capture
         </Text>
       ) : null}
-    </Pressable>
+    </GlowPressable>
   );
 }
 

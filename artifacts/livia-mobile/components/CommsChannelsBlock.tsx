@@ -51,6 +51,26 @@ export function CommsChannelsBlock({
   loading: boolean;
 }) {
   const colors = useColors();
+
+  if (loading) {
+    return (
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!comms) {
+    return (
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.cardTitle, { color: colors.foreground }]}>Comms</Text>
+        <Text style={[styles.rowMeta, { color: colors.mutedForeground }]}>
+          Channel status unavailable — pull to refresh or open web settings.
+        </Text>
+      </View>
+    );
+  }
+
   const extended = comms as BusinessCommunications & CommsPayload;
   const social = channelConnectionStatus(extended.messagingChannels);
   const metaReady = extended.metaConfigured === true;
@@ -58,11 +78,7 @@ export function CommsChannelsBlock({
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.cardTitle, { color: colors.foreground }]}>Comms</Text>
-      {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: 12 }} />
-      ) : (
-        <>
-          <Text style={[styles.rowMeta, { color: colors.mutedForeground }]}>
+      <Text style={[styles.rowMeta, { color: colors.mutedForeground }]}>
             SMS · {extended.providerStatus?.smsProvider ?? "—"} · Email ·{" "}
             {extended.providerStatus?.emailProvider ?? "—"}
           </Text>
@@ -117,8 +133,6 @@ export function CommsChannelsBlock({
               Open channel setup on web
             </Text>
           </Pressable>
-        </>
-      )}
     </View>
   );
 }

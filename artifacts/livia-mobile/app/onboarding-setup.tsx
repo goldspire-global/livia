@@ -42,6 +42,8 @@ import {
   type AvailRule,
 } from "@/lib/onboarding-blocking";
 import { customFetch } from "@workspace/api-client-react";
+import { CrossSurfaceContinueCard } from "@/components/CrossSurfaceContinueCard";
+import { OnboardingPresentationPick } from "@/components/onboarding/OnboardingPresentationPick";
 import { SetupGuidedFlowCard } from "@/components/SetupGuidedFlowCard";
 import { useOnboardingCapabilitySync } from "@/lib/onboarding-capability-sync";
 
@@ -239,6 +241,8 @@ export default function OnboardingSetupScreen() {
         sacredMetricMet={state?.checklist?.testBooking === true}
       />
 
+      <OnboardingPresentationPick businessId={bid} vertical={bizMeta?.vertical} />
+
       {isLoading ? (
         <ActivityIndicator color={accent} style={{ marginVertical: 32 }} />
       ) : appUnlocked ? (
@@ -378,16 +382,7 @@ export default function OnboardingSetupScreen() {
         </View>
       )}
 
-      {!appUnlocked ? (
-        <Pressable
-          style={{ marginTop: 20 }}
-          onPress={() => void Linking.openURL(`${getDashboardBaseUrl()}/onboarding`)}
-        >
-          <Text style={{ color: colors.mutedForeground, textAlign: "center", fontSize: 13 }}>
-            Prefer the full wizard? Continue on web
-          </Text>
-        </Pressable>
-      ) : null}
+      <CrossSurfaceContinueCard businessId={bid} variant="onboarding" />
     </ScrollView>
   );
 }

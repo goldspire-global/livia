@@ -15,6 +15,11 @@ function format(targetMs: number, nowMs: number): string {
   return past ? `${days}d ago` : `in ${days}d`;
 }
 
+export function formatRelativeIso(iso: string | null | undefined, nowMs = Date.now()): string {
+  if (!iso) return "";
+  return format(new Date(iso).getTime(), nowMs);
+}
+
 export function useRelativeTime(iso: string | null | undefined): string {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {

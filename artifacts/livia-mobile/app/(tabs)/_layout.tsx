@@ -9,7 +9,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "@/constants/typography";
-import { PresentationThemeProvider } from "@/contexts/PresentationThemeContext";
+import { useTenantPresentation } from "@/contexts/PresentationThemeContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { usePersona, type PersonaKind } from "@/hooks/usePersona";
@@ -17,6 +17,8 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
 import { useMobileOwnerIntelTabBadges } from "@/hooks/useMobileOwnerIntelTabBadges";
 import { verticalOperationalCopy } from "@workspace/policy";
+import { GatewayHandoffVeil } from "@/components/gateway/GatewayHandoffVeil";
+import { TenantPresentationShell } from "@/components/shell/TenantPresentationShell";
 
 type TabKey =
   | "index"
@@ -66,17 +68,14 @@ const ALL_TABS: TabSpec[] = [
 const DEFAULT_VISIBLE: TabKey[] = TAB_VISIBILITY.owner;
 
 export default function TabLayout() {
-  return (
-    <PresentationThemeProvider>
-      <TabLayoutInner />
-    </PresentationThemeProvider>
-  );
+  return <TabLayoutInner />;
 }
 
 function TabLayoutInner() {
   const colors = useColors();
+  const presentation = useTenantPresentation();
   const haptics = useHaptics();
-  const isDark = (colors as { colorScheme?: string }).colorScheme !== "light";
+  const isDark = presentation.colorMode !== "light";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
@@ -99,19 +98,30 @@ function TabLayoutInner() {
 
   const onTabPress = () => haptics.selection();
 
+  const frostedTabBar = presentation.tabBarChrome === "frosted-glass";
+  const tabBarBorder = frostedTabBar ? "rgba(217,195,154,0.12)" : colors.border;
+
   return (
-    <>
+    <TenantPresentationShell>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <GatewayHandoffVeil />
       <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: presentation.colorOverrides.primary ?? colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
+        sceneStyle: {
+          backgroundColor: presentation.transparentScreens ? "transparent" : colors.background,
+        },
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background + "ee",
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: colors.border,
+          backgroundColor: isIOS
+            ? "transparent"
+            : frostedTabBar
+              ? "rgba(44,47,58,0.92)"
+              : colors.background + "ee",
+          borderTopWidth: isWeb || frostedTabBar ? StyleSheet.hairlineWidth : 0,
+          borderTopColor: tabBarBorder,
           elevation: 0,
           paddingBottom: isWeb ? 0 : insets.bottom,
           ...(isWeb ? { height: 84 } : {}),
@@ -119,9 +129,16 @@ function TabLayoutInner() {
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={90}
+              intensity={frostedTabBar ? 72 : 90}
               tint={isDark ? "dark" : "light"}
-              style={[StyleSheet.absoluteFill, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                  borderTopColor: tabBarBorder,
+                  backgroundColor: frostedTabBar ? "rgba(44,47,58,0.55)" : undefined,
+                },
+              ]}
             />
           ) : isWeb ? (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
@@ -163,17 +180,21 @@ function TabLayoutInner() {
             href: visible.has(t.name) ? undefined : null,
             tabBarBadge:
               intelTabBadges[t.name as keyof typeof intelTabBadges] ?? undefined,
-            tabBarIcon: ({ color }) =>
+            tabBarIcon: ({ color, focused }) =>
               isIOS ? (
-                <SymbolView name={t.sf.selected as never} tintColor={color} size={22} />
+                <SymbolView
+                  name={(focused ? t.sf.selected : t.sf.default) as never}
+                  tintColor={color}
+                  size={focused ? 23 : 21}
+                />
               ) : (
-                <Feather name={t.feather} size={22} color={color} />
+                <Feather name={t.feather} size={focused ? 23 : 21} color={color} />
               ),
           }}
         />
       );
       })}
     </Tabs>
-    </>
+    </TenantPresentationShell>
   );
 }

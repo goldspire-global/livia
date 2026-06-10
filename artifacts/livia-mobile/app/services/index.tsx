@@ -18,6 +18,7 @@ import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useMembership } from "@/hooks/useMembership";
+import { businessVocabulary } from "@workspace/policy";
 
 export default function ServicesScreen() {
   const colors = useColors();
@@ -27,6 +28,8 @@ export default function ServicesScreen() {
   const { role } = useMembership();
   const { currentBusiness } = useBusiness();
   const canEdit = role === "OWNER" || role === "ADMIN";
+  const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
+  const serviceNoun = businessVocabulary(vertical, currentBusiness?.category).serviceNoun;
 
   const { data: services, isLoading, refetch, isRefetching } = useListServices(
     currentBusiness?.id ?? "",
@@ -37,7 +40,8 @@ export default function ServicesScreen() {
   return (
     <OperationalScreen
       scroll={false}
-      title="Services"
+      ritualPage
+      title={serviceNoun === "service" ? "Services" : `${serviceNoun.charAt(0).toUpperCase()}${serviceNoun.slice(1)}`}
       subtitle="Duration and price shape availability and what Liv can book confidently."
       headerExtra={
         canEdit ? (

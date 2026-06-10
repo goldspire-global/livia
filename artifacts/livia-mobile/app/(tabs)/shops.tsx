@@ -183,7 +183,7 @@ export default function ShopsScreen() {
 
   return (
     <OperationalScreen
-      eyebrow="Multi-location"
+      ritualPage
       title="Your shops"
       subtitle={
         briefing ??

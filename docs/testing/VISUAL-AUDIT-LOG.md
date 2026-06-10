@@ -74,6 +74,44 @@ pnpm maestro:visual-capture
 
 ---
 
+## 2026-06-05 — Mobile cold-open walkthrough (code review + Maestro prep)
+
+**Capture status:** Maestro CLI present; **0 devices/emulators connected** from agent (`adb` not on PATH; physical Expo Go on Wi‑Fi not automatable without USB debugging). New flow `capture-cold-open-gateway.yaml` added; run when emulator or USB device is up.
+
+### Screen-by-screen review (download → signed-in)
+
+| # | Screen / route | What user sees | Fit for purpose? | Severity | Notes / change |
+|---|----------------|----------------|------------------|----------|----------------|
+| 1 | `/` entry gateway | Two doors (My Livia + studio sign-in) + Walk the demo | **Y** — matches W4 split | — | `testID`s: `app-entry-gateway`, `entry-gateway-guest`, `entry-gateway-operator`, `entry-gateway-demo` |
+| 2 | `/my-livia` guest OTP | Phone + Send code, demo chip `+353 87 100 0001` | **Y** after fix | **P1** | Metro warned `No route named "my-livia"` — `_layout.tsx` stack screens fixed to `my-livia/index` + nested routes |
+| 3 | `/sign-in` operator | Gateway story, email/password, Google, back link, demo link | **Y** | P2 | Long scroll; demo password not shown on screen (must know `LiviaDemo2026!` or use demo gateway quick enter) |
+| 4 | `/demo` G1 launcher | Set up strip + horizontal world cards + guest card | **Y** (new) | — | Replaces legacy persona grid; aligns with web `/demo` |
+| 5 | `/demo/wedge/:vertical` | Story beats → Walk into live demo → role roster | **Y** | P2 | Wedge card images need dashboard CDN (`EXPO_PUBLIC_DASHBOARD_URL` or :5173 on LAN) |
+| 6 | Post ticket sign-in | Persona tabs (Today, Bookings, …) | **Y** | — | `PresentationThemeProvider` applies Constellation via tenant-experience API |
+| 7 | Real signup `/onboarding` | Create business wizard (not demo path) | **Y** for prod | — | Separate from demo; demo guide still lists emails |
+| 8 | Maestro legacy flows | Jump to sign-in / persona switcher | **N** for first-run | P2 | `capture-owner-tabs` etc. skip gateway; new cold-open flow is first in suite |
+
+### E2E navigation checklist (manual / Maestro)
+
+| Path | Steps | Blocker |
+|------|-------|---------|
+| Guest | Gateway → My Livia → demo phone → OTP → vault | API `:3000` + guest hub seeded |
+| Demo owner | Gateway → Demo → Set up → Beauty world → Owner enter | API demo provision + Clerk ticket |
+| Studio sign-in | Gateway → Sign in → `owner-conorcuts@livia.io` + demo password | Same |
+| Back navigation | Sign-in ← gateway; demo ← Home | OK via `sign-in-back-to-gateway` |
+
+### Commands (your machine)
+
+```powershell
+$env:Path += ";$env:LOCALAPPDATA\Android\Sdk\platform-tools"
+# Expo Go on emulator: $env:MAESTRO_APP_ID="host.exp.Exponent"
+# Dev build: $env:MAESTRO_APP_ID="io.livia.app"
+pnpm maestro:visual-capture
+# Output: e2e/visual-captures/mobile/01-entry-gateway.png … 06-owner-today.png
+```
+
+---
+
 ## Template for next entries
 
 ```markdown

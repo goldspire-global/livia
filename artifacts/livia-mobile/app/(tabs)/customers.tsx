@@ -24,6 +24,7 @@ import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useColors } from "@/hooks/useColors";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useManualRefresh } from "@/lib/manual-refresh";
 
 const PAGE_SIZE = 40;
 
@@ -58,7 +59,7 @@ export default function CustomersScreen() {
     shadowOpacity: focus.value * 0.35,
   }));
 
-  const { data, isLoading, refetch, isRefetching, isFetching } = useListCustomers(
+  const { data, isLoading, refetch, isFetching } = useListCustomers(
     currentBusiness?.id ?? "",
     { search: debouncedSearch || undefined, limit: PAGE_SIZE, offset },
     { query: { enabled: !!currentBusiness?.id } as never },
@@ -104,10 +105,17 @@ export default function CustomersScreen() {
   }, [bid, hasMore, loadingMore, isFetching, offset, debouncedSearch]);
 
   const listLoading = isLoading && offset === 0;
+  const resetAndRefetch = useCallback(async () => {
+    setOffset(0);
+    setAccumulated([]);
+    await refetch();
+  }, [refetch]);
+  const { refreshing: pullRefreshing, onRefresh: onPullRefresh } = useManualRefresh(resetAndRefetch);
 
   return (
     <OperationalScreen
       scroll={false}
+      ritualPage
       title="Clients"
       subtitle={`${total ?? accumulated.length} in your book`}
       actions={
@@ -204,12 +212,8 @@ export default function CustomersScreen() {
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => {
-              setOffset(0);
-              setAccumulated([]);
-              void refetch();
-            }}
+            refreshing={pullRefreshing}
+            onRefresh={onPullRefresh}
             tintColor={colors.primary}
           />
         }

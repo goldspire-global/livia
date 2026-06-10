@@ -37,6 +37,7 @@ import { useHaptics } from "@/hooks/useHaptics";
 import { notifyBookingRunningLate, promptRunningLateMinutes } from "@/lib/running-late";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
+import { useManualRefresh } from "@/lib/manual-refresh";
 
 type Filter = "day" | "week" | "month";
 type StatusFilter = "all" | "PENDING";
@@ -154,7 +155,7 @@ export default function BookingsScreen() {
     }
   };
 
-  const { data, isLoading, refetch, isRefetching } = useListBookings(
+  const { data, isLoading, refetch } = useListBookings(
     currentBusiness?.id ?? "",
     {
       ...getDateParams(filter),
@@ -164,17 +165,19 @@ export default function BookingsScreen() {
     {
       query: {
         enabled: !!currentBusiness?.id,
-        refetchInterval: 12_000,
+        refetchInterval: 30_000,
         refetchOnWindowFocus: true,
       } as never,
     },
   );
 
   const bookings = data?.data ?? [];
+  const { refreshing: pullRefreshing, onRefresh: onPullRefresh } = useManualRefresh(refetch);
 
   return (
     <OperationalScreen
       scroll={false}
+      ritualPage
       title={roomsTitle}
       subtitle={
         statusFilter === "PENDING"
@@ -331,8 +334,8 @@ export default function BookingsScreen() {
         }
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
+            refreshing={pullRefreshing}
+            onRefresh={onPullRefresh}
             tintColor={colors.primary}
           />
         }

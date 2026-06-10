@@ -26,12 +26,16 @@ import { GUEST_HUB_TOKEN_KEY } from "@/lib/guest-hub";
 import { consumeMobileHomeRoute } from "@/lib/demo-session";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { LogBox } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { isPushSupportedInThisBuild } from "@/lib/push-notifications";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OnboardingGate } from "@/components/OnboardingGate";
 import { BusinessProvider } from "@/contexts/BusinessContext";
+import { PresentationThemeProvider } from "@/contexts/PresentationThemeContext";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { usePushNavigation } from "@/hooks/usePushNavigation";
 import { getApiBaseUrl } from "@/lib/api-base";
@@ -40,6 +44,13 @@ import { initMobileSentry } from "@/lib/sentry";
 // Set API base URL at module level — runs once before any component mounts.
 setBaseUrl(getApiBaseUrl());
 initMobileSentry();
+
+if (!isPushSupportedInThisBuild()) {
+  LogBox.ignoreLogs([
+    "expo-notifications: Android Push notifications",
+    "expo-notifications: iOS Push notifications",
+  ]);
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -139,8 +150,10 @@ function PushRegistrationBridge() {
 function RootLayoutNav() {
   return (
     <BusinessProvider>
+      <PresentationThemeProvider>
       <PushRegistrationBridge />
       <AuthGate>
+        <OnboardingGate>
         <Stack
           screenOptions={{
             headerBackTitle: "Back",
@@ -153,6 +166,7 @@ function RootLayoutNav() {
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
           <Stack.Screen name="my" options={{ headerShown: false }} />
           <Stack.Screen name="demo/index" options={{ headerShown: false }} />
+          <Stack.Screen name="demo/wedge/[vertical]" options={{ headerShown: false }} />
           <Stack.Screen name="demo/[persona]" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding-setup" options={{ title: "Setup essentials" }} />
@@ -160,7 +174,9 @@ function RootLayoutNav() {
           <Stack.Screen name="experience" options={{ title: "Experience" }} />
           <Stack.Screen name="demo-guide" options={{ headerShown: false }} />
           <Stack.Screen name="public-book/[slug]" options={{ headerShown: false }} />
-          <Stack.Screen name="my-livia" options={{ headerShown: false }} />
+          <Stack.Screen name="my-livia/index" options={{ headerShown: false }} />
+          <Stack.Screen name="my-livia/[slug]" options={{ headerShown: false }} />
+          <Stack.Screen name="my-livia/[slug]/visit/[bookingId]" options={{ headerShown: false }} />
           <Stack.Screen name="guest-surface" options={{ headerShown: false }} />
           <Stack.Screen name="booking/[id]" options={{ title: "Booking" }} />
           <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
@@ -190,7 +206,9 @@ function RootLayoutNav() {
           <Stack.Screen name="rota" options={{ title: "Team rota" }} />
           <Stack.Screen name="time-off" options={{ title: "Request leave" }} />
         </Stack>
+        </OnboardingGate>
       </AuthGate>
+      </PresentationThemeProvider>
     </BusinessProvider>
   );
 }
