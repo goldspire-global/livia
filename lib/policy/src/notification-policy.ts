@@ -236,6 +236,86 @@ export function notificationFeedIcon(kind: string): NotificationFeedIcon {
   return "approval";
 }
 
+export type NotificationDigestBucket = "immediate" | "evening_roundup";
+
+export type BookingCreatedNotificationPlan = {
+  priority: "act" | "watch" | "info";
+  /** Staff push (Expo / web push) — immediate interruptions only. */
+  sendPush: boolean;
+  /** Always write in-app feed (may be digest-tagged). */
+  deliverInApp: boolean;
+  digestBucket: NotificationDigestBucket;
+};
+
+const MS_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Liv-smart booking alerts — near-term floor noise vs far-future diary entries.
+ * Pending approvals always interrupt; confirmed 2+ weeks out land in evening roundup.
+ */
+export function resolveBookingCreatedNotificationPlan(args: {
+  status: string;
+  startAt: string | Date;
+  now?: Date;
+}): BookingCreatedNotificationPlan {
+  const now = args.now ?? new Date();
+  const start = args.startAt instanceof Date ? args.startAt : new Date(args.startAt);
+  const startMs = start.getTime();
+  const daysUntil =
+    Number.isFinite(startMs) ? Math.floor((startMs - now.getTime()) / MS_DAY) : 999;
+
+  if (args.status === "PENDING") {
+    return {
+      priority: "act",
+      sendPush: true,
+      deliverInApp: true,
+      digestBucket: "immediate",
+    };
+  }
+
+  if (args.status === "CANCELLED") {
+    return {
+      priority: "watch",
+      sendPush: daysUntil <= 7,
+      deliverInApp: true,
+      digestBucket: daysUntil <= 7 ? "immediate" : "evening_roundup",
+    };
+  }
+
+  // CONFIRMED (and other active statuses treated as diary entries)
+  if (daysUntil <= 0) {
+    return {
+      priority: "watch",
+      sendPush: true,
+      deliverInApp: true,
+      digestBucket: "immediate",
+    };
+  }
+  if (daysUntil === 1) {
+    return {
+      priority: "watch",
+      sendPush: true,
+      deliverInApp: true,
+      digestBucket: "immediate",
+    };
+  }
+  if (daysUntil <= 6) {
+    return {
+      priority: "info",
+      sendPush: true,
+      deliverInApp: true,
+      digestBucket: "immediate",
+    };
+  }
+
+  return {
+    priority: "info",
+    sendPush: false,
+    deliverInApp: true,
+    digestBucket: "evening_roundup",
+  };
+}
+
 export function groupNotificationsByDay<T extends { createdAt: string }>(
   items: T[],
 ): { today: T[]; earlier: T[] } {

@@ -14,13 +14,16 @@ import {
 } from "@workspace/db";
 import { eq, and, desc, gte, inArray, sql } from "drizzle-orm";
 import {
+  curateGuestHubUpcoming,
+  guestBookPath,
+  guestManageVisitPath,
   guestOtpCodeMatches,
+  guestShopRelationshipPath,
+  guestPreferredModalitySchema,
   normalizeGuestHubPhone,
 } from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { getStagingRelaxations } from "../lib/staging-relaxations";
-import { ensureBookingGuestAccess } from "./booking-guest-access.service";
-
 const OTP_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -133,6 +136,12 @@ export async function getGuestHubView(hubToken: string) {
   const session = await getGuestHubSession(hubToken);
   if (!session?.guestId) return null;
 
+  const [guestIdentity] = await db
+    .select({ preferredModality: guestIdentitiesTable.preferredModality })
+    .from(guestIdentitiesTable)
+    .where(eq(guestIdentitiesTable.id, session.guestId))
+    .limit(1);
+
   const shops = await db
     .select({
       businessId: guestShopLinksTable.businessId,
@@ -166,6 +175,7 @@ export async function getGuestHubView(hubToken: string) {
             businessId: bookingsTable.businessId,
             status: bookingsTable.status,
             startAt: bookingsTable.startAt,
+            notes: bookingsTable.notes,
             serviceName: servicesTable.name,
             serviceId: bookingsTable.serviceId,
             staffDisplayName: staffTable.displayName,
@@ -186,8 +196,20 @@ export async function getGuestHubView(hubToken: string) {
             ),
           )
           .orderBy(bookingsTable.startAt)
-          .limit(25)
+          .limit(40)
       : [];
+
+  const upcomingCurated = curateGuestHubUpcoming(
+    upcomingRaw.map((b) => ({
+      bookingId: b.bookingId,
+      businessId: b.businessId,
+      startAt: b.startAt,
+      status: b.status,
+      notes: b.notes,
+    })),
+  );
+  const curatedIds = new Set(upcomingCurated.map((b) => b.bookingId));
+  const upcomingFiltered = upcomingRaw.filter((b) => curatedIds.has(b.bookingId));
 
   const lastBookRaw =
     businessIds.length > 0
@@ -222,22 +244,17 @@ export async function getGuestHubView(hubToken: string) {
     }
   }
 
-  const upcomingBookings = await Promise.all(
-    upcomingRaw.map(async (b) => {
-      const visitToken = await ensureBookingGuestAccess(b.businessId, b.bookingId);
-      return {
-        bookingId: b.bookingId,
-        businessId: b.businessId,
-        businessName: b.businessName,
-        slug: b.slug,
-        status: b.status,
-        startAt: b.startAt.toISOString(),
-        serviceName: b.serviceName,
-        staffDisplayName: b.staffDisplayName,
-        visitUrl: `/b/${b.slug}/visit/${encodeURIComponent(visitToken)}`,
-      };
-    }),
-  );
+  const upcomingBookings = upcomingFiltered.map((b) => ({
+    bookingId: b.bookingId,
+    businessId: b.businessId,
+    businessName: b.businessName,
+    slug: b.slug,
+    status: b.status,
+    startAt: b.startAt.toISOString(),
+    serviceName: b.serviceName,
+    staffDisplayName: b.staffDisplayName,
+    visitUrl: guestManageVisitPath(b.slug, b.bookingId),
+  }));
 
   const visitByBusiness = new Map(
     upcomingBookings.map((b) => [b.businessId, b.visitUrl] as const),
@@ -252,19 +269,21 @@ export async function getGuestHubView(hubToken: string) {
   return {
     guestId: session.guestId,
     phoneE164: session.phoneE164,
+    preferredModality: guestIdentity?.preferredModality ?? "ANY",
     packageCredits,
     upcomingBookings,
     shops: shops.map((s) => {
       const last = lastByBusiness.get(s.businessId);
       const bookUrl = last
-        ? `/b/${s.slug}?service=${encodeURIComponent(last.serviceId)}`
-        : `/b/${s.slug}`;
+        ? guestBookPath(s.slug, `service=${encodeURIComponent(last.serviceId)}`)
+        : guestBookPath(s.slug);
       return {
         ...s,
         firstBookingAt: s.firstBookingAt?.toISOString() ?? null,
         consentAt: s.consentAt.toISOString(),
         isFavorite: favoriteSet.has(s.businessId),
         bookUrl,
+        shopRelationshipUrl: guestShopRelationshipPath(s.slug),
         manageVisitUrl: visitByBusiness.get(s.businessId) ?? null,
         lastServiceName: last?.serviceName ?? null,
       };
@@ -272,16 +291,41 @@ export async function getGuestHubView(hubToken: string) {
   };
 }
 
+export async function patchGuestHubPreferences(
+  hubToken: string,
+  body: { preferredModality?: string },
+) {
+  const session = await getGuestHubSession(hubToken);
+  if (!session?.guestId) return null;
+
+  if (body.preferredModality != null) {
+    const parsed = guestPreferredModalitySchema.safeParse(body.preferredModality);
+    if (!parsed.success) throw new Error("INVALID_PREFERENCE");
+    await db
+      .update(guestIdentitiesTable)
+      .set({ preferredModality: parsed.data })
+      .where(eq(guestIdentitiesTable.id, session.guestId));
+  }
+
+  const view = await getGuestHubView(hubToken);
+  return view
+    ? { preferredModality: view.preferredModality, guestId: view.guestId, phoneE164: view.phoneE164 }
+    : null;
+}
+
 /** Resolve legacy `/my?visit=token` links to the public visit route. */
 export async function resolveGuestVisitPath(token: string): Promise<string | null> {
   const [row] = await db
-    .select({ slug: businessesTable.slug })
+    .select({
+      slug: businessesTable.slug,
+      bookingId: bookingGuestAccessTable.bookingId,
+    })
     .from(bookingGuestAccessTable)
     .innerJoin(businessesTable, eq(bookingGuestAccessTable.businessId, businessesTable.id))
     .where(eq(bookingGuestAccessTable.token, token))
     .limit(1);
-  if (!row?.slug) return null;
-  return `/b/${row.slug}/visit/${encodeURIComponent(token)}`;
+  if (!row?.slug || !row.bookingId) return null;
+  return guestManageVisitPath(row.slug, row.bookingId);
 }
 
 export async function linkGuestToShop(guestId: string, businessId: string, firstBookingAt?: Date) {

@@ -156,6 +156,7 @@ run("Owner intelligence nav", [
   "../../lib/policy/src/__tests__/twin-risks-opportunities.test.ts",
   "../../lib/policy/src/__tests__/twin-domain-trajectory.test.ts",
   "../../lib/policy/src/__tests__/notification-policy-twin.test.ts",
+  "../../lib/policy/src/__tests__/guest-hub-policy.test.ts",
 ]);
 
 run("Capability nav gates", [

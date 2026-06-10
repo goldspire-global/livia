@@ -18,6 +18,7 @@ import {
   buildInboxHandoffPush,
   buildInboxInboundPush,
   parseNotificationPrefs,
+  resolveBookingCreatedNotificationPlan,
 } from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { logger } from "../lib/logger";
@@ -258,6 +259,10 @@ export async function notifyBookingCreatedFromRow(bookingId: string, businessId:
   if (row.status !== "PENDING" && !ctx.prefs.pushBookingCreated) return;
 
   const booking = await enrichBooking(row);
+  const plan = resolveBookingCreatedNotificationPlan({
+    status: row.status,
+    startAt: row.startAt,
+  });
 
   const startLocal = new Date(booking.startAt).toLocaleString("en-IE", {
     dateStyle: "medium",
@@ -281,42 +286,51 @@ export async function notifyBookingCreatedFromRow(bookingId: string, businessId:
           source: booking.source ?? undefined,
         });
 
-  const result = await notifyBusinessMembersPushForRoles({
-    businessId,
-    roles: ["OWNER", "ADMIN", "STAFF"],
-    title: copy.title,
-    body: copy.body,
-    data: {
-      type: "booking.created",
+  if (plan.sendPush) {
+    const result = await notifyBusinessMembersPushForRoles({
       businessId,
-      bookingId,
-    },
-  });
+      roles: ["OWNER", "ADMIN", "STAFF"],
+      title: copy.title,
+      body: copy.body,
+      data: {
+        type: "booking.created",
+        businessId,
+        bookingId,
+      },
+    });
 
-  if (result.sent > 0) {
-    await logPush(
-      businessId,
-      "push-booking-created",
-      { bookingId, sent: result.sent },
-      bookingId,
-      booking.customerId,
-    );
+    if (result.sent > 0) {
+      await logPush(
+        businessId,
+        "push-booking-created",
+        { bookingId, sent: result.sent, digestBucket: plan.digestBucket },
+        bookingId,
+        booking.customerId,
+      );
+    }
   }
 
   const inAppKind: InAppNotificationKind =
     row.status === "PENDING" ? "booking.pending" : "booking.created";
-  if (inAppAllowedForPrefs(inAppKind, ctx.prefs)) {
+  if (plan.deliverInApp && inAppAllowedForPrefs(inAppKind, ctx.prefs)) {
+    const digestSuffix =
+      plan.digestBucket === "evening_roundup" ? " — in today's roundup" : "";
     await deliverInAppNotification({
       kind: inAppKind,
       businessId,
       title: copy.title,
-      body: copy.body,
-      priority: row.status === "PENDING" ? "act" : "info",
+      body: `${copy.body}${digestSuffix}`,
+      priority: plan.priority,
       resourceKind: "booking",
       resourceId: bookingId,
       dedupeKey: `${inAppKind}:${bookingId}`,
       assignedStaffId: row.staffId,
       audience: "operators",
+      metadata: {
+        digestBucket: plan.digestBucket,
+        bookingStartAt: booking.startAt,
+        sendPush: plan.sendPush,
+      },
     });
   }
 }

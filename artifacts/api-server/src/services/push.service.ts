@@ -120,3 +120,57 @@ export async function notifyBusinessMembersPushForRoles(args: {
 
   return { sent };
 }
+
+/** Push to explicit user ids (evening digest per recipient). */
+export async function notifyUsersPush(args: {
+  userIds: string[];
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  priority?: "default" | "high";
+}): Promise<{ sent: number }> {
+  const userIds = [...new Set(args.userIds.filter(Boolean))];
+  if (!userIds.length) return { sent: 0 };
+
+  const tokens = await db
+    .select({ token: deviceTokensTable.token, platform: deviceTokensTable.platform })
+    .from(deviceTokensTable)
+    .where(
+      and(eq(deviceTokensTable.isActive, true), inArray(deviceTokensTable.userId, userIds)),
+    );
+
+  const expoTokens = tokens
+    .filter((t) => t.platform !== "WEB" && t.token.startsWith("ExponentPushToken"))
+    .map((t) => t.token);
+
+  const webSubs = tokens.filter((t) => t.platform === "WEB").map((t) => t.token);
+
+  let sent = 0;
+
+  if (expoTokens.length) {
+    await sendExpoPush(
+      expoTokens.map((to) => ({
+        to,
+        title: args.title,
+        body: args.body,
+        data: args.data,
+        sound: "default",
+        priority: args.priority ?? "default",
+      })),
+    );
+    sent += expoTokens.length;
+  }
+
+  if (webSubs.length && isWebPushConfigured()) {
+    for (const sub of webSubs) {
+      const ok = await sendWebPushToSubscription(sub, {
+        title: args.title,
+        body: args.body,
+        data: args.data,
+      });
+      if (ok) sent += 1;
+    }
+  }
+
+  return { sent };
+}

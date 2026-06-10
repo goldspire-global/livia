@@ -3,7 +3,7 @@ import {
   PLATFORM_DEFAULT_PRESET_ID,
   resolvePresentationLayoutMorph,
   validateVerticalPresentationPack,
-} from "./index.ts";
+} from "./index";
 
 const COMPLETED_VERTICALS = ["beauty", "wellness"] as const;
 

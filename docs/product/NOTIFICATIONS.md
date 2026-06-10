@@ -13,6 +13,26 @@
 3. **Role-aware** — inbox events → OWNER + ADMIN; bookings → all active staff.
 4. **Liv-transparent** — inbound copy states whether Liv is handling the thread or a human is needed.
 5. **Logged** — staff push writes `notification_logs` with `channel=PUSH` and a `templateKey`.
+6. **Liv-smart urgency** — not every booking interrupts the floor; near-term and approvals do.
+
+---
+
+## Booking urgency (Liv-smart)
+
+Policy hub: `lib/policy/src/notification-policy.ts` → `resolveBookingCreatedNotificationPlan()`.
+
+| Booking | Push (instant) | In-app feed | Evening roundup push |
+|---------|----------------|-------------|----------------------|
+| **Pending approval** | Yes · `act` | Yes | No |
+| **Today / tomorrow** | Yes · `watch` | Yes | No |
+| **2–6 days out** | Yes · `info` | Yes | No |
+| **7+ days out (confirmed)** | No | Yes (tagged digest) | Yes · ~17:00 local |
+
+Orchestrator: `notification-orchestrator.service.ts` — far-future confirmed bookings skip staff push at create time; in-app rows carry `metadata.digestBucket = evening_roundup`. Cron: `POST /internal/cron/evening-notification-roundup` (one summary push per owner).
+
+**Inbox / handoff / Twin** remain immediate (`act` / `watch`) — human attention cannot wait for COB.
+
+Web: act toasts for Twin/commerce only (`use-act-notification-toasts`). Mobile: bell feed polls same `/api/me/notifications` API.
 
 ---
 

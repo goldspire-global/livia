@@ -30,6 +30,7 @@ export * from "./beauty-operator-shell";
 export * from "./beauty-service-templates";
 export * from "./public-service-images";
 export * from "./guest-hub-copy";
+export * from "./guest-hub-policy";
 export * from "./guest-book-url";
 export * from "./guest-my-relationship";
 export * from "./guest-care-automation";

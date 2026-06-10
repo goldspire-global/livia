@@ -24,7 +24,7 @@ End clients’ **cross-business relationship vault** on Livia: phone OTP sign-in
 | **Visit manage** | Redirect to `/b/.../visit` | `/my/{slug}/visit/{id}` vertical morph — **no book-surface redirect** |
 | **Visual** | Generic shell | Inherit favourite shop preset accent (read-only) |
 | **Shops list** | Flat cards | Sub-segment label, last service, book vs manage CTAs |
-| **Upcoming** | Links to `/b` visit | In-hub: running late, reschedule, message shop |
+| **Upcoming** | `/my/{slug}/visit/{id}` manage | Running late, message studio, vertical prep — API `guest-hub/shops/.../visits/...` |
 | **Liv** | Rules router to `/b` | Route to shop thread or book subdomain when appropriate |
 | **Vertical morph** | None | Beauty fill, wellness pack, proof status, pet card, vehicle card |
 | **Mobile** | Web responsive | PWA add-to-home (guest) |
@@ -60,11 +60,19 @@ End clients’ **cross-business relationship vault** on Livia: phone OTP sign-in
 ## Cascade (do not bypass)
 
 ```text
-lib/policy (guest copy, surface registry)
+lib/policy (guest copy, surface registry, vault curation)
   → api-server guest-hub routes + DTOs
   → livia-dashboard /my + guest components
   → E2E guest-hub spec
 ```
+
+### Demo vault curation (Mary)
+
+Operator **live-day** seeds can put Mary on many same-day bookings across showcase shops. Production guests would never see that pile — policy caps the hub:
+
+- Hub: `lib/policy/src/guest-hub-policy.ts` → `curateGuestHubUpcoming()` (max **8** total, **1** per linked shop; prefers `Demo guest hub` notes).
+- Seed: `demo-guest-hub.seed.ts` spreads **5** hero visits (4–28 days out) and cancels stray Mary futures on non-hero shops.
+- Repair: `pnpm demo:sync-guest-hub` (or `:staging`) after provision or live-day refresh.
 
 ---
 

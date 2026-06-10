@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, like, or } from "drizzle-orm";
 import {
   db,
   bookingsTable,
@@ -9,7 +9,11 @@ import {
   servicesTable,
   staffTable,
 } from "@workspace/db";
-import { normalizePhoneE164 } from "@workspace/policy";
+import {
+  GUEST_HUB_DEMO_BOOKING_NOTE,
+  MARY_GUEST_HUB_UPCOMING_DAYS,
+  normalizePhoneE164,
+} from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { createCustomer } from "./customers.service";
 import { linkGuestToShop } from "./guest-hub.service";
@@ -39,14 +43,7 @@ const MARY = {
   phone: DEMO_GUEST_PHONE_E164,
 } as const;
 
-/** Shops that get a seeded upcoming visit for Mary (hero demos). */
-const UPCOMING_SLUGS = new Set<string>([
-  "luxe-salon-spa",
-  "bloom-beauty-dublin",
-  "harbour-wellness-cork",
-  "motion-physio-cork",
-  "ink-anchor-galway",
-]);
+const UPCOMING_SLUGS = new Set<string>(Object.keys(MARY_GUEST_HUB_UPCOMING_DAYS));
 
 async function ensureDemoGuestIdentity(): Promise<string> {
   const [existing] = await db
@@ -110,13 +107,23 @@ async function ensureMaryCustomer(businessId: string): Promise<string> {
   return created.id;
 }
 
-async function ensureMaryUpcomingBooking(
+function bookingWindow(daysAhead: number): { startAt: Date; endAt: Date } {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() + daysAhead);
+  start.setHours(10 + (daysAhead % 3), 30, 0, 0);
+  const end = new Date(start);
+  end.setMinutes(end.getMinutes() + 60);
+  return { startAt: start, endAt: end };
+}
+
+async function cancelMaryFutureBookings(
   businessId: string,
   customerId: string,
-  daysAhead: number,
-): Promise<boolean> {
+  keepId?: string,
+): Promise<number> {
   const now = new Date();
-  const [existing] = await db
+  const rows = await db
     .select({ id: bookingsTable.id })
     .from(bookingsTable)
     .where(
@@ -126,10 +133,28 @@ async function ensureMaryUpcomingBooking(
         gte(bookingsTable.startAt, now),
         inArray(bookingsTable.status, ["PENDING", "CONFIRMED"]),
       ),
-    )
-    .limit(1);
-  if (existing) return false;
+    );
 
+  let cancelled = 0;
+  for (const row of rows) {
+    if (keepId && row.id === keepId) continue;
+    await db
+      .update(bookingsTable)
+      .set({
+        status: "CANCELLED",
+        cancellationReason: "demo-guest-hub-reconcile",
+      })
+      .where(eq(bookingsTable.id, row.id));
+    cancelled += 1;
+  }
+  return cancelled;
+}
+
+async function upsertMaryGuestHubBooking(
+  businessId: string,
+  customerId: string,
+  daysAhead: number,
+): Promise<string | null> {
   const [staff] = await db
     .select({ id: staffTable.id })
     .from(staffTable)
@@ -140,26 +165,57 @@ async function ensureMaryUpcomingBooking(
     .from(servicesTable)
     .where(eq(servicesTable.businessId, businessId))
     .limit(1);
-  if (!staff || !service) return false;
+  if (!staff || !service) return null;
 
-  const start = new Date(now);
-  start.setDate(start.getDate() + daysAhead);
-  start.setHours(10 + (daysAhead % 4), 0, 0, 0);
-  const end = new Date(start);
-  end.setMinutes(end.getMinutes() + 60);
+  const { startAt, endAt } = bookingWindow(daysAhead);
+  const now = new Date();
 
+  const [seeded] = await db
+    .select({ id: bookingsTable.id })
+    .from(bookingsTable)
+    .where(
+      and(
+        eq(bookingsTable.businessId, businessId),
+        eq(bookingsTable.customerId, customerId),
+        or(
+          like(bookingsTable.notes, `%Demo guest hub%`),
+          eq(bookingsTable.notes, GUEST_HUB_DEMO_BOOKING_NOTE),
+        ),
+        gte(bookingsTable.startAt, now),
+        inArray(bookingsTable.status, ["PENDING", "CONFIRMED"]),
+      ),
+    )
+    .limit(1);
+
+  if (seeded) {
+    await db
+      .update(bookingsTable)
+      .set({
+        startAt,
+        endAt,
+        status: "CONFIRMED",
+        notes: GUEST_HUB_DEMO_BOOKING_NOTE,
+        cancellationReason: null,
+      })
+      .where(eq(bookingsTable.id, seeded.id));
+    await cancelMaryFutureBookings(businessId, customerId, seeded.id);
+    return seeded.id;
+  }
+
+  await cancelMaryFutureBookings(businessId, customerId);
+  const id = generateId();
   await db.insert(bookingsTable).values({
-    id: generateId(),
+    id,
     businessId,
     customerId,
     staffId: staff.id,
     serviceId: service.id,
     status: "CONFIRMED",
-    startAt: start,
-    endAt: end,
-    notes: "Demo guest hub — Mary McNamara",
+    startAt,
+    endAt,
+    notes: GUEST_HUB_DEMO_BOOKING_NOTE,
   });
-  return true;
+  return id;
 }
 
 async function ensureWellnessPackageCredit(businessId: string, customerId: string): Promise<void> {
@@ -184,8 +240,8 @@ async function ensureWellnessPackageCredit(businessId: string, customerId: strin
 }
 
 /**
- * Link demo guest Mary to all showcase studios + upcoming visits + wellness pack.
- * Idempotent — safe on provision, repair, and CI seed.
+ * Link demo guest Mary to all showcase studios + realistic upcoming visits + wellness pack.
+ * Idempotent — reconciles operator live-day noise so `/my` is not 18 bookings on one day.
  */
 export async function seedDemoGuestHub(): Promise<{
   guestId: string;
@@ -214,11 +270,12 @@ export async function seedDemoGuestHub(): Promise<{
       await ensureWellnessPackageCredit(biz.id, customerId);
     }
 
-    if (UPCOMING_SLUGS.has(slug)) {
-      const days = 2 + (shopsLinked % 5);
-      if (await ensureMaryUpcomingBooking(biz.id, customerId, days)) {
-        upcomingEnsured += 1;
-      }
+    const daysAhead = MARY_GUEST_HUB_UPCOMING_DAYS[slug];
+    if (daysAhead != null) {
+      const id = await upsertMaryGuestHubBooking(biz.id, customerId, daysAhead);
+      if (id) upcomingEnsured += 1;
+    } else {
+      await cancelMaryFutureBookings(biz.id, customerId);
     }
   }
 

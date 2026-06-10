@@ -206,6 +206,21 @@ router.post("/internal/cron/aftercare-sequences", async (req, res): Promise<void
   res.json(result);
 });
 
+/** ~17:00 local — one push summarising far-future booking in-app alerts (no instant push). */
+router.post("/internal/cron/evening-notification-roundup", async (req, res): Promise<void> => {
+  if (!authorize(req)) {
+    sendError(res, req, 401, "Unauthorized");
+    return;
+  }
+  const { runEveningNotificationRoundup } = await import(
+    "../services/evening-notification-roundup.service"
+  );
+  const targetHour =
+    typeof req.body?.targetHour === "number" ? (req.body.targetHour as number) : undefined;
+  const result = await runEveningNotificationRoundup({ targetHour });
+  res.json(result);
+});
+
 router.post("/internal/cron/test-push", async (req, res): Promise<void> => {
   if (!authorize(req)) {
     sendError(res, req, 401, "Unauthorized");

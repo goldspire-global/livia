@@ -8,7 +8,7 @@ import { GuestHubLivChat } from "@/components/guest/guest-hub-liv-chat";
 import { GuestHubSignIn } from "@/components/guest/guest-hub-sign-in";
 import { formatDateTime } from "@/lib/format";
 import { GUEST_HUB_COPY, type GuestPreferredModality } from "@workspace/policy";
-import { GuestPreferredChannelCard } from "@/components/guest/guest-preferred-channel-card";
+import { GuestHubAccountSettings } from "@/components/guest/guest-hub-account-settings";
 import { extractGuestVisitToken, normalizeGuestVisitUrl } from "@/lib/guest-visit-path";
 import { GuestShopAvatar } from "@/components/guest/guest-shop-avatar";
 import { Heart, Loader2 } from "lucide-react";
@@ -248,7 +248,7 @@ export default function MyLiviaPage() {
         body: JSON.stringify({ pinned }),
       });
       if (!r.ok) throw new Error("favorite");
-      setView(await r.json());
+      setView(normalizeHubView((await r.json()) as HubView));
     } catch {
       setErr("Could not update favorite");
     } finally {
@@ -315,8 +315,8 @@ export default function MyLiviaPage() {
   }
 
   const statsLine = [
-    `${view.shops.length} studios`,
     `${view.upcomingBookings.length} upcoming`,
+    `${favoriteShops.length} favourites`,
     view.packageCredits?.length ? `${view.packageCredits.length} packs` : null,
   ]
     .filter(Boolean)
@@ -328,6 +328,7 @@ export default function MyLiviaPage() {
       phoneE164={view.phoneE164}
       hubToken={hubToken}
       onSignOut={signOut}
+      sidebarShops={view.shops}
     >
       <GuestHubPageHeader
         title={GUEST_HUB_COPY.vaultTitle}
@@ -341,117 +342,68 @@ export default function MyLiviaPage() {
         </p>
       </GuestHubPageHeader>
 
-      <GuestHubLivChat hubToken={hubToken} variant="panel" />
-
-      <div className="grid gap-8 xl:grid-cols-3">
-        <div className="xl:col-span-2 space-y-8 min-w-0">
-          {heroBooking ? (
-            <section className="space-y-3" data-testid="guest-hub-upcoming">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                {GUEST_HUB_COPY.upcomingSection}
-              </h2>
-              <GuestHubUpcomingHero
-                businessName={heroBooking.businessName}
-                serviceName={heroBooking.serviceName}
-                startAt={heroBooking.startAt}
-                visitUrl={heroBooking.visitUrl}
-                formatDateTime={formatDateTime}
-              />
-              {moreUpcoming.length > 0 ? (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {moreUpcoming.map((b) => (
-                    <Link key={b.bookingId} href={b.visitUrl}>
-                      <Card className="h-full hover:border-primary/40 cursor-pointer transition-colors">
-                        <CardContent className="py-4">
-                          <p className="font-medium">{b.businessName}</p>
-                          <p className="text-sm text-muted-foreground">{b.serviceName}</p>
-                          <p className="text-xs text-muted-foreground mt-2 font-mono tabular-nums">
-                            {formatDateTime(b.startAt)}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-          ) : null}
-
-          {view.shops.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground max-w-lg mx-auto">
-                {GUEST_HUB_COPY.emptyShops}
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {favoriteShops.length > 0 ? (
-                <ShopSection
-                  title={GUEST_HUB_COPY.favoritesSection}
-                  shops={favoriteShops}
-                  favoriteBusy={favoriteBusy}
-                  onToggleFavorite={toggleFavorite}
-                />
-              ) : null}
-              <ShopSection
-                title={
-                  favoriteShops.length > 0
-                    ? GUEST_HUB_COPY.moreShopsSection
-                    : GUEST_HUB_COPY.allShopsSection
-                }
-                shops={otherShops.length > 0 ? otherShops : view.shops}
-                favoriteBusy={favoriteBusy}
-                onToggleFavorite={toggleFavorite}
-              />
-            </>
-          )}
-        </div>
-
-        <aside className="space-y-6 min-w-0">
-          <GuestPreferredChannelCard
-            hubToken={hubToken}
-            preferredModality={view.preferredModality ?? "ANY"}
-            onUpdated={(next) => setView((v) => (v ? { ...v, preferredModality: next } : v))}
+      {heroBooking ? (
+        <section className="space-y-3" data-testid="guest-hub-upcoming">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            {GUEST_HUB_COPY.bookingsNav}
+          </h2>
+          <GuestHubUpcomingHero
+            businessName={heroBooking.businessName}
+            serviceName={heroBooking.serviceName}
+            startAt={heroBooking.startAt}
+            visitUrl={heroBooking.visitUrl}
+            formatDateTime={formatDateTime}
           />
-
-          {view.packageCredits && view.packageCredits.length > 0 ? (
-            <section className="space-y-3" data-testid="guest-hub-package-credits">
-              <h2 className="text-sm font-medium">{GUEST_HUB_COPY.packageCreditsSection}</h2>
-              {view.packageCredits.map((p) => (
-                <Card key={p.ledgerId}>
-                  <CardContent className="py-4 text-sm">
-                    <p className="font-medium">{p.businessName}</p>
-                    <p className="text-muted-foreground">{p.packageName}</p>
-                    <p className="mt-2 tabular-nums">
-                      {p.creditsRemaining} of {p.creditsTotal} sessions left
-                    </p>
-                    {p.expiresAt ? (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Expires {formatDateTime(p.expiresAt)}
+          {moreUpcoming.length > 0 ? (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {moreUpcoming.map((b) => (
+                <Link key={b.bookingId} href={b.visitUrl}>
+                  <Card className="h-full hover:border-primary/40 cursor-pointer transition-colors">
+                    <CardContent className="py-4">
+                      <p className="font-medium">{b.businessName}</p>
+                      <p className="text-sm text-muted-foreground">{b.serviceName}</p>
+                      <p className="text-xs text-muted-foreground mt-2 font-mono tabular-nums">
+                        {formatDateTime(b.startAt)}
                       </p>
-                    ) : null}
-                    {p.redemptionCode ? (
-                      <p className="font-mono text-xs mt-2 tracking-wider">{p.redemptionCode}</p>
-                    ) : null}
-                    <Link
-                      href={p.slug ? `/book/${p.slug}` : "#"}
-                      className="text-primary text-xs mt-3 inline-block font-medium"
-                    >
-                      Book a session →
-                    </Link>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
-            </section>
-          ) : (
-            <Card className="border-dashed">
-              <CardContent className="py-4 text-xs text-muted-foreground">
-                {GUEST_HUB_COPY.packageCreditsEmpty}
-              </CardContent>
-            </Card>
-          )}
-        </aside>
-      </div>
+            </div>
+          ) : null}
+        </section>
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            No upcoming visits — book at a studio you love and it will show up here.
+          </CardContent>
+        </Card>
+      )}
+
+      {view.shops.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground max-w-lg mx-auto">
+            {GUEST_HUB_COPY.emptyShops}
+          </CardContent>
+        </Card>
+      ) : (
+        <ShopSection
+          title={GUEST_HUB_COPY.allShopsSection}
+          shops={otherShops.length > 0 ? [...favoriteShops, ...otherShops] : view.shops}
+          favoriteBusy={favoriteBusy}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
+
+      <GuestHubAccountSettings
+        hubToken={hubToken}
+        phoneE164={view.phoneE164}
+        preferredModality={view.preferredModality ?? "ANY"}
+        packageCredits={view.packageCredits ?? []}
+        onPreferredUpdated={(next) => setView((v) => (v ? { ...v, preferredModality: next } : v))}
+      />
+
+      <GuestHubLivChat hubToken={hubToken} variant="panel" />
     </GuestHubShell>
   );
 }
@@ -471,11 +423,7 @@ function ShopSection({
     <section className="space-y-3">
       <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
       {shops.map((shop) => {
-        const shopHref = shop.shopRelationshipUrl ?? `/my/${shop.slug}`;
-        const primaryHref = shop.manageVisitUrl ?? shopHref;
-        const primaryLabel = shop.manageVisitUrl
-          ? "Manage visit"
-          : GUEST_HUB_COPY.manageStudioCta;
+        const studioHref = shop.shopRelationshipUrl ?? `/my/${shop.slug}`;
         return (
           <Card
             key={shop.businessId}
@@ -483,7 +431,7 @@ function ShopSection({
             data-testid={`guest-hub-shop-${shop.slug}`}
           >
             <CardContent className="py-4 flex items-center gap-3">
-              <Link href={shopHref} className="flex items-center gap-3 flex-1 min-w-0">
+              <Link href={studioHref} className="flex items-center gap-3 flex-1 min-w-0">
                 <GuestShopAvatar
                   businessName={shop.businessName}
                   imageUrl={shop.imageUrl}
@@ -495,11 +443,6 @@ function ShopSection({
                     {shop.vertical.replace(/-/g, " ")}
                     {shop.lastServiceName ? ` · last: ${shop.lastServiceName}` : ""}
                   </p>
-                  {shop.relationshipHint ? (
-                    <p className="text-[11px] text-primary/90 mt-1 line-clamp-1">
-                      {shop.relationshipHint}
-                    </p>
-                  ) : null}
                 </div>
               </Link>
               <Button
@@ -523,8 +466,13 @@ function ShopSection({
                   />
                 )}
               </Button>
-              <Button size="sm" variant={shop.manageVisitUrl ? "default" : "secondary"} asChild className="shrink-0">
-                <Link href={primaryHref}>{primaryLabel}</Link>
+              {shop.manageVisitUrl ? (
+                <Button size="sm" variant="default" asChild className="shrink-0">
+                  <Link href={shop.manageVisitUrl}>{GUEST_HUB_COPY.manageVisitCta.replace(" →", "")}</Link>
+                </Button>
+              ) : null}
+              <Button size="sm" variant="secondary" asChild className="shrink-0">
+                <Link href={shop.bookUrl}>{GUEST_HUB_COPY.bookStudioCta}</Link>
               </Button>
             </CardContent>
           </Card>

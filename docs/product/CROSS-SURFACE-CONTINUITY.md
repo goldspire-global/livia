@@ -31,7 +31,7 @@
 ## Guests (Mary / My Livia)
 
 - **Phone OTP** — `guest_identities` + `guest_shop_links`; not Clerk.
-- **Demo Mary** — `+353871000001` seeded via `seedDemoGuestHub()` on provision/sync.
+- **Demo Mary** — `+353871000001` seeded via `seedDemoGuestHub()` on provision/sync. Upcoming visits are **curated** (≤8, one per shop, spread across weeks) — not raw operator live-day noise.
 - **Web** `/my` and **mobile** `/my-livia` consume the same `GET /api/public/guest-hub/me` token.
 
 ---

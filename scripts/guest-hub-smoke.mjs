@@ -120,6 +120,7 @@ try {
         } else {
           const view = await me.json();
           const shopCount = Array.isArray(view.shops) ? view.shops.length : 0;
+          const upcoming = Array.isArray(view.upcomingBookings) ? view.upcomingBookings : [];
           if (shopCount < 7) {
             fail(
               "guest-hub /me shops",
@@ -127,6 +128,43 @@ try {
             );
           } else {
             pass("guest-hub /me", `${shopCount} shops linked`);
+          }
+          if (upcoming.length > 8) {
+            fail("guest-hub /me upcoming", `expected ≤8 curated upcoming, got ${upcoming.length}`);
+          } else if (upcoming.length > 0) {
+            const days = new Set(
+              upcoming.map((b) => new Date(b.startAt).toISOString().slice(0, 10)),
+            );
+            if (days.size < Math.min(upcoming.length, 2) && upcoming.length > 3) {
+              fail(
+                "guest-hub /me upcoming spread",
+                `expected visits spread across days, got ${days.size} unique day(s) for ${upcoming.length} rows`,
+              );
+            } else {
+              pass("guest-hub /me upcoming", `${upcoming.length} visits · ${days.size} day(s)`);
+            }
+            const first = upcoming[0];
+            if (first?.slug && first?.bookingId) {
+              const visitUrl = first.visitUrl ?? "";
+              if (!visitUrl.includes("/my/") || !visitUrl.includes("/visit/")) {
+                fail("guest-hub visitUrl", `expected /my/{slug}/visit/{id}, got ${visitUrl}`);
+              } else {
+                const visitRes = await fetch(
+                  `${apiBase}/api/public/guest-hub/shops/${encodeURIComponent(first.slug)}/visits/${encodeURIComponent(first.bookingId)}`,
+                  { headers: { "X-Guest-Hub-Token": hubToken } },
+                );
+                if (!visitRes.ok) {
+                  fail("guest-hub visit manage", `${visitRes.status} ${(await visitRes.text()).slice(0, 120)}`);
+                } else {
+                  const payload = await visitRes.json();
+                  if (!payload?.booking?.bookingId) {
+                    fail("guest-hub visit manage", "missing booking in payload");
+                  } else {
+                    pass("guest-hub visit manage", first.slug);
+                  }
+                }
+              }
+            }
           }
         }
       }

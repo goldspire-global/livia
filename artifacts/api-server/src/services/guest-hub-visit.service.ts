@@ -15,6 +15,7 @@ import {
   guestMyVisitPrep,
   guestPublicExperience,
   guestVisitDepositLine,
+  normalizePhoneE164,
   parseBeautyPreferences,
   beautyClientPatchTestLabel,
   type BusinessVertical,
@@ -94,16 +95,12 @@ async function assertGuestBookingAccess(
     .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
     .innerJoin(customersTable, eq(bookingsTable.customerId, customersTable.id))
     .leftJoin(staffTable, eq(bookingsTable.staffId, staffTable.id))
-    .where(
-      and(
-        eq(bookingsTable.id, bookingId),
-        eq(businessesTable.slug, slug),
-        eq(customersTable.phone, session.phoneE164),
-      ),
-    )
+    .where(and(eq(bookingsTable.id, bookingId), eq(businessesTable.slug, slug)))
     .limit(1);
 
-  if (!row || row.customerPhone !== session.phoneE164) throw new Error("NOT_FOUND");
+  const sessionDigits = normalizePhoneE164(session.phoneE164)?.replace(/\D/g, "") ?? "";
+  const customerDigits = normalizePhoneE164(row?.customerPhone ?? "")?.replace(/\D/g, "") ?? "";
+  if (!row || !sessionDigits || sessionDigits !== customerDigits) throw new Error("NOT_FOUND");
   return { session, booking: { ...row, customerPhone: row.customerPhone } };
 }
 
