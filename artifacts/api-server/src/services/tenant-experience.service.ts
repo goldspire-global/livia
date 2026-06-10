@@ -6,7 +6,17 @@ import {
   type BusinessVertical,
   type OnboardingState,
 } from "@workspace/policy";
+import { and, eq, sql } from "drizzle-orm";
+import { db, staffTable } from "@workspace/db";
 import { getBusinessById } from "./businesses.service";
+
+async function countActiveStaff(businessId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(staffTable)
+    .where(and(eq(staffTable.businessId, businessId), eq(staffTable.isActive, true)));
+  return row?.count ?? 0;
+}
 
 export async function getTenantExperienceForBusiness(businessId: string) {
   const biz = await getBusinessById(businessId);
@@ -16,6 +26,7 @@ export async function getTenantExperienceForBusiness(businessId: string) {
   const vertical = biz.vertical as BusinessVertical;
   const presetId = biz.presentationPresetId ?? PLATFORM_DEFAULT_PRESET_ID;
   const preset = resolvePresentationPreset(vertical, presetId);
+  const activeStaffCount = await countActiveStaff(businessId);
 
   return {
     ...resolveTenantExperience({
@@ -24,6 +35,8 @@ export async function getTenantExperienceForBusiness(businessId: string) {
       country: biz.country,
       businessName: biz.name,
       onboardingState: onboardingState ?? null,
+      tier: biz.tier ?? biz.planId ?? "solo",
+      activeStaffCount,
     }),
     presentation: {
       presetId: preset.id,

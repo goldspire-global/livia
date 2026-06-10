@@ -13,6 +13,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { LazyRoute } from "@/components/route-suspense";
 import { WedgeRouteGuard } from "@/components/wedge-route-guard";
+import { OperatorWorkforceGuard } from "@/components/operator-workforce-guard";
 import {
   LazyAuditPage,
   LazyBookingDetailPage,
@@ -160,8 +161,20 @@ function AuthenticatedRoutes() {
           <Route path="/bookings">{() => <LazyRoute page={LazyBookingsPage} />}</Route>
           <Route path="/customers/:customerId">{() => <LazyRoute page={LazyCustomerDetailPage} />}</Route>
           <Route path="/customers">{() => <LazyRoute page={LazyCustomersPage} />}</Route>
-          <Route path="/staff/:staffId">{() => <LazyRoute page={LazyStaffDetailPage} />}</Route>
-          <Route path="/staff">{() => <LazyRoute page={LazyStaffPage} />}</Route>
+          <Route path="/staff/:staffId">
+            {() => (
+              <OperatorWorkforceGuard>
+                <LazyRoute page={LazyStaffDetailPage} />
+              </OperatorWorkforceGuard>
+            )}
+          </Route>
+          <Route path="/staff">
+            {() => (
+              <OperatorWorkforceGuard>
+                <LazyRoute page={LazyStaffPage} />
+              </OperatorWorkforceGuard>
+            )}
+          </Route>
           <Route path="/services">{() => <LazyRoute page={LazyServicesPage} />}</Route>
           <Route path="/inbox">{() => <LazyRoute page={LazyInboxPage} />}</Route>
           <Route path="/audit">{() => <LazyRoute page={LazyAuditPage} />}</Route>
@@ -219,7 +232,13 @@ function AuthenticatedRoutes() {
             )}
           </Route>
           <Route path="/brands">{() => <LazyRoute page={LazyBrandsPage} />}</Route>
-          <Route path="/rota">{() => <LazyRoute page={LazyRotaPage} />}</Route>
+          <Route path="/rota">
+            {() => (
+              <OperatorWorkforceGuard>
+                <LazyRoute page={LazyRotaPage} />
+              </OperatorWorkforceGuard>
+            )}
+          </Route>
           <Route path="/classes">
             {() => (
               <WedgeRouteGuard path="/classes">

@@ -17,8 +17,19 @@ export function menuItemsForPersona(args: {
   showPremises: boolean;
   showDayPackages: boolean;
   isDemo: boolean;
+  /** Hide Team / rota until solo adds a second practitioner. */
+  showWorkforceNav?: boolean;
 }): MenuItem[] {
-  const { persona, vertical, tier, businessCount = 1, showPremises, showDayPackages, isDemo } = args;
+  const {
+    persona,
+    vertical,
+    tier,
+    businessCount = 1,
+    showPremises,
+    showDayPackages,
+    isDemo,
+    showWorkforceNav = true,
+  } = args;
   const items: MenuItem[] = [];
 
   if (isDemo) {
@@ -29,7 +40,7 @@ export function menuItemsForPersona(args: {
     items.push({ icon: "grid", label: "Glance · all shops", route: "/(tabs)/shops", section: "primary" });
   }
 
-  if (persona === "org_admin" || persona === "owner" || persona === "manager") {
+  if (showWorkforceNav && (persona === "org_admin" || persona === "owner" || persona === "manager")) {
     items.push({ icon: "clock", label: "Who's working", route: "/rota", section: "operations" });
   }
 
@@ -81,9 +92,11 @@ export function menuItemsForPersona(args: {
   items.push(
     { icon: "bell", label: "Notifications", route: "/notifications", section: "primary" },
     { icon: "settings", label: "Settings", route: "/settings", section: "primary" },
-    { icon: "users", label: "Staff", route: "/staff/", section: "primary" },
-    { icon: "briefcase", label: "Services", route: "/services/", section: "primary" },
   );
+  if (showWorkforceNav) {
+    items.push({ icon: "users", label: "Staff", route: "/staff/", section: "primary" });
+  }
+  items.push({ icon: "briefcase", label: "Services", route: "/services/", section: "primary" });
 
   if (persona === "org_admin" || persona === "owner" || persona === "manager") {
     items.push({ icon: "cpu", label: "Liv Mandate", route: "/liv-mandate", section: "trust" });

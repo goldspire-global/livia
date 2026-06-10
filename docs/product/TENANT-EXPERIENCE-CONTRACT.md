@@ -32,6 +32,19 @@ Public `/b/{slug}` uses the **same** `presentation_preset_id` and brand fields a
 | `onboardingExtras` | `getVerticalOnboardingExtras()` |
 | `onboarding.appUnlocked` | `isOnboardingAppUnlocked()` — blocking acts complete |
 | `onboarding.activationSteps` | Post-go-live checklist (not a hard app lock) |
+| `operator` | `tier` + `activeStaffCount` — drives **operator-nav-policy** (hide Team / Rota for solo until a second practitioner is added) |
+
+## Operator shape (solo vs team)
+
+Policy hub: `lib/policy/src/operator-nav-policy.ts`.
+
+| Signal | Team / Rota in nav | “Invite team” activation step |
+|--------|-------------------|------------------------------|
+| **Solo tier, 1 staff (owner only)** | Hidden | Hidden |
+| **Solo tier, 2+ staff** | Shown | Shown |
+| **Studio / chain / chair-host** | Shown | Shown |
+
+Surfaces: dashboard sidebar, mobile More menu, `/staff` + `/rota` route guards, `GET /me/tenant-experience` activation steps.
 
 ## Blocking onboarding (self-serve)
 

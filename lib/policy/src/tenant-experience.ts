@@ -10,6 +10,7 @@ import {
   isOnboardingAppUnlocked,
   type BLOCKING_ONBOARDING_ACTS,
 } from "./onboarding-program";
+import type { OperatorNavSignals } from "./operator-nav-policy";
 import type { OnboardingState } from "./onboarding-state";
 import {
   welcomeVerticalAnnouncement,
@@ -47,6 +48,7 @@ export type TenantExperience = {
   /** Vertical announcement welcomed by platform — capabilities flow to surfaces. */
   announcement: WelcomedVerticalAnnouncement;
   skin: TenantExperienceSkin;
+  operator: OperatorNavSignals;
   onboarding: {
     appUnlocked: boolean;
     blockingPercent: number;
@@ -119,6 +121,8 @@ export function resolveTenantExperience(args: {
   country?: string | null;
   businessName?: string | null;
   onboardingState?: OnboardingState | null;
+  tier?: string | null;
+  activeStaffCount?: number;
 }): TenantExperience {
   const key = resolveVerticalKey(args.vertical, args.category);
   const vocabulary = businessVocabulary(args.vertical, args.category);
@@ -140,6 +144,11 @@ export function resolveTenantExperience(args: {
     ? playbook.wedge
     : `A few minutes — then Liv runs your ${vocabulary.serviceNoun.toLowerCase()}s and inbox.`;
 
+  const operator: OperatorNavSignals = {
+    tier: args.tier ?? "solo",
+    activeStaffCount: args.activeStaffCount ?? 1,
+  };
+
   return {
     vertical: key,
     vocabulary,
@@ -147,11 +156,12 @@ export function resolveTenantExperience(args: {
     onboardingExtras,
     announcement: welcomeVerticalAnnouncement(key),
     skin,
+    operator,
     onboarding: {
       appUnlocked,
       blockingPercent,
       tourPercent,
-      activationSteps: activationStepsFromState(state, key),
+      activationSteps: activationStepsFromState(state, key, operator),
       welcomeHeadline,
       welcomeSubline,
     },

@@ -1,4 +1,8 @@
 import type { BusinessVertical } from "./types";
+import {
+  filterActivationStepsForOperator,
+  type OperatorNavSignals,
+} from "./operator-nav-policy";
 import type { OnboardingActId, OnboardingChecklist, OnboardingState } from "./onboarding-state";
 import {
   ONBOARDING_ACT_IDS,
@@ -53,6 +57,7 @@ export function verticalRequiresMenuSetup(vertical?: string | null): boolean {
 export function activationStepsFromState(
   state: OnboardingState | null | undefined,
   vertical?: string | null,
+  operatorSignals?: OperatorNavSignals | null,
 ): {
   id: string;
   label: string;
@@ -63,7 +68,7 @@ export function activationStepsFromState(
   const checklist = state?.checklist ?? ({} as OnboardingChecklist);
   const menuDone =
     completed.has("a3_service_menu") || checklist.servicesConfirmed === true;
-  return [
+  const steps = [
     {
       id: "menu",
       label: menuActivationLabel(vertical),
@@ -107,6 +112,7 @@ export function activationStepsFromState(
       href: "/staff",
     },
   ];
+  return filterActivationStepsForOperator(steps, operatorSignals ?? null);
 }
 
 export function mergePercentWithBlocking(state: OnboardingState): OnboardingState {

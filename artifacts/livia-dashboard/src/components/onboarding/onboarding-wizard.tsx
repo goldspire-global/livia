@@ -90,8 +90,8 @@ function actHints(
   },
   a5_hours: {
     body: "Set weekly opening hours so Liv knows when you take bookings.",
-    href: "/staff",
-    cta: "Set availability",
+    href: "/onboarding",
+    cta: "Set hours",
   },
   a6_liv: {
     body: "Choose Liv's tone, greeting, and when she can book for you.",

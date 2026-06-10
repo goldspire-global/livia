@@ -21,7 +21,11 @@ import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { PERSONA_LABEL, usePersona } from "@/hooks/usePersona";
 import { useGetTenantCapabilities } from "@workspace/api-client-react";
-import { filterMobileMenuItems } from "@workspace/policy";
+import {
+  filterMobileMenuItems,
+  filterMobileMenuItemsByOperatorShape,
+  operatorNeedsWorkforceNav,
+} from "@workspace/policy";
 import { canViewDayPackages, canViewPremises } from "@/lib/settings-persona";
 import { menuItemsForPersona } from "@/lib/mobile-menu";
 import { getPublicBookingLabel } from "@/lib/public-booking-url";
@@ -40,23 +44,34 @@ export default function MoreScreen() {
   const { data: tenantCaps } = useGetTenantCapabilities(bid, {
     query: { enabled: !!bid } as never,
   });
-  const menuItems = filterMobileMenuItems(
-    menuItemsForPersona({
-    persona: currentPersona,
-    vertical,
-    tier,
-    businessCount: businesses.length,
-    showPremises: canViewPremises(currentPersona, {
-      tier: (currentBusiness as { tier?: string } | undefined)?.tier,
-      premisesSharing: (currentBusiness as { premisesSharing?: boolean } | undefined)
-        ?.premisesSharing,
-    }),
-    showDayPackages:
-      canViewDayPackages(currentPersona) &&
-      (vertical === "wellness" || vertical === "medspa"),
-    isDemo: isDemoAccount,
-  }),
-    tenantCaps?.platformCapabilities,
+  const rawStaffCount = tenantCaps?.readinessFacts?.staffCount;
+  const operatorSignals = {
+    tier: tier ?? "solo",
+    activeStaffCount: typeof rawStaffCount === "number" ? rawStaffCount : 1,
+  };
+  const showWorkforceNav = operatorNeedsWorkforceNav(operatorSignals);
+
+  const menuItems = filterMobileMenuItemsByOperatorShape(
+    filterMobileMenuItems(
+      menuItemsForPersona({
+        persona: currentPersona,
+        vertical,
+        tier,
+        businessCount: businesses.length,
+        showWorkforceNav,
+        showPremises: canViewPremises(currentPersona, {
+          tier: (currentBusiness as { tier?: string } | undefined)?.tier,
+          premisesSharing: (currentBusiness as { premisesSharing?: boolean } | undefined)
+            ?.premisesSharing,
+        }),
+        showDayPackages:
+          canViewDayPackages(currentPersona) &&
+          (vertical === "wellness" || vertical === "medspa"),
+        isDemo: isDemoAccount,
+      }),
+      tenantCaps?.platformCapabilities,
+    ),
+    operatorSignals,
   );
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [founderTapCount, setFounderTapCount] = useState(0);

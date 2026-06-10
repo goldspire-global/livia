@@ -66,11 +66,11 @@ function readinessForCapability(
   switch (id) {
     case "bookings":
       if (facts.serviceCount < 1) blockers.push("Add at least one service");
-      if (facts.staffCount < 1) blockers.push("Add at least one team member");
+      if (facts.staffCount < 1) blockers.push("Confirm who takes bookings");
       break;
     case "availability":
-      if (facts.staffCount < 1) blockers.push("Set team availability");
-      else if (!facts.hasAvailabilityRules) blockers.push("Set opening hours on your team");
+      if (facts.staffCount < 1) blockers.push("Set your opening hours");
+      else if (!facts.hasAvailabilityRules) blockers.push("Set opening hours");
       break;
     case "payments":
       if (!facts.paymentsConnected) blockers.push("Connect Stripe");

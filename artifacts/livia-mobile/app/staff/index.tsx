@@ -1,7 +1,8 @@
-import { useListStaff } from "@workspace/api-client-react";
+import { useListStaff, useGetTenantCapabilities } from "@workspace/api-client-react";
+import { operatorNeedsWorkforceNav } from "@workspace/policy";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -25,11 +26,29 @@ export default function StaffListScreen() {
   const { currentBusiness } = useBusiness();
   const canInvite = role === "OWNER" || role === "ADMIN";
 
+  const bid = currentBusiness?.id ?? "";
+  const tier = (currentBusiness as { tier?: string } | undefined)?.tier;
+  const { data: caps } = useGetTenantCapabilities(bid, {
+    query: { enabled: !!bid } as never,
+  });
+  const rawStaffCount = caps?.readinessFacts?.staffCount;
+  const showWorkforce = operatorNeedsWorkforceNav({
+    tier: tier ?? "solo",
+    activeStaffCount: typeof rawStaffCount === "number" ? rawStaffCount : 1,
+  });
+
+  useEffect(() => {
+    if (!bid || caps === undefined) return;
+    if (!showWorkforce) router.replace("/(tabs)");
+  }, [bid, caps, showWorkforce, router]);
+
   const { data: staff, isLoading, refetch, isRefetching } = useListStaff(
-    currentBusiness?.id ?? "",
+    bid,
     {},
-    { query: { enabled: !!currentBusiness?.id } as any }
+    { query: { enabled: !!bid && showWorkforce } as never },
   );
+
+  if (!showWorkforce) return null;
 
   return (
     <FlatList

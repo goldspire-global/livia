@@ -42,7 +42,11 @@ import { useTenantExperience } from "@/lib/tenant-experience-api";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import { useGetTenantCapabilities } from "@workspace/api-client-react";
 import { useOnboardingCapabilitySync } from "@/hooks/use-onboarding-capability-sync";
-import { filterNavItemsByCapabilities, filterWellnessNavItems } from "@workspace/policy";
+import {
+  filterNavItemsByCapabilities,
+  filterNavItemsByOperatorShape,
+  filterWellnessNavItems,
+} from "@workspace/policy";
 
 import { UserButton } from "@clerk/clerk-react";
 
@@ -262,19 +266,31 @@ export function AppLayout({ children }: { children: ReactNode }) {
     [readyVerticalCapabilityIds],
   );
 
+  const operatorSignals = useMemo(() => {
+    const te = tenantExperience as { operator?: { tier?: string; activeStaffCount?: number } } | undefined;
+    const staffCount = tenantCapabilities?.readinessFacts?.staffCount ?? te?.operator?.activeStaffCount ?? 1;
+    return {
+      tier: (business as { tier?: string } | null)?.tier ?? te?.operator?.tier ?? "solo",
+      activeStaffCount: typeof staffCount === "number" ? staffCount : 1,
+    };
+  }, [business, tenantCapabilities?.readinessFacts?.staffCount, tenantExperience]);
+
   const items = filterWellnessNavItems(
-    filterNavItemsByCapabilities(
-      getRitualNav(
-        persona,
-        effectiveRole,
-        businesses.length,
-        isDemoLoginEnabled,
-        (business as { tier?: string } | null)?.tier,
-        (business as { vertical?: string } | null)?.vertical,
-        (business as { category?: string } | null)?.category,
-        { showLifecycle },
+    filterNavItemsByOperatorShape(
+      filterNavItemsByCapabilities(
+        getRitualNav(
+          persona,
+          effectiveRole,
+          businesses.length,
+          isDemoLoginEnabled,
+          operatorSignals.tier,
+          (business as { vertical?: string } | null)?.vertical,
+          (business as { category?: string } | null)?.category,
+          { showLifecycle },
+        ),
+        tenantCapabilities?.platformCapabilities,
       ),
-      tenantCapabilities?.platformCapabilities,
+      operatorSignals,
     ),
     readyVerticalCapSet,
   );
