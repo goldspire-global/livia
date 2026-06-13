@@ -7,7 +7,7 @@ import { SIGN_IN_AFTER_SIGN_OUT } from "@/lib/auth-routes";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { dark } from "@clerk/themes";
 import { ThemeProvider, useTheme } from "next-themes";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 
 import { AuthGuard } from "@/components/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -107,23 +107,6 @@ import { isProductionCustomerSurface } from "@/lib/production-surface";
 import { isOnboardingPreviewRouteEnabled } from "@/lib/onboarding-preview-route";
 import { isPublicGuestPath } from "@/lib/public-guest-paths";
 import { canonicalizeEventVendorQuotePath } from "@/lib/public-guest-route-params";
-
-/** Render public event-vendor pages before AuthGuard — avoids sign-in redirect on client quote links. */
-function publicEventVendorPageFromPathname(pathname: string): ReactNode | null {
-  const canonical = canonicalizeEventVendorQuotePath(pathname);
-  if (canonical) {
-    window.history.replaceState(null, "", canonical);
-    return <PublicEventVendorQuotePage />;
-  }
-  const p = pathname.split("?")[0]?.replace(/\/+$/, "") || "/";
-  if (p.match(/^\/e\/[^/]+\/q\/[^/]+$/)) return <PublicEventVendorQuotePage />;
-  if (p.match(/^\/e\/[^/]+\/enquire$/)) return <PublicEventVendorEnquirePage />;
-  if (p.match(/^\/e\/[^/]+\/gallery$/)) return <PublicEventVendorGalleryPage />;
-  if (p.match(/^\/e\/[^/]+\/services$/)) return <PublicEventVendorServicesPage />;
-  if (p.match(/^\/e\/[^/]+\/about$/)) return <PublicEventVendorAboutPage />;
-  if (p.match(/^\/e\/[^/]+$/)) return <PublicEventVendorSitePage />;
-  return null;
-}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -360,17 +343,19 @@ function AuthenticatedRoutes() {
 }
 
 function AppRouter() {
+  const [location] = useLocation();
+
   if (isGuestSubdomainHost()) {
     return <GuestSubdomainRouter />;
   }
 
-  if (typeof window !== "undefined") {
-    const guestPage = publicEventVendorPageFromPathname(window.location.pathname);
-    if (guestPage) return guestPage;
+  const quoteCanonical = canonicalizeEventVendorQuotePath(location);
+  if (quoteCanonical) {
+    return <Redirect to={quoteCanonical} />;
   }
 
   // App bare /demo → marketing W1 gate (matches staging.livia-hq.com/demo). Founder: /demo/founder
-  if (typeof window !== "undefined" && shouldRedirectAppDemoToMarketing(window.location.pathname)) {
+  if (typeof window !== "undefined" && shouldRedirectAppDemoToMarketing(location)) {
     window.location.replace(marketingDemoGateUrl());
     return null;
   }
