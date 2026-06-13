@@ -455,8 +455,8 @@
 
 .ev-services-card__media {
   width: 100%;
-  min-height: 11rem;
-  aspect-ratio: 4 / 5;
+  min-height: 8.8rem;
+  aspect-ratio: 1;
   border-radius: 1rem;
   overflow: hidden;
   border: 1px solid var(--ev-border);
