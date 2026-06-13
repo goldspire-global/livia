@@ -115,4 +115,16 @@ export const DEMO_SCENARIO_ACCOUNTS: DemoPersonaDef[] = [
     businessSlugs: ["motion-physio-cork"],
     requiresClerk: true,
   },
+  {
+    id: "owner",
+    email: DEMO_ROLE_EMAILS.eventDecor,
+    displayName: "Síle Brennan",
+    roleLabel: "Owner · Event decor",
+    firstName: "Síle",
+    lastName: "Brennan",
+    landingPath: "/dashboard",
+    primaryBusinessSlug: "atelier-decor-dublin",
+    businessSlugs: ["atelier-decor-dublin"],
+    requiresClerk: true,
+  },
 ];

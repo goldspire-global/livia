@@ -23,6 +23,7 @@ import {
   listQuotesWithEnquiry,
   requestPostEventReview,
   reviseSentQuote,
+  recordOperatorClientWithdrew,
   sendMoodBoardForApproval,
   sendQuote,
   updateEnquiry,
@@ -103,7 +104,13 @@ router.patch(
 router.get(
   "/businesses/:businessId/enquiries/:enquiryId/decline-draft",
   ...withBusinessFeature("enquiries", "STAFF", async (req, res) => {
-    const row = await getLivDeclineDraft(bizId(req.params.businessId), bizId(req.params.enquiryId));
+    const reason =
+      typeof req.query.reason === "string" ? (req.query.reason as import("@workspace/policy").EnquiryDeclineReasonId) : undefined;
+    const row = await getLivDeclineDraft(
+      bizId(req.params.businessId),
+      bizId(req.params.enquiryId),
+      reason,
+    );
     if (!row) {
       sendError(res, req, 404, "not_found");
       return;
@@ -115,9 +122,11 @@ router.get(
 router.post(
   "/businesses/:businessId/enquiries/:enquiryId/decline-with-liv",
   ...withBusinessFeature("enquiries", "ADMIN", async (req, res) => {
+    const body = (req.body ?? {}) as { reasonId?: import("@workspace/policy").EnquiryDeclineReasonId };
     const result = await declineEnquiryWithLivReply(
       bizId(req.params.businessId),
       bizId(req.params.enquiryId),
+      { reasonId: body.reasonId },
     );
     if (!result.ok) {
       if (result.reason === "send_failed") {
@@ -225,6 +234,23 @@ router.patch(
       return;
     }
     res.json(row);
+  }),
+);
+
+router.post(
+  "/businesses/:businessId/quotes/:quoteId/client-withdrew",
+  ...withBusinessFeature("quotes", "ADMIN", async (req, res) => {
+    const body = (req.body ?? {}) as { reasonId?: import("@workspace/policy").ClientWithdrawReasonId };
+    const result = await recordOperatorClientWithdrew(
+      bizId(req.params.businessId),
+      bizId(req.params.quoteId),
+      { reasonId: body.reasonId },
+    );
+    if (!result.ok) {
+      sendError(res, req, result.reason === "already_closed" ? 409 : 404, result.reason);
+      return;
+    }
+    res.json({ ok: true });
   }),
 );
 

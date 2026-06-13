@@ -51,8 +51,11 @@ export type QuoteRow = {
   subtotalMinor: number;
   enquiryId?: string | null;
   publicToken: string;
+  depositAmountMinor?: number;
+  depositPaidMinor?: number;
   enquiry?: {
     contactName: string;
+    status?: string | null;
     eventType?: string | null;
     eventDate?: string | null;
     venue?: string | null;

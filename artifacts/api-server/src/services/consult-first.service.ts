@@ -53,6 +53,8 @@ import {
   resolveEnquiryDeclineCopy,
   weightedPipelineForecast,
   replyTimeBenchmark,
+  type EnquiryDeclineReasonId,
+  type ClientWithdrawReasonId,
   type LivEventLifecycle,
 } from "@workspace/policy";
 
@@ -182,7 +184,11 @@ export async function getEnquiry(businessId: string, enquiryId: string) {
   return row ?? null;
 }
 
-export async function getLivDeclineDraft(businessId: string, enquiryId: string) {
+export async function getLivDeclineDraft(
+  businessId: string,
+  enquiryId: string,
+  reasonId?: EnquiryDeclineReasonId | null,
+) {
   const enquiry = await getEnquiry(businessId, enquiryId);
   if (!enquiry) return null;
 
@@ -196,6 +202,7 @@ export async function getLivDeclineDraft(businessId: string, enquiryId: string) 
     contactName: enquiry.contactName,
     businessName: biz?.name ?? "Your team",
     operatorTemplate,
+    reasonId: reasonId ?? "other",
   });
   return {
     ...copy,
@@ -238,12 +245,13 @@ export type DeclineEnquiryResult =
 export async function declineEnquiryWithLivReply(
   businessId: string,
   enquiryId: string,
+  opts?: { reasonId?: EnquiryDeclineReasonId },
 ): Promise<DeclineEnquiryResult> {
   const enquiry = await getEnquiry(businessId, enquiryId);
   if (!enquiry) return { ok: false, reason: "not_found" };
   if (enquiry.status === "lost") return { ok: false, reason: "already_closed" };
 
-  const draft = await getLivDeclineDraft(businessId, enquiryId);
+  const draft = await getLivDeclineDraft(businessId, enquiryId, opts?.reasonId);
   if (!draft) return { ok: false, reason: "not_found" };
 
   let emailStatus: "sent" | "skipped" | "failed" = "skipped";
@@ -268,6 +276,48 @@ export async function declineEnquiryWithLivReply(
     budgetRange: enquiry.budgetRange,
   }).catch(() => undefined);
   return { ok: true, enquiry: row, emailStatus, whatsappText: draft.whatsappText };
+}
+
+export type RecordClientWithdrewResult =
+  | { ok: true }
+  | { ok: false; reason: "not_found" | "already_closed" };
+
+/** Operator records client withdrew — any stage after quote sent. */
+export async function recordOperatorClientWithdrew(
+  businessId: string,
+  quoteId: string,
+  opts?: { reasonId?: ClientWithdrawReasonId },
+): Promise<RecordClientWithdrewResult> {
+  const quote = await getQuoteWithLines(businessId, quoteId);
+  if (!quote) return { ok: false, reason: "not_found" };
+  if (quote.status === "declined" || quote.enquiry?.status === "lost") {
+    return { ok: false, reason: "already_closed" };
+  }
+
+  await db
+    .update(quotesTable)
+    .set({ status: "declined", updatedAt: new Date() })
+    .where(and(eq(quotesTable.id, quoteId), eq(quotesTable.businessId, businessId)));
+
+  if (quote.enquiryId) {
+    await updateEnquiry(businessId, quote.enquiryId, {
+      status: "lost",
+      eventDateHoldStatus: "released",
+    });
+  }
+
+  const { notifyClientWithdrew } = await import("./engagement-exit.service");
+  void notifyClientWithdrew({
+    businessId,
+    quoteId,
+    publicToken: quote.publicToken,
+    depositPaidMinor: quote.depositPaidMinor,
+    depositAmountMinor: quote.depositAmountMinor,
+    initiatedBy: "operator",
+  }).catch(() => undefined);
+
+  void opts;
+  return { ok: true };
 }
 
 export async function updateEnquiry(
@@ -1241,6 +1291,15 @@ export async function declinePublicQuote(slug: string, token: string) {
   if (data.quote.enquiryId) {
     await updateEnquiry(data.business.id, data.quote.enquiryId, { status: "lost" });
   }
+  const { notifyClientWithdrew } = await import("./engagement-exit.service");
+  void notifyClientWithdrew({
+    businessId: data.business.id,
+    quoteId: data.quote.id,
+    publicToken: data.quote.publicToken,
+    depositPaidMinor: data.quote.depositPaidMinor ?? 0,
+    depositAmountMinor: data.quote.depositAmountMinor ?? 0,
+    initiatedBy: "client",
+  }).catch(() => undefined);
   return row;
 }
 
@@ -1257,6 +1316,9 @@ export async function acceptPublicQuote(slug: string, token: string) {
   if (data.quote.enquiryId) {
     await updateEnquiry(data.business.id, data.quote.enquiryId, { status: "accepted" });
   }
+
+  const { notifyQuoteAccepted } = await import("./engagement-exit.service");
+  void notifyQuoteAccepted(data.business.id, row.id, row.publicToken).catch(() => undefined);
 
   return row;
 }

@@ -10,24 +10,17 @@ type Props = {
   className?: string;
 };
 
+/** Slim inbox action row — qualify, issue quote, or decline. No hero panels. */
 export function ConsultLeadDecisionPanel({ decision, busy, onAction, className }: Props) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-primary/25 bg-gradient-to-b from-primary/8 to-transparent p-4 space-y-3",
-        className,
-      )}
-      data-testid="consult-lead-decision"
-    >
-      <div>
-        <p className="text-sm font-semibold">{decision.headline}</p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{decision.guidance}</p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-2">
+    <div className={cn("space-y-2", className)} data-testid="consult-lead-decision">
+      {decision.hint ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">{decision.hint}</p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           size="sm"
-          className="sm:flex-1"
           disabled={busy}
           onClick={() => onAction(decision.primary.action)}
           data-testid="consult-lead-primary"
@@ -39,9 +32,8 @@ export function ConsultLeadDecisionPanel({ decision, busy, onAction, className }
           <Button
             type="button"
             size="sm"
-            variant={decision.secondary.destructive ? "outline" : "secondary"}
+            variant="outline"
             className={cn(
-              "sm:flex-1",
               decision.secondary.destructive &&
                 "border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
             )}

@@ -425,8 +425,9 @@ function AppRouter() {
       {!isProductionCustomerSurface ? (
         <>
           <Route path="/demo/open" component={DemoOpenPersonaPage} />
-          <Route path={FOUNDER_DEMO_LAUNCHER_PATH} component={DemoLauncher} />
           <Route path="/demo/wedge/:vertical" component={DemoWedgeStoryPage} />
+          <Route path="/demo" component={DemoLauncher} />
+          <Route path={FOUNDER_DEMO_LAUNCHER_PATH} component={DemoLauncher} />
           <Route path="/demo/:persona">{() => <LazyRoute page={LazyDemoShowcase} />}</Route>
         </>
       ) : (

@@ -15,7 +15,7 @@ import { QuoteBillToPanel } from "@/components/event-vendor/quote-bill-to-panel"
 import { QuoteLineItemsEditor } from "@/components/event-vendor/quote-line-items-editor";
 import { QuoteSendReviewDialog } from "@/components/event-vendor/quote-send-review-dialog";
 import { QuoteSentNextSteps } from "@/components/event-vendor/quote-sent-next-steps";
-import { LivEventPrepTeaser, QuoteBriefPanel, EventDaySheetPanel } from "@/components/event-vendor/quote-workflow-panels";
+import { QuoteBriefPanel } from "@/components/event-vendor/quote-workflow-panels";
 import { EventPrepTimelinePanel, type PrepView } from "@/components/event-vendor/event-prep-timeline-panel";
 import {
   Dialog,
@@ -41,8 +41,7 @@ import {
   type EventDaySheet,
 } from "@/lib/event-vendor-studio";
 import { Plus, Send, Trash2 } from "lucide-react";
-import { STALE_QUOTE_DAYS } from "@workspace/policy";
-import type { QuoteBriefHint } from "@workspace/policy";
+import { STALE_QUOTE_DAYS, studioQuoteListLabel, studioQuoteDetailTitle, resolveQuoteExitActions, CLIENT_WITHDRAW_REASONS, type QuoteBriefHint, type ClientWithdrawReasonId } from "@workspace/policy";
 
 type Milestone = { label: string; percent: number; amountMinor: number; dueDate?: string };
 
@@ -150,6 +149,8 @@ export default function QuotesPage() {
   >([]);
   const [enquiries, setEnquiries] = useState<EnquirySummary[]>([]);
   const [quoteBrief, setQuoteBrief] = useState<QuoteBrief | null>(null);
+  const [withdrewOpen, setWithdrewOpen] = useState(false);
+  const [withdrewReason, setWithdrewReason] = useState<ClientWithdrawReasonId>("unknown");
 
   const params = new URLSearchParams(window.location.search);
   const highlightId = params.get("id");
@@ -189,7 +190,8 @@ export default function QuotesPage() {
     }
     const secured =
       selected.depositPaidMinor >= selected.depositAmountMinor && selected.depositAmountMinor > 0;
-    if (selected.status !== "accepted" && !secured) {
+    const pipeline = quotePipelineCurrent(selected);
+    if (pipeline !== "booked" && selected.status !== "accepted" && !secured) {
       setPrepView(null);
       return;
     }
@@ -228,6 +230,31 @@ export default function QuotesPage() {
   }, [bid]);
 
   const { primary: listRows } = useMemo(() => groupQuotesByEnquiry(rows), [rows]);
+
+  async function recordClientWithdrew() {
+    if (!bid || !selected) return;
+    try {
+      await customFetch(`/api/businesses/${bid}/quotes/${selected.id}/client-withdrew`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reasonId: withdrewReason }),
+      });
+      toast({ title: "Marked as withdrawn" });
+      setWithdrewOpen(false);
+      void load();
+    } catch {
+      toast({ title: "Could not update", variant: "destructive" });
+    }
+  }
+
+  const exitActions = selected
+    ? resolveQuoteExitActions({
+        quoteStatus: quotePipelineCurrent(selected),
+        enquiryStatus: selected.enquiry?.status,
+        depositPaidMinor: selected.depositPaidMinor,
+        depositAmountMinor: selected.depositAmountMinor,
+      })
+    : [];
 
   const publicQuoteUrl =
     business?.slug && selected
@@ -547,7 +574,13 @@ export default function QuotesPage() {
               </DialogContent>
             </Dialog>
           </div>
-          {listRows.map((row) => (
+          {listRows.map((row) => {
+            const listLabel = studioQuoteListLabel({
+              publicToken: row.publicToken,
+              eventType: row.enquiry?.eventType ?? row.eventDaySheet?.eventType,
+              eventDate: row.enquiry?.eventDate ?? row.eventDaySheet?.eventDate,
+            });
+            return (
             <button
               key={row.id}
               type="button"
@@ -556,13 +589,8 @@ export default function QuotesPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-medium truncate">
-                    {quoteBillToName(row.enquiry, row.eventDaySheet, row.customer) ?? "Quote"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {row.enquiry?.eventType ?? "Event"}
-                    {row.enquiry?.eventDate ? ` · ${row.enquiry.eventDate}` : ""}
-                  </p>
+                  <p className="font-medium truncate">{listLabel.primary}</p>
+                  <p className="text-xs text-muted-foreground truncate">{listLabel.secondary}</p>
                 </div>
                 <span className="font-semibold shrink-0">{eur(row.subtotalMinor)}</span>
               </div>
@@ -575,7 +603,8 @@ export default function QuotesPage() {
                 </span>
               </div>
             </button>
-          ))}
+            );
+          })}
           {listRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No quotes yet.{" "}
@@ -602,9 +631,7 @@ export default function QuotesPage() {
                 <div className="flex items-start gap-1 min-w-0">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
-                      <h2 className="font-semibold">
-                        {clientName ? `Quote for ${clientName}` : "Quote document"}
-                      </h2>
+                      <h2 className="font-semibold">{studioQuoteDetailTitle(selected.publicToken)}</h2>
                       {selected.status !== "draft" ? (
                         <QuoteSentNextSteps
                           status={selected.status}
@@ -676,8 +703,6 @@ export default function QuotesPage() {
                   });
                 }}
               />
-
-              <EventDaySheetPanel sheet={sheet} enquiry={selected.enquiry} />
 
               {quoteBrief && selected.status === "draft" ? (
                 <QuoteBriefPanel
@@ -774,12 +799,7 @@ export default function QuotesPage() {
                   onComplete={(taskId) => void completePrepTask(taskId)}
                   onCopyNudge={(taskId) => void copyPrepNudge(taskId)}
                 />
-              ) : (
-                <LivEventPrepTeaser
-                  eventDate={sheet?.eventDate ?? selected.enquiry?.eventDate}
-                  eventType={sheet?.eventType ?? selected.enquiry?.eventType}
-                />
-              )}
+              ) : null}
 
               {selected.status === "accepted" &&
               selected.depositPaidMinor < selected.depositAmountMinor ? (
@@ -790,6 +810,38 @@ export default function QuotesPage() {
                   <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => void resendDepositReminder()}>
                     Copy deposit reminder
                   </Button>
+                </div>
+              ) : null}
+
+              {exitActions.length > 0 ? (
+                <div className="rounded-lg border bg-muted/20 px-3 py-2 space-y-2">
+                  {exitActions.map((action) => (
+                    <div key={action.id} className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">{action.hint}</p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className={action.destructive ? "border-destructive/40 text-destructive hover:bg-destructive/10" : ""}
+                        onClick={() => {
+                          if (action.id === "client_withdrew") setWithdrewOpen(true);
+                          else if (action.id === "mark_lost" && bid && selected) {
+                            void customFetch(`/api/businesses/${bid}/quotes/${selected.id}/client-withdrew`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ reasonId: "unknown" }),
+                            }).then(() => {
+                              toast({ title: "Marked lost" });
+                              void load();
+                            });
+                          }
+                        }}
+                        data-testid={`quote-exit-${action.id}`}
+                      >
+                        {action.label}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               ) : null}
 
@@ -860,26 +912,6 @@ export default function QuotesPage() {
                         Copy Liv follow-up
                       </Button>
                     ) : null}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={async () => {
-                      if (!bid) return;
-                      try {
-                        await customFetch(`/api/businesses/${bid}/quotes/${selected.id}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ status: "declined" }),
-                        });
-                        toast({ title: "Quote marked declined" });
-                        void load();
-                      } catch {
-                        toast({ title: "Update failed", variant: "destructive" });
-                      }
-                    }}
-                  >
-                    Mark declined
-                  </Button>
                   </>
                 ) : null}
               </div>
@@ -916,6 +948,39 @@ export default function QuotesPage() {
           onSendWhatsApp={() => sendQuote("whatsapp_assisted")}
         />
       ) : null}
+
+      <Dialog open={withdrewOpen} onOpenChange={setWithdrewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Client withdrew</DialogTitle>
+            <DialogDescription>
+              Closes the quote and enquiry. If a deposit was paid, review your refund policy before confirming.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Reason (optional)</Label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+              value={withdrewReason}
+              onChange={(e) => setWithdrewReason(e.target.value as ClientWithdrawReasonId)}
+            >
+              {CLIENT_WITHDRAW_REASONS.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setWithdrewOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => void recordClientWithdrew()}>
+              Confirm withdrew
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageFrame>
   );
 }

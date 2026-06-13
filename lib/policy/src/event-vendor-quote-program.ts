@@ -25,6 +25,20 @@ export type QuoteBriefIntelligence = {
 
 export const STALE_QUOTE_DAYS = 5;
 
+/** Pipeline label — deposit paid upgrades accepted → booked for studio UI. */
+export function quotePipelineCurrent(quote: {
+  status: string;
+  depositPaidMinor: number;
+  depositAmountMinor: number;
+}): string {
+  if (quote.status === "booked") return "booked";
+  const depositDue = Math.max(0, quote.depositAmountMinor - quote.depositPaidMinor);
+  if (quote.depositAmountMinor > 0 && depositDue <= 0 && quote.status === "accepted") {
+    return "booked";
+  }
+  return quote.status;
+}
+
 export const DEFAULT_SETUP_CHECKLIST = [
   "Confirm venue access time with client",
   "Load van — check inventory against line items",
@@ -228,39 +242,22 @@ export function eventVendorPoweredByLine(): string {
   return "Quotes & enquiries powered by Livia";
 }
 
-/** Default decline — operator may override via `businesses.liv_outbound_overrides.decline_reply`. */
+/** Default decline — operator may override via `businesses.liv_outbound_overrides.decline_reply`. Use {{reasonSentence}} for reason-aware replies. */
 export const DEFAULT_ENQUIRY_DECLINE_REPLY = `Hi {{firstName}},
 
-Thank you for reaching out to {{businessName}}. After reviewing your event details, we're not able to take this one on — our calendar and styling scope won't be the right fit this time.
+Thank you for reaching out to {{businessName}}. {{reasonSentence}}
 
 We hope your celebration is wonderful, and we'd love to hear from you again for a future event.
 
 Warmly,
 {{businessName}}`;
 
-function applyDeclineTemplate(
-  template: string,
-  args: { firstName: string; businessName: string },
-): string {
-  return template
-    .replaceAll("{{firstName}}", args.firstName)
-    .replaceAll("{{businessName}}", args.businessName);
-}
-
-export function resolveEnquiryDeclineCopy(args: {
-  contactName: string;
-  businessName: string;
-  operatorTemplate?: string | null;
-}): { subject: string; body: string; whatsappText: string } {
-  const firstName = args.contactName.trim().split(/\s+/)[0] ?? "there";
-  const body = applyDeclineTemplate(
-    args.operatorTemplate?.trim() || DEFAULT_ENQUIRY_DECLINE_REPLY,
-    { firstName, businessName: args.businessName },
-  );
-  const subject = `Update on your enquiry — ${args.businessName}`;
-  const whatsappText = body.replace(/\n\n/g, "\n").trim();
-  return { subject, body, whatsappText };
-}
+export {
+  resolveEnquiryDeclineCopy,
+  resolveLegacyDeclineCopy,
+  ENQUIRY_DECLINE_REASONS,
+  type EnquiryDeclineReasonId,
+} from "./enquiry-decline-program";
 
 /**
  * Operator UI copy rule: never explain UI mechanics (collapse, hidden until, expand, same as PDF).

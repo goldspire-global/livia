@@ -27,7 +27,16 @@ export function unifiedConsultInboxTitle(): string {
 }
 
 export function unifiedConsultInboxSubtitle(): string {
-  return "Website leads and DMs — Liv pre-screens new ones so you focus on revenue.";
+  return "Website leads and DMs — review, reply, or move to the next stage.";
+}
+
+export function consultQuotesHref(quoteId: string): string {
+  return `/quotes?id=${encodeURIComponent(quoteId)}`;
+}
+
+export function consultEnquiryStatusLabel(status: string): string {
+  const step = CONSULT_ENQUIRY_PIPELINE_STEPS.find((s) => s.id === status);
+  return step?.label ?? status;
 }
 
 export type ConsultInboxLens = "all" | "leads" | "messages";
@@ -53,13 +62,13 @@ export const CONSULT_ENQUIRY_PIPELINE_STEPS = [
 export type ConsultLeadActionId = "draft_quote" | "open_quote" | "decline" | "mark_booked";
 
 export type ConsultLeadDecision = {
-  headline: string;
-  guidance: string;
+  /** Optional one-line hint — keep empty in inbox; stages live on Quotes. */
+  hint?: string;
   primary: { action: ConsultLeadActionId; label: string };
   secondary?: { action: ConsultLeadActionId; label: string; destructive?: boolean };
 };
 
-/** Stage-specific decision panel — two clear paths from inbox (quote vs close). */
+/** Inbox actions only — qualify, issue quote (opens Quotes), or close. */
 export function resolveConsultLeadDecision(
   status: string,
   opts?: { hasLinkedQuote?: boolean },
@@ -69,35 +78,26 @@ export function resolveConsultLeadDecision(
   switch (status) {
     case "new":
       return {
-        headline: "New enquiry",
-        guidance:
-          "Review the brief. If it's a fit, Liv drafts a quote from your catalogue. If not, close the case — it won't clutter your pipeline.",
-        primary: { action: "draft_quote", label: "Draft quote with Liv" },
-        secondary: { action: "decline", label: "Not a fit — close case", destructive: true },
+        primary: { action: "draft_quote", label: "Issue quote" },
+        secondary: { action: "decline", label: "Decline", destructive: true },
       };
     case "quoted":
       return {
-        headline: "Quote with client",
-        guidance:
-          "Waiting on their reply. Open the quote to tweak or send a follow-up. Mark lost if they've gone elsewhere.",
+        hint: "Quote work lives on Quotes — follow up or send from there.",
         primary: {
           action: hasQuote ? "open_quote" : "draft_quote",
-          label: hasQuote ? "Open quote" : "Draft quote",
+          label: hasQuote ? "Open quote" : "Issue quote",
         },
         secondary: { action: "decline", label: "Mark lost", destructive: true },
       };
     case "accepted":
       return {
-        headline: "Quote accepted",
-        guidance: "Collect deposit and secure the date. Liv can nudge prep tasks once booked.",
-        primary: { action: "open_quote", label: "Open quote & deposit" },
+        primary: { action: "open_quote", label: "Open quote" },
         secondary: { action: "mark_booked", label: "Mark booked" },
       };
     case "booked":
       return {
-        headline: "Booked",
-        guidance: "Event secured — prep checklist and event-day sheet live on the quote.",
-        primary: { action: "open_quote", label: "Event prep & quote" },
+        primary: { action: "open_quote", label: "Open quote" },
       };
     case "lost":
       return null;

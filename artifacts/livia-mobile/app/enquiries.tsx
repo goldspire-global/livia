@@ -1,8 +1,17 @@
 import { customFetch } from "@workspace/api-client-react";
+import {
+  consultEnquiryStatusLabel,
+  consultQuotesHref,
+  ENQUIRY_DECLINE_REASONS,
+  resolveConsultLeadDecision,
+  unifiedConsultInboxSubtitle,
+  type EnquiryDeclineReasonId,
+} from "@workspace/policy";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -21,15 +30,10 @@ import { asHref } from "@/lib/navigation";
 import {
   copyEnquiryWhatsApp,
   copyQuoteWhatsApp,
-  copyStaleNudge,
-  eur,
-  fetchConsultDashboard,
   fetchEnquiries,
   generateQuote,
-  type ConsultDashboard,
   type EnquiryRow,
 } from "@/lib/event-vendor-consult";
-import { resolveConsultLeadDecision } from "@workspace/policy";
 
 export default function EnquiriesScreen() {
   const colors = useColors();
@@ -42,22 +46,19 @@ export default function EnquiriesScreen() {
   const bid = currentBusiness?.id ?? "";
 
   const [rows, setRows] = useState<EnquiryRow[]>([]);
-  const [stats, setStats] = useState<ConsultDashboard | null>(null);
   const [selected, setSelected] = useState<EnquiryRow | null>(null);
   const [linkedQuoteId, setLinkedQuoteId] = useState<string | null>(null);
-  const [prescreen, setPrescreen] = useState<{
-    tier: string;
-    headline: string;
-    guidance: string;
-  } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [declineReason, setDeclineReason] = useState<EnquiryDeclineReasonId>("other");
+  const [declinePreview, setDeclinePreview] = useState<string | null>(null);
+  const [declineBusy, setDeclineBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!bid) return;
     try {
-      const [enquiries, dash] = await Promise.all([fetchEnquiries(bid), fetchConsultDashboard(bid)]);
+      const enquiries = await fetchEnquiries(bid);
       setRows(enquiries);
-      setStats(dash);
       if (!selected && enquiries[0]) setSelected(enquiries[0]);
     } catch {
       setRows([]);
@@ -79,16 +80,16 @@ export default function EnquiriesScreen() {
   }, [bid, selected?.id]);
 
   useEffect(() => {
-    if (!bid || !selected?.id || selected.status !== "new") {
-      setPrescreen(null);
+    if (!declineOpen || !bid || !selected?.id) {
+      setDeclinePreview(null);
       return;
     }
-    void customFetch<{ prescreen?: { tier: string; headline: string; guidance: string } }>(
-      `/api/businesses/${bid}/enquiries/${selected.id}/quote-brief`,
+    void customFetch<{ body: string }>(
+      `/api/businesses/${bid}/enquiries/${selected.id}/decline-draft?reason=${encodeURIComponent(declineReason)}`,
     )
-      .then((brief) => setPrescreen(brief.prescreen ?? null))
-      .catch(() => setPrescreen(null));
-  }, [bid, selected?.id, selected?.status]);
+      .then((draft) => setDeclinePreview(draft.body))
+      .catch(() => setDeclinePreview(null));
+  }, [declineOpen, bid, selected?.id, declineReason]);
 
   async function onGenerateQuote() {
     if (!bid || !selected) return;
@@ -96,11 +97,11 @@ export default function EnquiriesScreen() {
     try {
       const quote = await generateQuote(bid, selected.id);
       if (quote.reusedExisting) {
-        Alert.alert("Existing draft", "This enquiry already has a draft quote.");
+        /* existing draft — open it */
       }
       router.push(asHref(`/quotes?id=${quote.id}`));
     } catch {
-      Alert.alert("Could not generate quote");
+      /* silent — operator can retry */
     }
   }
 
@@ -112,41 +113,39 @@ export default function EnquiriesScreen() {
         : await copyEnquiryWhatsApp(bid, selected.id);
       await Share.share({ message: whatsappText });
     } catch {
-      Alert.alert("Could not load WhatsApp message");
+      /* optional assist */
     }
   }
 
-  async function onStaleNudge(quoteId: string) {
-    if (!bid) return;
+  async function confirmDecline() {
+    if (!bid || !selected) return;
+    setDeclineBusy(true);
     try {
-      const { whatsappText } = await copyStaleNudge(bid, quoteId);
-      await Share.share({ message: whatsappText });
+      const result = await customFetch<{
+        ok: boolean;
+        whatsappText?: string;
+        emailStatus?: string;
+      }>(`/api/businesses/${bid}/enquiries/${selected.id}/decline-with-liv`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reasonId: declineReason }),
+      });
+      if (!result.ok) return;
+      setDeclineOpen(false);
+      setSelected(null);
+      await load();
+      if (result.emailStatus !== "sent" && result.whatsappText) {
+        await Share.share({ message: result.whatsappText });
+      }
     } catch {
-      Alert.alert("Could not load follow-up");
+      /* operator can retry */
+    } finally {
+      setDeclineBusy(false);
     }
   }
 
   const listPane = (
     <View style={[styles.listPane, isTablet && styles.listPaneTablet]}>
-      {stats ? (
-        <View style={styles.statsRow}>
-          <StatChip label="New" value={stats.newEnquiries} colors={colors} />
-          <StatChip label="Quoted" value={stats.quotedEnquiries} colors={colors} />
-          <StatChip label="Stale" value={stats.staleQuotes} colors={colors} warn />
-        </View>
-      ) : null}
-      {stats?.staleQuotesList?.slice(0, 3).map((s) => (
-        <Pressable
-          key={s.quoteId}
-          onPress={() => onStaleNudge(s.quoteId)}
-          style={[styles.staleRow, { borderColor: colors.border, backgroundColor: colors.card }]}
-        >
-          <Text style={[styles.staleTitle, { color: colors.foreground }]}>{s.contactName}</Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
-            {s.daysSinceSent}d · tap to copy Liv nudge
-          </Text>
-        </Pressable>
-      ))}
       {rows.map((row) => (
         <Pressable
           key={row.id}
@@ -164,7 +163,7 @@ export default function EnquiriesScreen() {
           <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
             {row.eventType ?? "Event"} · {row.eventDate ?? "TBC"}
           </Text>
-          <Text style={[styles.badge, { color: colors.primary }]}>{row.status}</Text>
+          <Text style={[styles.badge, { color: colors.primary }]}>{consultEnquiryStatusLabel(row.status)}</Text>
         </Pressable>
       ))}
     </View>
@@ -174,71 +173,21 @@ export default function EnquiriesScreen() {
     ? resolveConsultLeadDecision(selected.status, { hasLinkedQuote: !!linkedQuoteId })
     : null;
 
-  async function onDecline() {
-    if (!bid || !selected) return;
-    let preview = "Liv will send your polite decline before closing.";
-    try {
-      const draft = await customFetch<{ body: string }>(
-        `/api/businesses/${bid}/enquiries/${selected.id}/decline-draft`,
-      );
-      preview = draft.body.slice(0, 280) + (draft.body.length > 280 ? "…" : "");
-    } catch {
-      /* use default preview */
-    }
-    Alert.alert("Not a fit — Liv replies first", preview, [
-      { text: "Keep open", style: "cancel" },
-      {
-        text: "Liv sends & closes",
-        style: "destructive",
-        onPress: () => {
-          void customFetch(`/api/businesses/${bid}/enquiries/${selected.id}/decline-with-liv`, {
-            method: "POST",
-          })
-            .then(() => {
-              setSelected(null);
-              void load();
-            })
-            .catch(() => {
-              Alert.alert(
-                "Could not send",
-                "Liv must reply before we close — check email on the enquiry and try again.",
-              );
-            });
-        },
-      },
-    ]);
-  }
-
   const detailPane = selected ? (
     <View style={[styles.detailPane, { borderColor: colors.border }]}>
       <Text style={[styles.detailTitle, { color: colors.foreground }]}>{selected.contactName}</Text>
-      {prescreen ? (
-        <View
-          style={[
-            styles.prescreenBox,
-            {
-              borderColor: colors.primary + "44",
-              backgroundColor: colors.primary + "11",
-            },
-          ]}
-        >
-          <Text style={[styles.prescreenHeadline, { color: colors.foreground }]}>{prescreen.headline}</Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18 }}>{prescreen.guidance}</Text>
-        </View>
-      ) : null}
       {leadDecision ? (
-        <View style={[styles.decisionBox, { borderColor: colors.primary + "44", backgroundColor: colors.primary + "11" }]}>
-          <Text style={[styles.decisionHeadline, { color: colors.foreground }]}>{leadDecision.headline}</Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18, marginBottom: 10 }}>
-            {leadDecision.guidance}
-          </Text>
+        <View style={styles.actions}>
+          {leadDecision.hint ? (
+            <Text style={{ color: colors.mutedForeground, fontSize: 12, lineHeight: 17 }}>{leadDecision.hint}</Text>
+          ) : null}
           <ActionBtn
             label={leadDecision.primary.label}
             primary
             colors={colors}
             onPress={() => {
-              if (leadDecision.primary.action === "decline") void onDecline();
-              else if (linkedQuoteId) router.push(asHref(`/quotes?id=${linkedQuoteId}`));
+              if (leadDecision.primary.action === "decline") setDeclineOpen(true);
+              else if (linkedQuoteId) router.push(asHref(consultQuotesHref(linkedQuoteId)));
               else void onGenerateQuote();
             }}
           />
@@ -247,7 +196,7 @@ export default function EnquiriesScreen() {
               label={leadDecision.secondary.label}
               colors={colors}
               onPress={() => {
-                if (leadDecision.secondary?.action === "decline") void onDecline();
+                if (leadDecision.secondary?.action === "decline") setDeclineOpen(true);
                 else if (leadDecision.secondary?.action === "mark_booked") {
                   void customFetch(`/api/businesses/${bid}/enquiries/${selected.id}`, {
                     method: "PATCH",
@@ -276,12 +225,7 @@ export default function EnquiriesScreen() {
   );
 
   return (
-    <OperationalScreen
-      scroll={false}
-      ritualPage
-      title="Enquiries"
-      subtitle="Leads from your enquire form — generate quotes on the go."
-    >
+    <OperationalScreen scroll={false} ritualPage title="Inbox" subtitle={unifiedConsultInboxSubtitle()}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 16, flexGrow: 1 }}
@@ -307,26 +251,55 @@ export default function EnquiriesScreen() {
           </>
         )}
       </ScrollView>
-    </OperationalScreen>
-  );
-}
 
-function StatChip({
-  label,
-  value,
-  colors,
-  warn,
-}: {
-  label: string;
-  value: number;
-  colors: ReturnType<typeof useColors>;
-  warn?: boolean;
-}) {
-  return (
-    <View style={[styles.stat, { borderColor: colors.border, backgroundColor: colors.card }]}>
-      <Text style={{ color: colors.mutedForeground, fontSize: 11 }}>{label}</Text>
-      <Text style={{ color: warn ? "#b45309" : colors.foreground, fontSize: 20, fontWeight: "600" }}>{value}</Text>
-    </View>
+      <Modal visible={declineOpen} animationType="slide" transparent onRequestClose={() => setDeclineOpen(false)}>
+        <View style={[styles.modalBackdrop, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Decline enquiry</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13, marginBottom: 8 }}>Reason</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {ENQUIRY_DECLINE_REASONS.map((r) => (
+                  <Pressable
+                    key={r.id}
+                    onPress={() => {
+                      haptics.selection();
+                      setDeclineReason(r.id);
+                    }}
+                    style={[
+                      styles.reasonChip,
+                      {
+                        borderColor: declineReason === r.id ? colors.primary : colors.border,
+                        backgroundColor: declineReason === r.id ? `${colors.primary}18` : colors.background,
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: colors.foreground, fontSize: 12 }}>{r.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13, marginBottom: 6 }}>Preview</Text>
+            <ScrollView style={[styles.previewBox, { borderColor: colors.border, backgroundColor: colors.background }]}>
+              {declinePreview ? (
+                <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 19 }}>{declinePreview}</Text>
+              ) : (
+                <ActivityIndicator color={colors.primary} />
+              )}
+            </ScrollView>
+            <View style={styles.modalActions}>
+              <ActionBtn label="Cancel" colors={colors} onPress={() => setDeclineOpen(false)} />
+              <ActionBtn
+                label={declineBusy ? "Sending…" : "Decline & send"}
+                primary
+                colors={colors}
+                onPress={() => void confirmDecline()}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </OperationalScreen>
   );
 }
 
@@ -377,21 +350,24 @@ const styles = StyleSheet.create({
   tabletRow: { flexDirection: "row", gap: 12, minHeight: 400 },
   listPane: { gap: 8, paddingHorizontal: 16 },
   listPaneTablet: { flex: 1, maxWidth: 360 },
-  statsRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
-  stat: { flex: 1, borderWidth: 1, borderRadius: 10, padding: 10 },
-  staleRow: { borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 4 },
-  staleTitle: { fontWeight: "600", fontSize: 14 },
   row: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 8 },
   rowTitle: { fontWeight: "600", fontSize: 16 },
   badge: { fontSize: 11, marginTop: 4, textTransform: "uppercase" },
   detailPane: { marginTop: 12, marginHorizontal: 16, borderWidth: 1, borderRadius: 12, padding: 16, gap: 8 },
   detailTitle: { fontSize: 18, fontWeight: "600", marginBottom: 4 },
-  prescreenBox: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 8, gap: 4 },
-  prescreenHeadline: { fontSize: 14, fontWeight: "600" },
-  decisionBox: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 8, gap: 8 },
-  decisionHeadline: { fontSize: 15, fontWeight: "600" },
   detailRow: { gap: 2 },
   detailLabel: { fontSize: 10, letterSpacing: 0.6, fontWeight: "600" },
   actions: { gap: 8, marginTop: 12 },
   actionBtn: { borderRadius: 10, paddingVertical: 12, alignItems: "center" },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 16,
+    justifyContent: "flex-end",
+  },
+  modalCard: { borderWidth: 1, borderRadius: 16, padding: 16, maxHeight: "85%" },
+  modalTitle: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
+  reasonChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  previewBox: { borderWidth: 1, borderRadius: 10, padding: 12, maxHeight: 180, marginBottom: 12 },
+  modalActions: { gap: 8 },
 });

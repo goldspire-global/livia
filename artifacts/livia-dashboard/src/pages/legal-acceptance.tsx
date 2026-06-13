@@ -8,6 +8,10 @@ import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { apiFetch } from "@/lib/api-fetch";
 import { legalUrl } from "@/lib/surface-urls";
 import { Loader2 } from "lucide-react";
+import {
+  platformLegalAcceptanceDescription,
+  platformLegalAcceptanceTitle,
+} from "@workspace/policy";
 
 const TOS_URL = legalUrl("tos");
 const PRIVACY_URL = legalUrl("privacy");
@@ -67,12 +71,8 @@ export default function LegalAcceptancePage() {
       <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-16">
         <Card className="w-full max-w-lg border-primary/10">
           <CardHeader>
-            <CardTitle className="font-serif text-2xl">Before you set up your shop</CardTitle>
-            <CardDescription>
-              Livia is a business platform for salons, studios, and clinics — not a personal consumer app.
-              You need to accept our platform terms to create a location. Same path whether you signed up
-              with email or Google.
-            </CardDescription>
+            <CardTitle className="font-serif text-2xl">{platformLegalAcceptanceTitle()}</CardTitle>
+            <CardDescription>{platformLegalAcceptanceDescription()}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">

@@ -168,6 +168,7 @@ export async function deliverInAppNotification(delivery: InAppDelivery): Promise
       delivery.resourceKind === "booking" ? delivery.resourceId : undefined,
     conversationId:
       delivery.resourceKind === "conversation" ? delivery.resourceId : undefined,
+    quoteId: delivery.resourceKind === "quote" ? delivery.resourceId : undefined,
   });
 
   let written = 0;

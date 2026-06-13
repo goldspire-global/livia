@@ -19,6 +19,11 @@ import { useColors } from "@/hooks/useColors";
 import { useHaptics } from "@/hooks/useHaptics";
 import { dpaUrl, privacyPolicyUrl, termsOfServiceUrl } from "@/lib/marketing-legal-urls";
 import { acceptPlatformLegal, fetchMeProfile } from "@/lib/platform-legal";
+import {
+  platformLegalAcceptanceBullets,
+  platformLegalAcceptanceDescription,
+  platformLegalAcceptanceTitle,
+} from "@workspace/policy";
 
 export default function LegalAcceptanceScreen() {
   const colors = useColors();
@@ -94,20 +99,17 @@ export default function LegalAcceptanceScreen() {
       >
         <LiviaWordmark size="md" color={colors.foreground} />
 
-        <Text style={[styles.title, { color: colors.foreground }]}>Before you set up your shop</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{platformLegalAcceptanceTitle()}</Text>
         <Text style={[styles.body, { color: colors.mutedForeground }]}>
-          Livia is a business platform for salons, studios, and clinics. Accept our platform terms to
-          create your location — same step on web and mobile.
+          {platformLegalAcceptanceDescription()}
         </Text>
 
         <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <Text style={[styles.bullet, { color: colors.mutedForeground }]}>
-            • No KYB in closed beta — you attest you operate a legitimate business when you create your
-            shop.
-          </Text>
-          <Text style={[styles.bullet, { color: colors.mutedForeground }]}>
-            • You remain responsible for client-facing policies, insurance, and sector rules.
-          </Text>
+          {platformLegalAcceptanceBullets().map((bullet) => (
+            <Text key={bullet} style={[styles.bullet, { color: colors.mutedForeground }]}>
+              • {bullet}
+            </Text>
+          ))}
         </View>
 
         <View style={styles.links}>

@@ -52,7 +52,7 @@ export default function BrandsScreen() {
       <ScreenPurpose
         icon="layers"
         title="Do you need this?"
-        body="Most single salons can ignore this. It appears when you run white-label or chain-tier setups with more than one brand shell. Use the Shops / Glance tab to switch day-to-day locations."
+        body="Most single-location businesses can ignore this. It appears when you run white-label or chain-tier setups with more than one brand shell. Use the Shops / Glance tab to switch day-to-day locations."
       />
 
       {loading ? (

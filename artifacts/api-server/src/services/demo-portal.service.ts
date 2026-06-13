@@ -20,7 +20,10 @@ import {
   DEMO_OPERATOR_EXPERIENCE,
   ONBOARDING_ACT_IDS,
   onboardingChecklistSchema,
+  listDemoPartnerTracks,
+  type DemoPartnerLoginKind,
 } from "@workspace/policy";
+import { DEMO_ROLE_EMAILS } from "@workspace/demo-logins";
 import { and, eq, inArray } from "drizzle-orm";
 import { generateId } from "../lib/id";
 import { mapWithConcurrency, withClerkRetry } from "../lib/async-pool";
@@ -75,6 +78,21 @@ import {
   seedDemoBusinessRosters,
 } from "./demo-business-roster.seed";
 import { getDashboardUrl, getInternalUrl, getMarketingUrl } from "../lib/public-urls";
+
+function resolvePartnerTrackEnterEmail(loginKind: DemoPartnerLoginKind, slug: string): string {
+  switch (loginKind) {
+    case "scenario-solo":
+      return DEMO_ROLE_EMAILS.solo;
+    case "scenario-studio-barber":
+      return DEMO_ROLE_EMAILS.studioBarber;
+    case "scenario-chain":
+      return DEMO_ROLE_EMAILS.chain;
+    case "owner-slug":
+      return demoOwnerEmailForSlug(slug);
+    default:
+      return demoOwnerEmailForSlug(slug);
+  }
+}
 
 function getClerk() {
   const secretKey = process.env.CLERK_SECRET_KEY;
@@ -1210,6 +1228,12 @@ export function getDemoCatalog() {
   return {
     passwordHint: publicDemoPasswordHint(),
     sharedPassword: demoResponsesMayIncludeSecrets() ? getDemoPassword() : undefined,
+    partnerTracks: listDemoPartnerTracks().map((t) => ({
+      ...t,
+      enterEmail: resolvePartnerTrackEnterEmail(t.loginKind, t.slug),
+      guestPath: t.guestPathKind === "public-event" ? `/e/${t.slug}/enquire` : `/b/${t.slug}`,
+      wedgeHref: t.wedgeVertical ? `/demo/wedge/${t.wedgeVertical}` : null,
+    })),
     scenarios: demoScenarioSpotlights(),
     personas: DEMO_PERSONAS.map((p) => ({
       id: p.id,

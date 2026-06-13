@@ -1,6 +1,9 @@
 /** Event-vendor studio — consult-first pipeline + invoice language (solo operator). */
 
-export { CONSULT_ENQUIRY_PIPELINE_STEPS as ENQUIRY_STATUSES } from "@workspace/policy";
+export {
+  CONSULT_ENQUIRY_PIPELINE_STEPS as ENQUIRY_STATUSES,
+  quotePipelineCurrent,
+} from "@workspace/policy";
 
 export const QUOTE_STATUSES = [
   { id: "draft", label: "Draft", hint: "Editing — not sent yet" },
@@ -10,19 +13,6 @@ export const QUOTE_STATUSES = [
   { id: "declined", label: "Declined", hint: "Client passed" },
   { id: "expired", label: "Expired", hint: "Past valid-until date" },
 ] as const;
-
-/** Pipeline step — advances to booked once deposit is fully paid. */
-export function quotePipelineCurrent(quote: {
-  status: string;
-  depositPaidMinor: number;
-  depositAmountMinor: number;
-}): string {
-  const depositDue = Math.max(0, quote.depositAmountMinor - quote.depositPaidMinor);
-  if (quote.depositAmountMinor > 0 && depositDue <= 0 && quote.status === "accepted") {
-    return "booked";
-  }
-  return quote.status;
-}
 
 export type EventDaySheet = {
   eventDate?: string | null;

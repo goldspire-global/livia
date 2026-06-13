@@ -14,8 +14,9 @@ export function isFounderDemoLauncherPath(path: string): boolean {
   return p === FOUNDER_DEMO_LAUNCHER_PATH || p.startsWith(`${FOUNDER_DEMO_LAUNCHER_PATH}/`);
 }
 
-/** Bare `/demo` on app → marketing gate (prod/staging/local parity). Wedge routes stay on app. */
+/** Bare `/demo` on app → marketing W1 gate in prod/staging. Local dev serves G1 launcher on :5173. */
 export function shouldRedirectAppDemoToMarketing(path: string): boolean {
+  if (import.meta.env.DEV) return false;
   const p = path.split("?")[0]?.replace(/\/+$/, "") || "/";
   if (p !== "/demo") return false;
   const params = new URLSearchParams(path.includes("?") ? path.split("?")[1] : "");

@@ -217,12 +217,17 @@ export async function applyGuestQuoteDepositFromWebhook(args: {
   const after = resolveQuoteMilestonePayment({ ...quote, depositPaidMinor });
   const wasSecured = before.dateSecured;
 
+  const patch: Partial<typeof quotesTable.$inferInsert> = {
+    depositPaidMinor,
+    updatedAt: new Date(),
+  };
+  if (!wasSecured && after.dateSecured) {
+    patch.status = "booked";
+  }
+
   await db
     .update(quotesTable)
-    .set({
-      depositPaidMinor,
-      updatedAt: new Date(),
-    })
+    .set(patch)
     .where(eq(quotesTable.id, quote.id));
 
   if (!wasSecured && after.dateSecured && quote.enquiryId) {
@@ -232,9 +237,25 @@ export async function applyGuestQuoteDepositFromWebhook(args: {
       .where(eq(enquiriesTable.id, quote.enquiryId));
   }
 
-  if (after.scheduleFullyPaid) {
+  if (!wasSecured && after.dateSecured) {
     void onBookingSecured(args.businessId, args.quoteId).catch(() => undefined);
   }
+
+  const [biz] = await db
+    .select({ currency: businessesTable.currency })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, args.businessId))
+    .limit(1);
+
+  const { notifyQuoteDepositPaid } = await import("./engagement-exit.service");
+  void notifyQuoteDepositPaid({
+    businessId: args.businessId,
+    quoteId: args.quoteId,
+    publicToken: quote.publicToken,
+    amountMinor: creditMinor,
+    currency: biz?.currency ?? "EUR",
+    dateSecured: after.dateSecured,
+  }).catch(() => undefined);
 
   await logEvent({
     businessId: args.businessId,

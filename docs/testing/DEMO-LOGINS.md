@@ -30,8 +30,10 @@ pnpm demo:provision
 
 | Email | Use for |
 |-------|---------|
-| `solo@livia.io` | Solo barber IE (Conor's Cut) |
-| `chain@livia.io` | Aurora chain only |
+| `solo@livia.io` | Solo barber IE (Stoneybatter) |
+| `studio-barber@livia.io` | Six-chair studio (Dublin Barber Collective) |
+| `chain@livia.io` | Aurora chain only (3 locations) |
+| `owner-atelier@demo.livia-hq.com` | Atelier Decor — quote-first |
 | `uk@livia.io` | London Rose Spa |
 | `de@livia.io` | Berlin Studio Neun |
 | `medspa@livia.io` | Clarity Medspa |

@@ -133,6 +133,9 @@ export type InAppNotificationKind =
   | "refund.pending"
   | "commerce.signal"
   | "payment.failed"
+  | "quote.accepted"
+  | "quote.deposit_paid"
+  | "quote.client_withdrew"
   | "twin.risk"
   | "twin.opportunity";
 
@@ -148,8 +151,9 @@ export function buildNotificationDeepLinks(args: {
   businessId: string;
   bookingId?: string;
   conversationId?: string;
+  quoteId?: string;
 }): { href: string; mobileHref: string } {
-  const { kind, businessId, bookingId, conversationId } = args;
+  const { kind, businessId, bookingId, conversationId, quoteId } = args;
   switch (kind) {
     case "booking.created":
     case "booking.pending":
@@ -201,6 +205,16 @@ export function buildNotificationDeepLinks(args: {
     case "commerce.signal":
     case "payment.failed":
       return { href: "/settings?tab=billing", mobileHref: "/(tabs)/today" };
+    case "quote.accepted":
+    case "quote.deposit_paid":
+    case "quote.client_withdrew":
+      if (quoteId) {
+        return {
+          href: `/quotes?id=${encodeURIComponent(quoteId)}`,
+          mobileHref: `/quotes?id=${encodeURIComponent(quoteId)}`,
+        };
+      }
+      return { href: "/quotes", mobileHref: "/quotes" };
     case "twin.risk":
     case "twin.opportunity":
       return { href: "/dashboard", mobileHref: "/(tabs)/index" };
@@ -229,6 +243,7 @@ export function notificationFeedIcon(kind: string): NotificationFeedIcon {
   if (kind.startsWith("booking")) return "booking";
   if (kind.startsWith("inbox")) return "inbox";
   if (kind === "chain.alert") return "chain";
+  if (kind.startsWith("quote.")) return "commerce";
   if (kind === "commerce.signal" || kind === "payment.failed" || kind === "capability.state") {
     return "commerce";
   }

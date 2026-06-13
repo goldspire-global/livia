@@ -32,12 +32,14 @@ import {
   type DemoCatalogPersona,
   type DemoPersonaId,
   type DemoScenarioSpotlight,
+  type DemoPartnerTrack,
   type DemoSignInResult,
 } from "@/lib/demo-portal";
 import { useToast } from "@/hooks/use-toast";
 import { completeDemoPortalSignIn } from "@/lib/demo/complete-demo-portal-sign-in";
 import { DemoFlowStepper, type DemoFlowStep } from "@/components/demo/demo-flow-stepper";
 import { DemoGuidedExperience } from "@/components/demo/demo-guided-experience";
+import { DemoPartnerTracks } from "@/components/demo/demo-partner-tracks";
 import { DemoWedgeGrid } from "@/components/demo/demo-wedge-grid";
 import { DemoFreshFounderShortcut } from "@/components/demo/demo-fresh-founder-shortcut";
 import { DemoGuestClientShortcut } from "@/components/demo/demo-guest-client-shortcut";
@@ -109,6 +111,7 @@ export default function DemoLauncher() {
   const { setActive, signOut, session } = useClerk();
   const [catalog, setCatalog] = useState<DemoCatalogPersona[]>([]);
   const [scenarios, setScenarios] = useState<DemoScenarioSpotlight[]>([]);
+  const [partnerTracks, setPartnerTracks] = useState<DemoPartnerTrack[]>([]);
   const [tenants, setTenants] = useState<DemoBusinessTenant[]>([]);
   const [provisioned, setProvisioned] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -135,6 +138,7 @@ export default function DemoLauncher() {
         devPassword: undefined,
         sharedPassword: undefined,
         scenarios: [],
+        partnerTracks: [],
       })),
       fetchDemoStatus().catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : "Demo status unreachable";
@@ -144,6 +148,7 @@ export default function DemoLauncher() {
     ]);
     setCatalog(cat.personas);
     setScenarios(cat.scenarios ?? []);
+    setPartnerTracks(cat.partnerTracks ?? []);
     // Only show a password if the API explicitly returns one.
     // Never fall back to a hardcoded shared password on the client.
     setDevPassword(cat.sharedPassword ?? cat.devPassword ?? undefined);
@@ -910,7 +915,19 @@ export default function DemoLauncher() {
         onSetup={() => void handleSync()}
         onRetry={() => void refresh()}
       />
+      <DemoPartnerTracks
+        tracks={partnerTracks}
+        provisioned={provisioned}
+        devPassword={devPassword}
+        busy={busy}
+        onEnter={(email, busyKey) => void quickEnterEmail(email, busyKey)}
+      />
       <DemoGuestClientShortcut openHref={demoOpenPersonaUrl({ persona: "customer" })} />
+      <div className="mb-2">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-white/35 text-center lg:text-left">
+          Or explore by industry
+        </p>
+      </div>
       <DemoWedgeGrid />
     </GatewayDemoLauncherShell>
   );

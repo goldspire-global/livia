@@ -86,6 +86,7 @@ export const LIV_EVENT_SITE_OUTBOUND_MAP = {
 export const LIV_OUTBOUND_TEMPLATE_VARS = [
   "{{firstName}}",
   "{{businessName}}",
+  "{{reasonSentence}}",
   "{{enquireUrl}}",
   "{{quoteUrl}}",
   "{{total}}",
@@ -175,7 +176,7 @@ export function livOutboundTemplatesSettingsCopy(vertical: string | null | undef
   > = {
     decline_reply: {
       label: "Not a fit reply",
-      hint: "Email sent before an enquiry closes — clients always hear back.",
+      hint: "Use {{reasonSentence}} — inbox decline inserts the operator's chosen reason inline.",
     },
     enquiry_thanks: {
       label: "New enquiry thanks",

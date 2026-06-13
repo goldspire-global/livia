@@ -41,3 +41,26 @@ export const tenantAttestationSchema = z.object({
 });
 
 export type TenantAttestation = z.infer<typeof tenantAttestationSchema>;
+
+/** Gateway legal acceptance — shared copy for web + mobile (no vertical-specific salon wording). */
+export const PLATFORM_LEGAL_ACCEPTANCE = {
+  title: "Before you set up your shop",
+  description:
+    "Livia is a business platform for operators who run client-facing services — appointments, events, and bookings. Not a personal consumer app. Accept our platform terms to create your location — same step on web and mobile.",
+  bullets: [
+    "No KYB in closed beta — you attest you operate a legitimate business when you create your shop.",
+    "You remain responsible for client-facing policies, insurance, and sector rules.",
+  ],
+} as const;
+
+export function platformLegalAcceptanceTitle(): string {
+  return PLATFORM_LEGAL_ACCEPTANCE.title;
+}
+
+export function platformLegalAcceptanceDescription(): string {
+  return PLATFORM_LEGAL_ACCEPTANCE.description;
+}
+
+export function platformLegalAcceptanceBullets(): readonly string[] {
+  return PLATFORM_LEGAL_ACCEPTANCE.bullets;
+}

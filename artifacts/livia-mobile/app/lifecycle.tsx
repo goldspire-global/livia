@@ -46,7 +46,7 @@ export default function LifecycleScreen() {
       <ScreenPurpose
         icon="trending-up"
         title="What this page is for"
-        body="A checklist as your salon or clinic grows. Heavy steps (ownership transfer, billing) stay on web where there is more room — mobile keeps the story clear."
+        body={`A checklist as your ${pack.label.toLowerCase()} grows. Heavy steps (ownership transfer, billing) stay on web where there is more room — mobile keeps the story clear.`}
       />
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>

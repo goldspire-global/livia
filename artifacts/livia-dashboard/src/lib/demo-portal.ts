@@ -61,6 +61,25 @@ export type DemoScenarioSpotlight = {
   locationOperatorSlug?: string;
 };
 
+export type DemoPartnerTrack = {
+  id: string;
+  title: string;
+  subtitle: string;
+  tagline: string;
+  orgShapeLabel: string;
+  slug: string;
+  loginKind: string;
+  landingPath: string;
+  guestPathKind: "public-book" | "public-event";
+  wedgeVertical?: string;
+  wowMoment: string;
+  walkthroughSteps: string[];
+  sortOrder: number;
+  enterEmail: string;
+  guestPath: string;
+  wedgeHref: string | null;
+};
+
 export type DemoSignInResult = {
   token?: string;
   landingPath: string;
@@ -92,6 +111,7 @@ export async function fetchDemoCatalog() {
     personas: DemoCatalogPersona[];
     scenarioAccounts?: DemoScenarioAccount[];
     scenarios?: DemoScenarioSpotlight[];
+    partnerTracks?: DemoPartnerTrack[];
     passwordHint?: string;
     sharedPassword?: string;
     devPassword?: string;

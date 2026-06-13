@@ -90,7 +90,7 @@ const WELLNESS_LIV_INTRO =
   "Three surfaces, one thread — concierge, your /b link, and the room board at Harbour Wellness Cork.";
 
 const EVENT_VENDOR_THREAD_BRIDGES: Partial<Record<WedgeDemoBeat["cropHint"], string>> = {
-  inbox: "Sarah's birthday lands from WhatsApp — Liv acknowledges and pre-screens budget fit.",
+  inbox: "Sarah's birthday enquiry lands from WhatsApp — review and reply in inbox.",
   "quote-gen": "One tap: birthday template + guest count → line items, deposit %, PDF-ready quote.",
   catalogue: "Per-table centrepieces and per-guest sashes — quantities scale from the enquiry brief.",
 };

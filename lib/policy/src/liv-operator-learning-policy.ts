@@ -169,9 +169,9 @@ export function scoreEnquiryRevenueFit(
     return {
       score: 58,
       tier: "medium",
-      headline: "Liv: learning your style",
-      guidance: "As you quote and close enquiries, Liv will pre-screen new ones for revenue potential.",
-      reasons: ["No operator history yet — every decision teaches Liv."],
+      headline: "",
+      guidance: "",
+      reasons: [],
     };
   }
 

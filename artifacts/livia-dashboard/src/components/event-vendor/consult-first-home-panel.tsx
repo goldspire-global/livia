@@ -71,8 +71,8 @@ export function ConsultFirstHomePanel({
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {lowFitNewEnquiries > 0
-                  ? `Liv flagged ${lowFitNewEnquiries} as low-fit — skim and let Liv decline if not worth your time.`
-                  : "Qualify each enquiry — draft a quote or let Liv close politely."}
+                  ? `${lowFitNewEnquiries} may be low-fit — review in inbox.`
+                  : "Review each lead in inbox."}
               </p>
             </div>
           </div>
@@ -110,8 +110,8 @@ export function ConsultFirstHomePanel({
       ) : null}
 
       {lowFitList.length > 0 ? (
-        <div className="rounded-xl border border-muted-foreground/25 bg-muted/30 p-4 space-y-2">
-          <p className="text-sm font-medium">Liv pre-screen — quick review</p>
+        <div className="rounded-lg border bg-muted/20 px-3 py-2 space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">Low-fit leads</p>
           <ul className="space-y-2">
             {lowFitList.map((row) => (
               <li key={row.enquiryId}>

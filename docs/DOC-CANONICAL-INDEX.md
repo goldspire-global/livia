@@ -45,6 +45,8 @@
 | Ship a platform release | [`product/PLATFORM-RELEASE-PROGRAM.md`](./product/PLATFORM-RELEASE-PROGRAM.md) |
 | See honest API vs UI gaps | [`product/LIVIA-IDEA-TO-REALITY.md`](./product/LIVIA-IDEA-TO-REALITY.md) |
 | Run locally | [`START-HERE.md`](./START-HERE.md) · [`LOCAL_DEV.md`](./LOCAL_DEV.md) |
+| Demo design partners | [`product/DEMO-EXPERIENCE-PROGRAM.md`](./product/DEMO-EXPERIENCE-PROGRAM.md) |
+| Engagement exit / decline / PII | [`product/ENGAGEMENT-EXIT-PROGRAM.md`](./product/ENGAGEMENT-EXIT-PROGRAM.md) |
 | Audit every doc (line-by-line) | [`operations/DOC-AUDIT-REGISTRY.md`](./operations/DOC-AUDIT-REGISTRY.md) |
 | Gap review / what we missed | [`product/MULTI-HAT-GAP-REVIEW.md`](./product/MULTI-HAT-GAP-REVIEW.md) |
 
