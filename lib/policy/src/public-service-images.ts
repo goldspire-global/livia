@@ -34,11 +34,29 @@ export const PUBLIC_SERVICE_IMAGE_KEYWORDS: Record<string, string> = {
   cut: "https://images.unsplash.com/photo-1503956546970-5a150ba5a4?w=400&h=300&fit=crop",
   wax: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&h=300&fit=crop",
   facial: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop",
+  /** Event vendors — bundled decor assets (same host as gallery). */
+  "balloon garland": "/event-vendor-media/birthday-party.jpg",
+  "table centrepieces": "/event-vendor-media/wedding-reception.jpg",
+  "table centrepiece": "/event-vendor-media/wedding-reception.jpg",
+  centrepiece: "/event-vendor-media/wedding-reception.jpg",
+  centerpiece: "/event-vendor-media/wedding-reception.jpg",
+  "backdrop styling": "/event-vendor-media/wedding-reception.jpg",
+  backdrop: "/event-vendor-media/wedding-reception.jpg",
+  "chair covers": "/event-vendor-media/wedding-reception.jpg",
+  "chair cover": "/event-vendor-media/wedding-reception.jpg",
+  "floral table runner": "/event-vendor-media/christening.jpg",
+  "table runner": "/event-vendor-media/christening.jpg",
+  "setup & delivery": "/event-vendor-media/birthday-party.jpg",
+  balloon: "/event-vendor-media/birthday-party.jpg",
+  garland: "/event-vendor-media/birthday-party.jpg",
+  floral: "/event-vendor-media/christening.jpg",
+  decor: "/event-vendor-media/wedding-reception.jpg",
+  styling: "/event-vendor-media/wedding-reception.jpg",
 };
 
 /** Known-bad demo URLs — prefer keyword inference instead. */
 export const STALE_PUBLIC_SERVICE_IMAGE =
-  /photo-1598371839696|photo-1611501275019|photo-1570172619644-dfd03ed5d881|photo-1487412940907|photo-1595476108013|photo-1583001931096/;
+  /photo-1598371839696|photo-1611501275019|photo-1570172619644-dfd03ed5d881|photo-1487412940907|photo-1595476108013|photo-1583001931096|photo-1544161515-4ab6ce6db874/;
 
 const KEYWORD_KEYS_LONGEST_FIRST = Object.keys(PUBLIC_SERVICE_IMAGE_KEYWORDS).sort(
   (a, b) => b.length - a.length,
@@ -58,7 +76,7 @@ export function resolvePublicServiceImageUrl(
   imageUrl?: string | null,
 ): string | undefined {
   const trimmed = imageUrl?.trim();
-  if (trimmed && /^https?:\/\//i.test(trimmed) && !STALE_PUBLIC_SERVICE_IMAGE.test(trimmed)) {
+  if (trimmed && (trimmed.startsWith("/") || (/^https?:\/\//i.test(trimmed) && !STALE_PUBLIC_SERVICE_IMAGE.test(trimmed)))) {
     return trimmed;
   }
   return inferPublicServiceImageFromName(serviceName) ?? verticalFallback;

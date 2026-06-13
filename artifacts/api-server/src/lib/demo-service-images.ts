@@ -54,16 +54,28 @@ export async function backfillDemoServiceImages(
     const keywordMatch = nameKeywords.some((k) => n.includes(k));
     const wrongDemoImage =
       keywordMatch && inferred && row.imageUrl && row.imageUrl !== inferred;
+    const wrongEventVendorImage =
+      vertical === "event-vendors" &&
+      row.imageUrl &&
+      (STALE_PUBLIC_SERVICE_IMAGE.test(row.imageUrl) ||
+        row.imageUrl.includes("photo-1544161515"));
 
     const url =
-      !opts?.force && row.imageUrl && !stale && !wrongDemoImage
+      !opts?.force && row.imageUrl && !stale && !wrongDemoImage && !wrongEventVendorImage
         ? row.imageUrl
         : inferred;
-    const nextUrl = opts?.force || stale || !row.imageUrl || wrongDemoImage ? url : row.imageUrl;
+    const nextUrl =
+      opts?.force || stale || !row.imageUrl || wrongDemoImage || wrongEventVendorImage
+        ? url
+        : row.imageUrl;
     const patch: { imageUrl?: string; category?: string; updatedAt: Date } = { updatedAt: new Date() };
 
     if (category) patch.category = category;
-    if (nextUrl && nextUrl !== row.imageUrl && (opts?.force || stale || !row.imageUrl || wrongDemoImage)) {
+    if (
+      nextUrl &&
+      nextUrl !== row.imageUrl &&
+      (opts?.force || stale || !row.imageUrl || wrongDemoImage || wrongEventVendorImage)
+    ) {
       patch.imageUrl = nextUrl;
     }
 

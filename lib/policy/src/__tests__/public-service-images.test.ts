@@ -7,6 +7,8 @@ import {
 
 assert.match(inferPublicServiceImageFromName("Brow shape")!, /1595475207225/);
 assert.match(inferPublicServiceImageFromName("Lash fill")!, /1516975080664/);
+assert.match(inferPublicServiceImageFromName("Balloon garland")!, /birthday-party/);
+assert.match(inferPublicServiceImageFromName("Table centrepieces")!, /wedding-reception/);
 
 assert.equal(
   resolvePublicServiceImageUrl(

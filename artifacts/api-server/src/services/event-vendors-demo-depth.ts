@@ -14,6 +14,7 @@ import {
   updateEventVendorSite,
   upsertQuoteTemplate,
 } from "./consult-first.service";
+import { inferDemoServiceImageUrl } from "../lib/experience-skin";
 
 const QUOTE_UNITS: Record<string, string> = {
   "Balloon garland": "flat",
@@ -43,13 +44,23 @@ export async function ensureEventVendorsShowcaseDepth(businessId: string) {
   for (const svc of services) {
     const unit = QUOTE_UNITS[svc.name];
     const stockCount = svc.name === "Balloon garland" ? 3 : null;
-    if (unit || stockCount != null) {
+    const imageUrl = inferDemoServiceImageUrl(svc.name, "event-vendors");
+    const patch: {
+      quoteUnit?: string;
+      durationMinutes?: number;
+      stockCount?: number | null;
+      imageUrl?: string;
+    } = {};
+    if (unit) {
+      patch.quoteUnit = unit;
+      patch.durationMinutes = 0;
+    }
+    if (stockCount != null) patch.stockCount = stockCount;
+    if (imageUrl) patch.imageUrl = imageUrl;
+    if (Object.keys(patch).length > 0) {
       await db
         .update(servicesTable)
-        .set({
-          ...(unit ? { quoteUnit: unit, durationMinutes: 0 } : {}),
-          ...(stockCount != null ? { stockCount } : {}),
-        })
+        .set({ ...patch, updatedAt: new Date() })
         .where(eq(servicesTable.id, svc.id));
     }
   }

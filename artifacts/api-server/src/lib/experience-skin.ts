@@ -50,7 +50,7 @@ const VERTICAL_FALLBACK: Record<BusinessVertical, string> = {
   "allied-health": PUBLIC_SERVICE_IMAGE_KEYWORDS.physio!,
   "pet-grooming": PUBLIC_SERVICE_IMAGE_KEYWORDS.groom!,
   "automotive-detailing": PUBLIC_SERVICE_IMAGE_KEYWORDS.detail!,
-  "event-vendors": PUBLIC_SERVICE_IMAGE_KEYWORDS.massage!,
+  "event-vendors": "/event-vendor-media/wedding-reception.jpg",
 };
 
 export function inferDemoServiceImageUrl(
@@ -59,6 +59,9 @@ export function inferDemoServiceImageUrl(
 ): string | undefined {
   if (vertical === "body-art") {
     return PUBLIC_SERVICE_IMAGE_KEYWORDS.tattoo;
+  }
+  if (vertical === "event-vendors") {
+    return inferPublicServiceImageFromName(serviceName) ?? VERTICAL_FALLBACK["event-vendors"];
   }
   const inferred = inferPublicServiceImageFromName(serviceName);
   if (inferred) return inferred;

@@ -56,7 +56,9 @@ import {
   type EnquiryDeclineReasonId,
   type ClientWithdrawReasonId,
   type LivEventLifecycle,
+  resolvePublicServiceImageUrl,
 } from "@workspace/policy";
+import { inferDemoServiceImageUrl } from "../lib/experience-skin";
 
 function quoteToken(): string {
   return randomBytes(24).toString("base64url");
@@ -1947,6 +1949,14 @@ export async function getPublicEventSite(slug: string) {
       phone: biz.phone,
     },
     site,
-    services,
+    services: services.map((svc) => ({
+      ...svc,
+      imageUrl:
+        resolvePublicServiceImageUrl(
+          svc.name,
+          inferDemoServiceImageUrl(svc.name, "event-vendors"),
+          svc.imageUrl,
+        ) ?? svc.imageUrl,
+    })),
   };
 }
