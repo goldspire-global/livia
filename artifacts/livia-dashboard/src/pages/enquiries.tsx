@@ -33,6 +33,10 @@ import {
 } from "@workspace/policy";
 import { cn } from "@/lib/utils";
 import { FeatureUnlockGate } from "@/components/billing/feature-unlock-panel";
+import {
+  publicEventVendorEnquireUrl,
+  publicEventVendorSiteUrl,
+} from "@/lib/surface-urls";
 
 type Enquiry = {
   id: string;
@@ -323,8 +327,8 @@ export default function EventVendorUnifiedInboxPage() {
     }
   }
 
-  const enquireUrl = business?.slug ? `${window.location.origin}/e/${business.slug}/enquire` : "";
-  const publicSiteUrl = business?.slug ? `${window.location.origin}/e/${business.slug}` : "";
+  const enquireUrl = business?.slug ? publicEventVendorEnquireUrl(business.slug) : "";
+  const publicSiteUrl = business?.slug ? publicEventVendorSiteUrl(business.slug) : "";
   const leadDecision = selected
     ? resolveConsultLeadDecision(selected.status, { hasLinkedQuote: !!linkedQuoteId })
     : null;

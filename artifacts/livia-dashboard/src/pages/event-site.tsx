@@ -10,6 +10,7 @@ import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
 import { PageFrame } from "@/components/ui/page-frame";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { FeatureUnlockGate } from "@/components/billing/feature-unlock-panel";
+import { publicEventVendorSiteUrl } from "@/lib/surface-urls";
 
 type MilestoneTemplate = { label: string; percent: number; dueDaysBeforeEvent?: number };
 
@@ -72,7 +73,7 @@ export default function EventSitePage() {
 
   if (!site) return <PageFrame width="md">Loading…</PageFrame>;
 
-  const publicUrl = business?.slug ? `${window.location.origin}/e/${business.slug}` : "";
+  const publicUrl = business?.slug ? publicEventVendorSiteUrl(business.slug) : "";
   const publicGalleryUrl = business?.slug ? `${publicUrl}/gallery` : "";
 
   return (

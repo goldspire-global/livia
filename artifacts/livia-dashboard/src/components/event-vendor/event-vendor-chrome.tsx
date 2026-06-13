@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Instagram, Mail, Menu, Phone, X } from "lucide-react";
 import type { EventVendorSitePayload } from "@/hooks/use-event-vendor-site";
 import { EventVendorPoweredBy } from "@/components/event-vendor/event-vendor-powered-by";
+import { eventVendorPublicHref } from "@/lib/event-vendor-public-path";
 import "@/styles/event-vendor-site.css";
 
 type Props = {
@@ -23,7 +24,15 @@ export function EventVendorChrome({ slug, data, children }: Props) {
   const [location] = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const base = `/e/${slug}`;
+  const navHref = (segment: string) => eventVendorPublicHref(slug, segment);
+  const homeHref = navHref("");
+  const isNavActive = (segment: string) => {
+    const path = navHref(segment);
+    if (!segment) {
+      return location === path || location === `${path}/` || location === "/";
+    }
+    return location === path || location.startsWith(`${path}/`);
+  };
   const { business } = data;
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export function EventVendorChrome({ slug, data, children }: Props) {
     <div className="ev-site min-h-screen" data-testid="event-vendor-site">
       <header className={`ev-nav ${scrolled ? "ev-nav--scrolled" : ""}`}>
         <div className="ev-nav__inner">
-          <Link href={base} className="ev-brand">
+          <Link href={homeHref} className="ev-brand">
             {business.logoUrl ? (
               <span className="ev-brand__lockup">
                 <img src={business.logoUrl} alt="" className="ev-brand__logo" />
@@ -63,11 +72,8 @@ export function EventVendorChrome({ slug, data, children }: Props) {
 
           <nav className="ev-nav__links" aria-label="Primary">
             {NAV.map((item) => {
-              const path = item.href ? `${base}${item.href}` : base;
-              const active =
-                item.href === ""
-                  ? location === base || location === `${base}/`
-                  : location.startsWith(`${base}${item.href}`);
+              const path = navHref(item.href);
+              const active = isNavActive(item.href);
               return (
                 <Link key={item.label} href={path} aria-current={active ? "page" : undefined}>
                   {item.label}
@@ -77,7 +83,7 @@ export function EventVendorChrome({ slug, data, children }: Props) {
           </nav>
 
           <div className="ev-nav__actions">
-            <Link href={`${base}/enquire`} className="ev-btn ev-btn--primary ev-nav__cta">
+            <Link href={navHref("/enquire")} className="ev-btn ev-btn--primary ev-nav__cta">
               Get a quote
             </Link>
             <button
@@ -100,18 +106,15 @@ export function EventVendorChrome({ slug, data, children }: Props) {
         >
           <nav className="ev-mobile-nav__inner" aria-label="Mobile">
             {NAV.map((item) => {
-              const path = item.href ? `${base}${item.href}` : base;
-              const active =
-                item.href === ""
-                  ? location === base || location === `${base}/`
-                  : location.startsWith(`${base}${item.href}`);
+              const path = navHref(item.href);
+              const active = isNavActive(item.href);
               return (
                 <Link key={item.label} href={path} aria-current={active ? "page" : undefined}>
                   {item.label}
                 </Link>
               );
             })}
-            <Link href={`${base}/enquire`} className="ev-btn ev-btn--primary ev-mobile-nav__cta">
+            <Link href={navHref("/enquire")} className="ev-btn ev-btn--primary ev-mobile-nav__cta">
               Get a quote
             </Link>
           </nav>
@@ -171,7 +174,7 @@ export function EventVendorChrome({ slug, data, children }: Props) {
             <ul className="ev-footer__list ev-muted">
               {NAV.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href ? `${base}${item.href}` : base}>{item.label}</Link>
+                  <Link href={navHref(item.href)}>{item.label}</Link>
                 </li>
               ))}
             </ul>

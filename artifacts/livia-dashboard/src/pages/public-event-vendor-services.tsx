@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { formatCurrency } from "@/lib/format";
 import { EventVendorPageShell } from "@/components/event-vendor/event-vendor-page-shell";
 import { EventVendorReveal } from "@/components/event-vendor/event-vendor-reveal";
+import { eventVendorPublicHref } from "@/lib/event-vendor-public-path";
 
 export default function PublicEventVendorServicesPage() {
   return (
@@ -52,7 +53,7 @@ export default function PublicEventVendorServicesPage() {
             <div className="ev-cta-band ev-cta-band--inset mt-12">
               <h2 className="ev-section__title text-2xl">Not sure what you need?</h2>
               <p className="ev-muted text-stone-300 mb-4">Tell us about your event — we&apos;ll recommend a package.</p>
-              <Link href={`/e/${slug}/enquire`} className="ev-btn ev-btn--primary">
+              <Link href={eventVendorPublicHref(slug, "/enquire")} className="ev-btn ev-btn--primary">
                 Get a personalised quote
               </Link>
             </div>

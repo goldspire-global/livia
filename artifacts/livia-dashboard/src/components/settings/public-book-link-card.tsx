@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, ExternalLink, Globe } from "lucide-react";
-import { publicBookingUrl, publicEventVendorSiteUrl } from "@/lib/surface-urls";
+import { publicBookingUrl, publicEventVendorSiteUrl, guestSubdomainLive } from "@/lib/surface-urls";
 import { clientGuestBookHref } from "@/lib/guest-book-url";
 
 type Props = {
@@ -25,9 +25,11 @@ export function PublicBookLinkCard({
   const isEventVendor = vertical === "event-vendors";
   const absolute = isEventVendor ? publicEventVendorSiteUrl(slug) : publicBookingUrl(slug);
   const previewPath = isEventVendor ? `/e/${slug}` : clientGuestBookHref(slug);
-  const displayLabel = import.meta.env.DEV
-    ? previewPath
-    : `${slug}.livia-hq.com`;
+  const displayLabel = guestSubdomainLive()
+    ? `${slug}.livia-hq.com`
+    : isEventVendor
+      ? `/e/${slug}`
+      : previewPath;
   const linkLabel = isEventVendor ? "Public website" : "Guest book page";
   const copyAria = isEventVendor ? "Copy website link" : "Copy booking link";
   const previewAria = isEventVendor ? "Open website" : "Open booking page";

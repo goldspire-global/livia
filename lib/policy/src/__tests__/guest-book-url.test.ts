@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {
   guestBookPath,
+  guestEventVendorPath,
+  guestEventVendorAbsoluteUrl,
   guestManageVisitPath,
   guestShopRelationshipPath,
   migrateLegacyGuestBookPath,
@@ -8,6 +10,12 @@ import {
 } from "../guest-book-url";
 
 assert.equal(guestBookPath("bloom-beauty-dublin"), "/book/bloom-beauty-dublin");
+assert.equal(guestEventVendorPath("atelier-decor-dublin"), "/e/atelier-decor-dublin");
+assert.equal(guestEventVendorPath("atelier-decor-dublin", "/enquire"), "/e/atelier-decor-dublin/enquire");
+assert.equal(
+  guestEventVendorAbsoluteUrl("atelier-decor-dublin", { forcePathMode: true, appOrigin: "https://app.livia-hq.com" }),
+  "https://app.livia-hq.com/e/atelier-decor-dublin",
+);
 assert.equal(
   migrateLegacyGuestBookPath("/b/bloom/visit/tok"),
   "/book/bloom/visit/tok",

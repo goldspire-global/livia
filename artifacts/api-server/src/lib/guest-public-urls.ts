@@ -57,7 +57,7 @@ export function resolveGuestBookPath(slug: string): string {
   return guestBookPath(slug);
 }
 
-/** Public quote page — subdomain in prod (`{slug}.livia-hq.com/q/{token}`), `/e/` path in dev. */
+/** Public quote page — subdomain in prod when live, `/e/` path otherwise. */
 export function resolveGuestQuoteUrl(slug: string, token: string): string {
   const env = guestBookUrlEnv();
   const encoded = encodeURIComponent(token);
@@ -66,4 +66,17 @@ export function resolveGuestQuoteUrl(slug: string, token: string): string {
     return `${origin}/e/${slug}/q/${encoded}`;
   }
   return `https://${slug}.${env.bookHostSuffix}/q/${encoded}`;
+}
+
+export function resolveEventVendorSiteUrl(slug: string): string {
+  const env = guestBookUrlEnv();
+  if (env.forcePathMode || !env.bookHostSuffix) {
+    const origin = getDashboardUrl().replace(/\/+$/, "");
+    return `${origin}/e/${slug}`;
+  }
+  return `https://${slug}.${env.bookHostSuffix}`;
+}
+
+export function resolveEventVendorEnquireUrl(slug: string): string {
+  return `${resolveEventVendorSiteUrl(slug)}/enquire`;
 }

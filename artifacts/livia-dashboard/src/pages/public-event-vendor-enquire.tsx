@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { EventVendorPageShell } from "@/components/event-vendor/event-vendor-page-shell";
 import { EventVendorReveal } from "@/components/event-vendor/event-vendor-reveal";
+import { eventVendorPublicHref } from "@/lib/event-vendor-public-path";
 
 const EVENT_TYPES = ["Wedding", "Birthday", "Corporate", "Christening", "Other"];
 
@@ -97,7 +98,7 @@ export default function PublicEventVendorEnquirePage() {
                   {preferredQuoteChannel === "whatsapp" ? "WhatsApp" : "email"} with a personalised quote.
                   No obligation until you accept.
                 </p>
-                <Link href={`/e/${slug}`} className="ev-btn ev-btn--primary">
+                <Link href={eventVendorPublicHref(slug)} className="ev-btn ev-btn--primary">
                   Back to home
                 </Link>
               </section>

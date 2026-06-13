@@ -25,6 +25,12 @@ export function guestBookPath(slug: string, query = ""): string {
   return `/book/${slug}${q}`;
 }
 
+/** Same-origin event-vendor public site path (dev + pre-wildcard-DNS fallback). */
+export function guestEventVendorPath(slug: string, segment = ""): string {
+  const seg = segment ? (segment.startsWith("/") ? segment : `/${segment}`) : "";
+  return `/e/${slug}${seg}`;
+}
+
 /** Token surfaces on book host (visit, proof, pay, …). */
 export function guestBookTokenPath(
   slug: string,
@@ -52,6 +58,14 @@ export function guestBookAbsoluteUrl(slug: string, env: GuestBookUrlEnv = {}): s
   if (env.forcePathMode || !env.bookHostSuffix) {
     const origin = (env.appOrigin ?? "https://app.livia-hq.com").replace(/\/$/, "");
     return `${origin}${guestBookPath(slug)}`;
+  }
+  return `https://${guestBookHostForSlug(slug, env.bookHostSuffix)}`;
+}
+
+export function guestEventVendorAbsoluteUrl(slug: string, env: GuestBookUrlEnv = {}): string {
+  if (env.forcePathMode || !env.bookHostSuffix) {
+    const origin = (env.appOrigin ?? "https://app.livia-hq.com").replace(/\/$/, "");
+    return `${origin}${guestEventVendorPath(slug)}`;
   }
   return `https://${guestBookHostForSlug(slug, env.bookHostSuffix)}`;
 }

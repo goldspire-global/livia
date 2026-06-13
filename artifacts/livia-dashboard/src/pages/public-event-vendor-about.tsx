@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { EventVendorHeroMedia } from "@/components/event-vendor/event-vendor-hero-media";
 import { EventVendorPageShell } from "@/components/event-vendor/event-vendor-page-shell";
+import { eventVendorPublicHref } from "@/lib/event-vendor-public-path";
 
 export default function PublicEventVendorAboutPage() {
   return (
@@ -45,7 +46,7 @@ export default function PublicEventVendorAboutPage() {
               </div>
             </div>
             <div className="mt-12">
-              <Link href={`/e/${slug}/enquire`} className="ev-btn ev-btn--primary">
+              <Link href={eventVendorPublicHref(slug, "/enquire")} className="ev-btn ev-btn--primary">
                 Start an enquiry
               </Link>
             </div>

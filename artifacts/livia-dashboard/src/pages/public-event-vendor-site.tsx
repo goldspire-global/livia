@@ -5,12 +5,13 @@ import { EventVendorPageShell } from "@/components/event-vendor/event-vendor-pag
 import { EventVendorReveal } from "@/components/event-vendor/event-vendor-reveal";
 import { EventVendorHeroMedia } from "@/components/event-vendor/event-vendor-hero-media";
 import { resolveGalleryImage } from "@/lib/event-vendor-media";
+import { eventVendorPublicHref } from "@/lib/event-vendor-public-path";
 
 export default function PublicEventVendorSitePage() {
   return (
     <EventVendorPageShell>
       {({ slug, data }) => {
-        const base = `/e/${slug}`;
+        const link = (segment: string) => eventVendorPublicHref(slug, segment);
         const currency = data.business.currency ?? "EUR";
         const featured = data.site.gallery.slice(0, 3).map((g, i) => resolveGalleryImage(g, i));
         const services = data.services.slice(0, 3);
@@ -30,11 +31,11 @@ export default function PublicEventVendorSitePage() {
                     "Tell us your vision — we send a personalised quote within 24 hours."}
                 </p>
                 <div className="ev-hero__actions">
-                  <Link href={`${base}/enquire`} className="ev-btn ev-btn--primary">
+                  <Link href={link("/enquire")} className="ev-btn ev-btn--primary">
                     Plan your event
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <Link href={`${base}/gallery`} className="ev-btn ev-btn--outline">
+                  <Link href={link("/gallery")} className="ev-btn ev-btn--outline">
                     View our work
                   </Link>
                 </div>
@@ -71,7 +72,7 @@ export default function PublicEventVendorSitePage() {
                       <h2 className="ev-section__title mb-0">Recent celebrations</h2>
                     </div>
                     <Link
-                      href={`${base}/gallery`}
+                      href={link("/gallery")}
                       className="text-sm font-medium text-amber-800 hover:underline shrink-0"
                     >
                       Full gallery →
@@ -116,7 +117,7 @@ export default function PublicEventVendorSitePage() {
                     ))}
                   </div>
                   <div className="mt-8">
-                    <Link href={`${base}/services`} className="ev-btn ev-btn--outline !text-stone-800 !border-stone-300 !bg-white">
+                    <Link href={link("/services")} className="ev-btn ev-btn--outline !text-stone-800 !border-stone-300 !bg-white">
                       All services & pricing
                     </Link>
                   </div>
@@ -131,7 +132,7 @@ export default function PublicEventVendorSitePage() {
                   <h2 className="ev-section__title">Your day, styled with care</h2>
                   <p className="ev-muted max-w-2xl text-lg leading-relaxed">{data.site.aboutText}</p>
                   <Link
-                    href={`${base}/about`}
+                    href={link("/about")}
                     className="inline-block mt-6 text-sm font-medium text-amber-800 hover:underline"
                   >
                     Our story →
@@ -147,7 +148,7 @@ export default function PublicEventVendorSitePage() {
                 <p className="ev-muted max-w-md mx-auto mb-6">
                   Weddings, birthdays, corporate — share your vision and we&apos;ll send a quote.
                 </p>
-                <Link href={`${base}/enquire`} className="ev-btn ev-btn--primary">
+                <Link href={link("/enquire")} className="ev-btn ev-btn--primary">
                   Start your enquiry
                 </Link>
               </section>

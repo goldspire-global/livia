@@ -19,13 +19,22 @@ function dashboardOrigin(): string {
   return import.meta.env.DEV ? "http://localhost:5173" : "https://app.livia-hq.com";
 }
 
+/** Wildcard `*.livia-hq.com` is opt-in — until DNS + Vercel host is live, use app path URLs. */
+export function guestSubdomainLive(): boolean {
+  return (
+    !import.meta.env.DEV &&
+    (import.meta.env.VITE_GUEST_SUBDOMAIN_LIVE === "true" ||
+      import.meta.env.VITE_GUEST_SUBDOMAIN_LIVE === "1")
+  );
+}
+
 export function publicBookingUrl(slug: string): string {
-  if (import.meta.env.DEV) return `${dashboardOrigin()}/book/${slug}`;
+  if (!guestSubdomainLive()) return `${dashboardOrigin()}/book/${slug}`;
   return `https://${slug}.livia-hq.com`;
 }
 
 export function publicEventVendorSiteUrl(slug: string): string {
-  if (import.meta.env.DEV) return `${dashboardOrigin()}/e/${slug}`;
+  if (!guestSubdomainLive()) return `${dashboardOrigin()}/e/${slug}`;
   return `https://${slug}.livia-hq.com`;
 }
 
@@ -39,11 +48,11 @@ export function marketingPricingUrl(): string {
 
 /** Slug field prefix in onboarding — dev path or subdomain stem. */
 export function publicBookingSlugPrefix(): string {
-  if (import.meta.env.DEV) return `${dashboardOrigin().replace(/^https?:\/\//, "")}/book/`;
+  if (!guestSubdomainLive()) return `${dashboardOrigin().replace(/^https?:\/\//, "")}/book/`;
   return "";
 }
 
 export function publicBookingSlugSuffix(): string {
-  if (import.meta.env.DEV) return "";
+  if (!guestSubdomainLive()) return "";
   return ".livia-hq.com";
 }
