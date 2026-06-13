@@ -208,6 +208,12 @@ export async function pruneConsultFirstDemoCustomers(businessId: string): Promis
     .where(eq(customersTable.businessId, businessId));
   const toDelete = all.filter((c) => !keep.has(c.id)).map((c) => c.id);
   if (!toDelete.length) return 0;
+  // Legacy salon-style bookings use ON DELETE RESTRICT — drop orphans before customer prune.
+  await db
+    .delete(bookingsTable)
+    .where(
+      and(eq(bookingsTable.businessId, businessId), inArray(bookingsTable.customerId, toDelete)),
+    );
   await db
     .delete(customersTable)
     .where(and(eq(customersTable.businessId, businessId), inArray(customersTable.id, toDelete)));
