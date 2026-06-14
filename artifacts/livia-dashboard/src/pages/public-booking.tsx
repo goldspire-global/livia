@@ -25,7 +25,7 @@ import {
 import type { PublicRetailProduct } from "@/components/public-booking/public-beauty-shop";
 import { isPublicShopPath } from "@/lib/public-guest-route-params";
 import { useGuestBookSlug } from "@/lib/use-guest-book-slug";
-import { guestBookTokenPath, isPublicRetailVertical } from "@workspace/policy";
+import { guestBookTokenPath, isPublicRetailVertical, resolveActiveBookingGuards, type BusinessVertical } from "@workspace/policy";
 import {
   useGetPublicBusiness,
   useGetPublicSlots,
@@ -457,6 +457,20 @@ export default function PublicBookingPage() {
       ? wellnessPublicCatalogLayout(presentationPreset)
       : "list";
 
+  const activeBookingGuards = useMemo(() => {
+    if (!b?.vertical) return [];
+    return resolveActiveBookingGuards({
+      vertical: b.vertical as BusinessVertical,
+      beautyService: selectedService
+        ? {
+            requiresPatchTest: selectedService.requiresPatchTest,
+            serviceKind: selectedService.serviceKind as import("@workspace/policy").BeautyServiceKind | null,
+            category: selectedService.category,
+          }
+        : null,
+    });
+  }, [b?.vertical, selectedService]);
+
   const requestChatOpen = () => setChatOpenRequest((n) => n + 1);
 
   useEffect(() => {
@@ -520,7 +534,7 @@ export default function PublicBookingPage() {
       return;
     }
 
-    for (const g of b?.bookingGuards ?? []) {
+    for (const g of activeBookingGuards) {
       if (g.required && !guardAnswers[g.id]?.trim()) {
         setValidationErr(`Please complete: ${g.label}`);
         return;
@@ -1183,13 +1197,13 @@ export default function PublicBookingPage() {
                   </span>
                 </label>
               ) : null}
-              {(b?.bookingGuards?.length ?? 0) > 0 && (
+              {activeBookingGuards.length > 0 && (
                 <div
                   className="space-y-3 rounded-lg border border-primary/20 p-4 bg-primary/5"
                   data-testid="public-booking-guards"
                 >
                   <p className="text-sm font-medium">{guardSectionTitle(b.vertical, b.category)}</p>
-                  {b!.bookingGuards!.map((g) => (
+                  {activeBookingGuards.map((g) => (
                     <div key={g.id} className="space-y-1.5">
                       <Label>
                         {g.label}

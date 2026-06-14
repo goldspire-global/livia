@@ -38,7 +38,7 @@ function eur(cents: number): string {
   );
 }
 
-export default function BillingControls() {
+export default function BillingControls({ showRemediationStrip = true }: { showRemediationStrip?: boolean }) {
   const { business } = useBusiness();
   const { role } = useMembership();
   const { toast } = useToast();
@@ -222,7 +222,7 @@ export default function BillingControls() {
 
   return (
     <div className="space-y-4">
-      <BillingRemediationStrip />
+      {showRemediationStrip ? <BillingRemediationStrip /> : null}
       <CommerceFixPanel />
       <Card id="plan-billing-card" className="scroll-mt-24">
         <CardHeader>

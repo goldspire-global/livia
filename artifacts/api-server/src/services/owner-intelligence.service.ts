@@ -103,6 +103,7 @@ export async function getOwnerIntelligenceBundle(
       refundMinor30d: commerceBundle.snapshot.refundMinor30d,
       demandBookings: pendingCount + confirmedCount,
       weekBookings: summary.weekBookings ?? 0,
+      depositRequired: commerceBundle.snapshot.depositRequired,
     },
   });
 

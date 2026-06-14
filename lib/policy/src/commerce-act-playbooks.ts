@@ -74,9 +74,9 @@ export function buildCommerceRemediationTasks(signals: CommerceSignal[]): Commer
     out.push({
       signalId: signal.id,
       severity: signal.severity,
-      title: playbook?.taskTitle ?? signal.title,
-      body: playbook?.taskBody ?? signal.body,
-      href: playbook?.href ?? signal.href,
+      title: signal.title,
+      body: signal.body,
+      href: signal.href,
       ownerPrompt: playbook?.ownerPrompt ?? `Explain the ${signal.title} signal and next steps.`,
       proposalAction: playbook?.proposalAction,
       priority: playbook?.priority ?? signal.priority,

@@ -30,7 +30,7 @@ export const ADDON_CATALOGUE: Record<string, AddonDefinition> = {
     id: "event_operator_pack",
     name: "Event Operator",
     description:
-      "Consult-first inbox, quote generator, milestone deposits, event prep lifecycle, and public quote pages.",
+      "Consult-first inbox, quote generator, milestone deposits, event prep lifecycle, and optional full /e/ website. Public booking (/b) is on your base plan.",
     eurCentsPerMonth: 4900,
     stripePriceEnv: "STRIPE_PRICE_EVENT_OPERATOR",
     grants: EVENT_OPERATOR_PACK_GRANTS,

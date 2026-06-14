@@ -53,7 +53,7 @@ export function CommerceFixPanel() {
   const bid = business?.id ?? "";
   const slug = business?.slug ?? "";
   const { data: billing } = useBillingState();
-  const { data: intel } = useGetOwnerIntelligence(bid, {
+  const { data: intel, dataUpdatedAt } = useGetOwnerIntelligence(bid, {
     query: { enabled: !!bid } as never,
   });
   const [depositRequired, setDepositRequired] = useState(false);
@@ -63,7 +63,7 @@ export function CommerceFixPanel() {
     void customFetch<OperationalPolicySnapshot>(`/api/businesses/${bid}/operational-policy`)
       .then((p) => setDepositRequired(Boolean(p.policy?.depositRequired)))
       .catch(() => setDepositRequired(false));
-  }, [bid]);
+  }, [bid, dataUpdatedAt]);
 
   const paymentCount = intel?.commerce.snapshot.paymentCount30d ?? 0;
   const hasDepositsEntitlement = billing?.entitlements.includes("deposits") ?? false;
@@ -87,9 +87,11 @@ export function CommerceFixPanel() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Fix payment capture</CardTitle>
         <CardDescription>
-          {topSignal?.title === "Demand without deposits"
-            ? "You have bookings but nothing captured yet — work through these steps in order."
-            : "Get deposits landing when guests book online."}
+          {topSignal?.title === "Complete a test deposit" || depositsDone
+            ? "Deposits are on — capture one test payment on your public page to verify checkout."
+            : topSignal?.title === "Turn on deposits"
+              ? "You have bookings but nothing captured yet — work through these steps in order."
+              : "Get deposits landing when guests book online."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

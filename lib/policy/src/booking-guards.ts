@@ -1,3 +1,5 @@
+import type { BeautyServiceMeta } from "./beauty-booking-rules";
+import { serviceRequiresPatchTest } from "./beauty-booking-rules";
 import type { BusinessVertical } from "./types";
 
 export interface BookingGuardField {
@@ -164,7 +166,7 @@ export const BOOKING_GUARDS: Partial<Record<BusinessVertical, BookingGuardField[
       id: "patch_test",
       label: "Patch test up to date (if required)?",
       type: "select",
-      required: true,
+      required: false,
       options: [
         { value: "yes", label: "Yes" },
         { value: "no", label: "No / not sure" },
@@ -196,6 +198,25 @@ export const BOOKING_GUARDS: Partial<Record<BusinessVertical, BookingGuardField[
 
 export function getBookingGuardsForVertical(vertical: BusinessVertical): BookingGuardField[] {
   return BOOKING_GUARDS[vertical] ?? [];
+}
+
+/** Guards shown on public book — patch test only when the selected service requires it. */
+export function resolveActiveBookingGuards(args: {
+  vertical: BusinessVertical;
+  beautyService?: BeautyServiceMeta | null;
+}): BookingGuardField[] {
+  const guards = getBookingGuardsForVertical(args.vertical);
+  if (args.vertical !== "beauty") return guards;
+  const svc = args.beautyService;
+  if (!svc) {
+    return guards.filter((g) => g.id !== "patch_test");
+  }
+  const needsPatch = serviceRequiresPatchTest(svc);
+  return guards
+    .filter((g) => g.id !== "patch_test" || needsPatch)
+    .map((g) =>
+      g.id === "patch_test" && needsPatch ? { ...g, required: true } : g,
+    );
 }
 
 export function formatGuardAnswersForNotes(

@@ -60,6 +60,20 @@ function normalizeIntelligenceTitle(title: string): string {
     .trim();
 }
 
+/** Collapse commerce deposit nudges that differ only in wording. */
+function commerceAttentionDedupeKey(row: { id: string; title: string }): string {
+  const t = normalizeIntelligenceTitle(row.title);
+  if (
+    row.id === "uncaptured_demand" ||
+    t.includes("deposit") ||
+    t.includes("uncaptured") ||
+    t.includes("payment capture")
+  ) {
+    return "commerce:uncaptured_demand";
+  }
+  return row.id || t;
+}
+
 /** One primary row + a short deduped "more" list — avoids repeating the same signal six times. */
 export function buildCompactOwnerIntelligenceRows(
   intel: OwnerIntelHomeInput & {
@@ -278,7 +292,7 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
   const rows: OwnerIntelligenceActionRow[] = [];
   const push = (row: OwnerIntelligenceActionRow) => {
     if (!row.title?.trim()) return;
-    const key = normalizeIntelligenceTitle(row.title);
+    const key = commerceAttentionDedupeKey(row);
     if (!key || seen.has(key)) return;
     seen.add(key);
     rows.push(row);
@@ -292,27 +306,6 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
       href: blocker.href,
       severity: "act",
       source: "remediation",
-    });
-  }
-
-  for (const signal of (
-    data.commerce?.signals as
-      | Array<{
-          id?: string;
-          severity: string;
-          title: string;
-          body: string;
-          href: string;
-        }>
-      | undefined
-  )?.filter((s) => s.severity === "act") ?? []) {
-    push({
-      id: signal.id ?? `commerce-${rows.length}`,
-      title: signal.title,
-      body: signal.body,
-      href: signal.href,
-      severity: "act",
-      source: "commerce",
     });
   }
 

@@ -39,7 +39,7 @@ export function SettingsBillingTab() {
         </p>
       </div>
 
-      <BillingControls />
+      <BillingControls showRemediationStrip={false} />
 
       <SettingsDisclosure
         id="commerce-signals-disclosure"

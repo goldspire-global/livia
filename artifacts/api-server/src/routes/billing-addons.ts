@@ -39,7 +39,7 @@ router.post(
     }
 
     const biz = await getBusinessById(businessId);
-    if (!biz || biz.ownerId !== userId) {
+    if (!biz) {
       sendError(res, req, 404, "Business not found");
       return;
     }

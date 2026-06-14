@@ -32,9 +32,28 @@ export type OperationalPolicy = z.infer<typeof operationalPolicySchema>;
 
 export const DEFAULT_OPERATIONAL_POLICY: OperationalPolicy = operationalPolicySchema.parse({});
 
+/** Strip leading zeros and clamp 0–100 — used by API + dashboard deposit % inputs. */
+export function normalizeDepositPercent(value: unknown): number {
+  if (typeof value === "string") {
+    const trimmed = value.trim().replace(/^0+(?=\d)/, "");
+    if (trimmed === "") return 0;
+    const n = parseInt(trimmed, 10);
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.min(100, Math.max(0, Math.floor(value)));
+  }
+  return 0;
+}
+
 export function parseOperationalPolicy(raw: unknown): OperationalPolicy {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_OPERATIONAL_POLICY };
-  const parsed = operationalPolicySchema.safeParse(raw);
+  const record = raw as Record<string, unknown>;
+  const coerced =
+    record.depositPercent !== undefined
+      ? { ...record, depositPercent: normalizeDepositPercent(record.depositPercent) }
+      : record;
+  const parsed = operationalPolicySchema.safeParse(coerced);
   return parsed.success ? parsed.data : { ...DEFAULT_OPERATIONAL_POLICY };
 }
 
@@ -42,7 +61,11 @@ export function mergeOperationalPolicy(
   partial: Partial<OperationalPolicy> | undefined,
   current: OperationalPolicy,
 ): OperationalPolicy {
-  return operationalPolicySchema.parse({ ...current, ...partial });
+  const next = { ...current, ...partial };
+  if (partial?.depositPercent !== undefined) {
+    next.depositPercent = normalizeDepositPercent(partial.depositPercent);
+  }
+  return operationalPolicySchema.parse(next);
 }
 
 /** Owner-facing plain-language summary for Liv setup copilot. */

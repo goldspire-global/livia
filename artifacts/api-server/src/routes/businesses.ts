@@ -313,6 +313,11 @@ router.patch(
     await appendHumanAudit(id, userId, "human.policy.operational.update", "business", id, {
       fields: Object.keys(parsed.data),
     });
+    const { invalidateOwnerIntelligenceCache } = await import("../services/owner-intelligence-cache");
+    invalidateOwnerIntelligenceCache(id);
+    void import("../services/commerce-signals.service").then((m) =>
+      m.syncCommerceIntelligenceLoop(id).catch(() => undefined),
+    );
     res.json(payload);
   },
 );

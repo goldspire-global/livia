@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "@/lib/business-context";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customFetch } from "@workspace/api-client-react";
+import { normalizeDepositPercent } from "@workspace/policy";
+import { invalidateCommerceIntelligence } from "@/lib/commerce-intelligence-cache";
+import { invalidateOperationalState } from "@/lib/operational-cache";
 import { Shield } from "lucide-react";
 
 type OperationalPolicyPayload = {
@@ -31,6 +35,7 @@ type OperationalPolicyPayload = {
 export default function OperationalPolicyControls() {
   const { business } = useBusiness();
   const { toast } = useToast();
+  const qc = useQueryClient();
   const bid = business?.id ?? "";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,6 +72,8 @@ export default function OperationalPolicyControls() {
         },
       );
       setState(data);
+      invalidateCommerceIntelligence(qc, bid);
+      invalidateOperationalState(qc, bid);
       toast({ title: "Policy saved" });
     } catch (e) {
       toast({
@@ -126,14 +133,25 @@ export default function OperationalPolicyControls() {
             <Label htmlFor="depositPercent">Deposit %</Label>
             <Input
               id="depositPercent"
-              type="number"
-              min={0}
-              max={100}
-              value={p.depositPercent}
-              onChange={(e) =>
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={3}
+              value={String(p.depositPercent)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
                 setState({
                   ...state,
-                  policy: { ...p, depositPercent: parseInt(e.target.value, 10) || 0 },
+                  policy: {
+                    ...p,
+                    depositPercent: raw === "" ? 0 : normalizeDepositPercent(raw),
+                  },
+                });
+              }}
+              onBlur={() =>
+                setState({
+                  ...state,
+                  policy: { ...p, depositPercent: normalizeDepositPercent(p.depositPercent) },
                 })
               }
             />

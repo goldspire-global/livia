@@ -120,14 +120,15 @@ export const FEATURE_UNLOCK_COPY: Record<CommerceFeatureId, FeatureUnlockCopy> =
   },
   event_public_site: {
     featureId: "event_public_site",
-    title: "Unlock public quote site",
-    description: "Your /e/ website — enquiry form, deposit terms, and milestone defaults.",
+    title: "Unlock full quote website",
+    description:
+      "Your /e/ enquiry site with gallery, deposit terms, and milestone defaults — public booking (/b) is included on your base plan.",
     addonId: "event_operator_pack",
     priceLabel: `${eventPackPrice}/mo`,
     bullets: [
-      "Public enquire + gallery",
-      "Default deposit % and terms",
-      "Powered-by Livia guest experience",
+      "Full /e/ website — enquiry form and gallery",
+      "Default deposit % and quote terms",
+      "Public /b booking page included on base plan",
     ],
     successReturnPath: "/event-site",
   },

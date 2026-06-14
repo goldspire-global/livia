@@ -45,14 +45,25 @@ export function resolveCommerceSignals(
       weekBookings: input.weekBookings,
     })
   ) {
-    out.push({
-      id: "uncaptured_demand",
-      severity: "act",
-      title: "Demand without deposits",
-      body: "Bookings are flowing but no payments were captured in the last 30 days. Turn on deposits, then run a test payment on your booking page.",
-      href: COMMERCE_BILLING_FIX_HREF,
-      priority: 1,
-    });
+    if (input.depositRequired) {
+      out.push({
+        id: "uncaptured_demand",
+        severity: "act",
+        title: "Complete a test deposit",
+        body: "Deposits are enabled but no payments were captured in the last 30 days — book on your public page and pay the deposit link to verify checkout.",
+        href: COMMERCE_BILLING_FIX_HREF,
+        priority: 1,
+      });
+    } else {
+      out.push({
+        id: "uncaptured_demand",
+        severity: "act",
+        title: "Turn on deposits",
+        body: "Bookings are flowing but no payments were captured in the last 30 days. Enable deposits in booking rules, then run a test payment on your booking page.",
+        href: COMMERCE_BOOKING_POLICIES_HREF,
+        priority: 1,
+      });
+    }
   }
 
   if (

@@ -11,6 +11,8 @@ export type CommerceBriefingInput = {
   /** Demand without capture — pending + confirmed bookings */
   demandBookings?: number;
   weekBookings?: number;
+  /** Tenant operational policy — suppresses "turn on deposits" when already enabled. */
+  depositRequired?: boolean;
 };
 
 export type OwnerLivSuggestion = {
@@ -60,7 +62,9 @@ export function resolveCommerceOwnerBriefingCta(signals: CommerceBriefingInput):
   label: string;
 } | null {
   if (ownerHomeUncapturedDemand(signals)) {
-    return { href: COMMERCE_BILLING_FIX_HREF, label: "Turn on deposits" };
+    return signals.depositRequired
+      ? { href: COMMERCE_BILLING_FIX_HREF, label: "Complete a test deposit" }
+      : { href: COMMERCE_BILLING_FIX_HREF, label: "Turn on deposits" };
   }
   if (ownerHomeCommerceNeedsAttention(signals)) {
     return { href: COMMERCE_BILLING_FIX_HREF, label: "Improve payment capture" };

@@ -4,7 +4,13 @@ import {
   diffOperationalPolicy,
   explainOperationalPolicySummary,
   mergeOperationalPolicy,
+  normalizeDepositPercent,
+  parseOperationalPolicy,
 } from "../operational-policy";
+
+assert.equal(normalizeDepositPercent("020"), 20);
+assert.equal(normalizeDepositPercent(20), 20);
+assert.equal(parseOperationalPolicy({ depositPercent: "020" }).depositPercent, 20);
 
 const summary = explainOperationalPolicySummary({
   operational: { ...DEFAULT_OPERATIONAL_POLICY, depositRequired: true, depositPercent: 20 },

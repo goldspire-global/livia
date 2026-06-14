@@ -8,6 +8,15 @@ const act = resolveCommerceSignals({
 });
 assert.equal(act[0]?.id, "uncaptured_demand");
 assert.equal(act[0]?.severity, "act");
+assert.equal(act[0]?.title, "Turn on deposits");
+
+const depositsOn = resolveCommerceSignals({
+  paymentCount30d: 0,
+  demandBookings: 4,
+  weekBookings: 3,
+  depositRequired: true,
+});
+assert.equal(depositsOn[0]?.title, "Complete a test deposit");
 
 const low = resolveCommerceSignals({
   paymentCount30d: 5,

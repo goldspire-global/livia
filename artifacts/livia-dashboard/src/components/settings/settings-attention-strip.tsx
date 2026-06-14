@@ -12,7 +12,7 @@ export function useSettingsAttentionRows() {
   const { business } = useBusiness();
   const bid = business?.id ?? "";
   const { data, isLoading } = useGetOwnerIntelligence(bid, {
-    query: { enabled: !!bid, staleTime: 60_000 } as never,
+    query: { enabled: !!bid, staleTime: 15_000, refetchOnWindowFocus: true } as never,
   });
   const rows = useMemo(
     () =>

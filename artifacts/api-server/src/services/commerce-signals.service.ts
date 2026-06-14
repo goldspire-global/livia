@@ -1,11 +1,12 @@
 import { EventType } from "@workspace/db";
-import { resolveCommerceSignals, type CommerceSignal } from "@workspace/policy";
+import { resolveCommerceSignals, parseOperationalPolicy, type CommerceSignal } from "@workspace/policy";
 import {
   formatCommerceMinor,
   getCommerceSnapshot,
   type CommerceSnapshot,
 } from "./commerce-intelligence.service";
 import { getDashboardSummary } from "./dashboard.service";
+import { getBusinessById } from "./businesses.service";
 import { upsertLivSignal } from "./liv-signals.service";
 import { logEvent } from "./events.service";
 import { publishDomainEvent } from "../lib/domain-events";
@@ -15,7 +16,7 @@ export type CommerceSignalsBundle = {
   businessId: string;
   generatedAt: string;
   signals: CommerceSignal[];
-  snapshot: CommerceSnapshot & { capturedLabel: string };
+  snapshot: CommerceSnapshot & { capturedLabel: string; depositRequired: boolean };
 };
 
 export async function getCommerceSignalsBundle(
@@ -27,6 +28,8 @@ export async function getCommerceSignalsBundle(
   ]);
 
   const capturedLabel = formatCommerceMinor(snapshot.capturedMinor30d, snapshot.currency);
+  const biz = await getBusinessById(businessId);
+  const op = parseOperationalPolicy(biz?.operationalPolicy);
   const signals = resolveCommerceSignals({
     capturedMinor30d: snapshot.capturedMinor30d,
     captureRatePercent: snapshot.captureRatePercent,
@@ -35,13 +38,14 @@ export async function getCommerceSignalsBundle(
     demandBookings: (summary.pendingCount ?? 0) + (summary.confirmedCount ?? 0),
     weekBookings: summary.weekBookings ?? 0,
     capturedLabel,
+    depositRequired: op.depositRequired,
   });
 
   return {
     businessId,
     generatedAt: new Date().toISOString(),
     signals,
-    snapshot: { ...snapshot, capturedLabel },
+    snapshot: { ...snapshot, capturedLabel, depositRequired: op.depositRequired },
   };
 }
 
