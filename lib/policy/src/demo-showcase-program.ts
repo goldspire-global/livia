@@ -58,12 +58,22 @@ const TIER_BY_SLUG: Partial<Record<string, BusinessTier>> = {
   "conors-cut-co": "solo",
   "stoneybatter-cuts": "solo",
   "dundrum-serenity-spa": "solo",
+  "atelier-decor-dublin": "solo",
   "dublin-barber-collective": "studio",
   "dundrum-hair-studio": "studio",
   "aurora-studio": "studio",
   "aurora-mews": "studio",
   "aurora-galway": "studio",
   "luxe-salon-spa": "studio",
+  "bloom-beauty-dublin": "studio",
+  "harbour-wellness-cork": "studio",
+  "copenhagen-havn-wellness": "studio",
+  "ink-anchor-galway": "studio",
+  "clarity-medspa-dublin": "studio",
+  "motion-physio-cork": "studio",
+  "peak-fitness-dublin": "studio",
+  "paws-parlour-dublin": "studio",
+  "shine-studio-belfast": "studio",
 };
 
 function operatorSpecForSlug(slug: string) {

@@ -22,6 +22,7 @@ import {
   onboardingChecklistSchema,
   listDemoPartnerTracks,
   resolveDemoShowcaseBusinessSpec,
+  resolveDemoShowcaseTier,
   type DemoPartnerLoginKind,
 } from "@workspace/policy";
 import { DEMO_ROLE_EMAILS } from "@workspace/demo-logins";
@@ -1219,7 +1220,11 @@ export async function getDemoPortalStatus(): Promise<{
             r.vertical === "event-vendors"
               ? `${dashboardBase}/e/${r.slug}`
               : `${dashboardBase}/b/${r.slug}`,
-          roster: rosterEntriesForSlug(r.slug, r.name, r.tier).map((entry) => ({
+          roster: rosterEntriesForSlug(
+            r.slug,
+            r.name,
+            resolveDemoShowcaseTier(r.slug) ?? r.tier,
+          ).map((entry) => ({
             ...entry,
             email:
               entry.role === "owner" && chainHq

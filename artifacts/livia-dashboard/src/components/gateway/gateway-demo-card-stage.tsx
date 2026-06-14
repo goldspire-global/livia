@@ -106,10 +106,10 @@ export function GatewayDemoEnterStage({
 }: EnterProps) {
   return (
     <article
-      className="rounded-3xl border-2 border-[#d9b97a]/45 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-1 shadow-[0_0_60px_-20px_rgba(217,185,122,0.28)]"
+      className="gateway-demo-enter-stage mx-auto w-full max-w-[26rem] sm:max-w-[30rem] rounded-3xl border-2 border-[#d9b97a]/45 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-1 shadow-[0_0_42px_-14px_rgba(217,185,122,0.28)]"
       data-testid="gateway-demo-card-stage"
     >
-      <div className="rounded-[1.35rem] border border-primary/25 bg-[#0a0c12]/90 p-4 sm:p-5">
+      <div className="rounded-[1.35rem] border border-primary/25 bg-[#0a0c12]/90 p-3 sm:p-4">
         <GatewayBackLink
           href={backHref}
           className="inline-flex min-h-[44px] items-center rounded-full border border-[#d9b97a]/35 bg-[#d9b97a]/10 px-3.5 text-sm text-[#e6d0a5] transition hover:border-[#d9b97a]/55"
@@ -118,9 +118,9 @@ export function GatewayDemoEnterStage({
           {backLabel}
         </GatewayBackLink>
         <div className="mt-4 space-y-1">
-          <p className="font-serif text-lg text-[#e6d0a5]/95">{tradeLabel}</p>
-          <p className="text-base font-medium text-foreground">{businessName}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="font-serif text-base text-[#e6d0a5]/95">{tradeLabel}</p>
+          <p className="text-sm font-medium text-foreground">{businessName}</p>
+          <p className="text-xs text-muted-foreground">
             Each role opens in its own tab — keep this screen to try more.
           </p>
         </div>

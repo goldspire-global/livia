@@ -18,6 +18,7 @@ assert.equal(luxe.subverticalProfileId, "hair.salon");
 const bloom = resolveDemoShowcaseBusinessSpec("bloom-beauty-dublin");
 assert.ok(bloom);
 assert.equal(bloom.subverticalProfileId, "beauty.lash");
+assert.equal(bloom.tier, "studio");
 
 assert.equal(isKnownDemoShowcaseSlug("atelier-decor-dublin"), true);
 assert.equal(resolveDemoShowcaseBusinessSpec("atelier-decor-dublin")?.vertical, "event-vendors");

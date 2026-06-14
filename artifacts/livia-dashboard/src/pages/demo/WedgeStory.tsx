@@ -80,7 +80,7 @@ export default function DemoWedgeStoryPage() {
   return (
     <DemoFlowShell>
       {enterMode ? (
-        <p className="mb-6 text-center font-serif text-xl tracking-tight text-[#e6d0a5]/90 sm:text-2xl">
+        <p className="mb-5 text-center font-serif text-lg tracking-tight text-[#e6d0a5]/90 sm:text-xl">
           Walk in as your role
         </p>
       ) : null}

@@ -11,7 +11,7 @@ import {
   featureUnlockCopy,
   type CommerceFeatureId,
 } from "@workspace/policy";
-import { hasEffectiveEntitlement, type EntitlementKey } from "@workspace/entitlements";
+import { hasEffectiveEntitlement, lookupAddon, type EntitlementKey } from "@workspace/entitlements";
 import { useBillingState } from "@/hooks/use-billing-state";
 
 const FEATURE_ENTITLEMENT: Record<CommerceFeatureId, EntitlementKey> = {
@@ -51,6 +51,7 @@ export function FeatureUnlockPanel({
   compact?: boolean;
 }) {
   const copy = featureUnlockCopy(featureId);
+  const addon = lookupAddon(copy.addonId);
   const { business } = useBusiness();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -58,7 +59,14 @@ export function FeatureUnlockPanel({
   const [loading, setLoading] = useState(false);
 
   async function unlock() {
-    if (!bid) return;
+    if (!bid) {
+      toast({
+        title: "No shop selected",
+        description: "Sign in to a business first, then unlock from Settings → Billing or Shop.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     try {
       const res = await customFetch<{ url?: string; mode?: string; message?: string; active?: boolean }>(
@@ -77,7 +85,7 @@ export function FeatureUnlockPanel({
         return;
       }
       toast({
-        title: res.mode === "dev" ? "Unlocked (dev)" : "Event Operator active",
+        title: res.mode === "dev" ? "Unlocked (dev)" : `${addon?.name ?? "Add-on"} active`,
         description: res.message,
       });
       invalidateOperationalState(qc, bid);
@@ -111,18 +119,18 @@ export function FeatureUnlockPanel({
 
   return (
     <Card
-      className="border-primary/25 bg-gradient-to-b from-primary/5 to-background"
+      className="mx-auto w-full max-w-md border-primary/25 bg-gradient-to-b from-primary/5 to-background text-[0.925rem]"
       data-testid={`feature-unlock-${featureId}`}
     >
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
           <Lock className="h-4 w-4 text-primary" aria-hidden />
           {copy.title}
         </CardTitle>
-        <CardDescription>{copy.description}</CardDescription>
+        <CardDescription className="text-xs">{copy.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ul className="text-sm text-muted-foreground space-y-1.5">
+      <CardContent className="space-y-3">
+        <ul className="text-xs text-muted-foreground space-y-1">
           {copy.bullets.map((b) => (
             <li key={b} className="flex gap-2">
               <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" aria-hidden />
@@ -131,11 +139,11 @@ export function FeatureUnlockPanel({
           ))}
         </ul>
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" disabled={loading} onClick={() => void unlock()} data-testid="feature-unlock-cta">
+          <Button type="button" size="sm" disabled={loading} onClick={() => void unlock()} data-testid="feature-unlock-cta">
             {loading ? "Opening checkout…" : `Unlock · ${copy.priceLabel}`}
           </Button>
-          <span className="text-xs text-muted-foreground">
-            Event Operator add-on · works on Solo or Studio
+          <span className="text-[10px] text-muted-foreground">
+            {addon?.name ?? copy.addonId} add-on · works on Solo or Studio
           </span>
         </div>
       </CardContent>
