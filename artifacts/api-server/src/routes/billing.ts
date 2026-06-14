@@ -29,11 +29,16 @@ import {
 
   stripePriceEnvKeyForPlan,
 
+  billingMayGrantWithoutStripe,
+
+  billingLocalGrantMode,
+
 } from "../lib/stripe";
 
 import { CHECKOUT_PLAN_IDS } from "@workspace/entitlements";
 import { sendError, logRouteError, safeClientMessage } from "../lib/http-errors";
 import { replyDomainError } from "../lib/domain-errors";
+import { DEMO_WORLD_SLUGS, isDemoPortalEnabled } from "../lib/demo-portal-config";
 
 
 
@@ -138,17 +143,28 @@ router.post(
 
       logStripeSkip("checkout-session");
 
-      if (process.env.NODE_ENV !== "production") {
+      const mayGrantLocally =
+        billingMayGrantWithoutStripe() ||
+        (isDemoPortalEnabled() &&
+          biz.slug &&
+          (DEMO_WORLD_SLUGS as readonly string[]).includes(biz.slug));
+
+      if (mayGrantLocally) {
 
         await setBusinessPlanForDev(businessId, planId);
 
         const state = await resolveBillingState(businessId);
 
+        const mode = billingLocalGrantMode() ?? "demo-override";
+
         res.json({
 
-          mode: "dev",
+          mode,
 
-          message: "Stripe not configured — plan applied locally for development.",
+          message:
+            mode === "staging-demo"
+              ? "Plan applied for staging demo."
+              : "Stripe not configured — plan applied locally for development.",
 
           billing: state,
 

@@ -203,7 +203,7 @@ export default function BillingControls({ showRemediationStrip = true }: { showR
         return;
       }
       toast({
-        title: res.mode === "dev" ? "Add-on active (dev)" : "Add-on active",
+        title: res.mode === "staging-demo" ? "Add-on active (staging demo)" : res.mode === "dev" ? "Add-on active (dev)" : "Add-on active",
         description: res.message,
       });
       await refetch();

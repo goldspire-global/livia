@@ -84,12 +84,18 @@ export function FeatureUnlockPanel({
         window.location.href = res.url;
         return;
       }
+      const modeLabel =
+        res.mode === "staging-demo"
+          ? "Unlocked (staging demo)"
+          : res.mode === "dev"
+            ? "Unlocked (dev)"
+            : `${addon?.name ?? "Add-on"} active`;
       toast({
-        title: res.mode === "dev" ? "Unlocked (dev)" : `${addon?.name ?? "Add-on"} active`,
+        title: modeLabel,
         description: res.message,
       });
       invalidateOperationalState(qc, bid);
-      await qc.invalidateQueries({ queryKey: ["billing-state", bid] });
+      await qc.refetchQueries({ queryKey: ["billing-state", bid] });
     } catch (err: unknown) {
       const data = (err as { data?: { code?: string; error?: string; priceEnv?: string } })?.data;
       toast({

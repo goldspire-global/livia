@@ -9,15 +9,24 @@ import {
   logStripeSkip,
   priceIdForAddon,
   stripePriceEnvKeyForAddon,
+  billingMayGrantWithoutStripe,
+  billingLocalGrantMode,
 } from "../lib/stripe";
 import { getBusinessById, updateBusiness } from "../services/businesses.service";
 import { getDashboardUrl } from "../lib/public-urls";
 import { getOrCreateUser } from "../services/users.service";
 import { lookupAddon, type EntitlementKey } from "@workspace/entitlements";
 import { sendError } from "../lib/http-errors";
+import { DEMO_WORLD_SLUGS, isDemoPortalEnabled } from "../lib/demo-portal-config";
 
 const router: IRouter = Router();
 const getBizId = (p: string | string[]) => (Array.isArray(p) ? p[0] : p);
+
+function mayGrantAddonLocally(slug: string | null | undefined): boolean {
+  if (billingMayGrantWithoutStripe()) return true;
+  if (!isDemoPortalEnabled() || !slug) return false;
+  return (DEMO_WORLD_SLUGS as readonly string[]).includes(slug);
+}
 
 router.post(
   "/businesses/:businessId/billing/checkout-addon",
@@ -55,11 +64,15 @@ router.post(
     const priceId = priceIdForAddon(addonId);
     if (!stripe || !priceId) {
       logStripeSkip(`checkout-addon:${addonId}`);
-      if (process.env.NODE_ENV !== "production") {
+      if (mayGrantAddonLocally(biz.slug)) {
         await grantAddonBundle(businessId, addonId);
+        const mode = billingLocalGrantMode() ?? "demo-override";
         res.json({
-          mode: "dev",
-          message: `${addon.name} granted locally for development.`,
+          mode,
+          message:
+            mode === "staging-demo"
+              ? `${addon.name} unlocked for staging demo.`
+              : `${addon.name} granted locally for development.`,
           active: true,
         });
         return;

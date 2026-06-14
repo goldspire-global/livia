@@ -111,6 +111,41 @@ export function isStripeConfigured(): boolean {
 
 }
 
+/** Dev, staging demo, or explicit demo-in-prod — grant plans/add-ons without Stripe price ids. */
+export function billingMayGrantWithoutStripe(): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  if (
+    process.env.LIVIA_DEPLOY_ENV === "staging" &&
+    process.env.LIVIA_DEMO_ENABLED === "true"
+  ) {
+    return true;
+  }
+  if (
+    process.env.LIVIA_DEMO_ENABLED === "true" &&
+    process.env.LIVIA_DEMO_ALLOW_IN_PRODUCTION === "true"
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function billingLocalGrantMode(): "dev" | "staging-demo" | "demo-override" | null {
+  if (process.env.NODE_ENV !== "production") return "dev";
+  if (
+    process.env.LIVIA_DEPLOY_ENV === "staging" &&
+    process.env.LIVIA_DEMO_ENABLED === "true"
+  ) {
+    return "staging-demo";
+  }
+  if (
+    process.env.LIVIA_DEMO_ENABLED === "true" &&
+    process.env.LIVIA_DEMO_ALLOW_IN_PRODUCTION === "true"
+  ) {
+    return "demo-override";
+  }
+  return null;
+}
+
 
 
 export function logStripeSkip(reason: string): void {
