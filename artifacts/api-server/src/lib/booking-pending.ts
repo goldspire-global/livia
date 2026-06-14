@@ -29,6 +29,9 @@ export function derivePendingReason(args: {
   customerHasPhone?: boolean;
   customerHasEmail?: boolean;
 }): PendingReason | null {
+  if (args.depositRequired && args.depositPaidEurCents <= 0) {
+    return PENDING_REASON_CODES.AWAITING_DEPOSIT;
+  }
   if (args.customerTrusted && args.autoConfirmWhenNoDeposit !== false) {
     return null;
   }

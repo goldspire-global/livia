@@ -158,13 +158,43 @@ export default function MyLiviaVisitScreen() {
           {data.visitGreeting}
         </Text>
         {b.depositLine ? (
-          <Text style={[type.caption, { color: colors.primary, marginTop: 8 }]}>{b.depositLine.label}</Text>
+          <View
+            style={[
+              styles.depositLine,
+              {
+                backgroundColor:
+                  b.depositLine.tone === "paid"
+                    ? "rgba(16,185,129,0.12)"
+                    : b.depositLine.tone === "due"
+                      ? "rgba(245,158,11,0.12)"
+                      : colors.muted + "33",
+              },
+            ]}
+            testID="guest-hub-visit-deposit-line"
+          >
+            <Text
+              style={[
+                type.caption,
+                {
+                  color:
+                    b.depositLine.tone === "paid"
+                      ? "#059669"
+                      : b.depositLine.tone === "due"
+                        ? "#b45309"
+                        : colors.mutedForeground,
+                },
+              ]}
+            >
+              {b.depositLine.label}
+            </Text>
+          </View>
         ) : null}
 
         {data.depositPayUrl ? (
           <Pressable
             style={[styles.btn, { backgroundColor: colors.primary, marginTop: 12 }]}
             onPress={() => void Linking.openURL(data.depositPayUrl!)}
+            testID="guest-hub-visit-pay-deposit"
           >
             <Text style={[type.body, { color: colors.primaryForeground, fontFamily: fonts.bodyMed }]}>
               Pay deposit
@@ -230,6 +260,7 @@ const styles = StyleSheet.create({
   back: { padding: 16 },
   pad: { padding: 16, paddingBottom: 40 },
   card: { borderWidth: 1, borderRadius: 12, padding: 14 },
+  depositLine: { marginTop: 10, borderRadius: 10, padding: 10 },
   input: {
     borderWidth: 1,
     borderRadius: 10,

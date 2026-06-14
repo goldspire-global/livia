@@ -40,15 +40,15 @@ export function resolvePendingReasonCode(args: {
   if (source === "owner-manual" || source === "walk-in") {
     return PENDING_REASON_CODES.OWNER_MANUAL;
   }
+  if (args.depositRequired && (args.depositPaidEurCents ?? 0) <= 0) {
+    return PENDING_REASON_CODES.AWAITING_DEPOSIT;
+  }
   if (
     args.bookingContinuityEnabled !== false &&
     source === "web" &&
     (args.customerHasPhone || args.customerHasEmail)
   ) {
     return PENDING_REASON_CODES.AWAITING_CONTINUITY;
-  }
-  if (args.depositRequired && (args.depositPaidEurCents ?? 0) <= 0) {
-    return PENDING_REASON_CODES.AWAITING_DEPOSIT;
   }
   if (args.aiCanBookDirectly === false) {
     return PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM;

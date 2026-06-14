@@ -9,6 +9,11 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { getAvailableSlots } from "./slots.service";
 import { findOrCreateCustomer } from "./customers.service";
 import { createBooking } from "./bookings.service";
+import { ensureBookingGuestAccess } from "./booking-guest-access.service";
+import { computeDepositDueMinor } from "./guest-deposit-pay.service";
+import { policiesFromBusiness } from "./policies.service";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
+import { getBusinessById } from "./businesses.service";
 import { emitBookingCreated } from "../lib/booking-events";
 
 export async function getPartnerBusinessBySlug(slug: string) {
@@ -156,10 +161,31 @@ export async function createPartnerBooking(
     startAt: booking.startAt,
     status: booking.status,
   });
+  let depositPayUrl: string | null = null;
+  let depositDueMinor: number | null = null;
+  if (booking.pendingReason === "awaiting_deposit") {
+    const biz = await getBusinessById(businessId);
+    if (biz) {
+      const policies = policiesFromBusiness(biz);
+      depositDueMinor = computeDepositDueMinor({
+        priceMinor: booking.service?.priceMinor ?? 0,
+        depositPercent: policies.operational.depositPercent ?? 0,
+        depositRequired: policies.operational.depositRequired,
+        depositPaidMinor: booking.depositPaidEurCents ?? 0,
+      });
+      if (depositDueMinor > 0) {
+        const token = await ensureBookingGuestAccess(businessId, booking.id);
+        depositPayUrl = resolveGuestTokenUrl(biz.slug, "pay", token);
+      }
+    }
+  }
   return {
     bookingId: booking.id,
     status: booking.status,
+    pendingReason: booking.pendingReason,
     startAt: booking.startAt.toISOString(),
     endAt: booking.endAt.toISOString(),
+    depositPayUrl,
+    depositDueMinor,
   };
 }

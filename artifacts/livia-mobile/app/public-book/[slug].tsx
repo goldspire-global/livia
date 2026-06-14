@@ -39,10 +39,11 @@ import {
   isBeautyPublicSurface,
 } from "@/lib/beauty-public";
 import { resolvePresentationMobileColors } from "@/lib/presentation-preset-colors";
-import { getBookingGuardsForVertical, isPublicRetailVertical } from "@workspace/policy";
+import { getBookingGuardsForVertical, guestRetailFulfillmentOptions, isPublicRetailVertical, type GuestRetailFulfillmentMode } from "@workspace/policy";
 import { PublicBookingGuardsFields } from "@/components/public/PublicBookingGuardsFields";
 import { PublicRetailShop } from "@/components/public/PublicRetailShop";
 import { PublicRetailCartBar } from "@/components/public/PublicRetailCartBar";
+import { PublicRetailCartDrawer } from "@/components/public/PublicRetailCartDrawer";
 import {
   addToRetailCart,
   clearRetailCart,
@@ -98,6 +99,12 @@ export default function PublicBookScreen() {
   const [retailCheckoutBusy, setRetailCheckoutBusy] = useState(false);
   const [combinedCheckoutBusy, setCombinedCheckoutBusy] = useState(false);
   const [guestPayToken, setGuestPayToken] = useState<string | null>(null);
+  const [depositPayUrl, setDepositPayUrl] = useState<string | null>(null);
+  const [depositDueMinor, setDepositDueMinor] = useState<number | null>(null);
+  const [depositCurrency, setDepositCurrency] = useState("EUR");
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  const [fulfillmentMode, setFulfillmentMode] = useState<GuestRetailFulfillmentMode>("collect_in_store");
+  const [fulfillmentDetail, setFulfillmentDetail] = useState("");
 
   const { data: biz, isLoading } = useGetPublicBusiness(sl, {
     query: { enabled: !!sl } as any,
@@ -210,6 +217,9 @@ export default function PublicBookScreen() {
       });
       const guestToken = (result as { guestToken?: string | null })?.guestToken ?? null;
       setGuestPayToken(guestToken);
+      setDepositPayUrl((result as { depositPayUrl?: string | null }).depositPayUrl ?? null);
+      setDepositDueMinor((result as { depositDueMinor?: number | null }).depositDueMinor ?? null);
+      setDepositCurrency((result as { currency?: string }).currency ?? selectedService?.currency ?? "EUR");
       setStep("done");
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Booking failed");
@@ -286,6 +296,12 @@ export default function PublicBookScreen() {
   const showCartBar =
     step === "services" && retailEnabled && retailCart && retailCart.lines.length > 0;
 
+  const retailFulfillmentOptions = guestRetailFulfillmentOptions({
+    vertical: b.vertical,
+    category: b.category,
+    hasLinkedBooking: Boolean(slot),
+  });
+
   async function handleAddRetailToBag(product: RetailCartProduct) {
     if (!sl) return;
     const next = await addToRetailCart(sl, product, retailCart, 1);
@@ -312,6 +328,8 @@ export default function PublicBookScreen() {
           guestName: firstName.trim() || undefined,
           guestEmail: email.trim() || undefined,
           guestPhone: phone.trim() || undefined,
+          fulfillmentMode,
+          fulfillmentDetail: fulfillmentDetail.trim() || undefined,
         }),
       });
       const body = (await r.json().catch(() => ({}))) as {
@@ -321,6 +339,7 @@ export default function PublicBookScreen() {
       if (!r.ok) throw new Error(body.error ?? "Could not start order");
       await clearRetailCart(sl);
       setRetailCart(null);
+      setCartDrawerOpen(false);
       if (body.payToken) {
         const url = getGuestSurfaceUrl("shop", sl, body.payToken);
         await WebBrowser.openBrowserAsync(url);
@@ -341,7 +360,11 @@ export default function PublicBookScreen() {
       const r = await fetch(`${api}/api/public/b/${sl}/pay/${payToken}/checkout-combined`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: retailCartApiItems(retailCart) }),
+        body: JSON.stringify({
+          items: retailCartApiItems(retailCart),
+          fulfillmentMode,
+          fulfillmentDetail: fulfillmentDetail.trim() || undefined,
+        }),
       });
       const j = (await r.json().catch(() => ({}))) as {
         mode?: string;
@@ -352,6 +375,7 @@ export default function PublicBookScreen() {
       if (!r.ok) throw new Error(j.error ?? "Could not start checkout");
       await clearRetailCart(sl);
       setRetailCart(null);
+      setCartDrawerOpen(false);
       const url =
         j.mode === "stripe" && j.checkoutUrl
           ? j.checkoutUrl
@@ -453,8 +477,24 @@ export default function PublicBookScreen() {
               <Feather name="check-circle" size={40} color={xp.primary} />
               <Text style={[type.title, { color: colors.foreground, marginTop: 12, fontSize: 22 }]}>You're booked</Text>
               <Text style={[type.body, { color: colors.mutedForeground, marginTop: 8, textAlign: "center" }]}>
-                We'll confirm by message if needed. See you soon.
+                {depositPayUrl && (depositDueMinor ?? 0) > 0
+                  ? "Your slot is held — pay your deposit to confirm."
+                  : "We'll confirm by message if needed. See you soon."}
               </Text>
+              {depositPayUrl && (depositDueMinor ?? 0) > 0 ? (
+                <View style={{ width: "100%", marginTop: 16, gap: 8 }}>
+                  <Text style={[type.label, { color: colors.foreground }]}>
+                    Deposit due: {formatMoney(depositDueMinor ?? 0, depositCurrency)}
+                  </Text>
+                  <Pressable
+                    style={[styles.primaryBtn, { backgroundColor: xp.primary, borderRadius: xp.cardRadius }]}
+                    onPress={() => void WebBrowser.openBrowserAsync(depositPayUrl)}
+                    testID="public-pay-deposit"
+                  >
+                    <Text style={[type.body, { color: "#fff", fontFamily: fonts.bodyMed }]}>Pay deposit</Text>
+                  </Pressable>
+                </View>
+              ) : null}
               {guestPayToken && retailCart && retailCart.lines.length > 0 ? (
                 <View style={{ width: "100%", marginTop: 16, gap: 8 }}>
                   <Text style={[type.label, { color: colors.foreground }]}>Your bag</Text>
@@ -929,12 +969,28 @@ export default function PublicBookScreen() {
         </View>
       </ScrollView>
       {showCartBar && retailCart ? (
-        <PublicRetailCartBar
-          cart={retailCart}
-          checkoutBusy={retailCheckoutBusy}
-          onCheckout={() => void checkoutRetailCart()}
-          surface={surface}
-        />
+        <>
+          <PublicRetailCartBar
+            cart={retailCart}
+            checkoutBusy={retailCheckoutBusy || combinedCheckoutBusy}
+            onViewBag={() => setCartDrawerOpen(true)}
+            surface={surface}
+          />
+          <PublicRetailCartDrawer
+            visible={cartDrawerOpen}
+            onClose={() => setCartDrawerOpen(false)}
+            cart={retailCart}
+            fulfillmentOptions={retailFulfillmentOptions}
+            fulfillmentMode={fulfillmentMode}
+            onFulfillmentModeChange={setFulfillmentMode}
+            fulfillmentDetail={fulfillmentDetail}
+            onFulfillmentDetailChange={setFulfillmentDetail}
+            onChangeQty={handleChangeRetailQty}
+            checkoutBusy={retailCheckoutBusy}
+            onCheckoutRetailOnly={() => void checkoutRetailCart()}
+            surface={{ ...surface, card: surface.card ?? surface.background }}
+          />
+        </>
       ) : null}
     </SafeAreaView>
   );

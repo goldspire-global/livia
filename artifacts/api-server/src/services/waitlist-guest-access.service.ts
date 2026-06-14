@@ -8,6 +8,11 @@ import {
 } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { createBooking, getBookingById } from "./bookings.service";
+import { ensureBookingGuestAccess } from "./booking-guest-access.service";
+import { computeDepositDueMinor } from "./guest-deposit-pay.service";
+import { policiesFromBusiness } from "./policies.service";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
+import { getBusinessById } from "./businesses.service";
 import { publishDomainEvent } from "../lib/domain-events";
 
 export type GuestWaitlistOfferView = {
@@ -75,7 +80,18 @@ export async function getGuestWaitlistOfferByToken(
 export async function acceptGuestWaitlistOfferByToken(
   slug: string,
   token: string,
-): Promise<{ ok: true; bookingId: string; message: string } | { ok: false; error: string }> {
+): Promise<
+  | {
+      ok: true;
+      bookingId: string;
+      message: string;
+      status?: string;
+      pendingReason?: string | null;
+      depositPayUrl?: string | null;
+      depositDueMinor?: number | null;
+    }
+  | { ok: false; error: string }
+> {
   const offer = await getGuestWaitlistOfferByToken(slug, token);
   if (!offer) return { ok: false, error: "not_found" };
 
@@ -148,9 +164,41 @@ export async function acceptGuestWaitlistOfferByToken(
     timeZone: biz?.timezone ?? "Europe/Dublin",
   });
 
+  let depositPayUrl: string | null = null;
+  let depositDueMinor: number | null = null;
+  if (created.pendingReason === "awaiting_deposit") {
+    const fullBiz = await getBusinessById(offer.businessId);
+    if (fullBiz) {
+      const policies = policiesFromBusiness(fullBiz);
+      const enriched = await getBookingById(offer.businessId, created.id);
+      const priceMinor = enriched?.service?.priceMinor ?? 0;
+      depositDueMinor = computeDepositDueMinor({
+        priceMinor,
+        depositPercent: policies.operational.depositPercent ?? 0,
+        depositRequired: policies.operational.depositRequired,
+        depositPaidMinor: created.depositPaidEurCents ?? 0,
+      });
+      if (depositDueMinor > 0) {
+        const payToken = await ensureBookingGuestAccess(offer.businessId, created.id);
+        depositPayUrl = resolveGuestTokenUrl(fullBiz.slug, "pay", payToken);
+      }
+    }
+  }
+
+  const statusLine =
+    created.status === "CONFIRMED"
+      ? `You're booked for ${when}.`
+      : depositPayUrl
+        ? `Your slot is held for ${when} — pay your deposit to confirm.`
+        : `Request received for ${when} — the studio will confirm shortly.`;
+
   return {
     ok: true,
     bookingId: created.id,
-    message: `You're booked for ${when}. We'll send a confirmation shortly.`,
+    status: created.status,
+    pendingReason: created.pendingReason,
+    depositPayUrl,
+    depositDueMinor,
+    message: statusLine,
   };
 }

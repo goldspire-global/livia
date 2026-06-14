@@ -15,6 +15,7 @@ import {
   sendBookingCancellationEmail,
 } from "./booking-emails.service";
 import { derivePendingReason, resolvePendingReasonForBooking } from "../lib/booking-pending";
+import { assertDepositPaidBeforeConfirm } from "../lib/booking-deposit-gate";
 import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { getPoliciesForBusinessId, policiesFromBusiness } from "./policies.service";
 import { businessesTable } from "@workspace/db";
@@ -541,6 +542,9 @@ export async function updateBookingStatus(
     if (!isValidTransition(existing.status, updates.status)) {
       throw new Error(`INVALID_TRANSITION:${existing.status}->${updates.status}`);
     }
+    if (updates.status === "CONFIRMED") {
+      await assertDepositPaidBeforeConfirm(businessId, bookingId);
+    }
   }
 
   const clearPending =
@@ -607,6 +611,7 @@ export async function confirmBooking(businessId: string, bookingId: string) {
   if (!isValidTransition(existing.status, "CONFIRMED")) {
     throw new Error(`INVALID_TRANSITION:${existing.status}->CONFIRMED`);
   }
+  await assertDepositPaidBeforeConfirm(businessId, bookingId);
   const [updated] = await db
     .update(bookingsTable)
     .set({

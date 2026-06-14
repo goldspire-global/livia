@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db, bookingsTable } from "@workspace/db";
 import { attachBookingMedia } from "./booking-media.service";
 import { logEvent } from "./events.service";
-import { updateBookingStatus } from "./bookings.service";
+import { confirmBookingAfterStripePayment } from "./wellness-ops.service";
 
 /**
  * When a customer replies on a continuity thread, link media to the booking
@@ -52,14 +52,16 @@ export async function handleContinuityInbound(args: {
   });
 
   if (snippet.length > 0 && /^(yes|confirm|ok|okay|perfect|thanks)/i.test(snippet)) {
-    await updateBookingStatus(args.businessId, booking.id, { status: "CONFIRMED" });
-    await logEvent({
-      type: "BOOKING_CONFIRMED",
-      businessId: args.businessId,
-      entityType: "booking",
-      entityId: booking.id,
-      context: { source: "continuity_auto_confirm", conversationId: args.conversationId },
-    });
+    const confirmed = await confirmBookingAfterStripePayment(args.businessId, booking.id);
+    if (confirmed.updated) {
+      await logEvent({
+        type: "BOOKING_CONFIRMED",
+        businessId: args.businessId,
+        entityType: "booking",
+        entityId: booking.id,
+        context: { source: "continuity_auto_confirm", conversationId: args.conversationId },
+      });
+    }
     return { bookingId: booking.id, mediaAttached };
   }
 

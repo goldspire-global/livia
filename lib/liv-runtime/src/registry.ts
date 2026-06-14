@@ -26,6 +26,7 @@ export type RegisteredLivTool = LivToolDefinition & {
 
 export const LIV_TOOL_FIND_SLOTS = "find_slots";
 export const LIV_TOOL_CREATE_BOOKING = "create_booking";
+export const LIV_TOOL_SEARCH_RETAIL_PRODUCTS = "search_retail_products";
 export const LIV_TOOL_SEND_MESSAGE = "send_message";
 export const LIV_TOOL_CONFIRM_BOOKING = "confirm_booking";
 export const LIV_TOOL_CANCEL_BOOKING = "cancel_booking";
@@ -105,6 +106,24 @@ const CATALOG: RegisteredLivTool[] = [
         notes: { type: "string", description: "Any special requests from the customer." },
       },
       required: ["serviceId", "startAt", "customerFirstName"],
+    },
+  },
+  {
+    id: LIV_TOOL_SEARCH_RETAIL_PRODUCTS,
+    name: LIV_TOOL_SEARCH_RETAIL_PRODUCTS,
+    risk: "low",
+    profiles: ["tenant_public", "tenant_staff"],
+    entitlements: ["retail_pack"],
+    description:
+      "Search take-home retail products by name or category. Returns in-stock items with price and id for the guest bag.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Optional name or keyword search." },
+        category: { type: "string", description: "Optional category filter." },
+        limit: { type: "number", description: "Max results (default 6)." },
+      },
+      required: [],
     },
   },
   {

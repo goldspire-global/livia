@@ -20,6 +20,18 @@ assert.equal(
 );
 
 assert.equal(
+  resolvePendingReasonCode({
+    status: "PENDING",
+    source: "web",
+    depositRequired: true,
+    depositPaidEurCents: 0,
+    bookingContinuityEnabled: true,
+    customerHasPhone: true,
+  }),
+  PENDING_REASON_CODES.AWAITING_DEPOSIT,
+);
+
+assert.equal(
   pendingReasonLabel(PENDING_REASON_CODES.AWAITING_CONTINUITY, "wellness"),
   "Waiting for guest reply (health notes or arrival confirmation)",
 );

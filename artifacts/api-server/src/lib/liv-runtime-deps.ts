@@ -150,6 +150,44 @@ export function buildLivToolDeps(args: {
       return available;
     },
 
+    async searchRetailProducts(input) {
+      const { tenantHasEntitlementForBusiness } = await import("../services/billing.service");
+      const entitled = await tenantHasEntitlementForBusiness(businessId, "retail_pack");
+      if (!entitled) {
+        return { ok: false, error: "RETAIL_NOT_AVAILABLE", products: [] };
+      }
+      const { listActiveRetailProducts } = await import("../services/beauty-retail.service");
+      const { isRetailProductInStock } = await import("@workspace/policy");
+      const limit = Math.min(12, Math.max(1, Math.floor(input.limit ?? 6)));
+      const q = input.query?.trim().toLowerCase();
+      const cat = input.category?.trim().toLowerCase();
+      let products = await listActiveRetailProducts(businessId);
+      products = products.filter((p) => isRetailProductInStock(p.stockQuantity));
+      if (q) {
+        products = products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            (p.description ?? "").toLowerCase().includes(q) ||
+            (p.category ?? "").toLowerCase().includes(q),
+        );
+      }
+      if (cat) {
+        products = products.filter((p) => (p.category ?? "").toLowerCase() === cat);
+      }
+      return {
+        ok: true,
+        products: products.slice(0, limit).map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          category: p.category,
+          priceMinor: p.priceMinor,
+          currency: p.currency,
+          inStock: true,
+        })),
+      };
+    },
+
     async createBooking(input) {
       return createBookingViaLiv({
         businessId,

@@ -3,6 +3,7 @@ import {
   LIV_TOOL_CONFIRM_BOOKING,
   LIV_TOOL_CREATE_BOOKING,
   LIV_TOOL_FIND_SLOTS,
+  LIV_TOOL_SEARCH_RETAIL_PRODUCTS,
   LIV_TOOL_GET_BOOKING,
   LIV_TOOL_LIST_STUCK_CONTINUITY,
   LIV_TOOL_LIST_DRIFT_CANDIDATES,
@@ -52,6 +53,11 @@ export type LivToolDeps = {
     date: string;
     staffId?: string;
   }) => Promise<LivSlot[]>;
+  searchRetailProducts?: (input: {
+    query?: string;
+    category?: string;
+    limit?: number;
+  }) => Promise<Record<string, unknown>>;
   sendMessage?: (input: { content: string }) => Promise<{ messageId: string }>;
   createBooking: (input: {
     serviceId: string;
@@ -68,6 +74,7 @@ export type LivToolDeps = {
     bookingId: string;
     customerId: string;
     status: string;
+    pendingReason?: string | null;
     startAt: string;
     endAt: string;
     serviceName: string | null;
@@ -180,6 +187,15 @@ function bookingToolError(message: string): LivToolResult {
   if (message === "BOOKING_NOT_FOUND") {
     return { result: { ok: false, error: "NOT_FOUND", message: "Booking not found." } };
   }
+  if (message === "DEPOSIT_REQUIRED") {
+    return {
+      result: {
+        ok: false,
+        error: "DEPOSIT_REQUIRED",
+        message: "Deposit must be paid before this booking can be confirmed.",
+      },
+    };
+  }
   return { result: { ok: false, error: "UNKNOWN", message } };
 }
 
@@ -206,6 +222,18 @@ export async function executeLivTool(args: {
     };
   }
 
+  if (toolName === LIV_TOOL_SEARCH_RETAIL_PRODUCTS) {
+    if (!deps.searchRetailProducts) {
+      return { result: { ok: false, error: "RETAIL_NOT_AVAILABLE", products: [] } };
+    }
+    const products = await deps.searchRetailProducts({
+      query: toolInput.query ? String(toolInput.query) : undefined,
+      category: toolInput.category ? String(toolInput.category) : undefined,
+      limit: toolInput.limit != null ? Number(toolInput.limit) : undefined,
+    });
+    return { result: products };
+  }
+
   if (toolName === LIV_TOOL_CREATE_BOOKING) {
     try {
       const created = await deps.createBooking({
@@ -229,6 +257,7 @@ export async function executeLivTool(args: {
           bookingId: created.bookingId,
           customerId: created.customerId,
           status: created.status,
+          pendingReason: created.pendingReason,
           startAt: created.startAt,
           endAt: created.endAt,
           serviceName: created.serviceName,

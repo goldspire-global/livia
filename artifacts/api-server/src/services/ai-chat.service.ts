@@ -51,6 +51,8 @@ async function afterCreateBookingNotifications(args: {
   staffName: string | null;
   startAt: string;
   channelType?: "WEB" | "SMS" | "WHATSAPP" | "INSTAGRAM" | "MESSENGER" | "VOICE";
+  status?: string;
+  pendingReason?: string | null;
 }): Promise<void> {
   const {
     business,
@@ -62,6 +64,8 @@ async function afterCreateBookingNotifications(args: {
     staffName,
     startAt,
     channelType,
+    status,
+    pendingReason,
   } = args;
 
   const ch = channelType ?? "WEB";
@@ -83,6 +87,11 @@ async function afterCreateBookingNotifications(args: {
       )
       .catch(() => undefined);
   }
+
+  if (status === "PENDING" && pendingReason === "awaiting_deposit") {
+    return;
+  }
+
   const firstName = String(toolInput.customerFirstName ?? "there");
   const startLocalFull = new Date(startAt).toLocaleString("en-IE", {
     dateStyle: "full",
@@ -385,6 +394,9 @@ export async function handlePublicChat(args: {
               staffName: (exec.result.staffName as string | null) ?? null,
               startAt: String(exec.result.startAt),
               channelType,
+              status: typeof exec.result.status === "string" ? exec.result.status : undefined,
+              pendingReason:
+                typeof exec.result.pendingReason === "string" ? exec.result.pendingReason : null,
             });
           }
         }

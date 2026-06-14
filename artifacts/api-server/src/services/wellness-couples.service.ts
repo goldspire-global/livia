@@ -1,6 +1,9 @@
-import { db, bookingsTable, customersTable } from "@workspace/db";
+import { db, bookingsTable, businessesTable, customersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { generateId } from "../lib/id";
+import { derivePendingReason } from "../lib/booking-pending";
+import { policiesFromBusiness } from "./policies.service";
+import { getPoliciesForBusinessId } from "./policies.service";
 
 type CouplesMeta = {
   wellnessCouples?: {
@@ -48,6 +51,45 @@ export async function createCouplesBookingPair(
     }
   }
 
+  const [biz] = await db
+    .select()
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  const policies =
+    (await getPoliciesForBusinessId(businessId)) ??
+    (biz ? policiesFromBusiness(biz) : null);
+  const op = policies?.operational;
+  const [primaryCust] = await db
+    .select({
+      trustedClient: customersTable.trustedClient,
+      strikeCount: customersTable.strikeCount,
+      phone: customersTable.phone,
+      email: customersTable.email,
+    })
+    .from(customersTable)
+    .where(eq(customersTable.id, input.primary.customerId))
+    .limit(1);
+  const aiCanBookDirectly = (biz?.aiCanBookDirectly ?? "true") === "true";
+  let customerTrusted = false;
+  if (op?.depositRequired && op.requireDepositAfterStrikes && primaryCust) {
+    customerTrusted =
+      !!primaryCust.trustedClient ||
+      (primaryCust.strikeCount ?? 0) < (op.noShowStrikeThreshold ?? 3);
+  }
+  const pendingReason = derivePendingReason({
+    source: "web",
+    aiCanBookDirectly,
+    depositRequired: Boolean(op?.depositRequired && !customerTrusted),
+    depositPaidEurCents: 0,
+    autoConfirmWhenNoDeposit: op?.autoConfirmWhenNoDeposit,
+    customerTrusted,
+    bookingContinuityEnabled: op?.bookingContinuityEnabled,
+    customerHasPhone: !!primaryCust?.phone?.trim(),
+    customerHasEmail: !!primaryCust?.email?.trim(),
+  });
+  const initialStatus = pendingReason ? "PENDING" : "CONFIRMED";
+
   await db.insert(bookingsTable).values([
     {
       id: primaryId,
@@ -58,7 +100,8 @@ export async function createCouplesBookingPair(
       resourceId: input.primary.resourceId ?? null,
       startAt: input.primary.startAt,
       endAt: input.primary.endAt,
-      status: "PENDING",
+      status: initialStatus,
+      pendingReason,
       source: "web",
       internalNotes: JSON.stringify({
         wellnessCouples: {
@@ -77,7 +120,8 @@ export async function createCouplesBookingPair(
       resourceId: input.primary.resourceId ?? null,
       startAt: input.primary.startAt,
       endAt: input.primary.endAt,
-      status: "PENDING",
+      status: initialStatus,
+      pendingReason,
       source: "web",
       internalNotes: JSON.stringify({
         wellnessCouples: {

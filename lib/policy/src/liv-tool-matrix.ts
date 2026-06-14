@@ -33,6 +33,13 @@ export const LIV_TOOL_MATRIX: LivToolMatrixRow[] = [
     surfaceIds: ["guest.public.book"],
   },
   {
+    toolId: "search_retail_products",
+    label: "Search take-home products",
+    status: "live",
+    profiles: ["tenant_public", "tenant_staff"],
+    surfaceIds: ["guest.public.book"],
+  },
+  {
     toolId: "create_booking",
     label: "Create booking",
     status: "live",

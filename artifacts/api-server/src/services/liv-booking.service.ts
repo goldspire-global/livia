@@ -35,6 +35,7 @@ export async function createBookingViaLiv(args: {
 }): Promise<{
   bookingId: string;
   status: string;
+  pendingReason: string | null;
   startAt: string;
   endAt: string;
   serviceName: string | null;
@@ -153,6 +154,7 @@ export async function createBookingViaLiv(args: {
   return {
     bookingId: booking.id,
     status: booking.status,
+    pendingReason: booking.pendingReason ?? null,
     startAt: booking.startAt.toISOString(),
     endAt: booking.endAt.toISOString(),
     serviceName: booking.service?.name ?? null,
