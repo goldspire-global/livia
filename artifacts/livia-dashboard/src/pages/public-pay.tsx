@@ -86,13 +86,30 @@ export default function PublicPayPage() {
   }, [load]);
 
   useEffect(() => {
-    if (statusHint === "success") {
+    const sessionId = params.get("session_id");
+    if (statusHint === "success" && sessionId && slug && token) {
+      setFlash("Confirming payment…");
+      void fetch(`/api/public/b/${slug}/pay/${token}/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      })
+        .then(async (r) => {
+          if (!r.ok) throw new Error("confirm failed");
+          setFlash("Payment received — thank you.");
+          await load();
+        })
+        .catch(() => {
+          setFlash("Payment received — thank you.");
+          void load();
+        });
+    } else if (statusHint === "success") {
       setFlash("Payment received — thank you.");
       void load();
     } else if (statusHint === "cancel") {
       setFlash("Checkout cancelled — you can try again when ready.");
     }
-  }, [statusHint, load]);
+  }, [statusHint, params, slug, token, load]);
 
   async function startCheckout() {
     if (!slug || !token) return;

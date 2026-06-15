@@ -341,15 +341,17 @@ export async function upsertPaymentFromStripeIntent(
     const { confirmBookingAfterStripePayment } = await import("./wellness-ops.service");
     void confirmBookingAfterStripePayment(businessId, bookingId).catch(() => undefined);
   } else if (bookingId && businessId && kind === "guest_deposit") {
-    await db
-      .update(bookingsTable)
-      .set({
-        depositPaidEurCents: pi.amount_received || pi.amount,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.businessId, businessId)));
-    const { confirmBookingAfterStripePayment } = await import("./wellness-ops.service");
-    void confirmBookingAfterStripePayment(businessId, bookingId).catch(() => undefined);
+    const { captureGuestDepositPayment } = await import("./guest-deposit-pay.service");
+    await captureGuestDepositPayment({
+      businessId,
+      bookingId,
+      customerId: intentRecord?.customerId,
+      amountMinor: pi.amount_received || pi.amount,
+      currency: pi.currency.toUpperCase(),
+      paymentIntentRecordId: recordId,
+      providerChargeId: chargeId,
+      paymentId,
+    });
   } else if (businessId && kind === "guest_quote_deposit") {
     const quoteId = pi.metadata?.quoteId ?? bookingId;
     if (quoteId) {

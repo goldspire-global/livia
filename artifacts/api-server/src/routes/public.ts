@@ -1231,6 +1231,33 @@ router.post("/public/b/:slug/pay/:token/checkout", async (req, res): Promise<voi
   }
 });
 
+router.post("/public/b/:slug/pay/:token/confirm", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const sessionId =
+    typeof req.body?.sessionId === "string"
+      ? req.body.sessionId
+      : typeof req.query.session_id === "string"
+        ? req.query.session_id
+        : null;
+  if (!sessionId) {
+    sendError(res, req, 400, "Missing checkout session");
+    return;
+  }
+  const { confirmGuestDepositCheckout } = await import("../services/guest-deposit-pay.service");
+  try {
+    const result = await confirmGuestDepositCheckout(slug, token, sessionId);
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    logRouteError(req, err, "[public] guest deposit pay confirm failed");
+    sendError(res, req, 500, err instanceof Error ? err.message : "Could not confirm payment");
+  }
+});
+
 router.post("/public/b/:slug/pay/:token/checkout-combined", async (req, res): Promise<void> => {
   const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
   const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;

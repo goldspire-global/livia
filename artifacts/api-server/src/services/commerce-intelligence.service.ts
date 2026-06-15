@@ -1,4 +1,4 @@
-import { db, paymentsTable, paymentIntentRecordsTable, refundsTable } from "@workspace/db";
+import { db, paymentsTable, paymentIntentRecordsTable, refundsTable, bookingsTable } from "@workspace/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 
 export type CommerceSnapshot = {
@@ -66,21 +66,44 @@ export async function getCommerceSnapshot(businessId: string): Promise<CommerceS
   ]);
 
   const paymentCount = captured?.count ?? 0;
-  const capturedMinor = captured?.total ?? 0;
+  let capturedMinor = captured?.total ?? 0;
   const failedCount = failed?.count ?? 0;
-  const attempts = paymentCount + failedCount;
+  let effectivePaymentCount = paymentCount;
+
+  // Guest deposits may land on booking before payments ledger (simulated / webhook gap).
+  if (effectivePaymentCount === 0) {
+    const [bookingDeposits] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+        total: sql<number>`coalesce(sum(${bookingsTable.depositPaidEurCents}), 0)::int`,
+      })
+      .from(bookingsTable)
+      .where(
+        and(
+          eq(bookingsTable.businessId, businessId),
+          sql`${bookingsTable.depositPaidEurCents} > 0`,
+          gte(bookingsTable.updatedAt, since),
+        ),
+      );
+    if ((bookingDeposits?.count ?? 0) > 0) {
+      effectivePaymentCount = bookingDeposits!.count;
+      capturedMinor = bookingDeposits!.total;
+    }
+  }
+
+  const attempts = effectivePaymentCount + failedCount;
   const captureRatePercent =
-    attempts >= 3 ? Math.round((paymentCount / attempts) * 100) : null;
+    attempts >= 3 ? Math.round((effectivePaymentCount / attempts) * 100) : null;
 
   return {
     currency: captured?.currency ?? "EUR",
     capturedMinor30d: capturedMinor,
     refundMinor30d: refunds?.total ?? 0,
-    paymentCount30d: paymentCount,
+    paymentCount30d: effectivePaymentCount,
     succeededIntentCount30d: intents?.count ?? 0,
     failedPaymentCount30d: failedCount,
     captureRatePercent,
-    avgTicketMinor30d: paymentCount > 0 ? Math.round(capturedMinor / paymentCount) : null,
+    avgTicketMinor30d: effectivePaymentCount > 0 ? Math.round(capturedMinor / effectivePaymentCount) : null,
   };
 }
 
