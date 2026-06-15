@@ -13,7 +13,11 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateTime } from "@/lib/format";
-import { bookingExperienceCopy } from "@workspace/policy";
+import {
+  bookingExperienceCopy,
+  bookingConfirmBlockedByDeposit,
+  formatBookingStatusLabel,
+} from "@workspace/policy";
 import { canMarkNoShow, noShowUnavailableHint } from "@/lib/booking-appointment-window";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,6 +128,18 @@ export default function BookingDetailPage() {
 
   function handleTransition(newStatus: string) {
     if (!bid || !bkId) return;
+    const pendingReason = (booking as { pendingReason?: string | null })?.pendingReason;
+    if (
+      newStatus === "CONFIRMED" &&
+      bookingConfirmBlockedByDeposit(pendingReason)
+    ) {
+      toast({
+        title: "Deposit due first",
+        description: "Send the deposit link or mark paid before confirming.",
+        variant: "destructive",
+      });
+      return;
+    }
     updateBooking.mutate(
       { businessId: bid, bookingId: bkId, data: { status: newStatus as any } },
       {
@@ -132,13 +148,31 @@ export default function BookingDetailPage() {
           invalidateOperationalState(qc, bid);
           toast({ title: exp.toastStatusUpdated(newStatus) });
         },
-        onError: () => toast({ title: "Failed to update booking", variant: "destructive" }),
-      }
+        onError: (err: unknown) => {
+          const msg =
+            err && typeof err === "object" && "message" in err
+              ? String((err as { message?: string }).message)
+              : "";
+          toast({
+            title:
+              msg.includes("Deposit") || msg.includes("DEPOSIT")
+                ? "Deposit due first"
+                : "Could not update booking",
+            description:
+              msg.includes("Deposit") || msg.includes("DEPOSIT")
+                ? "Send the deposit link or mark paid before confirming."
+                : undefined,
+            variant: "destructive",
+          });
+        },
+      },
     );
   }
 
   const bookingStatus = (booking as { status?: string })?.status ?? "";
   const bookingStartAt = (booking as { startAt?: string })?.startAt ?? "";
+  const pendingReason = (booking as { pendingReason?: string | null })?.pendingReason ?? null;
+  const confirmBlockedByDeposit = bookingConfirmBlockedByDeposit(pendingReason);
 
   const allowedTransitions = useMemo(() => {
     const base = booking ? (TRANSITIONS[bookingStatus] ?? []) : [];
@@ -208,7 +242,7 @@ export default function BookingDetailPage() {
                   STATUS_COLORS[(booking as any).status] ?? ""
                 }`}
               >
-                {(booking as any).status}
+                {formatBookingStatusLabel((booking as any).status)}
               </span>
             </CardHeader>
             <CardContent>
@@ -273,18 +307,28 @@ export default function BookingDetailPage() {
                   </Button>
                 ) : null}
                 {allowedTransitions.length > 0 && !refundCaseBlocksActions
-                  ? allowedTransitions.map((status) => (
-                      <Button
-                        key={status}
-                        variant={ACTION_VARIANTS[status] ?? "outline"}
-                        size="sm"
-                        disabled={updateBooking.isPending}
-                        onClick={() => handleTransition(status)}
-                        data-testid={`button-transition-${status}`}
-                      >
-                        {exp.statusActions[status as keyof typeof exp.statusActions] ?? status}
-                      </Button>
-                    ))
+                  ? allowedTransitions.map((status) => {
+                      const blocked =
+                        status === "CONFIRMED" && confirmBlockedByDeposit;
+                      return (
+                        <Button
+                          key={status}
+                          variant={ACTION_VARIANTS[status] ?? "outline"}
+                          size="sm"
+                          disabled={updateBooking.isPending || blocked}
+                          title={
+                            blocked
+                              ? "Deposit must be paid before confirming"
+                              : undefined
+                          }
+                          onClick={() => handleTransition(status)}
+                          data-testid={`button-transition-${status}`}
+                        >
+                          {exp.statusActions[status as keyof typeof exp.statusActions] ??
+                            formatBookingStatusLabel(status)}
+                        </Button>
+                      );
+                    })
                   : null}
               </div>
               {(booking as { serviceId: string }).serviceId ? (

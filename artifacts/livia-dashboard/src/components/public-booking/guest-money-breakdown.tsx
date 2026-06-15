@@ -55,10 +55,8 @@ export function GuestMoneyBreakdown({
       ) : (
         <p className="text-xs text-muted-foreground">No deposit required.</p>
       )}
-      {hasDeposit && depositDueMinor > 0 ? (
-        <p className="text-xs text-muted-foreground leading-snug pt-0.5">
-          {dueLabel}
-        </p>
+      {hasDeposit && depositDueMinor > 0 && dueLabel?.trim() ? (
+        <p className="text-xs text-muted-foreground leading-snug pt-0.5">{dueLabel.trim()}</p>
       ) : null}
     </div>
   );

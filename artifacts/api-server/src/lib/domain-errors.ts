@@ -33,6 +33,11 @@ const DOMAIN_ERRORS: Record<string, { status: number; message: string; code?: st
     message: "Chair-rental host cannot access renter guest records.",
     code: "CHAIR_RENTAL_CUSTOMER_FIREWALL",
   },
+  DEPOSIT_REQUIRED: {
+    status: 409,
+    message: "Deposit must be paid before confirming this booking.",
+    code: "DEPOSIT_REQUIRED",
+  },
 };
 
 export function replyDomainError(req: Request, res: Response, err: unknown): boolean {

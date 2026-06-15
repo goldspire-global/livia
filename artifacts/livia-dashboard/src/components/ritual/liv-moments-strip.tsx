@@ -1,5 +1,5 @@
-import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Sparkles, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api-fetch";
 import { useBusiness } from "@/lib/business-context";
@@ -34,6 +34,8 @@ function relativeTime(iso: string): string {
 export function LivMomentsStrip({ className }: { className?: string }) {
   const { business } = useBusiness();
   const bid = business?.id ?? "";
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const { data } = useQuery({
     queryKey: ["liv-moments", bid],
@@ -50,6 +52,16 @@ export function LivMomentsStrip({ className }: { className?: string }) {
   );
   if (moments.length === 0) return null;
 
+  async function openMoment(moment: LivMoment) {
+    queryClient.setQueryData<{ data: LivMoment[] }>(["liv-moments", bid], (prev) => ({
+      data: (prev?.data ?? []).filter((m) => m.id !== moment.id),
+    }));
+    void apiFetch(`/businesses/${bid}/liv-moments/${moment.id}/dismiss`, {
+      method: "POST",
+    }).catch(() => undefined);
+    if (moment.href) setLocation(moment.href);
+  }
+
   return (
     <div className={cn("space-y-2", className)} data-testid="liv-moments-strip">
       <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
@@ -60,16 +72,17 @@ export function LivMomentsStrip({ className }: { className?: string }) {
         {moments.map((m) => (
           <li key={m.id}>
             {m.href ? (
-              <Link
-                href={m.href}
+              <button
+                type="button"
+                onClick={() => void openMoment(m)}
                 className={cn(
-                  "flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/50",
+                  "w-full text-left flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/50",
                   PRIORITY_STYLES[m.priority],
                 )}
               >
                 <MomentBody moment={m} />
                 <ChevronRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
-              </Link>
+              </button>
             ) : (
               <div
                 className={cn(

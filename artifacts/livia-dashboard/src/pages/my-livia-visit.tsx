@@ -8,7 +8,7 @@ import { GuestHubPageHeader, GuestHubShell } from "@/components/guest/guest-hub-
 import { GuestHubLivChat } from "@/components/guest/guest-hub-liv-chat";
 import { GuestVisitSummaryCard } from "@/components/guest/guest-visit-summary-card";
 import { formatVisitHeroTime } from "@/lib/format";
-import { GUEST_HUB_COPY, guestMyQuickActions } from "@workspace/policy";
+import { GUEST_HUB_COPY, guestMyQuickActions, formatBookingStatusLabel } from "@workspace/policy";
 import { GuestMyArtifactPanels } from "@/components/guest/guest-my-artifact-panels";
 import {
   ArrowLeft,
@@ -197,11 +197,11 @@ export default function MyLiviaVisitPage() {
   return (
     <GuestHubShell hubToken={hubToken} testId="guest-hub-visit-manage">
       <Link
-        href={`/my/${slug}`}
+        href="/my"
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        {b.businessName}
+        {GUEST_HUB_COPY.backToVault}
       </Link>
 
       <GuestHubPageHeader
@@ -224,7 +224,7 @@ export default function MyLiviaVisitPage() {
             ) : null}
           </section>
 
-          {data.relationship?.memoryHighlight ? (
+          {data.relationship?.memoryHighlight && !data.beautyPrefs?.patchTestLabel ? (
             <p
               className="text-sm text-muted-foreground border-l-2 border-primary/40 pl-3"
               id="guest-hub-memory"

@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Heart, LogOut } from "lucide-react";
 import { GUEST_HUB_COPY } from "@workspace/policy";
 import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
@@ -19,6 +19,7 @@ export type GuestHubSidebarShop = {
   logoUrl: string | null;
   imageUrl?: string | null;
   isFavorite: boolean;
+  manageVisitUrl?: string | null;
 };
 
 export function GuestHubPageHeader({
@@ -103,7 +104,7 @@ function GuestHubSidebar({ favoriteShops }: { favoriteShops?: GuestHubSidebarSho
           {favorites.map((shop) => (
             <Link
               key={shop.businessId}
-              href={`/my/${shop.slug}`}
+              href={shop.manageVisitUrl ?? `/my/${shop.slug}`}
               className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
             >
               <GuestShopAvatar
@@ -120,7 +121,7 @@ function GuestHubSidebar({ favoriteShops }: { favoriteShops?: GuestHubSidebarSho
       ) : null}
 
       <Link
-        href="/my#account-settings"
+        href="/my/account"
         className="text-xs text-muted-foreground hover:text-foreground px-1 transition-colors"
       >
         {GUEST_HUB_COPY.accountSettingsLink}
@@ -190,16 +191,20 @@ export function GuestHubUpcomingHero({
   startAt,
   visitUrl,
   formatDateTime,
+  replaceHistory,
 }: {
   businessName: string;
   serviceName: string;
   startAt: string;
   visitUrl: string;
   formatDateTime: (iso: string) => string;
+  /** Skip intermediate hub pages in browser back stack when opening from /my home. */
+  replaceHistory?: boolean;
 }) {
   return (
     <Link
       href={visitUrl}
+      replace={replaceHistory}
       className="block rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-card to-card p-5 sm:p-6 shadow-sm hover:border-primary/50 transition-colors"
       data-testid="guest-hub-upcoming-hero"
     >

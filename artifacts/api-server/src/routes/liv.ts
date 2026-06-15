@@ -104,7 +104,7 @@ router.get(
 router.post(
   "/businesses/:businessId/liv-moments/:signalId/dismiss",
   requireAuth,
-  requireRole("ADMIN"),
+  requireRole("STAFF"),
   async (req, res): Promise<void> => {
     const businessId = getBizId(req.params.businessId);
     const signalId = getBizId(req.params.signalId);

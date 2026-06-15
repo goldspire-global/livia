@@ -77,6 +77,7 @@ import PublicWaitlistPage from "@/pages/public-waitlist";
 import PublicPayPage from "@/pages/public-pay";
 import PublicShopPage from "@/pages/public-shop";
 import MyLiviaPage from "@/pages/my-livia";
+import MyLiviaAccountPage from "@/pages/my-livia-account";
 import MyLiviaShopPage from "@/pages/my-livia-shop";
 import MyLiviaVisitPage from "@/pages/my-livia-visit";
 import { GuestSubdomainRouter, isGuestSubdomainHost } from "@/components/guest/guest-subdomain-router";
@@ -369,6 +370,7 @@ function AppRouter() {
       <Route path="/sign-in" component={SignInPage} />
       <Route path="/sign-up" component={SignUpPage} />
       <Route path="/my/:slug/visit/:bookingId" component={MyLiviaVisitPage} />
+      <Route path="/my/account" component={MyLiviaAccountPage} />
       <Route path="/my/:slug" component={MyLiviaShopPage} />
       <Route path="/my" component={MyLiviaPage} />
       <Route path="/my/" component={MyLiviaPage} />

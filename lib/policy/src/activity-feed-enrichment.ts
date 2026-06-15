@@ -4,6 +4,7 @@
  */
 
 import { isCommerceCapabilityId } from "./capability-commerce-bridge";
+import { humanizeEnumLabel } from "./booking-experience-copy";
 
 export type ActivityFeedEnrichment = {
   label: string;
@@ -170,7 +171,7 @@ export function enrichActivityFeedItem(args: {
     }
     default:
       return {
-        label: args.type.replace(/_/g, " ").toLowerCase(),
+        label: humanizeEnumLabel(args.type),
         priority: "info",
       };
   }

@@ -143,6 +143,12 @@ export default function MyLiviaPage() {
   );
 
   useEffect(() => {
+    if (window.location.hash === "#account-settings") {
+      setLocation("/my/account");
+    }
+  }, [setLocation]);
+
+  useEffect(() => {
     const visitToken = new URLSearchParams(window.location.search).get("visit");
     if (!visitToken) return;
     redirectLegacyVisit(visitToken, view);
@@ -350,11 +356,12 @@ export default function MyLiviaPage() {
             startAt={heroBooking.startAt}
             visitUrl={heroBooking.visitUrl}
             formatDateTime={formatDateTime}
+            replaceHistory
           />
           {moreUpcoming.length > 0 ? (
             <div className="grid sm:grid-cols-2 gap-3">
               {moreUpcoming.map((b) => (
-                <Link key={b.bookingId} href={b.visitUrl}>
+                <Link key={b.bookingId} href={b.visitUrl} replace>
                   <Card className="h-full hover:border-primary/40 cursor-pointer transition-colors">
                     <CardContent className="py-4">
                       <p className="font-medium">{b.businessName}</p>
@@ -465,7 +472,7 @@ function ShopSection({
               </Button>
               {shop.manageVisitUrl ? (
                 <Button size="sm" variant="default" asChild className="shrink-0">
-                  <Link href={shop.manageVisitUrl}>
+                  <Link href={shop.manageVisitUrl} replace>
                     {GUEST_HUB_COPY.manageVisitCta.replace(" →", "")}
                   </Link>
                 </Button>

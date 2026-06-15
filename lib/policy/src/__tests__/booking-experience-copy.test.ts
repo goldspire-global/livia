@@ -7,6 +7,7 @@ import {
   bookingExperienceCopy,
   publicAwaitingContinuityHoldLines,
   resolvePendingReasonCode,
+  formatBookingStatusLabel,
 } from "../booking-experience-copy";
 
 assert.equal(
@@ -75,6 +76,12 @@ assert.ok(
   !(
     livPendingAutoConfirmBlocker(PENDING_REASON_CODES.AWAITING_CONTINUITY, "hair") ?? ""
   ).includes("continuity thread"),
+);
+
+assert.equal(formatBookingStatusLabel("NO_SHOW"), "No-show");
+assert.equal(
+  bookingExperienceCopy("beauty").toastStatusUpdated("NO_SHOW"),
+  "Appointment no-show",
 );
 
 console.log("booking-experience-copy.test.ts ok");

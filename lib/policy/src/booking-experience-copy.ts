@@ -14,6 +14,39 @@ export const PENDING_REASON_CODES = {
 export type PendingReasonCode =
   (typeof PENDING_REASON_CODES)[keyof typeof PENDING_REASON_CODES];
 
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  CONFIRMED: "Confirmed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_SHOW: "No-show",
+};
+
+/** Human label for booking status enums — never show raw `NO_SHOW` in UI. */
+export function formatBookingStatusLabel(status: string): string {
+  const normalized = status.trim().toUpperCase();
+  if (BOOKING_STATUS_LABELS[normalized]) return BOOKING_STATUS_LABELS[normalized];
+  return status
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Generic snake_case / SCREAMING_SNAKE → title case for operator surfaces. */
+export function humanizeEnumLabel(raw: string): string {
+  return formatBookingStatusLabel(raw.replace(/-/g, "_"));
+}
+
+function bookingStatusToast(prefix: string, status: string): string {
+  return `${prefix} ${formatBookingStatusLabel(status).toLowerCase()}`;
+}
+
+export function bookingConfirmBlockedByDeposit(pendingReason?: string | null): boolean {
+  return pendingReason === PENDING_REASON_CODES.AWAITING_DEPOSIT;
+}
+
 /** Resolve stored or inferred machine reason while status is PENDING (hub for API + UI). */
 export function resolvePendingReasonCode(args: {
   status: string;
@@ -510,7 +543,7 @@ const DEFAULT_EXPERIENCE: BookingExperienceCopy = {
   listEmptyTitle: "No bookings found",
   listEmptyPendingCta: "New booking",
   statusFilterNoShow: "No Show",
-  toastStatusUpdated: (status) => `Booking ${status.toLowerCase()}`,
+  toastStatusUpdated: (status) => bookingStatusToast("Booking", status),
   statusActions: {
     CONFIRMED: "Confirm",
     COMPLETED: "Mark Complete",
@@ -540,7 +573,7 @@ const HAIR_EXPERIENCE: BookingExperienceCopy = {
   listEmptyTitle: "No appointments in this view",
   listEmptyPendingCta: "New appointment",
   statusFilterNoShow: "No-show",
-  toastStatusUpdated: (status) => `Appointment ${status.toLowerCase()}`,
+  toastStatusUpdated: (status) => bookingStatusToast("Appointment", status),
   statusActions: {
     CONFIRMED: "Confirm",
     COMPLETED: "Complete",
@@ -570,7 +603,7 @@ const BEAUTY_EXPERIENCE: BookingExperienceCopy = {
   listEmptyTitle: "No appointments in this view",
   listEmptyPendingCta: "New appointment",
   statusFilterNoShow: "No-show",
-  toastStatusUpdated: (status) => `Appointment ${status.toLowerCase()}`,
+  toastStatusUpdated: (status) => bookingStatusToast("Appointment", status),
   statusActions: {
     CONFIRMED: "Confirm",
     COMPLETED: "Complete",
@@ -601,7 +634,7 @@ const WELLNESS_EXPERIENCE: BookingExperienceCopy = {
   listEmptyPendingCta: "Hold a room",
   statusFilterNoShow: "Did not arrive",
   toastStatusUpdated: (status) =>
-    status === "NO_SHOW" ? "Marked did not arrive" : `Session ${status.toLowerCase()}`,
+    status === "NO_SHOW" ? "Marked did not arrive" : bookingStatusToast("Session", status),
   statusActions: {
     CONFIRMED: "Confirm session",
     COMPLETED: "Session complete",
@@ -629,7 +662,7 @@ function experienceFromVocabulary(
     noServiceLabel: `No ${svc} selected`,
     listEmptyTitle: `No ${plural} in this view`,
     listEmptyPendingCta: `New ${svc}`,
-    toastStatusUpdated: (status) => `${v.serviceNoun} ${status.toLowerCase()}`,
+    toastStatusUpdated: (status) => bookingStatusToast(v.serviceNoun, status),
     ...patch,
   };
 }

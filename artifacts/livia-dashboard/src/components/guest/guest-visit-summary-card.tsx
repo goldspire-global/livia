@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
+import { formatBookingStatusLabel } from "@workspace/policy";
 import { GuestMoneyBreakdown } from "@/components/public-booking/guest-money-breakdown";
 
 /** One home for visit facts + money on /my visit manage. */
@@ -67,7 +68,7 @@ export function GuestVisitSummaryCard({
         ) : null}
         <div className="flex justify-between gap-2 text-xs uppercase tracking-wide text-muted-foreground">
           <span>Status</span>
-          <span>{status}</span>
+          <span>{formatBookingStatusLabel(status)}</span>
         </div>
         {showMoney ? (
           <GuestMoneyBreakdown
