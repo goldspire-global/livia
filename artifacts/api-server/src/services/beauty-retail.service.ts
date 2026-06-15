@@ -14,6 +14,8 @@ import {
   normalizeRetailCartItems,
   parseTenantRetailStoreSettings,
   resolveTenantRetailPack,
+  resolveEffectiveRetailGates,
+  buildTenantRetailPaySms,
   tenantRetailTemplatesForBusiness,
   verticalSupportsRetail,
   type RetailCartItemInput,
@@ -36,12 +38,16 @@ export async function getRetailStoreBundle(businessId: string) {
   const biz = await getBusinessById(businessId);
   if (!biz) return null;
   const settings = parseTenantRetailStoreSettings(biz.retailStore);
+  const effectiveGates = resolveEffectiveRetailGates({
+    settings,
+    operationalPolicy: biz.operationalPolicy,
+  });
   const products = await db
     .select()
     .from(retailProductsTable)
     .where(eq(retailProductsTable.businessId, businessId))
     .orderBy(asc(retailProductsTable.sortOrder), asc(retailProductsTable.name));
-  return { settings, products };
+  return { settings, products, effectiveGates };
 }
 
 export async function listActiveRetailProducts(businessId: string) {
@@ -600,6 +606,11 @@ export async function createRetailPayLinkForStaff(args: {
   return {
     payUrl,
     productName: order.product.name,
-    smsBody: `${order.product.name}: ${payUrl}`,
+    smsBody: buildTenantRetailPaySms({
+      businessName: biz.name,
+      productName: order.product.name,
+      payUrl,
+      guestFirstName: args.guestName,
+    }),
   };
 }

@@ -4,7 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { bookingAftercareAutoSendLine } from "@workspace/policy";
+import {
+  bookingAftercareAutoSendLine,
+  bookingAftercareDisabledHint,
+  bookingAftercareDraftHint,
+  bookingAftercareManualOnlyHint,
+} from "@workspace/policy";
 import { Sparkles } from "lucide-react";
 
 type AftercareState = {
@@ -40,6 +45,10 @@ export function BookingAftercarePanel({
 
   if (status !== "COMPLETED" || !data) return null;
 
+  const disabled =
+    !data.sentAt && !data.draftBody && (data.mode === null || data.mode === undefined);
+  if (disabled) return null;
+
   async function send() {
     setSending(true);
     try {
@@ -72,11 +81,11 @@ export function BookingAftercarePanel({
           <p className="text-sm text-muted-foreground">
             Sent {new Date(data.sentAt).toLocaleString()}
           </p>
+        ) : data.mode === "manual_only" ? (
+          <p className="text-sm text-muted-foreground">{bookingAftercareManualOnlyHint()}</p>
         ) : data.mode === "liv_draft" || data.status === "draft" ? (
           <>
-            <p className="text-xs text-muted-foreground">
-              Liv prepared aftercare — edit if needed, then send. Uses guest&apos;s preferred channel.
-            </p>
+            <p className="text-xs text-muted-foreground">{bookingAftercareDraftHint()}</p>
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -92,10 +101,10 @@ export function BookingAftercarePanel({
               {sending ? "Sending…" : "Send aftercare"}
             </Button>
           </>
+        ) : data.mode === "auto" ? (
+          <p className="text-sm text-muted-foreground">{bookingAftercareAutoSendLine()}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {bookingAftercareAutoSendLine()}
-          </p>
+          <p className="text-sm text-muted-foreground">{bookingAftercareDisabledHint()}</p>
         )}
       </CardContent>
     </Card>

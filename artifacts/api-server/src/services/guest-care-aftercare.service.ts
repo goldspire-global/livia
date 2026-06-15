@@ -16,8 +16,10 @@ import {
 import { eq, and, desc } from "drizzle-orm";
 import {
   resolveAftercareMessageBody,
-  resolveGuestCareAutomation,
+  resolveEffectiveGuestCareAutomation,
   resolveRetailProductForService,
+  resolveAftercareSequenceStepBody,
+  aftercareEmailSubject,
   resolveOutboundChannel,
   aftercareDelayMs,
   type BusinessVertical,
@@ -45,7 +47,7 @@ export async function buildAftercareBodyForBooking(
     .limit(1);
   if (!biz) return null;
 
-  const care = resolveGuestCareAutomation({
+  const care = resolveEffectiveGuestCareAutomation({
     vertical: biz.vertical as BusinessVertical,
     operationalPolicy: biz.operationalPolicy,
   });
@@ -152,7 +154,7 @@ export async function prepareAftercareOnComplete(businessId: string, bookingId: 
     .where(eq(businessesTable.id, businessId))
     .limit(1);
 
-  const care = resolveGuestCareAutomation({
+  const care = resolveEffectiveGuestCareAutomation({
     vertical: (biz?.vertical ?? "hair") as BusinessVertical,
     operationalPolicy: biz?.operationalPolicy,
   });
@@ -206,7 +208,7 @@ export async function sendAftercareForBooking(
     .limit(1);
   if (!cust) return { sent: false, skipped: "no_customer" };
 
-  const care = resolveGuestCareAutomation({
+  const care = resolveEffectiveGuestCareAutomation({
     vertical: biz.vertical as BusinessVertical,
     operationalPolicy: biz.operationalPolicy,
   });
@@ -267,7 +269,7 @@ export async function sendAftercareForBooking(
       businessId,
       businessName: biz.name,
       to: cust.email,
-      subject: `After your visit at ${biz.name}`,
+      subject: aftercareEmailSubject(biz.name),
       body: `Hi ${name},\n\n${body}`,
       customerId: cust.id,
     });
@@ -343,12 +345,7 @@ async function scheduleAftercareSequenceIfNeeded(
   for (let i = 0; i < followUps.length; i++) {
     const day = followUps[i]!;
     const scheduledAt = new Date(base + day * 24 * 60 * 60 * 1000);
-    const body =
-      day === 1
-        ? "Day 1 check-in — how is healing going? Reply with a photo if anything looks unusual."
-        : day === 3
-          ? "Day 3 — keep following your aftercare. Reply here with any questions."
-          : `Day ${day} follow-up from your studio — reply if you need a touch-up or have concerns.`;
+    const body = resolveAftercareSequenceStepBody(day);
     await db.insert(aftercareSequenceStepsTable).values({
       id: generateId(),
       businessId,
@@ -393,7 +390,7 @@ export function aftercareWorkflowDelayMs(businessId: string): Promise<number> {
     .where(eq(businessesTable.id, businessId))
     .limit(1)
     .then(([biz]) => {
-      const care = resolveGuestCareAutomation({
+      const care = resolveEffectiveGuestCareAutomation({
         vertical: (biz?.vertical ?? "hair") as BusinessVertical,
         operationalPolicy: biz?.operationalPolicy,
       });

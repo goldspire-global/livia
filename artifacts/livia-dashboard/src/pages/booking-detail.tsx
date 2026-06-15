@@ -100,7 +100,16 @@ export default function BookingDetailPage() {
     queryFn: () =>
       apiFetch<{
         settings: { enabled: boolean; postSessionSuggest?: boolean };
-        products: Array<{ id: string; name: string; priceMinor: number; currency: string; isActive?: boolean }>;
+        products: Array<{
+          id: string;
+          name: string;
+          priceMinor: number;
+          currency: string;
+          isActive?: boolean;
+          category?: string | null;
+          linkedServiceCategory?: string | null;
+        }>;
+        effectiveGates?: { enabled: boolean; postSessionSuggest: boolean };
       }>(`/api/businesses/${bid}/retail/store`),
     enabled: !!bid && verticalSupportsRetail(businessVertical),
   });
@@ -324,11 +333,13 @@ export default function BookingDetailPage() {
               businessName={business?.name ?? "Studio"}
               businessVertical={businessVertical}
               guestFirstName={(booking as { customer?: { firstName?: string } }).customer?.firstName}
+              serviceCategory={(booking as { service?: { category?: string | null } }).service?.category}
               products={retailProducts}
               enabled={
                 hasRetailEntitlement &&
-                retailBundle?.settings?.enabled &&
-                retailBundle.settings.postSessionSuggest !== false
+                (retailBundle?.effectiveGates?.enabled ?? retailBundle?.settings?.enabled) &&
+                (retailBundle?.effectiveGates?.postSessionSuggest ??
+                  retailBundle?.settings?.postSessionSuggest !== false)
               }
             />
           ) : null}

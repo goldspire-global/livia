@@ -5,6 +5,7 @@ import {
   buildTenantPostSessionInboxDraft,
   normalizeRetailCartItems,
   resolveTenantRetailPack,
+  tenantRetailPreviewExample,
   tenantRetailTemplatesForBusiness,
   verticalSupportsRetail,
 } from "../tenant-retail-program";
@@ -26,6 +27,10 @@ assert.notEqual(
 const hairPack = resolveTenantRetailPack("hair")!;
 assert.ok(hairPack.ownerTitle.length > 3);
 assert.ok(buildTenantPostSessionInboxDraft("hair").body.includes("stylist"));
+
+const beautyPreview = tenantRetailPreviewExample("beauty");
+assert.ok(beautyPreview.serviceName.length > 0);
+assert.ok(beautyPreview.serviceCategory);
 
 assert.equal(verticalStarterPackIncludesRetail("hair"), true);
 assert.equal(verticalStarterPackIncludesRetail("beauty"), true);

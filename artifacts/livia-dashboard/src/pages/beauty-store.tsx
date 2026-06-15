@@ -17,6 +17,7 @@ import {
   formatRetailInventoryLabel,
   isTenantRetailVisibleOnPublicBook,
   resolveTenantRetailPack,
+  tenantRetailPreviewExample,
   verticalSupportsRetail,
   type TenantRetailStoreSettings,
 } from "@workspace/policy";
@@ -66,13 +67,15 @@ export default function TenantStorePage() {
   });
   const [editingProduct, setEditingProduct] = useState<RetailProductRow | null>(null);
 
+  const previewExample = useMemo(() => tenantRetailPreviewExample(vertical), [vertical]);
+
   const livPreview = useMemo(
     () =>
       buildPostSessionLivPreview({
         vertical,
         businessName: business?.name ?? "Your studio",
-        serviceName: vertical === "beauty" ? "Lash fill" : "Today's session",
-        serviceCategory: vertical === "beauty" ? "Lashes" : undefined,
+        serviceName: previewExample.serviceName,
+        serviceCategory: previewExample.serviceCategory,
         products: products.map((p) => ({
           id: p.id,
           name: p.name,
@@ -81,7 +84,7 @@ export default function TenantStorePage() {
           isActive: p.isActive,
         })),
       }),
-    [business?.name, products, vertical],
+    [business?.name, previewExample.serviceCategory, previewExample.serviceName, products, vertical],
   );
 
   const load = useCallback(async () => {

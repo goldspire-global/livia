@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 import type { BusinessVertical } from "./types";
 import { getCountryOverlay } from "./country-overlays";
-import { guestCareAutomationSchema } from "./guest-care-automation";
+import { guestCareAutomationSchema } from "./guest-care-automation-schema";
 import { automationToggleSignalSchema } from "./automation-toggle-signals";
 
 /** Tenant-editable operational rules (stored on business.operational_policy jsonb). */

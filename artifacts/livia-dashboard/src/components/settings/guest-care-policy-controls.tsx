@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
 import { apiFetch } from "@/lib/api-fetch";
 import { useBusiness } from "@/lib/business-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   parseOperationalPolicy,
-  parseGuestCareAutomation,
   resolveGuestCareAutomation,
+  GUEST_CARE_DELAY_LABELS,
+  GUEST_CARE_SETTINGS_INTRO,
   AFTERCARE_MODE_OWNER_COPY,
   OWNER_LIV_TAGLINE,
   type GuestCareAutomation,
   type BusinessVertical,
+  type AftercareDelay,
 } from "@workspace/policy";
 
 export function GuestCarePolicyControls() {
@@ -68,10 +69,7 @@ export function GuestCarePolicyControls() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
-          <span className="font-medium text-foreground">You configure:</span> on/off, auto-send vs
-          draft, timing, retail mention gate.{" "}
-          <span className="font-medium text-foreground">Liv handles:</span> treatment-aware copy,
-          product match, channel, and memory — staff only sends when you choose draft mode.
+          {GUEST_CARE_SETTINGS_INTRO}
         </p>
 
         <div className="flex items-center justify-between gap-4">
@@ -125,9 +123,11 @@ export function GuestCarePolicyControls() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2h">~2 hours after complete</SelectItem>
-              <SelectItem value="same_evening">Same evening</SelectItem>
-              <SelectItem value="next_morning">Next morning</SelectItem>
+              {(Object.keys(GUEST_CARE_DELAY_LABELS) as AftercareDelay[]).map((delay) => (
+                <SelectItem key={delay} value={delay}>
+                  {GUEST_CARE_DELAY_LABELS[delay]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

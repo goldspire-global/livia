@@ -5,49 +5,33 @@
  * Owner vs Liv: see owner-liv-ownership.ts — owners set gates (on/off, auto vs draft);
  * Liv writes treatment-aware copy and optional retail nudge; platform holds vertical aftercare knowledge.
  */
-import { z } from "zod/v4";
 import type { BusinessVertical } from "./types";
 import { beautyAftercareSmsBody } from "./beauty-booking-rules";
 import { parseOperationalPolicy, type OperationalPolicy } from "./operational-policy";
+import type { AutomationToggleSignals } from "./automation-toggle-signals";
 import { resolveEffectivePreferredModality } from "./inbox-channel-routing";
+import {
+  DEFAULT_GUEST_CARE,
+  guestCareAutomationSchema,
+  type AftercareChannelPreference,
+  type AftercareDelay,
+  type GuestCareAutomation,
+  type GuestPreferredModality,
+} from "./guest-care-automation-schema";
 
-export const aftercareModeSchema = z.enum(["auto", "liv_draft", "manual_only"]);
-export type AftercareMode = z.infer<typeof aftercareModeSchema>;
-
-export const aftercareDelaySchema = z.enum(["2h", "same_evening", "next_morning"]);
-export type AftercareDelay = z.infer<typeof aftercareDelaySchema>;
-
-export const aftercareChannelPreferenceSchema = z.enum([
-  "thread_first",
-  "sms_fallback",
-  "sms_only",
-]);
-export type AftercareChannelPreference = z.infer<typeof aftercareChannelPreferenceSchema>;
-
-export const guestPreferredModalitySchema = z.enum([
-  "VOICE",
-  "WHATSAPP",
-  "SMS",
-  "EMAIL",
-  "INSTAGRAM",
-  "WEB",
-  "ANY",
-]);
-export type GuestPreferredModality = z.infer<typeof guestPreferredModalitySchema>;
-
-export const guestCareAutomationSchema = z.object({
-  aftercareEnabled: z.boolean().default(true),
-  aftercareMode: aftercareModeSchema.default("auto"),
-  aftercareDelay: aftercareDelaySchema.default("2h"),
-  aftercareChannel: aftercareChannelPreferenceSchema.default("thread_first"),
-  retailAftercareEnabled: z.boolean().default(true),
-  /** Body-art / medspa multi-touch sequences (day offsets from complete). */
-  aftercareSequenceDays: z.array(z.number().int().min(0).max(90)).optional(),
-});
-
-export type GuestCareAutomation = z.infer<typeof guestCareAutomationSchema>;
-
-export const DEFAULT_GUEST_CARE: GuestCareAutomation = guestCareAutomationSchema.parse({});
+export {
+  aftercareChannelPreferenceSchema,
+  aftercareDelaySchema,
+  aftercareModeSchema,
+  DEFAULT_GUEST_CARE,
+  guestCareAutomationSchema,
+  guestPreferredModalitySchema,
+  type AftercareChannelPreference,
+  type AftercareDelay,
+  type AftercareMode,
+  type GuestCareAutomation,
+  type GuestPreferredModality,
+} from "./guest-care-automation-schema";
 
 const VERTICAL_AFTERCARE_DEFAULTS: Partial<
   Record<BusinessVertical, Partial<GuestCareAutomation>>
@@ -113,6 +97,58 @@ export function resolveGuestCareAutomation(args: {
   const recommended = recommendedGuestCareForVertical(args.vertical);
   return guestCareAutomationSchema.parse({ ...recommended, ...fromPolicy });
 }
+
+/** Owner gates merged with adoption signals — Liv respects persistently-off retail/aftercare. */
+export function resolveEffectiveGuestCareAutomation(args: {
+  vertical: BusinessVertical;
+  operationalPolicy?: unknown;
+}): GuestCareAutomation {
+  const care = resolveGuestCareAutomation(args);
+  const op = parseOperationalPolicy(args.operationalPolicy);
+  const signals = op.automationToggleSignals as AutomationToggleSignals | undefined;
+  if (!signals) return care;
+
+  const effective = { ...care };
+  if (signals["guestCare.retailAftercareEnabled"]?.persistentlyOff) {
+    effective.retailAftercareEnabled = false;
+  }
+  if (signals["guestCare.aftercareEnabled"]?.persistentlyOff) {
+    effective.aftercareEnabled = false;
+  }
+  return guestCareAutomationSchema.parse(effective);
+}
+
+export function resolveEffectiveRetailGates(args: {
+  settings: { enabled: boolean; postSessionSuggest: boolean };
+  operationalPolicy?: unknown;
+}): { enabled: boolean; postSessionSuggest: boolean } {
+  const op = parseOperationalPolicy(args.operationalPolicy);
+  const signals = op.automationToggleSignals as AutomationToggleSignals | undefined;
+  let { enabled, postSessionSuggest } = args.settings;
+  if (signals?.["retail.enabled"]?.persistentlyOff) enabled = false;
+  if (signals?.["retail.postSessionSuggest"]?.persistentlyOff) postSessionSuggest = false;
+  return { enabled, postSessionSuggest };
+}
+
+export function aftercareEmailSubject(businessName: string): string {
+  return `After your visit at ${businessName}`;
+}
+
+export function resolveAftercareSequenceStepBody(day: number): string {
+  if (day === 1) {
+    return "Day 1 check-in — how is healing going? Reply with a photo if anything looks unusual.";
+  }
+  if (day === 3) {
+    return "Day 3 — keep following your aftercare. Reply here with any questions.";
+  }
+  return `Day ${day} follow-up from your studio — reply if you need a touch-up or have concerns.`;
+}
+
+export const GUEST_CARE_DELAY_LABELS: Record<AftercareDelay, string> = {
+  "2h": "~2 hours after complete",
+  same_evening: "Same evening",
+  next_morning: "Next morning",
+};
 
 export function aftercareDelayMs(delay: AftercareDelay): number {
   switch (delay) {

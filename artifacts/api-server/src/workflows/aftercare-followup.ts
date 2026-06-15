@@ -6,7 +6,7 @@ import {
   sendAftercareForBooking,
   aftercareWorkflowDelayMs,
 } from "../services/guest-care-aftercare.service";
-import { resolveGuestCareAutomation, type BusinessVertical } from "@workspace/policy";
+import { resolveEffectiveGuestCareAutomation, type BusinessVertical } from "@workspace/policy";
 import { db, businessesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
@@ -44,7 +44,7 @@ export const aftercareFollowup = inngest.createFunction(
       .where(eq(businessesTable.id, businessId))
       .limit(1);
 
-    const care = resolveGuestCareAutomation({
+    const care = resolveEffectiveGuestCareAutomation({
       vertical: (biz?.vertical ?? "hair") as BusinessVertical,
       operationalPolicy: biz?.operationalPolicy,
     });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { apiFetch } from "@/lib/api-fetch";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import {
   buildTenantRetailPaySms,
+  resolveRetailProductForService,
   resolveTenantRetailPack,
   tenantRetailOwnerRoute,
 } from "@workspace/policy";
 import { Package } from "lucide-react";
 
-type ProductOption = { id: string; name: string; priceMinor: number; currency: string };
+type ProductOption = {
+  id: string;
+  name: string;
+  priceMinor: number;
+  currency: string;
+  category?: string | null;
+  linkedServiceCategory?: string | null;
+};
+
+function sortProductsForVisit(
+  products: ProductOption[],
+  serviceCategory?: string | null,
+): ProductOption[] {
+  const matched = resolveRetailProductForService({
+    products,
+    serviceCategory,
+  });
+  if (!matched?.id) return products;
+  const rest = products.filter((p) => p.id !== matched.id);
+  return [products.find((p) => p.id === matched.id)!, ...rest];
+}
 
 export function TenantRetailAttachPanel({
   businessId,
@@ -19,6 +40,7 @@ export function TenantRetailAttachPanel({
   businessVertical,
   guestFirstName,
   products,
+  serviceCategory,
   enabled,
 }: {
   businessId: string;
@@ -26,6 +48,7 @@ export function TenantRetailAttachPanel({
   businessVertical?: string | null;
   guestFirstName?: string | null;
   products: ProductOption[];
+  serviceCategory?: string | null;
   enabled?: boolean;
 }) {
   const { toast } = useToast();
@@ -33,12 +56,22 @@ export function TenantRetailAttachPanel({
   const [lastLink, setLastLink] = useState<string | null>(null);
   const pack = resolveTenantRetailPack(businessVertical);
 
+  const displayProducts = useMemo(
+    () => sortProductsForVisit(products, serviceCategory).slice(0, 4),
+    [products, serviceCategory],
+  );
+
+  const suggested = useMemo(
+    () => resolveRetailProductForService({ products, serviceCategory }),
+    [products, serviceCategory],
+  );
+
   if (!enabled || products.length === 0) return null;
 
   async function sendLink(productId: string) {
     setBusy(productId);
     try {
-      const r = await apiFetch<{ payUrl: string; productName: string }>(
+      const r = await apiFetch<{ payUrl: string; productName: string; smsBody?: string }>(
         `/api/businesses/${businessId}/retail/pay-link`,
         {
           method: "POST",
@@ -46,12 +79,14 @@ export function TenantRetailAttachPanel({
         },
       );
       setLastLink(r.payUrl);
-      const sms = buildTenantRetailPaySms({
-        businessName,
-        productName: r.productName,
-        payUrl: r.payUrl,
-        guestFirstName,
-      });
+      const sms =
+        r.smsBody ??
+        buildTenantRetailPaySms({
+          businessName,
+          productName: r.productName,
+          payUrl: r.payUrl,
+          guestFirstName,
+        });
       await navigator.clipboard.writeText(sms);
       toast({ title: "Pay link copied", description: "Paste into Inbox or SMS to the guest." });
     } catch {
@@ -71,14 +106,19 @@ export function TenantRetailAttachPanel({
         <CardDescription>{pack?.attachDescription ?? "Generate a pay link to text after the visit."}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
+        {suggested ? (
+          <p className="text-xs text-primary">
+            Liv suggests for this treatment: {suggested.name}
+          </p>
+        ) : null}
         <ul className="space-y-2">
-          {products.slice(0, 4).map((p) => (
+          {displayProducts.map((p) => (
             <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
               <span className="truncate">{p.name}</span>
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
+                variant={p.id === suggested?.id ? "default" : "outline"}
                 disabled={busy === p.id}
                 onClick={() => void sendLink(p.id)}
               >

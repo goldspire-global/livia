@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import {
   beautyOutlineButton,
   beautyPrimaryButton,
-  takeBeautyPostSessionDraft,
 } from "@/lib/beauty-operational-ui";
 import { InboxRelationshipChip } from "@/components/inbox/inbox-relationship-chip";
 import { HelpSupportDialog } from "@/components/help-support-dialog";
@@ -41,8 +40,9 @@ import {
   INBOX_QUEUE_LENS_LABELS,
   matchesInboxQueueLens,
   shouldShowInboxContextRail,
-  buildBeautyPostSessionInboxDraft,
-  buildWellnessPostSessionInboxDraft,
+  buildTenantPostSessionInboxDraft,
+  tenantRetailPostSessionInboxBanner,
+  verticalSupportsRetail,
   wellnessRetailSkuById,
   inboxFloorGuidance,
   inboxChannelLabel,
@@ -181,7 +181,6 @@ export default function InboxPage() {
   const [replyDraft, setReplyDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [postSessionFlow, setPostSessionFlow] = useState<{
-    skuName?: string;
     productName?: string;
     steps: string[];
   } | null>(null);
@@ -212,27 +211,15 @@ export default function InboxPage() {
       setQueueLens(lens);
     }
 
-    if (params.get("flow") === "post_session" && tenantVertical === "wellness") {
+    if (params.get("flow") === "post_session" && verticalSupportsRetail(tenantVertical)) {
+      const productParam = params.get("product") ?? undefined;
       const skuId = params.get("sku") ?? undefined;
-      const sku = skuId ? wellnessRetailSkuById(skuId) : undefined;
-      const draft = buildWellnessPostSessionInboxDraft({ skuName: sku?.name });
+      const skuName =
+        tenantVertical === "wellness" && skuId ? wellnessRetailSkuById(skuId)?.name : undefined;
+      const productName = productParam ?? skuName;
+      const draft = buildTenantPostSessionInboxDraft(tenantVertical, { productName });
       setReplyDraft(draft.body);
-      setPostSessionFlow({ skuName: sku?.name, steps: draft.steps });
-      setStatusFilter("ALL");
-      setQueueLens("all");
-    }
-
-    if (params.get("flow") === "post_session" && tenantVertical === "beauty") {
-      const stashed = takeBeautyPostSessionDraft();
-      const productName = params.get("product") ?? undefined;
-      const draft = buildBeautyPostSessionInboxDraft({
-        productName: productName ?? undefined,
-      });
-      setReplyDraft(stashed ?? draft.body);
-      setPostSessionFlow({
-        productName: productName ?? undefined,
-        steps: draft.steps,
-      });
+      setPostSessionFlow({ productName, steps: draft.steps });
       setStatusFilter("ALL");
       setQueueLens("all");
     }
@@ -582,19 +569,13 @@ export default function InboxPage() {
           data-testid="inbox-post-session-flow"
         >
           <p className="font-medium text-foreground">
-            Post-session continuity
-            {tenantVertical === "beauty" ? " — mini store" : " (WB-402)"}
+            {tenantRetailPostSessionInboxBanner(tenantVertical)}
           </p>
           <ol className="mt-1 list-decimal pl-5 text-xs text-muted-foreground space-y-0.5">
             {postSessionFlow.steps.map((step) => (
               <li key={step}>{step}</li>
             ))}
           </ol>
-          {postSessionFlow.skuName ? (
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Product mention: <span className="text-foreground">{postSessionFlow.skuName}</span>
-            </p>
-          ) : null}
           {postSessionFlow.productName ? (
             <p className="text-xs text-muted-foreground mt-1.5">
               Product mention: <span className="text-foreground">{postSessionFlow.productName}</span>

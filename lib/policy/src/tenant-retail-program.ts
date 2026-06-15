@@ -7,6 +7,7 @@
 import type { BusinessVertical } from "./types";
 import { getSubverticalProfile } from "./subvertical-profiles";
 import { resolveAftercareMessageBody } from "./guest-care-automation";
+import { BEAUTY_SERVICE_TEMPLATES } from "./beauty-service-templates";
 
 export type TenantRetailStoreSettings = {
   enabled: boolean;
@@ -772,6 +773,32 @@ export function buildPostSessionLivPreview(args: {
     matchedProduct: matched?.name ?? null,
     caption: `Example after ${args.serviceName} — Liv adapts to each guest and your send mode in Settings.`,
   };
+}
+
+export function tenantRetailPostSessionInboxBanner(
+  vertical: BusinessVertical | string | null | undefined,
+): string {
+  const pack = resolveTenantRetailPack(vertical);
+  return pack
+    ? `Post-session continuity — ${pack.ownerTitle.toLowerCase()}`
+    : "Post-session continuity";
+}
+
+/** Example visit for store preview — derived from vertical pack templates. */
+export function tenantRetailPreviewExample(
+  vertical: BusinessVertical | string | null | undefined,
+): { serviceName: string; serviceCategory: string | null } {
+  const pack = resolveTenantRetailPack(vertical);
+  const template = pack?.templates.find((t) => t.linkedServiceCategory);
+  if (!template?.linkedServiceCategory) {
+    return { serviceName: "Today's session", serviceCategory: null };
+  }
+  const cat = template.linkedServiceCategory;
+  if (vertical === "beauty") {
+    const svc = BEAUTY_SERVICE_TEMPLATES.find((s) => s.category === cat);
+    if (svc) return { serviceName: svc.name, serviceCategory: cat };
+  }
+  return { serviceName: `${cat} session`, serviceCategory: cat };
 }
 
 export function buildTenantPostSessionInboxDraft(

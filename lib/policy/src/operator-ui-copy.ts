@@ -33,7 +33,19 @@ export function refundLinkedInboxBannerBody(): string {
 }
 
 export function bookingAftercareAutoSendLine(): string {
-  return "Aftercare sends automatically from guest care settings.";
+  return "Liv will send aftercare automatically — timing and channel come from guest care settings.";
+}
+
+export function bookingAftercareDraftHint(): string {
+  return "Liv prepared aftercare — edit if needed, then send. Uses the guest's preferred channel.";
+}
+
+export function bookingAftercareDisabledHint(): string {
+  return "Post-session follow-up is off. Turn it on in Settings → Guest care when you're ready.";
+}
+
+export function bookingAftercareManualOnlyHint(): string {
+  return "Aftercare is manual-only — Liv does not auto-send. Copy from the guest thread when needed.";
 }
 
 export function inboxRefundResolvePrompt(): string {

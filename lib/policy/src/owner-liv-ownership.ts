@@ -79,3 +79,6 @@ export const AFTERCARE_MODE_OWNER_COPY: Record<
 
 export const OWNER_LIV_TAGLINE =
   "You run the menu and the shelf. Liv handles what to say, when, and to whom — you control the gates.";
+
+export const GUEST_CARE_SETTINGS_INTRO =
+  "You configure: on/off, auto-send vs draft, timing, retail mention gate. Liv handles: treatment-aware copy, product match, channel, and memory — staff only sends when you choose draft mode.";
