@@ -1,8 +1,8 @@
 # Repo vs Blueprint Gap Matrix
 
-**Status:** canonical (2026-06-05) — **replaces audit PDF Part 20 as live authority**  
+**Status:** canonical (2026-06-15) — **replaces audit PDF Part 20 as live authority**  
 **Audience:** founder, engineering, product, Cursor  
-**Method:** Deep Audit V1 + repo exploration + blueprint volumes A–H  
+**Method:** Deep Audit V1 + repo exploration + blueprint volumes A–H + **`pnpm readiness:score`** rubric  
 **Update:** After each era gate or quarterly review
 
 ---
@@ -11,15 +11,18 @@
 
 Livia is **significantly more advanced than a typical startup MVP** in architecture, and **significantly less mature than production SaaS** in market proof.
 
-| Dimension | Score | Reality |
-|-----------|-------|---------|
-| Vision | 9.5 / 10 | People Business OS direction is clear and documented |
-| Architecture | 8.5 / 10 | Policy hub, OpenAPI, Liv runtime, experience resolution |
-| Documentation | 9 / 10 | Now includes canonical blueprint volumes |
-| Product completeness | 4 / 10 | Core loops exist; not all paths are shippable |
-| Activation readiness | 3 / 10 | Gate wired; funnel analytics and speed still weak |
-| Commercial readiness | 3 / 10 | Pricing spec exists; prod monetization path incomplete |
-| Market readiness | 2 / 10 | No proven GTM motion yet |
+| Dimension | V1 headline | Engineering rubric | Reality |
+|-----------|-------------|-------------------|---------|
+| Vision | 9.5 / 10 | — | People Business OS direction is clear and documented |
+| Architecture | **9 / 10** | — | Policy hub hardened (effective gates, schema split); OpenAPI + Liv runtime |
+| Documentation | 9 / 10 | — | Canonical blueprint volumes + rubric scorecard |
+| Product completeness | **5 / 10** | 7–9 / 10 | Core loops on staging; mutation paths + field proof open |
+| Activation readiness | **4 / 10** | 6–7 / 10 | Demo + UAT E2E + onboarding gates; funnel dashboard + Gate 2 open |
+| Commercial readiness | **3.5 / 10** | 3.5–5 / 10 | Stripe deposits on staging; prod subscription + MRR proof open |
+| Market readiness | **2 / 10** | 2 / 10 | GTM Wave 1 locked in docs; no Dublin field proof yet |
+| Founder acceptance (Bucket C) | **80%** | 80% | Staging gates green; founder walkthrough not signed |
+
+**Score authority:** `lib/policy/src/production-readiness-program.ts` · run `pnpm readiness:score -- --run-gates --live-staging` for live evidence. V1 headline caps engineering-heavy rubric until mutation coverage, funnel dashboard, and prod billing clear.
 
 **Strategic objective:** coherence — not more vision documents.
 
@@ -177,4 +180,5 @@ Update this matrix when:
 
 | Date | Change |
 |------|--------|
+| 2026-06-15 | Production readiness rubric (`production-readiness-program.ts`, `pnpm readiness:score`); V1 headline scores tightened (5/4/3.5/2/80%) |
 | 2026-06-05 | Initial live matrix — audit Part 20 + repo exploration |

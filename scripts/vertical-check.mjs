@@ -256,6 +256,12 @@ run("Demo showcase program", [
   "../../lib/policy/src/__tests__/demo-showcase-program.test.ts",
 ]);
 
+run("Production readiness rubric", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/production-readiness-program.test.ts",
+]);
+
 run("Analytics event bridge (blueprint H)", [
   "--import",
   "tsx/esm",

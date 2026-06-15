@@ -118,6 +118,7 @@
     "repo:health": "node scripts/repo-health-audit.mjs",
     "observability:up": "node scripts/observability-up.mjs",
     "gate:production-ready": "node scripts/production-readiness-gate.mjs",
+    "readiness:score": "node scripts/production-readiness-score.mjs",
     "smoke:load": "node scripts/k6-smoke-bookings.mjs",
     "stress:flood": "node scripts/stress-flood.mjs",
     "a11y:routes": "node scripts/axe-critical-routes.mjs",

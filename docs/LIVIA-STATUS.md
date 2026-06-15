@@ -1,6 +1,7 @@
 # Livia — top-level status
 
-**Updated:** 2026-06-15 (guest placement + Liv Era 1 lock)  
+**Updated:** 2026-06-15 (production readiness rubric + guest UX hardening)  
+**Readiness scores:** `pnpm readiness:score` · [`REPO-VS-BLUEPRINT-GAP-MATRIX.md`](product/REPO-VS-BLUEPRINT-GAP-MATRIX.md)  
 **Read this first** for “are we finished?” — execution sequencing: [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](product/LIVIA-MASTER-EXECUTION-PLAN-V3.md).  
 **GTM + vertical parity:** [`product/GTM-VERTICAL-DEPTH-PROGRAM.md`](product/GTM-VERTICAL-DEPTH-PROGRAM.md).  
 **Liv today → JARVIS:** [`product/LIV-OPERATING-SYSTEM.md`](product/LIV-OPERATING-SYSTEM.md) §16.  
@@ -20,7 +21,7 @@
 |--------|--------|------------------------|
 | **A — Platform engineering** | **Done** | APIs, policy hub, 9 verticals, guest `/b`, presets matrix, CI, demo seeds, support registry, mobile parity hooks |
 | **B — Screen implementation** | **Done** | Density + northstar gate — see **Bucket B checklist** below |
-| **C — Visual & founder acceptance** | **In progress (~65%)** | UAT specs + staging checks — **your walkthrough** closes this bucket |
+| **C — Visual & founder acceptance** | **In progress (80%)** | UAT specs + staging checks green — **your walkthrough** closes this bucket |
 | **D — Launch & field** | **Not done** | Gate 2 (10 Dublin shops), prod preset flag, App Store / Stripe prod evidence |
 
 **You are right to UAT now for feel and layout** — that is bucket **B + C**. There is no R4; only **R∞** (incremental polish toward north-star screens).
@@ -121,6 +122,7 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 
 | Date | Change |
 |------|--------|
+| 2026-06-15 | Production readiness rubric; Bucket C 80%; guest hub UX hardening on staging |
 | 2026-06-15 | Guest placement contract + Liv Era 1 doc (§16); `/book` deposit in summary, silent hub autofill, universal deposits |
 | 2026-06-05 | GTM Wave 1 lock — nine verticals, one bar; subdomain + `/my`; innovation program; retire `/b` UX |
 | 2026-06-05 | Master Blueprint Volumes 0–H; V3 execution plan; Era 1 focus replaces open-ended wellness wave 7 |

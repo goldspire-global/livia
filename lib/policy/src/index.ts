@@ -82,6 +82,7 @@ export * from "./tenant-surface-density";
 export * from "./studio-profile-fields";
 export * from "./pending-booking-flow";
 export * from "./booking-experience-copy";
+export * from "./production-readiness-program";
 export * from "./vertical-announcement";
 export * from "./guest-public-experience";
 export * from "./owner-home-bookings";
