@@ -266,6 +266,20 @@ async function seedEndClient(client: DemoEndClient): Promise<{
 
     const customerId = await ensureGuestCustomer(biz.id, client);
 
+    if (client.id === "mary" && slug === "luxe-salon-spa") {
+      const [staff] = await db
+        .select({ id: staffTable.id })
+        .from(staffTable)
+        .where(eq(staffTable.businessId, biz.id))
+        .limit(1);
+      if (staff) {
+        await db
+          .update(customersTable)
+          .set({ preferredStaffId: staff.id })
+          .where(eq(customersTable.id, customerId));
+      }
+    }
+
     if (client.packageCreditSlugs?.includes(slug)) {
       await ensureGuestPackageCredit(biz.id, customerId, client);
     }

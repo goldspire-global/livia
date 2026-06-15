@@ -47,10 +47,11 @@ test.describe("Internal ops smoke", () => {
     } catch {
       test.skip(true, `Internal ops not running at ${internalBase} — pnpm dev:internal`);
     }
-    await page.getByPlaceholder("X-Internal-Ops-Secret").fill(opsSecret);
-    await page.getByPlaceholder(/@livia-hq\.com|you@livia\.io/).fill("e2e@livia.io");
+    await page.locator('input[name="secret"]').fill(opsSecret);
+    await page.locator('input[name="operator"]').fill("e2e@livia.io");
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("link", { name: "Support", exact: true })).toBeVisible({
+    await expect(page.getByLabel("Internal navigation")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("link", { name: /^Support/ })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByTestId("api-connection-error")).not.toBeVisible({ timeout: 20_000 });

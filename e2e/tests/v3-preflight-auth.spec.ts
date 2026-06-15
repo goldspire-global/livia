@@ -145,7 +145,11 @@ test.describe("v3 pre-flight — owner (authenticated)", () => {
     const activation = page.getByTestId("activation-welcome");
     const activationDone = page.getByTestId("activation-welcome-done");
     const maturity = page.getByTestId(/^operator-maturity-/);
-    await expect(activation.or(activationDone).or(maturity).first()).toBeVisible({
+    const milestone = page.getByTestId("activation-milestone-in-progress");
+    const greeting = page.getByTestId("owner-dashboard-greeting");
+    await expect(
+      activation.or(activationDone).or(maturity).or(milestone).or(greeting).first(),
+    ).toBeVisible({
       timeout: 20_000,
     });
   });

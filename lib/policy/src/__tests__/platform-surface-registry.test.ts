@@ -13,7 +13,7 @@ import { getSupportPoint } from "../support-points";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const openapi = readFileSync(resolve(root, "lib/api-spec/openapi.yaml"), "utf8");
 
-assert.equal(P0_PLATFORM_SURFACES.length, 25, "P0 catalog has 25 surfaces");
+assert.equal(P0_PLATFORM_SURFACES.length, 26, "P0 catalog has 26 surfaces");
 
 for (const surface of P0_PLATFORM_SURFACES) {
   const cardPath = resolve(root, `docs/design/screen-cards/${surface.screenCardId}.yaml`);

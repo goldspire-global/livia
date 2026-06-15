@@ -23,6 +23,7 @@ import { useTenantExperience } from "@/lib/tenant-experience-api";
 import { useCallback, useState } from "react";
 import { InboxPreviewPanel } from "@/components/dashboard/inbox-preview-panel";
 import { OwnerLivGuardrails } from "@/components/dashboard/owner-liv-guardrails";
+import { HairColourDayCard } from "@/components/hair/hair-colour-day-card";
 import { VerticalHomeModules } from "@/components/dashboard/vertical-home-modules";
 import {
   consultFirstBriefingLine,
@@ -685,6 +686,8 @@ export function OwnerHomeRitual({
       </section>
 
       <OwnerLivGuardrails livNeedsAttention={livPulse === "act"} />
+
+      {tenantVertical === "hair" ? <HairColourDayCard /> : null}
 
       <div className={cn("grid gap-2.5", kpiGridClass)} data-testid="owner-kpi-row">
         {kpiChips.includes("todayBookings") ? (

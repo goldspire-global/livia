@@ -77,6 +77,10 @@ export const MARY_GUEST_HUB_UPCOMING_DAYS: Record<string, number> = {
   "harbour-wellness-cork": 14,
   "motion-physio-cork": 21,
   "ink-anchor-galway": 28,
+  "clarity-medspa-dublin": 7,
+  "peak-fitness-dublin": 11,
+  "paws-parlour-dublin": 12,
+  "shine-studio-belfast": 16,
 };
 
 export const DEMO_END_CLIENTS: DemoEndClient[] = [

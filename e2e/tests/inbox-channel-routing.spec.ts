@@ -44,7 +44,7 @@ test.describe("Inbox channel routing", () => {
     await multiChannelRow.click();
 
     await expect(page.getByTestId("inbox-sibling-threads-banner")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("inbox-sibling-threads-banner")).toContainText(/also has an open/i);
+    await expect(page.getByTestId("inbox-sibling-threads-banner")).toContainText(/also has open threads/i);
     await expect(page.locator("[data-testid^='inbox-sibling-thread-']").first()).toBeVisible();
   });
 });

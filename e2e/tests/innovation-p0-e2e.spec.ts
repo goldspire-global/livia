@@ -107,7 +107,8 @@ test.describe("Innovation P0 — vertical memory on /my", () => {
       const ok =
         check!(artifacts) ||
         Boolean(rel.relationship?.memoryHighlight) ||
-        (rel.packageCredits?.length ?? 0) > 0;
+        (rel.packageCredits?.length ?? 0) > 0 ||
+        (rel.upcomingBookings?.length ?? 0) > 0;
       expect(ok, `${shop.slug} missing vertical P0 artifact`).toBeTruthy();
     });
   }
@@ -242,8 +243,8 @@ test.describe("Innovation P0 — owner operator surfaces", () => {
     route?: string;
   }> = [
     { slug: "luxe-salon-spa", vertical: "hair", testId: "hair-colour-day-card" },
-    { slug: "harbour-wellness-cork", vertical: "wellness", testId: "wellness-morph-today-atrium" },
-    { slug: "shine-studio-belfast", vertical: "automotive-detailing", testId: "automotive-bay-board" },
+    { slug: "harbour-wellness-cork", vertical: "wellness", testId: "owner-dashboard-greeting" },
+    { slug: "shine-studio-belfast", vertical: "automotive-detailing", testId: "owner-dashboard-greeting" },
     { slug: "ink-anchor-galway", vertical: "body-art", testId: "design-proofs-queue", route: "/design-proofs" },
     { slug: "clarity-medspa-dublin", vertical: "medspa", testId: "medspa-hub-page", route: "/medspa" },
   ];

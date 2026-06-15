@@ -35,6 +35,8 @@ const ROUTES = [
   "/legal/privacy",
   "/status",
 ];
+
+test.describe("Marketing platform smoke", () => {
   test.beforeAll(async ({ request }) => {
     try {
       const res = await request.get(`${marketingBase}/`, { timeout: 8000 });
@@ -79,9 +81,9 @@ const ROUTES = [
   test("pricing shows F9 tiers from catalogue", async ({ page }) => {
     await page.goto(`${marketingBase}/pricing`);
     await expect(page.getByRole("heading", { name: /pricing/i })).toBeVisible();
-    await expect(page.getByText(/€79/)).toBeVisible();
-    await expect(page.getByText(/\/shop/)).toBeVisible();
-    await expect(page.getByText(/most teams/i)).toBeVisible();
+    await expect(page.getByText(/€79/).first()).toBeVisible();
+    await expect(page.getByText(/\/shop/).first()).toBeVisible();
+    await expect(page.getByText(/most teams/i).first()).toBeVisible();
   });
 
   test("404 page offers home link", async ({ page }) => {

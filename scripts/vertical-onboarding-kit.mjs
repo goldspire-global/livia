@@ -30,7 +30,10 @@ console.log("\n══ Vertical onboarding kit ══\n");
 
 for (const v of uniqueVerticals) {
   const hasPack = verticals.includes(`${v}:`) || verticals.includes(`"${v}"`);
-  const hasPlaybook = playbooks.includes(`${v}:`);
+  const hasPlaybook =
+    playbooks.includes(`${v}:`) ||
+    playbooks.includes(`"${v}":`) ||
+    playbooks.includes(`vertical: "${v}"`);
   const inCoverage = coverage.includes(`codeVertical: "${v}"`) || coverage.includes(`nearestPack: "${v}"`);
   const hasDemo = demoShops.includes(`vertical: "${v}"`) || demoShops.includes(`'${v}'`);
 
