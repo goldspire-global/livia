@@ -139,17 +139,23 @@ export const VERTICAL_THEMES: Record<
   },
 };
 
-export function applyVerticalTheme(vertical?: string | null, category?: string | null) {
+export function applyVerticalTheme(
+  vertical?: string | null,
+  category?: string | null,
+  opts?: { includeColorTokens?: boolean },
+) {
   const key = resolveVerticalKey(vertical, category);
   const t = VERTICAL_THEMES[key];
   const root = document.documentElement;
   root.dataset.vertical = key;
   root.dataset.verticalShell = t.shell;
   root.dataset.verticalDisplay = t.display;
-  root.style.setProperty("--primary", t.primary);
-  root.style.setProperty("--ring", t.ring);
-  root.style.setProperty("--sidebar-primary", t.primary);
-  root.style.setProperty("--vertical-accent", t.accent);
+  if (opts?.includeColorTokens !== false) {
+    root.style.setProperty("--primary", t.primary);
+    root.style.setProperty("--ring", t.ring);
+    root.style.setProperty("--sidebar-primary", t.primary);
+    root.style.setProperty("--vertical-accent", t.accent);
+  }
   root.style.setProperty("--vertical-hero-from", t.heroFrom);
   root.style.setProperty("--vertical-hero-to", t.heroTo);
   root.style.setProperty("--vertical-radius", t.radius === "xl" ? "1rem" : t.radius === "lg" ? "0.75rem" : t.radius === "md" ? "0.5rem" : "0.25rem");

@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useState } from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "@/lib/business-context";
 
 import { useMembership, type Role } from "@/lib/membership-context";
@@ -13,7 +14,6 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import {
-  applyExperienceTheme,
   applyTenantPresentationSurface,
   resolvePresentationColorMode,
 } from "@/lib/experience-theme";
@@ -47,6 +47,7 @@ import {
   filterNavItemsByOperatorShape,
   filterWellnessNavItems,
 } from "@workspace/policy";
+import { applyTenantShellFromCache } from "@/lib/prefetch-tenant-dashboard";
 
 import { UserButton } from "@clerk/clerk-react";
 
@@ -144,6 +145,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   useWebPush();
 
   const [location] = useLocation();
+  const queryClient = useQueryClient();
 
   const appearanceEmbed = isAppearanceEmbed();
 
@@ -172,17 +174,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const [showLifecycle, setShowLifecycle] = useState(false);
 
-  useEffect(() => {
-    applyExperienceTheme({
-      vertical: (business as { vertical?: string } | null)?.vertical,
-      category: (business as { category?: string } | null)?.category,
-      country: (business as { country?: string } | null)?.country,
-      persona,
-    });
-  }, [business, persona]);
-
+  const bid = business?.id ?? "";
   const previewSearch =
     typeof window !== "undefined" ? window.location.search : "";
+
+  useLayoutEffect(() => {
+    if (!bid) return;
+    applyTenantShellFromCache(queryClient, bid);
+  }, [bid, queryClient]);
 
   useLayoutEffect(() => {
     return () => {
@@ -215,6 +214,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       vertical: biz?.vertical ?? teVertical ?? null,
       category: biz?.category ?? null,
       country: biz?.country ?? null,
+      persona,
       cssPreset: p?.cssPreset ?? "platform-default",
       brandAccentHex: p?.brandAccentHex,
       colorMode: colorMode === "light" || colorMode === "dark" ? colorMode : null,
@@ -228,6 +228,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     tenantExperience?.presentation?.tokens?.colorMode,
     tenantExperience,
     business,
+    persona,
     setTheme,
     location,
     previewSearch,
@@ -250,7 +251,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
   /** Vertical theme sets `--primary`; persona tint only for badge copy. */
   const accent = "hsl(var(--primary))";
 
-  const bid = business?.id ?? "";
   const { data: tenantCapabilities } = useGetTenantCapabilities(bid, {
     query: { enabled: !!bid } as never,
   });

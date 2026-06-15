@@ -6,14 +6,15 @@ import { MembershipProvider, useMembership } from "@/lib/membership-context";
 import { isDemoLoginEnabled, usePersona } from "@/lib/persona";
 import { PERSONA_RITUALS, resolvePersonaRitual } from "@/lib/persona-rituals";
 import { Spinner } from "@/components/ui/spinner";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api-fetch";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlatformLegalGate } from "@/components/platform-legal-gate";
 import { isDemoAccountEmail, isDemoTenantSlug } from "@/lib/demo-tenant";
 import { FOUNDER_DEMO_LAUNCHER_PATH } from "@/lib/demo-routes";
 import { isOnboardingAppUnlocked, type OnboardingState } from "@workspace/policy";
 import { PlatformExecHandoff } from "@/components/platform-exec-handoff";
+import { prefetchTenantDashboardShell, applyTenantShellFromCache } from "@/lib/prefetch-tenant-dashboard";
 
 // On first authenticated load, sweep up any pending Clerk invitations
 // and turn them into business_memberships rows. Idempotent + cheap, so
@@ -110,10 +111,31 @@ function BusinessDataLoader({
   children: ReactNode;
   skipLegalGate?: boolean;
 }) {
+  const queryClient = useQueryClient();
   const { data: businesses, isLoading } = useGetMyBusinesses();
   const [location] = useLocation();
   const { user } = useUser();
   const demoEmail = isDemoAccountEmail(user?.primaryEmailAddress?.emailAddress);
+
+  const list = normalizeBusinessList(businesses);
+  const initialBusiness = useMemo(() => {
+    if (list.length === 0) return null;
+    const persisted =
+      typeof window !== "undefined" ? window.localStorage.getItem("livia.currentBusinessId") : null;
+    if (persisted) {
+      const found = list.find((b) => b.id === persisted);
+      if (found) return found;
+    }
+    return list[0] ?? null;
+  }, [list]);
+
+  useEffect(() => {
+    const businessId = initialBusiness?.id;
+    if (!businessId) return;
+    void prefetchTenantDashboardShell(queryClient, businessId).then(() => {
+      applyTenantShellFromCache(queryClient, businessId);
+    });
+  }, [initialBusiness?.id, queryClient]);
 
   if (isLoading) {
     return (
@@ -123,7 +145,6 @@ function BusinessDataLoader({
     );
   }
 
-  const list = normalizeBusinessList(businesses);
   const hasAny = list.length > 0;
 
   if (!hasAny && location !== "/onboarding" && location !== "/legal-acceptance") {

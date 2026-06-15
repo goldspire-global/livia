@@ -93,8 +93,12 @@ export function applyExperienceTheme(args: {
   category?: string | null;
   country?: string | null;
   persona?: PersonaKind | null;
+  /** Public /b uses vertical accent; tenant dashboard defers to presentation preset. */
+  includeVerticalColorTokens?: boolean;
 }) {
-  applyVerticalTheme(args.vertical, args.category);
+  applyVerticalTheme(args.vertical, args.category, {
+    includeColorTokens: args.includeVerticalColorTokens ?? true,
+  });
   applyMarketTheme(args.country);
   applyPersonaTheme(args.persona);
 }
@@ -327,6 +331,7 @@ export function applyTenantPresentationSurface(args: {
       category: args.category,
       country: args.country,
       persona: args.persona ?? null,
+      includeVerticalColorTokens: !args.cssPreset,
     });
   }
   const cssPreset = args.cssPreset;
