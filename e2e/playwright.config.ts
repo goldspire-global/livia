@@ -384,6 +384,16 @@ export default defineConfig({
       },
     },
     {
+      name: "guest-care-aftercare",
+      testMatch: /guest-care-aftercare\.spec\.ts/,
+      timeout: 180_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
       name: "innovation-p0-e2e",
       testMatch: /innovation-p0-e2e\.spec\.ts/,
       timeout: 600_000,

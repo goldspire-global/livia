@@ -77,7 +77,7 @@
 | **Guest book URLs (D0)** | Owner surfaces use `publicBookingUrl` / policy helpers — not hardcoded `/book/` |
 | **Sub-segment onboarding** | `subverticalProfileId` at create — wizard step live; starter packs per profile |
 | **Guest surfaces** | Retire user-facing `/b` → **`{slug}.livia-hq.com`** when `VITE_GUEST_SUBDOMAIN_LIVE` |
-| **Activation tracking** | Sacred metric wired; founder funnel dashboard + Gate 2 field proof open |
+| **Activation tracking** | Sacred metric wired; `pnpm test:e2e:guest-care-aftercare` for complete → draft → send |
 | **Your UAT** | Nine-slug showcase + guest hub — [`FOUNDER-UAT-CHECKLIST.md`](operations/FOUNDER-UAT-CHECKLIST.md) |
 | Staging | **`livia-stg`** only — [`VERCEL-DEPLOY-ENVIRONMENTS.md`](operations/VERCEL-DEPLOY-ENVIRONMENTS.md) |
 

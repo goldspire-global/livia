@@ -80,6 +80,7 @@
     "test:e2e:preflight": "pnpm --filter @workspace/e2e run test:preflight",
     "test:e2e:verticals": "node scripts/e2e-all-verticals.mjs",
     "test:e2e:innovation-p0": "node scripts/e2e-innovation-p0.mjs",
+    "test:e2e:guest-care-aftercare": "pnpm --filter @workspace/e2e run test:guest-care-aftercare",
     "test:e2e:uat-dual-entry": "pnpm --filter @workspace/e2e exec playwright test --project=dual-entry-uat --workers=1",
     "uat:deep-gate": "node scripts/uat-deep-gate.mjs",
     "smoke:mobile-entry": "node scripts/mobile-entry-smoke.mjs",
