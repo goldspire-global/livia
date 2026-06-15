@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
 import { clientGuestBookHref } from "@/lib/guest-book-url";
-import { applyVerticalTheme } from "@/lib/vertical-theme";
-import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
+import {
+  applyPublicGuestSurfaceTheme,
+  clearPublicGuestSurfaceTheme,
+  type PublicGuestExperienceSkin,
+} from "@/lib/apply-public-guest-theme";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Star, CheckCircle2, Loader2, MapPin } from "lucide-react";
@@ -38,6 +41,7 @@ type VisitPayload = {
   depositDueMinor?: number;
   depositPayUrl?: string | null;
   depositLine?: { label: string; tone: "paid" | "due" | "hold" | "none" } | null;
+  experienceSkin?: PublicGuestExperienceSkin;
 };
 
 const SCORES = [1, 2, 3, 4, 5] as const;
@@ -64,15 +68,14 @@ export default function PublicVisitPage() {
       })
       .then((d) => {
         setData(d);
-        applyVerticalTheme(d.vertical, null);
-        applyExperienceTheme({ vertical: d.vertical ?? undefined });
+        applyPublicGuestSurfaceTheme({
+          vertical: d.vertical,
+          experienceSkin: d.experienceSkin,
+        });
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-    return () => {
-      document.documentElement.removeAttribute("data-vertical");
-      clearExperienceTheme();
-    };
+    return () => clearPublicGuestSurfaceTheme();
   }, [slug, token]);
 
   async function sendRunningLate(minutes: number) {

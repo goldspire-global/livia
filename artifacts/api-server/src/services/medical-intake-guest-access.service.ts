@@ -6,6 +6,7 @@ import {
   medicalIntakeGuestAccessTable,
   medicalIntakeRecordsTable,
 } from "@workspace/db";
+import { buildPublicGuestExperienceSkin } from "../lib/experience-skin";
 import { and, eq } from "drizzle-orm";
 
 export async function ensureMedicalIntakeGuestAccess(
@@ -42,6 +43,7 @@ export type GuestIntakeView = {
   priorProcedures: string | null;
   notes: string | null;
   logoUrl: string | null;
+  experienceSkin: ReturnType<typeof buildPublicGuestExperienceSkin>;
 };
 
 export async function getGuestIntakeByToken(
@@ -61,6 +63,9 @@ export async function getGuestIntakeByToken(
       businessName: businessesTable.name,
       slug: businessesTable.slug,
       vertical: businessesTable.vertical,
+      country: businessesTable.country,
+      presentationPresetId: businessesTable.presentationPresetId,
+      brandAccentHex: businessesTable.brandAccentHex,
       logoUrl: businessesTable.logoUrl,
       customerFirstName: customersTable.firstName,
     })
@@ -94,6 +99,12 @@ export async function getGuestIntakeByToken(
     priorProcedures: row.priorProcedures,
     notes: row.notes,
     logoUrl: row.logoUrl,
+    experienceSkin: buildPublicGuestExperienceSkin({
+      vertical: row.vertical,
+      country: row.country,
+      presentationPresetId: row.presentationPresetId,
+      brandAccentHex: row.brandAccentHex,
+    }),
   };
 }
 

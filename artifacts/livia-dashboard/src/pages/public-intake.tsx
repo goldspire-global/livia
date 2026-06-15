@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
 import { clientGuestBookHref } from "@/lib/guest-book-url";
-import { applyVerticalTheme } from "@/lib/vertical-theme";
-import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
+import {
+  applyPublicGuestSurfaceTheme,
+  clearPublicGuestSurfaceTheme,
+  type PublicGuestExperienceSkin,
+} from "@/lib/apply-public-guest-theme";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -27,6 +30,7 @@ type IntakePayload = {
   priorProcedures: string | null;
   notes: string | null;
   logoUrl: string | null;
+  experienceSkin?: PublicGuestExperienceSkin;
 };
 
 type YesNo = "yes" | "no" | null;
@@ -101,8 +105,10 @@ export default function PublicIntakePage() {
       })
       .then((d) => {
         setData(d);
-        applyVerticalTheme(d.vertical, null);
-        applyExperienceTheme({ vertical: d.vertical ?? undefined });
+        applyPublicGuestSurfaceTheme({
+          vertical: d.vertical,
+          experienceSkin: d.experienceSkin,
+        });
         setAllergies(d.allergies ?? "");
         setMedications(d.medications ?? "");
         setConditions(d.conditions ?? "");
@@ -112,10 +118,7 @@ export default function PublicIntakePage() {
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-    return () => {
-      document.documentElement.removeAttribute("data-vertical");
-      clearExperienceTheme();
-    };
+    return () => clearPublicGuestSurfaceTheme();
   }, [slug, token]);
 
   const readOnly = data?.status !== "draft";

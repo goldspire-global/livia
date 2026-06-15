@@ -12,6 +12,7 @@ import { ensureBookingGuestAccess } from "./booking-guest-access.service";
 import { computeDepositDueMinor } from "./guest-deposit-pay.service";
 import { policiesFromBusiness } from "./policies.service";
 import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
+import { buildPublicGuestExperienceSkin } from "../lib/experience-skin";
 import { getBusinessById } from "./businesses.service";
 import { publishDomainEvent } from "../lib/domain-events";
 
@@ -27,6 +28,7 @@ export type GuestWaitlistOfferView = {
   expiresAt: string | null;
   logoUrl: string | null;
   customerFirstName: string | null;
+  experienceSkin: ReturnType<typeof buildPublicGuestExperienceSkin>;
 };
 
 export async function getGuestWaitlistOfferByToken(
@@ -43,6 +45,9 @@ export async function getGuestWaitlistOfferByToken(
       businessName: businessesTable.name,
       slug: businessesTable.slug,
       vertical: businessesTable.vertical,
+      country: businessesTable.country,
+      presentationPresetId: businessesTable.presentationPresetId,
+      brandAccentHex: businessesTable.brandAccentHex,
       logoUrl: businessesTable.logoUrl,
       serviceName: servicesTable.name,
       customerFirstName: customersTable.firstName,
@@ -74,6 +79,12 @@ export async function getGuestWaitlistOfferByToken(
     expiresAt: row.expiresAt ? new Date(row.expiresAt).toISOString() : null,
     logoUrl: row.logoUrl,
     customerFirstName: row.customerFirstName,
+    experienceSkin: buildPublicGuestExperienceSkin({
+      vertical: row.vertical,
+      country: row.country,
+      presentationPresetId: row.presentationPresetId,
+      brandAccentHex: row.brandAccentHex,
+    }),
   };
 }
 

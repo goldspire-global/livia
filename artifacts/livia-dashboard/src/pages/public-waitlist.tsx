@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
-import { applyVerticalTheme } from "@/lib/vertical-theme";
-import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
+import {
+  applyPublicGuestSurfaceTheme,
+  clearPublicGuestSurfaceTheme,
+  type PublicGuestExperienceSkin,
+} from "@/lib/apply-public-guest-theme";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +27,7 @@ type WaitlistPayload = {
   expiresAt: string | null;
   logoUrl: string | null;
   customerFirstName: string | null;
+  experienceSkin?: PublicGuestExperienceSkin;
 };
 
 function formatTtl(expiresAt: string | null): string | null {
@@ -58,16 +62,15 @@ export default function PublicWaitlistPage() {
       })
       .then((d) => {
         setData(d);
-        applyVerticalTheme(d.vertical, null);
-        applyExperienceTheme({ vertical: d.vertical ?? undefined });
+        applyPublicGuestSurfaceTheme({
+          vertical: d.vertical,
+          experienceSkin: d.experienceSkin,
+        });
         setTtl(formatTtl(d.expiresAt));
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-    return () => {
-      document.documentElement.removeAttribute("data-vertical");
-      clearExperienceTheme();
-    };
+    return () => clearPublicGuestSurfaceTheme();
   }, [slug, token]);
 
   useEffect(() => {

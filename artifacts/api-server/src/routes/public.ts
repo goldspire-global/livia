@@ -70,7 +70,7 @@ import {
 import { db, visitFeedbackTable, bookingsTable, customersTable, businessesTable } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
 import { socialProofForVertical } from "../lib/public-social-proof";
-import { inferDemoServiceImageUrl, publicExperienceSkin } from "../lib/experience-skin";
+import { inferDemoServiceImageUrl, publicExperienceSkin, buildPublicGuestExperienceSkin } from "../lib/experience-skin";
 import { resolvePublicServiceImageUrl } from "@workspace/policy";
 import { getSignInAppearanceHintForEmail } from "../services/sign-in-appearance-hint.service";
 import { purchaseWellnessGiftPackage } from "../services/wellness-gift.service";
@@ -247,18 +247,12 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
       locale: biz.locale,
       name: biz.name,
     }),
-    experienceSkin: (() => {
-      const preset = resolvePresentationPreset(
-        biz.vertical as BusinessVertical,
-        biz.presentationPresetId ?? PLATFORM_DEFAULT_PRESET_ID,
-      );
-      return {
-        ...publicExperienceSkin(biz.vertical, biz.country),
-        presentation: preset.cssPreset,
-        presentationColorMode: preset.tokens.colorMode,
-        brandAccentHex: biz.brandAccentHex ?? null,
-      };
-    })(),
+    experienceSkin: buildPublicGuestExperienceSkin({
+      vertical: biz.vertical,
+      country: biz.country,
+      presentationPresetId: biz.presentationPresetId,
+      brandAccentHex: biz.brandAccentHex,
+    }),
     socialProof: socialProofForVertical(biz.vertical),
     retailStore:
       isPublicRetailVertical(biz.vertical) && retailEntitled
@@ -1017,6 +1011,14 @@ router.get("/public/b/:slug/visit/:token", async (req, res): Promise<void> => {
       currency: view.currency,
       pendingReason: view.pendingReason,
     }),
+    experienceSkin: biz
+      ? buildPublicGuestExperienceSkin({
+          vertical: biz.vertical,
+          country: biz.country,
+          presentationPresetId: biz.presentationPresetId,
+          brandAccentHex: biz.brandAccentHex,
+        })
+      : undefined,
   });
 });
 
@@ -1286,6 +1288,12 @@ router.get("/public/b/:slug/shop/:token", async (req, res): Promise<void> => {
     fulfillmentDetail: order.fulfillmentDetail,
     checkoutAvailable:
       order.status !== "PAID" && (isStripeConfigured() || guestMaySimulatePayments()),
+    experienceSkin: buildPublicGuestExperienceSkin({
+      vertical: business.vertical,
+      country: business.country,
+      presentationPresetId: business.presentationPresetId,
+      brandAccentHex: business.brandAccentHex,
+    }),
   });
 });
 

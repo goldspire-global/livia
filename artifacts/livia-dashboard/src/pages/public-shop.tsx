@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearch } from "wouter";
 import { useGuestBookTokenRoute } from "@/lib/use-guest-book-slug";
-import { applyVerticalTheme } from "@/lib/vertical-theme";
-import { applyExperienceTheme, clearExperienceTheme } from "@/lib/experience-theme";
+import {
+  applyPublicGuestSurfaceTheme,
+  clearPublicGuestSurfaceTheme,
+  type PublicGuestExperienceSkin,
+} from "@/lib/apply-public-guest-theme";
 import { formatCurrency } from "@/lib/format";
 import { parsePublicApiError } from "@/lib/public-booking-helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +53,7 @@ type ShopPayload = {
   checkoutAvailable: boolean;
   fulfillmentMode?: string | null;
   fulfillmentDetail?: string | null;
+  experienceSkin?: PublicGuestExperienceSkin;
 };
 
 export default function PublicShopPage() {
@@ -80,8 +84,10 @@ export default function PublicShopPage() {
       if (!r.ok) throw new Error("not found");
       const d = (await r.json()) as ShopPayload;
       setData(d);
-      applyVerticalTheme(d.vertical, null);
-      applyExperienceTheme({ vertical: d.vertical });
+      applyPublicGuestSurfaceTheme({
+        vertical: d.vertical,
+        experienceSkin: d.experienceSkin,
+      });
     } catch {
       setData(null);
     } finally {
@@ -91,10 +97,7 @@ export default function PublicShopPage() {
 
   useEffect(() => {
     void load();
-    return () => {
-      document.documentElement.removeAttribute("data-vertical");
-      clearExperienceTheme();
-    };
+    return () => clearPublicGuestSurfaceTheme();
   }, [load]);
 
   useEffect(() => {

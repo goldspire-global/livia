@@ -2,7 +2,9 @@ import type { BusinessVertical } from "@workspace/policy";
 import {
   inferPublicServiceImageFromName,
   PUBLIC_SERVICE_IMAGE_KEYWORDS,
+  PLATFORM_DEFAULT_PRESET_ID,
   resolveJurisdictionCode,
+  resolvePresentationPreset,
 } from "@workspace/policy";
 
 const SHELL: Record<BusinessVertical, string> = {
@@ -37,6 +39,25 @@ export function publicExperienceSkin(vertical?: string | null, country?: string 
     shell: SHELL[v] ?? "warm",
     display: DISPLAY[v] ?? "serif",
     market: resolveJurisdictionCode(country).toLowerCase(),
+  };
+}
+
+/** Tenant presentation on public /b guest surfaces — matches GET /public/b/:slug book payload. */
+export function buildPublicGuestExperienceSkin(biz: {
+  vertical?: string | null;
+  country?: string | null;
+  presentationPresetId?: string | null;
+  brandAccentHex?: string | null;
+}) {
+  const preset = resolvePresentationPreset(
+    (biz.vertical ?? "hair") as BusinessVertical,
+    biz.presentationPresetId ?? PLATFORM_DEFAULT_PRESET_ID,
+  );
+  return {
+    ...publicExperienceSkin(biz.vertical, biz.country),
+    presentation: preset.cssPreset,
+    presentationColorMode: preset.tokens.colorMode,
+    brandAccentHex: biz.brandAccentHex ?? null,
   };
 }
 

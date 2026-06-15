@@ -1,12 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { applyVerticalTheme } from "@/lib/vertical-theme";
 import {
-  applyExperienceTheme,
-  applyTenantPresentationSurface,
-  clearExperienceTheme,
-  clearPresentationTheme,
+  applyPublicGuestSurfaceTheme,
+  clearPublicGuestSurfaceTheme,
+} from "@/lib/apply-public-guest-theme";
+import {
   publicExperienceClassNames,
-  resolvePresentationColorMode,
 } from "@/lib/experience-theme";
 import { applyAppearancePreviewFromSearch } from "@/lib/appearance-preview-mode";
 import { playCelebrationChime, celebrationEnabled } from "@/lib/celebrate";
@@ -359,27 +357,7 @@ export default function PublicBookingPage() {
   const slots = (slotsData as { slots?: PublicSlot[] } | undefined)?.slots ?? [];
 
   useEffect(() => {
-    if (b?.vertical || b?.category || b?.country) {
-      applyExperienceTheme({
-        vertical: b?.vertical,
-        category: b?.category,
-        country: b?.country,
-      });
-    }
-    return () => {
-      clearExperienceTheme();
-      clearPresentationTheme();
-    };
-  }, [b?.vertical, b?.category, b?.country]);
-
-  useEffect(() => {
-    const skin = b?.experienceSkin as
-      | { presentation?: string; presentationColorMode?: string; brandAccentHex?: string | null }
-      | undefined;
-    const savedMode =
-      skin?.presentationColorMode === "light" || skin?.presentationColorMode === "dark"
-        ? skin.presentationColorMode
-        : null;
+    if (!b?.vertical && !b?.category && !b?.country && !b?.experienceSkin) return;
 
     if (
       applyAppearancePreviewFromSearch(undefined, {
@@ -391,16 +369,16 @@ export default function PublicBookingPage() {
       return;
     }
 
-    if (skin?.presentation || skin?.brandAccentHex) {
-      applyTenantPresentationSurface({
-        vertical: b?.vertical,
-        category: b?.category,
-        country: b?.country,
-        cssPreset: skin.presentation,
-        brandAccentHex: skin.brandAccentHex,
-        colorMode: savedMode ?? resolvePresentationColorMode(skin.presentation),
-      });
-    }
+    applyPublicGuestSurfaceTheme({
+      vertical: b?.vertical,
+      category: b?.category,
+      country: b?.country,
+      experienceSkin: b?.experienceSkin as
+        | { presentation?: string; presentationColorMode?: string; brandAccentHex?: string | null }
+        | undefined,
+    });
+
+    return () => clearPublicGuestSurfaceTheme();
   }, [b?.experienceSkin, b?.vertical, b?.category, b?.country]);
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { getGuestBookingByToken } from "./booking-guest-access.service";
 import { policiesFromBusiness } from "./policies.service";
 import { createBookingPaymentIntent } from "./payment.service";
 import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
+import { buildPublicGuestExperienceSkin } from "../lib/experience-skin";
 import { getStripe, isStripeConfigured, logStripeSkip, guestMaySimulatePayments } from "../lib/stripe";
 import { db, bookingsTable, businessesTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
@@ -26,6 +27,7 @@ export type GuestDepositPayView = {
   depositRequired: boolean;
   logoUrl: string | null;
   checkoutAvailable: boolean;
+  experienceSkin: ReturnType<typeof buildPublicGuestExperienceSkin>;
 };
 
 export function computeDepositDueMinor(args: {
@@ -85,6 +87,12 @@ export async function getGuestDepositPayView(
     depositRequired,
     logoUrl: view.logoUrl,
     checkoutAvailable: canPay,
+    experienceSkin: buildPublicGuestExperienceSkin({
+      vertical: biz.vertical,
+      country: biz.country,
+      presentationPresetId: biz.presentationPresetId,
+      brandAccentHex: biz.brandAccentHex,
+    }),
   };
 }
 
