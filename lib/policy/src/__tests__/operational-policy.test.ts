@@ -7,11 +7,14 @@ import {
   mergeOperationalPolicy,
   normalizeDepositPercent,
   parseOperationalPolicy,
+  recommendedOperationalPolicyDefaults,
 } from "../operational-policy";
 
 assert.equal(normalizeDepositPercent("020"), 20);
 assert.equal(normalizeDepositPercent(20), 20);
 assert.equal(parseOperationalPolicy({ depositPercent: "020" }).depositPercent, 20);
+assert.equal(DEFAULT_OPERATIONAL_POLICY.depositRequired, true);
+assert.equal(DEFAULT_OPERATIONAL_POLICY.depositPercent, 20);
 
 assert.equal(
   customerExemptFromDeposit({
@@ -60,5 +63,15 @@ const proposed = mergeOperationalPolicy({ lateGraceMinutes: 15 }, DEFAULT_OPERAT
 const changes = diffOperationalPolicy(DEFAULT_OPERATIONAL_POLICY, proposed);
 assert.equal(changes.length, 1);
 assert.equal(changes[0]?.field, "lateGraceMinutes");
+
+assert.equal(
+  recommendedOperationalPolicyDefaults({ countryIso: "IE", vertical: "wellness" }).depositPercent,
+  50,
+);
+assert.equal(
+  recommendedOperationalPolicyDefaults({ countryIso: "IE", vertical: "allied-health" })
+    .depositRequired,
+  false,
+);
 
 console.log("operational-policy.test.ts OK");

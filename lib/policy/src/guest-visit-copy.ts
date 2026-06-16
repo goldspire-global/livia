@@ -4,6 +4,7 @@
 import type { BusinessVertical } from "./types";
 import { resolveVerticalKey } from "./vocabulary";
 import { guestPublicVisitPrep } from "./guest-public-experience";
+import { guestBalanceAtVisitLine } from "./policy-evolution-program";
 
 export type GuestVisitDepositLine = {
   label: string;
@@ -27,38 +28,50 @@ export function guestVisitDepositLine(args: {
   priceMinor?: number;
   currency?: string;
   pendingReason?: string | null;
+  depositDueMinor?: number;
+  depositPercent?: number;
 }): GuestVisitDepositLine | null {
   const paid = args.depositPaidEurCents ?? 0;
   const status = (args.status ?? "").toUpperCase();
   const currency = args.currency ?? "EUR";
-  const vertical = resolveVerticalKey(args.vertical, null);
 
   if (paid > 0) {
+    const balanceLine = guestBalanceAtVisitLine({
+      priceMinor: args.priceMinor ?? 0,
+      depositPaidMinor: paid,
+      currency,
+    });
     return {
-      label: `Deposit paid — ${formatMoneyMinor(paid, currency)} held for this visit`,
+      label: balanceLine
+        ? `Deposit paid — ${formatMoneyMinor(paid, currency)}. ${balanceLine}`
+        : `Deposit paid — ${formatMoneyMinor(paid, currency)}. Your slot is locked.`,
       tone: "paid",
     };
   }
 
-  const awaitingDeposit =
-    args.pendingReason === "awaiting_deposit" ||
-    (status === "PENDING" &&
-      (vertical === "body-art" || vertical === "medspa" || vertical === "wellness"));
-
-  if (awaitingDeposit) {
-    const due =
-      args.priceMinor && args.priceMinor > 0
-        ? formatMoneyMinor(Math.round(args.priceMinor * 0.2), currency)
-        : "your deposit";
-    return {
-      label: `Deposit due — complete the pay link we sent to hold your slot (${due})`,
-      tone: "due",
-    };
+  if (args.pendingReason === "awaiting_deposit" || status === "PENDING") {
+    const dueMinor =
+      args.depositDueMinor ??
+      (args.priceMinor && args.depositPercent
+        ? Math.round((args.priceMinor * args.depositPercent) / 100)
+        : 0);
+    if (dueMinor > 0) {
+      return {
+        label: `Pay ${formatMoneyMinor(dueMinor, currency)} to hold your slot — Liv confirms automatically when payment clears.`,
+        tone: "due",
+      };
+    }
+    if (args.pendingReason === "awaiting_deposit") {
+      return {
+        label: "Complete the pay link we sent — Liv confirms your slot when payment clears.",
+        tone: "due",
+      };
+    }
   }
 
-  if (status === "CONFIRMED" && (vertical === "body-art" || vertical === "medspa")) {
+  if (status === "CONFIRMED") {
     return {
-      label: "Your slot is held — no deposit outstanding",
+      label: "Your slot is confirmed — see you soon.",
       tone: "hold",
     };
   }

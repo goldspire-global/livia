@@ -18,9 +18,12 @@ const due = guestVisitDepositLine({
   status: "PENDING",
   pendingReason: "awaiting_deposit",
   priceMinor: 25000,
+  depositDueMinor: 7500,
+  depositPercent: 30,
   currency: "EUR",
 });
-assert.ok(due?.label.includes("Deposit due"));
+assert.ok(due?.label.includes("Pay"));
+assert.ok(due?.label.includes("Liv confirms"));
 assert.equal(due?.tone, "due");
 
 const alliedSms = guestVerticalPrepSmsBody("allied-health", "Motion Physio");

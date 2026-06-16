@@ -32,9 +32,6 @@ export function derivePendingReason(args: {
   if (args.depositRequired && args.depositPaidEurCents <= 0) {
     return PENDING_REASON_CODES.AWAITING_DEPOSIT;
   }
-  if (args.customerTrusted && args.autoConfirmWhenNoDeposit !== false) {
-    return null;
-  }
   return resolvePendingReasonCodeFromPolicy({
     status: "PENDING",
     source: args.source,

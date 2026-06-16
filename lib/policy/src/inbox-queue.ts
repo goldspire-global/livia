@@ -15,17 +15,43 @@ export type InboxQueueConversation = {
   aiHandled: boolean;
 };
 
+/** Open threads waiting for a human — Liv paused or not assigned. */
+export function inboxThreadNeedsYou(c: InboxQueueConversation): boolean {
+  return c.status === "OPEN" && !c.aiHandled;
+}
+
+/** Handed off to staff and still needs a reply. */
+export function inboxThreadTakenOver(c: InboxQueueConversation): boolean {
+  return c.status === "HANDED_OFF";
+}
+
+/** Any thread that should pull owner/manager attention in the list. */
+export function inboxThreadNeedsAttention(c: InboxQueueConversation): boolean {
+  return inboxThreadNeedsYou(c) || inboxThreadTakenOver(c);
+}
+
+export function sortInboxThreadsByAttention<T extends InboxQueueConversation & { lastMessageAt: string }>(
+  threads: T[],
+): T[] {
+  return [...threads].sort((a, b) => {
+    const aAtt = inboxThreadNeedsAttention(a) ? 1 : 0;
+    const bAtt = inboxThreadNeedsAttention(b) ? 1 : 0;
+    if (aAtt !== bAtt) return bAtt - aAtt;
+    return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+  });
+}
+
 export function matchesInboxQueueLens(
   c: InboxQueueConversation,
   lens: InboxQueueLens,
 ): boolean {
   switch (lens) {
     case "needs_you":
-      return c.status === "OPEN" && !c.aiHandled;
+      return inboxThreadNeedsYou(c);
     case "liv_handling":
       return c.status === "OPEN" && c.aiHandled;
     case "taken_over":
-      return c.status === "HANDED_OFF";
+      return inboxThreadTakenOver(c);
     case "closed":
       return c.status === "CLOSED";
     case "all":

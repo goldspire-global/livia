@@ -22,11 +22,13 @@ export function useNavActionCounts() {
   const pendingCount = summary?.pendingCount ?? 0;
   const handedOffCount =
     (summary as { handedOffCount?: number } | undefined)?.handedOffCount ?? 0;
+  const needsYouCount =
+    (summary as { needsYouCount?: number } | undefined)?.needsYouCount ?? 0;
   const newEnquiriesCount =
     (summary as { newEnquiriesCount?: number } | undefined)?.newEnquiriesCount ?? 0;
   const inboxAttentionCount =
     (summary as { inboxAttentionCount?: number } | undefined)?.inboxAttentionCount ??
-    handedOffCount;
+    needsYouCount + handedOffCount;
 
   const consultInboxAttention = useMemo(
     () =>

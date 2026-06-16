@@ -2,6 +2,8 @@
  * Twin observations — meaningful interpretations from facts + signals (Volume D layer 4).
  * Policy resolves drafts; API materializes to twin_observations table.
  */
+import { emergentTrustTwinObservation } from "./emergent-trust-program";
+import type { EmergentTrustEligibilityInput } from "./emergent-trust-program";
 
 export type TwinObservationDomain =
   | "operational"
@@ -49,6 +51,8 @@ export type TwinObservationResolveInput = {
   capabilityScore: number;
   feedbackCount: number;
   avgFeedback: number | null;
+  /** Optional — emergent trust tier proposal (never auto-enable). */
+  emergentTrust?: EmergentTrustEligibilityInput;
 };
 
 /** Derive observation drafts from twin context facts — no DB in policy. */
@@ -226,6 +230,11 @@ export function resolveTwinObservationDrafts(
       ],
       href: "/settings?tab=public",
     });
+  }
+
+  if (input.emergentTrust) {
+    const trustProposal = emergentTrustTwinObservation(input.emergentTrust);
+    if (trustProposal) out.push(trustProposal);
   }
 
   return out;

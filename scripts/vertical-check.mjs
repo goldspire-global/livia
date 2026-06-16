@@ -226,6 +226,30 @@ run("Operational policy (Liv setup I-B)", [
   "../../lib/policy/src/__tests__/operational-policy.test.ts",
 ]);
 
+run("Booking commitment gate (deposits per vertical)", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/booking-commitment-program.test.ts",
+]);
+
+run("Owner operating ritual (Liv handled pulse)", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/owner-operating-ritual.test.ts",
+]);
+
+run("Emergent trust programs (VIP evolves from data)", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/emergent-trust-program.test.ts",
+]);
+
+run("Policy evolution (Twin accept patches)", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/policy-evolution-program.test.ts",
+]);
+
 run("Relationship layer (Era 1 Q2)", [
   "--import",
   "tsx/esm",

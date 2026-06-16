@@ -10,6 +10,7 @@ import { EventType } from "@workspace/db";
 import { logEvent } from "./events.service";
 import { generateId } from "../lib/id";
 import { logger } from "../lib/logger";
+import { resolveDepositPercentForService, type OperationalPolicy } from "@workspace/policy";
 
 export type GuestDepositPayView = {
   bookingId: string;
@@ -43,6 +44,21 @@ export function computeDepositDueMinor(args: {
   return Math.max(0, target - args.depositPaidMinor);
 }
 
+export function resolveBookingDepositPercent(args: {
+  operational: Pick<OperationalPolicy, "depositPercent" | "depositRequired">;
+  service?: {
+    category?: string | null;
+    serviceKind?: string | null;
+    name?: string | null;
+    durationMinutes?: number;
+  } | null;
+}): number {
+  return resolveDepositPercentForService({
+    operational: args.operational,
+    service: args.service,
+  });
+}
+
 export async function getGuestDepositPayView(
   slug: string,
   token: string,
@@ -59,7 +75,21 @@ export async function getGuestDepositPayView(
 
   const policies = policiesFromBusiness(biz);
   const depositRequired = policies.operational.depositRequired;
-  const depositPercent = policies.operational.depositPercent ?? 0;
+  const [svc] = await db
+    .select({
+      category: servicesTable.category,
+      serviceKind: servicesTable.serviceKind,
+      name: servicesTable.name,
+      durationMinutes: servicesTable.durationMinutes,
+    })
+    .from(bookingsTable)
+    .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
+    .where(eq(bookingsTable.id, view.bookingId))
+    .limit(1);
+  const depositPercent = resolveBookingDepositPercent({
+    operational: policies.operational,
+    service: svc ?? null,
+  });
   const depositDueMinor = computeDepositDueMinor({
     priceMinor: view.priceMinor,
     depositPercent,
@@ -125,6 +155,10 @@ export async function captureGuestDepositPayment(args: {
       customerId: bookingsTable.customerId,
       priceMinor: servicesTable.priceMinor,
       currency: servicesTable.currency,
+      category: servicesTable.category,
+      serviceKind: servicesTable.serviceKind,
+      name: servicesTable.name,
+      durationMinutes: servicesTable.durationMinutes,
     })
     .from(bookingsTable)
     .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
@@ -142,9 +176,13 @@ export async function captureGuestDepositPayment(args: {
   if (!biz) return { ok: false, reason: "booking_not_found" };
 
   const policies = policiesFromBusiness(biz);
+  const depositPercent = resolveBookingDepositPercent({
+    operational: policies.operational,
+    service: row,
+  });
   const depositDueMinor = computeDepositDueMinor({
     priceMinor: row.priceMinor,
-    depositPercent: policies.operational.depositPercent ?? 0,
+    depositPercent,
     depositRequired: policies.operational.depositRequired,
     depositPaidMinor: row.depositPaidEurCents,
   });
@@ -345,7 +383,21 @@ export async function createGuestDepositCheckout(
   if (!biz) return { mode: "error", message: "Shop not found" };
 
   const policies = policiesFromBusiness(biz);
-  const depositPercent = policies.operational.depositPercent ?? 0;
+  const [svc] = await db
+    .select({
+      category: servicesTable.category,
+      serviceKind: servicesTable.serviceKind,
+      name: servicesTable.name,
+      durationMinutes: servicesTable.durationMinutes,
+    })
+    .from(bookingsTable)
+    .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
+    .where(eq(bookingsTable.id, view.bookingId))
+    .limit(1);
+  const depositPercent = resolveBookingDepositPercent({
+    operational: policies.operational,
+    service: svc ?? null,
+  });
   const depositDueMinor = computeDepositDueMinor({
     priceMinor: view.priceMinor,
     depositPercent,

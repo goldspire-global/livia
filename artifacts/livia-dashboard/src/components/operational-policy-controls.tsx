@@ -160,7 +160,8 @@ export default function OperationalPolicyControls() {
           <div>
             <Label>Auto-confirm when no deposit required</Label>
             <p className="text-xs text-muted-foreground mt-1">
-              Pending only when deposit, staff confirm, or policy blocks.
+              V1 uses deposits as the confirmation gate — Liv confirms automatically once paid.
+              This toggle only applies if deposits are turned off.
             </p>
           </div>
           <Switch

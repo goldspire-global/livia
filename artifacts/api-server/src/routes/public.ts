@@ -43,6 +43,7 @@ import {
   validateFitnessParqGate,
   guestManageVisitPath,
   guestBookPath,
+  verticalSupportsPackageCreditCommitment,
 } from "@workspace/policy";
 import type { BusinessVertical } from "@workspace/policy";
 import type { Service } from "@workspace/db";
@@ -763,7 +764,8 @@ router.post("/public/b/:slug/book", async (req, res): Promise<void> => {
       booking = primary;
     } else {
       const usePackage =
-        biz.vertical === "wellness" && req.body?.usePackageCredit === true;
+        verticalSupportsPackageCreditCommitment(biz.vertical) &&
+        req.body?.usePackageCredit === true;
       booking = await createBooking(biz.id, {
         serviceId,
         customerId: customer.id,
@@ -1274,6 +1276,67 @@ router.post("/public/b/:slug/pay/:token/checkout-combined", async (req, res): Pr
       items: body.items ?? [],
       fulfillmentMode: body.fulfillmentMode,
       fulfillmentDetail: body.fulfillmentDetail,
+    });
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
+  }
+});
+
+router.get("/public/b/:slug/packages/:serviceId", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const serviceId = Array.isArray(req.params.serviceId)
+    ? req.params.serviceId[0]
+    : req.params.serviceId;
+  try {
+    const { getGuestPackagePurchaseView } = await import(
+      "../services/guest-package-purchase.service"
+    );
+    const view = await getGuestPackagePurchaseView(slug, serviceId);
+    if (!view) {
+      sendError(res, req, 404, "Package not found");
+      return;
+    }
+    res.json(view);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Failed to load package");
+  }
+});
+
+router.post("/public/b/:slug/packages/:serviceId/checkout", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const serviceId = Array.isArray(req.params.serviceId)
+    ? req.params.serviceId[0]
+    : req.params.serviceId;
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  try {
+    const biz = await getBusinessBySlug(slug);
+    if (!biz) {
+      sendError(res, req, 404, "Business not found");
+      return;
+    }
+    const { firstName, lastName, email, phone } = req.body ?? {};
+    if (!firstName?.trim() || (!email?.trim() && !phone?.trim())) {
+      sendError(res, req, 400, "firstName and email or phone required");
+      return;
+    }
+    const customer = await findOrCreateCustomer(biz.id, {
+      firstName: String(firstName).trim(),
+      lastName: lastName ? String(lastName).trim() : undefined,
+      email: email ? String(email).trim() : undefined,
+      phone: phone ? String(phone).trim() : undefined,
+    });
+    const { createGuestPackageCheckout } = await import(
+      "../services/guest-package-purchase.service"
+    );
+    const result = await createGuestPackageCheckout({
+      slug,
+      serviceId,
+      customerId: customer.id,
     });
     if (result.mode === "error") {
       sendError(res, req, 400, result.message);

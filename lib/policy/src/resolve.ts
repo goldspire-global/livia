@@ -70,6 +70,7 @@ export function resolveBusinessPolicies(
       autoConfirmWhenNoDeposit: op.autoConfirmWhenNoDeposit,
       bookingContinuityEnabled: op.bookingContinuityEnabled,
       bookingContinuityMode: op.bookingContinuityMode,
+      emergentTrustProgram: op.emergentTrustProgram,
     },
   };
 }

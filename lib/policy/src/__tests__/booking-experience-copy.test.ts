@@ -9,6 +9,7 @@ import {
   resolvePendingReasonCode,
   formatBookingStatusLabel,
 } from "../booking-experience-copy";
+import { depositCollectionGuidance } from "../booking-commitment-program";
 
 assert.equal(
   resolvePendingReasonCode({
@@ -16,6 +17,21 @@ assert.equal(
     pendingReason: null,
     source: "web",
     aiCanBookDirectly: false,
+    depositRequired: true,
+    depositPaidEurCents: 0,
+  }),
+  PENDING_REASON_CODES.AWAITING_DEPOSIT,
+  "deposit gate before staff handoff",
+);
+
+assert.equal(
+  resolvePendingReasonCode({
+    status: "PENDING",
+    pendingReason: null,
+    source: "web",
+    aiCanBookDirectly: false,
+    depositRequired: true,
+    depositPaidEurCents: 2000,
   }),
   PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM,
 );

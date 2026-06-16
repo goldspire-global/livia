@@ -25,7 +25,7 @@ test.describe("EU platform — automated smoke (Phases 1–8)", () => {
 
     test("how-it-works loads", async ({ page }) => {
       await page.goto(`${marketingBase}/how-it-works`);
-      await expect(page.getByRole("heading", { name: /how livia works/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /how it works/i })).toBeVisible();
     });
 
     test("vertical hair loads", async ({ page }) => {

@@ -33,7 +33,9 @@ import {
   resolveOwnerHomeKpiChips,
   resolveOwnerHomeModuleLayout,
   resolveSoloOwnerHomeFallback,
+  classifyPendingBookingAttention,
 } from "@workspace/policy";
+import { OwnerOperatingPulse } from "@/components/dashboard/owner-operating-pulse";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetch";
 import { SoloOperatorCopilot } from "@/components/dashboard/solo-operator-copilot";
@@ -251,6 +253,7 @@ function PendingPanel({
   vertical,
   category,
   compact,
+  title = "Needs you",
 }: {
   pendingBookings: PendingBooking[];
   pendingCount: number;
@@ -262,7 +265,14 @@ function PendingPanel({
   vertical?: string | null;
   category?: string | null;
   compact?: boolean;
+  title?: string;
 }) {
+  const needsYou = pendingBookings.filter(
+    (b) => classifyPendingBookingAttention(b.pendingReason) === "needs_you",
+  );
+  const display = needsYou.length > 0 ? needsYou : pendingBookings;
+  const displayCount = needsYou.length > 0 ? needsYou.length : pendingCount;
+
   return (
     <section
       className={cn(
@@ -271,9 +281,9 @@ function PendingPanel({
       )}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/60">
-        <h2 className="text-sm font-semibold">Needs confirmation</h2>
-        {pendingCount > 0 ? (
-          <span className="text-[10px] font-mono text-[hsl(var(--chart-4))]">{pendingCount} pending</span>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {displayCount > 0 ? (
+          <span className="text-[10px] font-mono text-[hsl(var(--chart-4))]">{displayCount} pending</span>
         ) : null}
       </div>
       {isLoadingSummary ? (
@@ -282,14 +292,14 @@ function PendingPanel({
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
         </div>
-      ) : pendingBookings.length === 0 ? (
+      ) : display.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-3 py-6 text-center">
           <Check className="h-6 w-6 text-[hsl(var(--chart-3))]/50 mb-1.5" aria-hidden />
           <p className="text-xs text-muted-foreground">Nothing waiting on you.</p>
         </div>
       ) : (
         <ul className="divide-y divide-border/60">
-          {pendingBookings.map((b) => (
+          {display.map((b) => (
             <li key={b.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
               <Link href={`/bookings/${b.id}`} className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{customerName(b.customer)}</p>
@@ -686,6 +696,13 @@ export function OwnerHomeRitual({
       </section>
 
       <OwnerLivGuardrails livNeedsAttention={livPulse === "act"} />
+
+      {!consultFirst ? (
+        <OwnerOperatingPulse
+          pulse={(summary as { operatingPulse?: import("@workspace/policy").OperatingPulseView })?.operatingPulse}
+          loading={isLoadingSummary}
+        />
+      ) : null}
 
       {tenantVertical === "hair" ? <HairColourDayCard /> : null}
 

@@ -111,6 +111,11 @@ export interface OperationalPolicySnapshot {
     | "whatsapp_thread"
     | "email_only"
     | "instagram_deep_link";
+  emergentTrustProgram?: {
+    enabled: boolean;
+    acceptedAt?: string;
+    proposalKey?: string;
+  };
 }
 
 export interface ResolvedBusinessPolicies {

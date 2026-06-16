@@ -18,6 +18,8 @@ import {
   normalizePhoneE164,
   parseBeautyPreferences,
   beautyClientPatchTestLabel,
+  depositAppliesForBookingContext,
+  ownerBalanceAtVisitLine,
   type BusinessVertical,
 } from "@workspace/policy";
 import { resolveGuestBookUrl, resolveGuestTokenUrl } from "../lib/guest-public-urls";
@@ -30,7 +32,7 @@ import { listGuestPackageCreditsForGuest } from "./package-credits.service";
 import { loadGuestVerticalArtifacts } from "./guest-hub-vertical-artifacts.service";
 import { fanOutSideEffect } from "../lib/side-effect-emitter";
 import { policiesFromBusiness } from "./policies.service";
-import { computeDepositDueMinor } from "./guest-deposit-pay.service";
+import { computeDepositDueMinor, resolveBookingDepositPercent } from "./guest-deposit-pay.service";
 
 function guestBookUrlForSlug(slug: string, query = ""): string {
   const params = new URLSearchParams(query.startsWith("?") ? query.slice(1) : query);
@@ -274,15 +276,38 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
     .where(eq(businessesTable.id, booking.businessId))
     .limit(1);
   if (biz) {
-    const op = policiesFromBusiness(biz).operational;
-    depositPercent = op.depositPercent ?? 0;
-    depositRequired = op.depositRequired;
-    depositDueMinor = computeDepositDueMinor({
-      priceMinor: booking.priceMinor,
-      depositPercent,
-      depositRequired,
-      depositPaidMinor: booking.depositPaidEurCents ?? 0,
+    const policies = policiesFromBusiness(biz);
+    const op = policies.operational;
+    const [svc] = await db
+      .select({
+        priceMinor: servicesTable.priceMinor,
+        category: servicesTable.category,
+        serviceKind: servicesTable.serviceKind,
+        name: servicesTable.name,
+        durationMinutes: servicesTable.durationMinutes,
+      })
+      .from(servicesTable)
+      .where(
+        and(eq(servicesTable.id, booking.serviceId), eq(servicesTable.businessId, booking.businessId)),
+      )
+      .limit(1);
+    depositPercent = resolveBookingDepositPercent({ operational: op, service: svc ?? null });
+    depositRequired = depositAppliesForBookingContext({
+      operational: op,
+      service: svc ?? {
+        priceMinor: booking.priceMinor,
+        serviceKind: null,
+        category: null,
+      },
     });
+    depositDueMinor = depositRequired
+      ? computeDepositDueMinor({
+          priceMinor: booking.priceMinor,
+          depositPercent,
+          depositRequired: true,
+          depositPaidMinor: booking.depositPaidEurCents ?? 0,
+        })
+      : 0;
     if (booking.status === "PENDING" && depositDueMinor > 0) {
       depositPayUrl = resolveGuestTokenUrl(slug, "pay", visitToken);
     }
@@ -364,6 +389,14 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
         priceMinor: booking.priceMinor,
         currency: booking.currency,
         pendingReason: booking.pendingReason,
+        depositDueMinor,
+        depositPercent,
+      }),
+      balanceAtVisitLine: ownerBalanceAtVisitLine({
+        priceMinor: booking.priceMinor,
+        depositPaidMinor: booking.depositPaidEurCents ?? 0,
+        currency: booking.currency,
+        status: booking.status,
       }),
       visitToken,
     },

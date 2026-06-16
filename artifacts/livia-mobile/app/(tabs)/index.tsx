@@ -57,6 +57,7 @@ import { LivIncidentsCard } from "@/components/LivIncidentsCard";
 import { StuckContinuityCard } from "@/components/StuckContinuityCard";
 import { VisitFeedbackCard } from "@/components/VisitFeedbackCard";
 import { OwnerIntelligenceHub } from "@/components/OwnerIntelligenceHub";
+import { OwnerOperatingPulseCard } from "@/components/OwnerOperatingPulseCard";
 import { ActNotificationBanner } from "@/components/ActNotificationBanner";
 import { OwnerLivOpsCard } from "@/components/OwnerLivOpsCard";
 import { SoloOperatorLivStrip } from "@/components/SoloOperatorLivStrip";
@@ -830,6 +831,13 @@ export default function DashboardScreen() {
           confirmedCount={summary?.confirmedCount ?? 0}
           weekBookings={summary?.weekBookings ?? 0}
           commerce={(summary as { commerce?: { capturedLabel?: string; captureRatePercent?: number | null; paymentCount30d?: number; capturedMinor30d?: number } })?.commerce}
+        />
+      ) : null}
+
+      {(role === "OWNER" || role === "ADMIN") && !isLoading ? (
+        <OwnerOperatingPulseCard
+          pulse={(summary as { operatingPulse?: import("@workspace/policy").OperatingPulseView } | undefined)
+            ?.operatingPulse}
         />
       ) : null}
 

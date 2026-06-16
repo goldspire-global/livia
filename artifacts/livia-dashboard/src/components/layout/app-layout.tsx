@@ -313,7 +313,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     useNavActionCounts();
   const navBadges = useMemo(() => {
     const badges: Record<string, number> = { ...intelBadges };
-    const inboxCount = consultFirst ? inboxAttentionCount : handedOffCount;
+    const inboxCount = inboxAttentionCount;
     if (inboxCount > 0) badges["/inbox"] = inboxCount;
     if (pendingCount > 0) badges["/bookings"] = pendingCount;
     return badges;
@@ -321,12 +321,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const navBadgeLabels = useMemo(() => {
     const labels: Record<string, string> = {};
-    const inboxCount = consultFirst ? inboxAttentionCount : handedOffCount;
+    const inboxCount = inboxAttentionCount;
     if (inboxCount > 0) {
       labels["/inbox"] =
         consultFirst && inboxAttentionLabel
           ? inboxAttentionLabel
-          : `${inboxCount} handoff${inboxCount === 1 ? "" : "s"} waiting`;
+          : `${inboxCount} thread${inboxCount === 1 ? "" : "s"} need attention`;
     }
     if (pendingCount > 0) {
       labels["/bookings"] = `${pendingCount} pending booking${pendingCount === 1 ? "" : "s"}`;

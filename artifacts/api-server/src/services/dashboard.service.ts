@@ -13,7 +13,7 @@ import { listAtRiskGuestPreviews } from "./relationship.service";
 import { listRecentVisitFeedback } from "./visit-feedback.service";
 import { formatCommerceMinor, getCommerceSnapshot } from "./commerce-intelligence.service";
 import { syncCommerceIntelligenceLoop } from "./commerce-signals.service";
-import { enrichActivityFeedItem, isConsultFirstVertical } from "@workspace/policy";
+import { enrichActivityFeedItem, isConsultFirstVertical, resolveOperatingPulse } from "@workspace/policy";
 
 export async function getDashboardSummary(businessId: string) {
   const now = new Date();
@@ -85,6 +85,28 @@ export async function getDashboardSummary(businessId: string) {
       ),
     );
 
+  const [needsYouCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(conversationsTable)
+    .where(
+      and(
+        eq(conversationsTable.businessId, businessId),
+        eq(conversationsTable.status, "OPEN"),
+        eq(conversationsTable.aiHandled, false),
+      ),
+    );
+
+  const [livHandlingInboxCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(conversationsTable)
+    .where(
+      and(
+        eq(conversationsTable.businessId, businessId),
+        eq(conversationsTable.status, "OPEN"),
+        eq(conversationsTable.aiHandled, true),
+      ),
+    );
+
   const consultFirst = isConsultFirstVertical(biz?.vertical);
   let newEnquiriesCount = 0;
   if (consultFirst) {
@@ -98,7 +120,7 @@ export async function getDashboardSummary(businessId: string) {
   }
   const inboxAttentionCount = consultFirst
     ? newEnquiriesCount + (handedOffCount?.count ?? 0)
-    : handedOffCount?.count ?? 0;
+    : (needsYouCount?.count ?? 0) + (handedOffCount?.count ?? 0);
 
   const [confirmedCount] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -191,11 +213,20 @@ export async function getDashboardSummary(businessId: string) {
     void syncCommerceIntelligenceLoop(businessId).catch(() => undefined);
   }
 
+  const pendingUpcoming = upcomingBookings.filter((b) => b.status === "PENDING");
+  const operatingPulse = resolveOperatingPulse({
+    pendingBookings: pendingUpcoming,
+    inboxNeedsYou: needsYouCount?.count ?? 0,
+    inboxHandedOff: handedOffCount?.count ?? 0,
+    inboxLivHandling: livHandlingInboxCount?.count ?? 0,
+  });
+
   return {
     todayBookings: todayCount?.count ?? 0,
     weekBookings: weekCount?.count ?? 0,
     pendingCount: pendingCount?.count ?? 0,
     handedOffCount: handedOffCount?.count ?? 0,
+    needsYouCount: needsYouCount?.count ?? 0,
     newEnquiriesCount: consultFirst ? newEnquiriesCount : undefined,
     inboxAttentionCount,
     confirmedCount: confirmedCount?.count ?? 0,
@@ -222,6 +253,7 @@ export async function getDashboardSummary(businessId: string) {
     })),
     lowFeedbackCount: recentFeedback.filter((r) => r.score <= 3).length,
     commerce,
+    operatingPulse,
   };
 }
 

@@ -3,11 +3,12 @@ import type { BusinessVertical } from "./types";
 import { getCountryOverlay } from "./country-overlays";
 import { guestCareAutomationSchema } from "./guest-care-automation-schema";
 import { automationToggleSignalSchema } from "./automation-toggle-signals";
+import { recommendedDepositPolicyForVertical } from "./booking-commitment-program";
 
 /** Tenant-editable operational rules (stored on business.operational_policy jsonb). */
 export const operationalPolicySchema = z.object({
-  depositRequired: z.boolean().default(false),
-  depositPercent: z.number().int().min(0).max(100).default(0),
+  depositRequired: z.boolean().default(true),
+  depositPercent: z.number().int().min(0).max(100).default(20),
   serviceBufferMinutes: z.number().int().min(0).max(120).default(0),
   cancelWindowHours: z.number().int().min(0).max(168).optional(),
   lateGraceMinutes: z.number().int().min(0).max(60).default(10),
@@ -28,6 +29,14 @@ export const operationalPolicySchema = z.object({
   /** Owner automation gate adoption — toggles persistently left off (product signal). */
   automationToggleSignals: z
     .record(z.string(), automationToggleSignalSchema)
+    .optional(),
+  /** Emergent trusted-client tier — enabled only after owner accepts Twin proposal. */
+  emergentTrustProgram: z
+    .object({
+      enabled: z.boolean().default(false),
+      acceptedAt: z.string().datetime().optional(),
+      proposalKey: z.string().optional(),
+    })
     .optional(),
 });
 
@@ -72,15 +81,22 @@ export function mergeOperationalPolicy(
 }
 
 /**
- * Whether a customer may skip the deposit on a new booking.
- * V1: no client-level exemptions — Liv tracks visit/no-show patterns in the background
- * for future trust signals; shops always collect when deposits are on.
+ * Whether a deposit must be collected before this booking can confirm.
+ * V1: no per-client VIP waivers — policy-level only.
+ */
+export function depositAppliesForBooking(
+  operational: Pick<OperationalPolicy, "depositRequired" | "depositPercent">,
+): boolean {
+  return operational.depositRequired && operational.depositPercent > 0;
+}
+
+/**
+ * @deprecated use depositAppliesForBooking — inverted helper kept for call sites.
  */
 export function customerExemptFromDeposit(args: {
   operational: Pick<OperationalPolicy, "depositRequired" | "depositPercent">;
 }): boolean {
-  const { operational: op } = args;
-  return !op.depositRequired || op.depositPercent <= 0;
+  return !depositAppliesForBooking(args.operational);
 }
 
 /** Owner-facing plain-language summary for Liv setup copilot. */
@@ -98,9 +114,7 @@ export function explainOperationalPolicySummary(args: {
     op.bookingContinuityEnabled
       ? `Booking continuity: ${op.bookingContinuityMode.replace(/_/g, " ")}.`
       : "Booking continuity follow-up is off.",
-    op.autoConfirmWhenNoDeposit
-      ? "Bookings auto-confirm when no deposit is required."
-      : "Bookings stay pending until staff confirms.",
+    "Online bookings confirm automatically once the deposit is paid — Liv handles day-to-day holds.",
   ];
   return {
     headline: op.depositRequired
@@ -136,8 +150,11 @@ export function recommendedOperationalPolicyDefaults(args: {
   vertical: BusinessVertical;
 }): Partial<OperationalPolicy> {
   const overlay = getCountryOverlay({ countryIso: args.countryIso, vertical: args.vertical });
+  const depositDefaults = recommendedDepositPolicyForVertical(args.vertical);
   return {
     bookingContinuityMode: overlay.continuityMode,
     lateGraceMinutes: overlay.defaultLateGraceMinutes,
+    depositRequired: depositDefaults.depositRequired,
+    depositPercent: depositDefaults.depositPercent,
   };
 }

@@ -24,7 +24,7 @@ import {
 import type { PublicRetailProduct } from "@/components/public-booking/public-beauty-shop";
 import { isPublicShopPath } from "@/lib/public-guest-route-params";
 import { useGuestBookSlug } from "@/lib/use-guest-book-slug";
-import { guestBookTokenPath, isPublicRetailVertical, resolveActiveBookingGuards, guestRetailFulfillmentOptions, type BusinessVertical, type GuestRetailFulfillmentMode } from "@workspace/policy";
+import { guestBookTokenPath, isPublicRetailVertical, resolveActiveBookingGuards, guestRetailFulfillmentOptions, verticalSupportsPackageCreditCommitment, isPackageCatalogService, packageCatalogPublicLabel, verticalAllowsPackageCatalog, type BusinessVertical, type GuestRetailFulfillmentMode } from "@workspace/policy";
 import {
   useGetPublicBusiness,
   useGetPublicSlots,
@@ -223,6 +223,7 @@ interface BookingConfirmation {
   depositDueMinor?: number | null;
   depositPayUrl?: string | null;
   currency?: string;
+  packPurchased?: boolean;
 }
 
 function buildIcsDataUri(args: {
@@ -302,6 +303,8 @@ export default function PublicBookingPage() {
   const [waitlistBusy, setWaitlistBusy] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
   const [usePackageCredit, setUsePackageCredit] = useState(false);
+  const [packCheckoutBusy, setPackCheckoutBusy] = useState(false);
+  const [packBookNext, setPackBookNext] = useState(false);
   const [validationErr, setValidationErr] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
   const [medspaProcedure, setMedspaProcedure] = useState("");
@@ -324,6 +327,22 @@ export default function PublicBookingPage() {
   const hubProfileApplied = useRef(false);
 
   const sl = slug ?? "";
+
+  useEffect(() => {
+    if (!sl || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pack_purchased") === "1") {
+      setUsePackageCredit(true);
+      setPackBookNext(true);
+      setSelectedService(null);
+      setSelectedSlot("");
+      setStep("services");
+      params.delete("pack_purchased");
+      const next = params.toString();
+      const path = window.location.pathname;
+      window.history.replaceState({}, "", next ? `${path}?${next}` : path);
+    }
+  }, [sl]);
 
   usePublicGuestPwa(sl);
 
@@ -483,6 +502,11 @@ export default function PublicBookingPage() {
   const beautyPublic = beautyBook && isBeautyPresentationPreset(beautyCssPreset);
   const wellnessPublic =
     isWellnessVertical(b?.vertical) && isWellnessPresentationPreset(presentationPreset);
+  const packageCreditBook = verticalSupportsPackageCreditCommitment(b?.vertical);
+  const isSelectedPackage =
+    !!selectedService &&
+    verticalAllowsPackageCatalog(b?.vertical) &&
+    isPackageCatalogService(selectedService);
   const wellnessExperience = wellnessPublic
     ? resolveWellnessExperience(presentationPreset)
     : null;
@@ -591,7 +615,7 @@ export default function PublicBookingPage() {
     );
   }, [step, selectedService, b?.medspaProcedures, medspaProcedure]);
 
-  function handleBook() {
+  async function handleBook() {
     setValidationErr(null);
     if (!sl || !selectedService || !selectedSlot || !firstName.trim()) return;
 
@@ -624,6 +648,50 @@ export default function PublicBookingPage() {
       }
     }
 
+    if (isSelectedPackage) {
+      setPackCheckoutBusy(true);
+      try {
+        const r = await fetch(
+          `/api/public/b/${encodeURIComponent(sl)}/packages/${encodeURIComponent(selectedService!.id)}/checkout`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              firstName: firstName.trim(),
+              lastName: lastName.trim() || undefined,
+              email: email.trim() || undefined,
+              phone: phone.trim() || undefined,
+            }),
+          },
+        );
+        const body = (await r.json()) as { checkoutUrl?: string; message?: string; mode?: string };
+        if (!r.ok) {
+          setValidationErr(body.message ?? "Could not start checkout");
+          return;
+        }
+        if (body.mode === "stripe" && body.checkoutUrl) {
+          window.location.href = body.checkoutUrl;
+          return;
+        }
+        if (body.mode === "dev") {
+          setUsePackageCredit(true);
+          setPackBookNext(true);
+          setSelectedService(null);
+          setSelectedSlot("");
+          setStep("services");
+          setConfirmation(null);
+          playCelebrationChime();
+          return;
+        }
+        setValidationErr("Could not start checkout");
+      } catch {
+        setValidationErr("Could not start checkout");
+      } finally {
+        setPackCheckoutBusy(false);
+      }
+      return;
+    }
+
     createBooking.mutate(
       {
         slug: sl,
@@ -650,7 +718,7 @@ export default function PublicBookingPage() {
           ...(isBodyArtConsult && consultReferenceUrl.trim()
             ? { consultReferenceUrl: consultReferenceUrl.trim() }
             : {}),
-          ...(wellnessPublic && usePackageCredit ? { usePackageCredit: true } : {}),
+          ...(packageCreditBook && usePackageCredit ? { usePackageCredit: true } : {}),
           ...(isMedspa
             ? {
                 medspaConsent: {
@@ -686,7 +754,12 @@ export default function PublicBookingPage() {
     setPickServiceHint(false);
     setSelectedService(svc);
     syncPublicBookingServiceQuery(svc.id);
-    if (!beautyPublic) {
+    if (
+      verticalAllowsPackageCatalog(b?.vertical) &&
+      isPackageCatalogService(svc)
+    ) {
+      setStep("details");
+    } else if (!beautyPublic) {
       setStep("slots");
     }
   }
@@ -886,6 +959,26 @@ export default function PublicBookingPage() {
               showMessage={aiOn && !beautyPublic}
             />
             <div ref={heroSentinelRef} className="h-px w-full" aria-hidden />
+            {packBookNext && packageCreditBook ? (
+              <div
+                className="mt-4 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm"
+                data-testid="pack-book-next-banner"
+              >
+                <p className="font-medium">Pack purchased — book your first session</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Choose a session below. Your pack credit will apply automatically.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-8"
+                  onClick={() => setPackBookNext(false)}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            ) : null}
             {!beautyPublic && !wellnessPublic ? (
               <div className="mt-4 mb-5">
                 <PublicBookingStepper
@@ -1373,7 +1466,7 @@ export default function PublicBookingPage() {
                 </div>
               ) : null}
 
-              {wellnessPublic ? (
+              {packageCreditBook ? (
                 <label className="flex items-start gap-3 rounded-lg border border-border/60 p-3 cursor-pointer">
                   <Checkbox
                     checked={usePackageCredit}
@@ -1383,7 +1476,7 @@ export default function PublicBookingPage() {
                   <span className="text-sm leading-snug">
                     <span className="font-medium">Use session pack credit</span>
                     <span className="block text-muted-foreground text-xs mt-0.5">
-                      If you have a package on file, we&apos;ll burn one session on confirm.
+                      If you have a package on file, we&apos;ll apply one session — no deposit needed.
                     </span>
                   </span>
                 </label>
@@ -1621,11 +1714,17 @@ export default function PublicBookingPage() {
 
             <Button
               className="w-full hidden md:flex"
-              disabled={createBooking.isPending}
+              disabled={createBooking.isPending || packCheckoutBusy}
               onClick={handleBook}
               data-testid="button-confirm-booking"
             >
-              {createBooking.isPending ? "Booking..." : confirmLabel}
+              {packCheckoutBusy
+                ? "Starting checkout..."
+                : isSelectedPackage
+                  ? "Purchase pack"
+                  : createBooking.isPending
+                    ? "Booking..."
+                    : confirmLabel}
             </Button>
           </section>
         )}

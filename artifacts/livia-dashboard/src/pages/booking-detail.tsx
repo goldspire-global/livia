@@ -17,6 +17,7 @@ import {
   bookingExperienceCopy,
   bookingConfirmBlockedByDeposit,
   formatBookingStatusLabel,
+  ownerBalanceAtVisitLine,
 } from "@workspace/policy";
 import { canMarkNoShow, noShowUnavailableHint } from "@/lib/booking-appointment-window";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -195,6 +196,20 @@ export default function BookingDetailPage() {
     (linkedInboxCase.caseIntent === "refund_request" ||
       linkedInboxCase.summary?.toLowerCase().includes("refund"));
 
+  const balanceAtVisitLine = useMemo(() => {
+    if (!booking) return null;
+    const svc = (booking as { service?: { priceMinor?: number; currency?: string } }).service;
+    const priceMinor = svc?.priceMinor ?? (booking as { priceMinor?: number }).priceMinor ?? 0;
+    const currency = svc?.currency ?? (booking as { currency?: string }).currency ?? "EUR";
+    const depositPaid = (booking as { depositPaidEurCents?: number }).depositPaidEurCents ?? 0;
+    return ownerBalanceAtVisitLine({
+      priceMinor,
+      depositPaidMinor: depositPaid,
+      currency,
+      status: bookingStatus,
+    });
+  }, [booking, bookingStatus]);
+
   return (
     <OperationalPageShell
       data-testid="booking-detail-page"
@@ -257,6 +272,11 @@ export default function BookingDetailPage() {
                     category={businessCategory}
                   />
                 </div>
+              ) : null}
+              {balanceAtVisitLine ? (
+                <p className="text-sm text-muted-foreground mb-3" data-testid="booking-balance-at-visit">
+                  {balanceAtVisitLine}
+                </p>
               ) : null}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                 <Clock className="h-4 w-4" />

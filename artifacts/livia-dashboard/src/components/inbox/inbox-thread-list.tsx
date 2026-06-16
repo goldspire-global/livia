@@ -9,7 +9,7 @@ import {
   Phone,
   User as UserIcon,
 } from "lucide-react";
-import { inboxMultiChannelListHint } from "@workspace/policy";
+import { inboxMultiChannelListHint, inboxThreadNeedsAttention } from "@workspace/policy";
 import { MOTION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -94,7 +94,7 @@ export function InboxThreadList({
     <div className="divide-y divide-border overflow-y-auto max-h-[min(720px,calc(100vh-220px))]" data-testid="inbox-thread-list">
       {threads.map((c, i) => {
         const isActive = selectedId === c.id;
-        const needsHuman = c.status === "HANDED_OFF" || (c.status === "OPEN" && !c.aiHandled);
+        const needsHuman = inboxThreadNeedsAttention(c);
         const multiChannelHint =
           c.customerId && activeChannelCountByCustomer
             ? inboxMultiChannelListHint(activeChannelCountByCustomer.get(c.customerId) ?? 0)
@@ -114,6 +114,9 @@ export function InboxThreadList({
                 : beautyChrome
                   ? "hover:bg-primary/5"
                   : "hover:bg-muted/50",
+              needsHuman && !isActive
+                ? "border-l-2 border-amber-500/70 bg-amber-500/5"
+                : "",
               needsHuman && !isActive ? "font-medium" : "",
               MOTION.listItem,
             )}

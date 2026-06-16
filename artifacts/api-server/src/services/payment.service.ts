@@ -362,6 +362,24 @@ export async function upsertPaymentFromStripeIntent(
         amountMinor: pi.amount_received || pi.amount,
       });
     }
+  } else if (businessId && kind === "guest_package_purchase") {
+    const customerId = pi.metadata?.customerId ?? intentRecord?.customerId;
+    const serviceId = pi.metadata?.serviceId ?? "";
+    const packageName = pi.metadata?.packageName ?? "Session pack";
+    const creditsTotal = Math.max(1, Number(pi.metadata?.creditsTotal ?? 1));
+    if (customerId) {
+      const { captureGuestPackagePurchaseFromWebhook } = await import(
+        "./guest-package-purchase.service"
+      );
+      await captureGuestPackagePurchaseFromWebhook({
+        businessId,
+        customerId,
+        serviceId,
+        packageName,
+        creditsTotal,
+        purchaseId: pi.metadata?.purchaseId,
+      });
+    }
   }
 
   if (kind === "retail_order" && retailOrderId) {

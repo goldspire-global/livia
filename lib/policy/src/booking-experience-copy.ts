@@ -1,5 +1,6 @@
 import type { BusinessVertical } from "./types";
 import { businessVocabulary, resolveVerticalKey } from "./vocabulary";
+import { depositCollectionGuidance } from "./booking-commitment-program";
 
 /** Machine-readable PENDING reasons — keep in sync with api-server `booking-pending.ts`. */
 export const PENDING_REASON_CODES = {
@@ -65,41 +66,59 @@ export function resolvePendingReasonCode(args: {
   if (status !== "PENDING") return null;
   const stored = args.pendingReason?.trim();
   if (stored && Object.values(PENDING_REASON_CODES).includes(stored as PendingReasonCode)) {
-    return stored as PendingReasonCode;
+    const code = stored as PendingReasonCode;
+    // Legacy rows: staff-confirm was over-used before V1 deposit gate.
+    if (
+      code === PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM &&
+      args.depositRequired &&
+      (args.depositPaidEurCents ?? 0) <= 0
+    ) {
+      return PENDING_REASON_CODES.AWAITING_DEPOSIT;
+    }
+    if (
+      code === PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM &&
+      args.depositRequired &&
+      (args.depositPaidEurCents ?? 0) > 0 &&
+      args.aiCanBookDirectly !== false
+    ) {
+      return null;
+    }
+    return code;
   }
   if (stored) return stored as PendingReasonCode;
 
   const source = args.source ?? "web";
+
+  // Edge: walk-in / owner manual hold — staff confirms.
   if (source === "owner-manual" || source === "walk-in") {
     return PENDING_REASON_CODES.OWNER_MANUAL;
   }
+
+  // Primary V1 gate: deposit must be paid before the slot locks.
   if (args.depositRequired && (args.depositPaidEurCents ?? 0) <= 0) {
     return PENDING_REASON_CODES.AWAITING_DEPOSIT;
   }
-  if (
-    args.bookingContinuityEnabled !== false &&
-    source === "web" &&
-    (args.customerHasPhone || args.customerHasEmail)
-  ) {
-    return PENDING_REASON_CODES.AWAITING_CONTINUITY;
-  }
+
+  // Edge: Liv direct booking disabled or guest explicitly in human queue.
   if (args.aiCanBookDirectly === false) {
     return PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM;
   }
-  if (args.autoConfirmWhenNoDeposit === false) {
-    return PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM;
+
+  // Deposit satisfied (or policy has deposits off) — Liv auto-confirms automated channels.
+  const livChannels = new Set([
+    "voice",
+    "whatsapp",
+    "sms",
+    "instagram",
+    "messenger",
+    "web",
+    "partner-api",
+  ]);
+  if (livChannels.has(source)) {
+    return null;
   }
-  if (
-    source === "voice" ||
-    source === "whatsapp" ||
-    source === "sms" ||
-    source === "instagram" ||
-    source === "messenger" ||
-    source === "web"
-  ) {
-    return PENDING_REASON_CODES.CREATED_BY_LIV;
-  }
-  return PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM;
+
+  return PENDING_REASON_CODES.OWNER_MANUAL;
 }
 
 type VerticalPendingPack = {
@@ -360,7 +379,7 @@ const EVENT_PENDING_PACK: VerticalPendingPack = {
 
 const BEAUTY_PENDING_LABELS: Record<string, string> = {
   [PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM]:
-    "Artist or front desk needs to confirm this appointment",
+    "Team review — Liv direct booking is off or guest asked for a human",
   [PENDING_REASON_CODES.AWAITING_DEPOSIT]: "Deposit due before confirming",
   [PENDING_REASON_CODES.AWAITING_POLICY_REVIEW]: "Review cancellation policy before confirming",
   [PENDING_REASON_CODES.CREATED_BY_LIV]: "Liv proposed this slot — confirm to hold it",
@@ -371,7 +390,7 @@ const BEAUTY_PENDING_LABELS: Record<string, string> = {
 
 const BEAUTY_PENDING_GUIDANCE: Record<string, string> = {
   [PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM]:
-    "Assign the artist, then confirm — the client gets a confirmation once locked.",
+    "Turn Liv direct booking back on in settings, or confirm manually if they asked for your team.",
   [PENDING_REASON_CODES.AWAITING_DEPOSIT]:
     "Send the deposit link or mark paid, then confirm the slot.",
   [PENDING_REASON_CODES.AWAITING_CONTINUITY]:
@@ -430,6 +449,9 @@ export function pendingApprovalGuidance(
   vertical?: string | null,
   category?: string | null,
 ): string {
+  if (reason === PENDING_REASON_CODES.AWAITING_DEPOSIT) {
+    return depositCollectionGuidance(vertical, category);
+  }
   const key = resolveVerticalKey(vertical, category);
   const pack = pendingPack(key);
   if (reason && pack.guidance[reason]) return pack.guidance[reason];
@@ -449,15 +471,15 @@ export function livPendingAutoConfirmBlocker(
     key === "wellness" || key === "fitness" || key === "body-art" ? "session" : "appointment";
   switch (reason) {
     case PENDING_REASON_CODES.AWAITING_DEPOSIT:
-      return `Liv can't auto-confirm — your policy requires a deposit before this ${slot} locks.`;
+      return `Waiting for deposit — Liv will confirm this ${slot} when payment clears.`;
     case PENDING_REASON_CODES.AWAITING_CONTINUITY:
       return pack.livContinuityBlocker;
     case PENDING_REASON_CODES.AWAITING_STAFF_CONFIRM:
-      return `Liv won't auto-confirm — staff must approve this ${slot} per your booking rules.`;
+      return `Liv queued this for your team — direct booking is off or the guest asked for a human.`;
     case PENDING_REASON_CODES.AWAITING_POLICY_REVIEW:
       return "Liv flagged this for policy review — confirm once you've checked your rules.";
     case PENDING_REASON_CODES.CREATED_BY_LIV:
-      return `Liv matched the slot but your rules still need owner confirmation.`;
+      return `Liv held this slot — confirm or release when you've reviewed it.`;
     case PENDING_REASON_CODES.OWNER_MANUAL:
       return null;
     default:

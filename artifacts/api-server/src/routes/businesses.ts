@@ -337,6 +337,51 @@ router.patch(
 );
 
 router.get(
+  "/businesses/:businessId/policy-evolution",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const id = Array.isArray(req.params.businessId) ? req.params.businessId[0] : req.params.businessId;
+    const { getPolicyEvolutionProposals, getQualityRegistryForBusiness } = await import(
+      "../services/policy-evolution.service"
+    );
+    const [proposals, qualityRegistry] = await Promise.all([
+      getPolicyEvolutionProposals(id),
+      getQualityRegistryForBusiness(id),
+    ]);
+    res.json({ proposals, qualityRegistry });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/policy-evolution/:proposalId/accept",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const userId = getUserId(req);
+    const id = Array.isArray(req.params.businessId) ? req.params.businessId[0] : req.params.businessId;
+    const proposalId = Array.isArray(req.params.proposalId)
+      ? req.params.proposalId[0]
+      : req.params.proposalId;
+    const { acceptPolicyEvolutionProposal } = await import("../services/policy-evolution.service");
+    const result = await acceptPolicyEvolutionProposal(
+      id,
+      proposalId as import("@workspace/policy").PolicyEvolutionProposalId,
+    );
+    if (!result.ok) {
+      sendError(res, req, 400, result.reason);
+      return;
+    }
+    await appendHumanAudit(id, userId, "human.policy.evolution.accept", "business", id, {
+      proposalId,
+    });
+    const { invalidateOwnerIntelligenceCache } = await import("../services/owner-intelligence-cache");
+    invalidateOwnerIntelligenceCache(id);
+    res.json(result);
+  },
+);
+
+router.get(
   "/businesses/:businessId/presentation",
   requireAuth,
   requireRole("STAFF"),

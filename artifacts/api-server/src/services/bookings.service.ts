@@ -15,19 +15,16 @@ import {
   sendBookingCancellationEmail,
 } from "./booking-emails.service";
 import { derivePendingReason, resolvePendingReasonForBooking } from "../lib/booking-pending";
+import { depositAppliesForBooking, depositAppliesForBookingContext, type OperationalPolicy } from "@workspace/policy";
 import { assertDepositPaidBeforeConfirm } from "../lib/booking-deposit-gate";
 import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { getPoliciesForBusinessId, policiesFromBusiness } from "./policies.service";
-import { businessesTable } from "@workspace/db";
+import { businessesTable, bookingResourcesTable } from "@workspace/db";
 import {
   resolveResourceForService,
   resourceCapacityAvailable,
   resolveResourceTurnoverMinutes,
 } from "./booking-resources.service";
-import { bookingResourcesTable } from "@workspace/db";
-import {
-  customerExemptFromDeposit,
-} from "@workspace/policy";
 
 export async function listBookings(
   businessId: string,
@@ -78,6 +75,7 @@ type PendingResolveCtx = {
   depositPercent: number;
   autoConfirmWhenNoDeposit: boolean;
   bookingContinuityEnabled: boolean;
+  emergentTrustProgram?: OperationalPolicy["emergentTrustProgram"];
 };
 
 async function pendingResolveCtxForBusiness(
@@ -92,15 +90,24 @@ async function pendingResolveCtxForBusiness(
     depositPercent: op.depositPercent ?? 0,
     autoConfirmWhenNoDeposit: op.autoConfirmWhenNoDeposit,
     bookingContinuityEnabled: op.bookingContinuityEnabled,
+    emergentTrustProgram: op.emergentTrustProgram,
   };
 }
 
-function customerTrustedForDeposit(ctx: PendingResolveCtx): boolean {
-  return customerExemptFromDeposit({
+function depositAppliesFromCtx(
+  ctx: PendingResolveCtx,
+  service?: { priceMinor: number; serviceKind?: string | null; category?: string | null } | null,
+  options?: { customerTrusted?: boolean; packageCreditApplied?: boolean },
+): boolean {
+  return depositAppliesForBookingContext({
     operational: {
       depositRequired: ctx.depositRequired,
       depositPercent: ctx.depositPercent,
+      emergentTrustProgram: ctx.emergentTrustProgram,
     },
+    service,
+    packageCreditApplied: options?.packageCreditApplied,
+    customerTrusted: options?.customerTrusted,
   });
 }
 
@@ -149,7 +156,10 @@ export async function enrichBookingsBatch(
     const customer = customerMap.get(b.customerId) ?? null;
     let pendingReason = b.pendingReason;
     if (b.status === "PENDING" && pendingCtx) {
-      const trusted = customerTrustedForDeposit(pendingCtx);
+      const svc = serviceMap.get(b.serviceId);
+      const depositApplies = depositAppliesFromCtx(pendingCtx, svc ?? null, {
+        customerTrusted: customer?.trustedClient ?? false,
+      });
       pendingReason =
         resolvePendingReasonForBooking(
           {
@@ -160,8 +170,7 @@ export async function enrichBookingsBatch(
           },
           {
             ...pendingCtx,
-            depositRequired: pendingCtx.depositRequired && !trusted,
-            customerTrusted: trusted,
+            depositRequired: depositApplies,
             customerHasPhone: !!customer?.phone?.trim(),
             customerHasEmail: !!customer?.email?.trim(),
           },
@@ -214,7 +223,9 @@ export async function enrichBooking(
   if (opts?.resolvePending !== false && booking.status === "PENDING") {
     const pendingCtx = await pendingResolveCtxForBusiness(booking.businessId);
     if (pendingCtx) {
-      const trusted = customerTrustedForDeposit(pendingCtx);
+      const depositApplies = depositAppliesFromCtx(pendingCtx, service ?? null, {
+        customerTrusted: customer?.trustedClient ?? false,
+      });
       pendingReason =
         resolvePendingReasonForBooking(
           {
@@ -225,8 +236,7 @@ export async function enrichBooking(
           },
           {
             ...pendingCtx,
-            depositRequired: pendingCtx.depositRequired && !trusted,
-            customerTrusted: trusted,
+            depositRequired: depositApplies,
             customerHasPhone: !!customer?.phone?.trim(),
             customerHasEmail: !!customer?.email?.trim(),
           },
@@ -294,7 +304,6 @@ export async function createBooking(
   const policies = (await getPoliciesForBusinessId(businessId)) ?? policiesFromBusiness(biz);
   const aiCanBookDirectly = (biz.aiCanBookDirectly ?? "true") === "true";
   const op = policies.operational;
-  const depositRequired = op.depositRequired;
   const source = (data.source ?? channelTypeToSource(data.channelType)) as string;
 
   const [custRow] = await db
@@ -320,15 +329,36 @@ export async function createBooking(
     data.resourceId,
   );
 
-  const customerTrusted = customerExemptFromDeposit({ operational: op });
+  const depositApplies = depositAppliesForBookingContext({
+    operational: op,
+    service,
+    packageCreditApplied: false,
+    customerTrusted: custRow?.trustedClient ?? false,
+  });
+
+  let packageLedgerId: string | undefined;
+  if (data.usePackageCredit || data.packageLedgerId) {
+    const { findActivePackageCredit } = await import("./package-credits.service");
+    packageLedgerId =
+      data.packageLedgerId ??
+      (await findActivePackageCredit(businessId, data.customerId))?.id;
+    if (!packageLedgerId) {
+      throw new Error("PACKAGE_CREDIT_UNAVAILABLE");
+    }
+  }
+
+  const depositAppliesWithCredit = depositAppliesForBookingContext({
+    operational: op,
+    service,
+    packageCreditApplied: !!packageLedgerId,
+    customerTrusted: custRow?.trustedClient ?? false,
+  });
 
   const pendingReason = derivePendingReason({
     source,
     aiCanBookDirectly,
-    depositRequired: depositRequired && !customerTrusted,
+    depositRequired: depositAppliesWithCredit,
     depositPaidEurCents: 0,
-    autoConfirmWhenNoDeposit: op.autoConfirmWhenNoDeposit,
-    customerTrusted,
     bookingContinuityEnabled: op.bookingContinuityEnabled,
     customerHasPhone: !!custRow?.phone?.trim(),
     customerHasEmail: !!custRow?.email?.trim(),
@@ -452,33 +482,27 @@ export async function createBooking(
       })
       .returning();
 
+    if (packageLedgerId) {
+      const { burnPackageCredit } = await import("./package-credits.service");
+      const burn = await burnPackageCredit(businessId, packageLedgerId, 1);
+      if (!("ledger" in burn) || !burn.ledger) {
+        throw new Error("PACKAGE_CREDIT_UNAVAILABLE");
+      }
+      const creditNote = `Package credit applied (${burn.ledger.packageName})`;
+      await tx
+        .update(bookingsTable)
+        .set({
+          notes: [data.notes, creditNote].filter(Boolean).join(" · "),
+          updatedAt: new Date(),
+        })
+        .where(eq(bookingsTable.id, b.id));
+      b.notes = [data.notes, creditNote].filter(Boolean).join(" · ");
+    }
+
     return b;
   });
 
   const enriched = await enrichBooking(inserted);
-
-  if (data.usePackageCredit || data.packageLedgerId) {
-    const { burnPackageCredit, findActivePackageCredit } = await import(
-      "./package-credits.service"
-    );
-    const ledgerId =
-      data.packageLedgerId ??
-      (await findActivePackageCredit(businessId, data.customerId))?.id;
-    if (ledgerId) {
-      const burn = await burnPackageCredit(businessId, ledgerId, 1);
-      if ("ledger" in burn) {
-        await db
-          .update(bookingsTable)
-          .set({
-            notes: [data.notes, `Package credit applied (${burn.ledger?.packageName})`]
-              .filter(Boolean)
-              .join(" · "),
-            updatedAt: new Date(),
-          })
-          .where(eq(bookingsTable.id, inserted.id));
-      }
-    }
-  }
 
   // Fire-and-forget: confirmation email.
   void sendBookingConfirmationEmail({

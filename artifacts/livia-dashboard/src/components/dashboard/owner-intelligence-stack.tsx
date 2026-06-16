@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, CreditCard, MessageSquare, Sparkles, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PolicyEvolutionPanel } from "@/components/dashboard/policy-evolution-panel";
 
 const SEVERITY_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   act: "destructive",
@@ -98,6 +99,11 @@ export function OwnerIntelligenceStack({ className, variant = "owner-home" }: St
             {data.twinSubline}
           </p>
         ) : null}
+
+        <PolicyEvolutionPanel
+          proposals={(data as { policyEvolutionProposals?: import("@workspace/policy").PolicyEvolutionProposal[] })
+            .policyEvolutionProposals}
+        />
 
         {primary ? (
           <div

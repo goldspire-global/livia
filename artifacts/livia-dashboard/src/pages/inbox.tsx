@@ -35,6 +35,8 @@ import { useUser } from "@clerk/clerk-react";
 import { timeGreeting } from "@/lib/persona-rituals";
 import {
   countByInboxQueueLens,
+  sortInboxThreadsByAttention,
+  inboxThreadNeedsAttention,
   defaultInboxQueueLens,
   inboxScreenTitle,
   INBOX_QUEUE_LENS_LABELS,
@@ -258,10 +260,17 @@ export default function InboxPage() {
           if (queueLens === "all") return c.status !== "CLOSED";
           return matchesInboxQueueLens(c, queueLens);
         });
-    return [...base].sort(
-      (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
-    );
+    return sortInboxThreadsByAttention(base);
   }, [conversations, queueLens, showRitual]);
+
+  useEffect(() => {
+    if (!showRitual || conversations.length === 0) return;
+    const attention =
+      (queueCounts.needs_you ?? 0) + (queueCounts.taken_over ?? 0);
+    if (attention > 0 && queueLens === "liv_handling") {
+      setQueueLens("all");
+    }
+  }, [showRitual, conversations.length, queueCounts.needs_you, queueCounts.taken_over, queueLens]);
 
   const detailData = detail as
     | {

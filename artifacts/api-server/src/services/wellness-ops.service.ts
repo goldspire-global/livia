@@ -12,7 +12,7 @@ import { WELLNESS_ROOM_TURNOVER_MINUTES } from "@workspace/policy";
 import { getAvailableSlots } from "./slots.service";
 import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { derivePendingReason } from "../lib/booking-pending";
-import { customerExemptFromDeposit } from "@workspace/policy";
+import { depositAppliesForBookingContext } from "@workspace/policy";
 import { policiesFromBusiness } from "./policies.service";
 
 function addMinutes(d: Date, m: number): Date {
@@ -292,24 +292,34 @@ export async function confirmBookingAfterStripePayment(businessId: string, booki
     .where(eq(customersTable.id, booking.customerId))
     .limit(1);
 
-  const exempt = customerExemptFromDeposit({ operational: op });
+  const [service] = await db
+    .select({
+      priceMinor: servicesTable.priceMinor,
+      serviceKind: servicesTable.serviceKind,
+      category: servicesTable.category,
+    })
+    .from(servicesTable)
+    .where(and(eq(servicesTable.id, booking.serviceId), eq(servicesTable.businessId, businessId)))
+    .limit(1);
+
+  const depositApplies = depositAppliesForBookingContext({
+    operational: op,
+    service: service ?? null,
+  });
 
   const pendingReason = derivePendingReason({
     source: booking.source ?? "web",
     aiCanBookDirectly: (cached.business.aiCanBookDirectly ?? "true") === "true",
-    depositRequired: op.depositRequired && !exempt,
+    depositRequired: depositApplies,
     depositPaidEurCents: booking.depositPaidEurCents ?? 0,
-    autoConfirmWhenNoDeposit: op.autoConfirmWhenNoDeposit,
-    customerTrusted: exempt,
     bookingContinuityEnabled: op.bookingContinuityEnabled,
     customerHasPhone: !!cust?.phone?.trim(),
     customerHasEmail: !!cust?.email?.trim(),
   });
 
-  if (pendingReason && pendingReason !== "awaiting_deposit") {
+  if (pendingReason !== null) {
     return { updated: false };
   }
-  if (pendingReason && (booking.depositPaidEurCents ?? 0) <= 0) return { updated: false };
 
   await db
     .update(bookingsTable)

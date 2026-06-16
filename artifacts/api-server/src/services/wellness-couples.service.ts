@@ -1,8 +1,8 @@
 import { db, bookingsTable, businessesTable, customersTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { generateId } from "../lib/id";
+import { depositAppliesForBookingContext } from "@workspace/policy";
 import { derivePendingReason } from "../lib/booking-pending";
-import { customerExemptFromDeposit } from "@workspace/policy";
 import { policiesFromBusiness } from "./policies.service";
 import { getPoliciesForBusinessId } from "./policies.service";
 
@@ -72,19 +72,22 @@ export async function createCouplesBookingPair(
     .where(eq(customersTable.id, input.primary.customerId))
     .limit(1);
   const aiCanBookDirectly = (biz?.aiCanBookDirectly ?? "true") === "true";
-  const customerTrusted = customerExemptFromDeposit({
+  const depositApplies = depositAppliesForBookingContext({
     operational: {
       depositRequired: Boolean(op?.depositRequired),
       depositPercent: op?.depositPercent ?? 0,
+    },
+    service: {
+      priceMinor: 0,
+      serviceKind: null,
+      category: null,
     },
   });
   const pendingReason = derivePendingReason({
     source: "web",
     aiCanBookDirectly,
-    depositRequired: Boolean(op?.depositRequired && !customerTrusted),
+    depositRequired: depositApplies,
     depositPaidEurCents: 0,
-    autoConfirmWhenNoDeposit: op?.autoConfirmWhenNoDeposit,
-    customerTrusted,
     bookingContinuityEnabled: op?.bookingContinuityEnabled,
     customerHasPhone: !!primaryCust?.phone?.trim(),
     customerHasEmail: !!primaryCust?.email?.trim(),

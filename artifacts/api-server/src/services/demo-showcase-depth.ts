@@ -23,6 +23,7 @@ import { ensureLiveDayForBusiness } from "./demo-live-day.service";
 import { ensureWellnessShowcaseDepth } from "./wellness-demo-depth";
 import { ensureDemoOperationalCases } from "./demo-operational-cases.seed";
 import { applyDemoPublicBranding } from "../lib/demo-public-assets";
+import { mergeOperationalPolicy, parseOperationalPolicy, recommendedDepositPolicyForVertical } from "@workspace/policy";
 import { backfillDemoServiceImages } from "../lib/demo-service-images";
 import { inferDemoServiceImageUrl } from "../lib/experience-skin";
 import { consultFirstDemoCustomerCap, isConsultFirstVertical, type BusinessVertical } from "@workspace/policy";
@@ -250,6 +251,39 @@ export async function ensureShowcasePets(
   }
 }
 
+/** V1: showcase shops use vertical-appropriate deposit defaults — Liv confirms once paid. */
+async function ensureShowcaseV1DepositPolicy(
+  businessId: string,
+  vertical: BusinessVertical,
+): Promise<void> {
+  const [biz] = await db
+    .select({ operationalPolicy: businessesTable.operationalPolicy })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  if (!biz) return;
+  const current = parseOperationalPolicy(biz.operationalPolicy);
+  const defaults = recommendedDepositPolicyForVertical(vertical);
+  const next = mergeOperationalPolicy(
+    {
+      depositRequired: defaults.depositRequired,
+      depositPercent:
+        current.depositPercent > 0 ? current.depositPercent : defaults.depositPercent,
+      autoConfirmWhenNoDeposit: true,
+    },
+    current,
+  );
+  if (
+    next.depositRequired !== current.depositRequired ||
+    next.depositPercent !== current.depositPercent
+  ) {
+    await db
+      .update(businessesTable)
+      .set({ operationalPolicy: next as unknown as Record<string, unknown> })
+      .where(eq(businessesTable.id, businessId));
+  }
+}
+
 /** Idempotent refresh for existing showcase shops — live day, depth, inbox only when empty. */
 export async function refreshVerticalShowcaseShop(
   businessId: string,
@@ -261,6 +295,7 @@ export async function refreshVerticalShowcaseShop(
     seedPets?: Array<{ name: string; breed: string; species?: "dog" | "cat"; customerIndex?: number }>;
   },
 ): Promise<void> {
+  await ensureShowcaseV1DepositPolicy(businessId, d.vertical);
   await applyDemoPublicBranding(businessId, d.vertical);
   await ensureDefaultLivOutboundOverrides(businessId, d.vertical);
   await backfillDemoServiceImages(businessId, d.vertical, { force: true });

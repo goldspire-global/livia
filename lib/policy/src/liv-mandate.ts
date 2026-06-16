@@ -225,6 +225,37 @@ export const LIV_MANDATE_RUNG_LABELS: Record<
   },
 };
 
+const RUNG_PROMOTION_ORDER: LivAutonomyRung[] = ["R0", "R1", "R2", "R3", "R4"];
+
+/** Twin proposes rung promotion when trust metrics justify it — owner accepts. */
+export function promoteLivAutonomyIfEarned(args: {
+  mandate: LivMandate;
+  trustScore: number;
+  completedBookings: number;
+  captureRatePercent?: number | null;
+}): {
+  nextRung: LivAutonomyRung;
+  nextTrustScore: number;
+  reason: string;
+  benefit: string;
+  confidence: "high" | "medium" | "low";
+} | null {
+  const idx = RUNG_PROMOTION_ORDER.indexOf(args.mandate.rung);
+  if (idx < 0 || idx >= RUNG_PROMOTION_ORDER.length - 1) return null;
+  if (args.completedBookings < 50) return null;
+  if (args.trustScore < 55) return null;
+  if (args.captureRatePercent != null && args.captureRatePercent < 60) return null;
+
+  const nextRung = RUNG_PROMOTION_ORDER[idx + 1]!;
+  return {
+    nextRung,
+    nextTrustScore: Math.min(100, args.trustScore + 8),
+    reason: `${args.completedBookings} completed visits and solid payment capture — Liv can handle more routine actions without a tap.`,
+    benefit: `Moves to ${LIV_MANDATE_RUNG_LABELS[nextRung].short}: ${LIV_MANDATE_RUNG_LABELS[nextRung].description}`,
+    confidence: args.trustScore >= 65 ? "high" : "medium",
+  };
+}
+
 export function simulateMandateScenarios(
   mandate: LivMandate,
   vertical?: string,

@@ -56,17 +56,22 @@ export type OwnerIntelligenceBundle = {
   twinRisks: TwinRiskOrOpportunity[];
   twinOpportunities: TwinRiskOrOpportunity[];
   twinHealth?: BusinessTwinHealth | null;
+  policyEvolutionProposals?: import("@workspace/policy").PolicyEvolutionProposal[];
+  qualityRegistry?: import("@workspace/policy").QualityRegistryEntry[];
 };
 
 /** Single Twin context load — commerce, capabilities, twin headline/recs. */
 export async function getOwnerIntelligenceBundle(
   businessId: string,
 ): Promise<OwnerIntelligenceBundle | null> {
-  const [ctx, atRisk, feedback, twinObservations] = await Promise.all([
+  const [ctx, atRisk, feedback, twinObservations, policyEvolutionProposals, qualityRegistry] =
+    await Promise.all([
     loadBusinessTwinContext(businessId),
     listAtRiskGuestPreviews(businessId, { limit: 5 }),
     listRecentVisitFeedback(businessId, 14),
     listActiveTwinObservations(businessId, 6),
+    import("./policy-evolution.service").then((m) => m.getPolicyEvolutionProposals(businessId)),
+    import("./policy-evolution.service").then((m) => m.getQualityRegistryForBusiness(businessId)),
   ]);
 
   const caps = ctx.capabilities;
@@ -188,5 +193,7 @@ export async function getOwnerIntelligenceBundle(
     twinRisks,
     twinOpportunities,
     twinHealth,
+    policyEvolutionProposals,
+    qualityRegistry,
   };
 }

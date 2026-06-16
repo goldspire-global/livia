@@ -1,7 +1,8 @@
 import { db, bookingsTable, businessesTable, servicesTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
-import { computeDepositDueMinor } from "../services/guest-deposit-pay.service";
+import { computeDepositDueMinor, resolveBookingDepositPercent } from "../services/guest-deposit-pay.service";
 import { policiesFromBusiness } from "../services/policies.service";
+import { depositAppliesForBookingContext } from "@workspace/policy";
 
 /** Deposit still due — staff/Liv must not confirm until paid. */
 export async function depositDueMinorForBooking(
@@ -27,16 +28,31 @@ export async function depositDueMinorForBooking(
   if (!biz) return 0;
 
   const [service] = await db
-    .select({ priceMinor: servicesTable.priceMinor })
+    .select({
+      priceMinor: servicesTable.priceMinor,
+      serviceKind: servicesTable.serviceKind,
+      category: servicesTable.category,
+      name: servicesTable.name,
+      durationMinutes: servicesTable.durationMinutes,
+    })
     .from(servicesTable)
     .where(and(eq(servicesTable.id, row.serviceId), eq(servicesTable.businessId, businessId)))
     .limit(1);
 
   const policies = policiesFromBusiness(biz);
+  const depositRequired = depositAppliesForBookingContext({
+    operational: policies.operational,
+    service: service ?? null,
+  });
+  if (!depositRequired) return 0;
+
   return computeDepositDueMinor({
     priceMinor: service?.priceMinor ?? 0,
-    depositPercent: policies.operational.depositPercent ?? 0,
-    depositRequired: policies.operational.depositRequired,
+    depositPercent: resolveBookingDepositPercent({
+      operational: policies.operational,
+      service: service ?? null,
+    }),
+    depositRequired: true,
     depositPaidMinor: row.depositPaidEurCents ?? 0,
   });
 }
