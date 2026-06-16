@@ -80,12 +80,13 @@ export function resolveOperatingPulse(input: {
       parts.length > 0
         ? `${parts.join(" · ")} — Liv is handling everything else.`
         : "Liv is handling everything else.";
-    primaryHref = needsYou > 0 ? "/bookings?status=PENDING" : "/inbox?lens=needs_you";
+    primaryHref =
+      needsYou > 0 ? "/bookings?status=PENDING&lens=needs_you" : "/inbox?lens=needs_you";
     primaryLabel = needsYou > 0 ? "Review bookings" : "Open inbox";
   } else if (guestAction > 0) {
     headline = "Liv is running the floor";
     subline = `${guestAction} guest${guestAction === 1 ? "" : "s"} completing deposit or reply — no action needed.`;
-    primaryHref = "/bookings?status=PENDING";
+    primaryHref = "/bookings?status=PENDING&lens=guest_action";
     primaryLabel = "View waiting";
   } else {
     headline = "Liv has the floor";

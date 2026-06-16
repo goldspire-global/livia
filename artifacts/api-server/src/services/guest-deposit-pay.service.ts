@@ -10,7 +10,7 @@ import { EventType } from "@workspace/db";
 import { logEvent } from "./events.service";
 import { generateId } from "../lib/id";
 import { logger } from "../lib/logger";
-import { resolveDepositPercentForService, type OperationalPolicy } from "@workspace/policy";
+import { resolveDepositPercentForService, resolveTotalPaidMinor, type OperationalPolicy } from "@workspace/policy";
 
 export type GuestDepositPayView = {
   bookingId: string;
@@ -152,6 +152,7 @@ export async function captureGuestDepositPayment(args: {
   const [row] = await db
     .select({
       depositPaidEurCents: bookingsTable.depositPaidEurCents,
+      totalPaidEurCents: bookingsTable.totalPaidEurCents,
       customerId: bookingsTable.customerId,
       priceMinor: servicesTable.priceMinor,
       currency: servicesTable.currency,
@@ -252,10 +253,15 @@ export async function captureGuestDepositPayment(args: {
   }
 
   if (creditMinor > 0) {
+    const prevTotal = resolveTotalPaidMinor({
+      depositPaidEurCents: row.depositPaidEurCents,
+      totalPaidEurCents: row.totalPaidEurCents ?? row.depositPaidEurCents,
+    });
     await db
       .update(bookingsTable)
       .set({
         depositPaidEurCents: row.depositPaidEurCents + creditMinor,
+        totalPaidEurCents: prevTotal + creditMinor,
         updatedAt: new Date(),
       })
       .where(

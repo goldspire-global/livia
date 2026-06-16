@@ -1744,6 +1744,7 @@ export const UpdateCustomerBody = zod.object({
   notes: zod.string().optional(),
   tags: zod.array(zod.string()).optional(),
   isBlocked: zod.boolean().optional(),
+  trustedClient: zod.boolean().optional(),
 });
 
 export const UpdateCustomerResponse = zod.object({
@@ -2157,6 +2158,129 @@ export const UpdateBookingResponse = zod.object({
 });
 
 /**
+ * @summary Record in-person or manual balance payment
+ */
+export const MarkBookingBalancePaidParams = zod.object({
+  businessId: zod.coerce.string(),
+  bookingId: zod.coerce.string(),
+});
+
+export const MarkBookingBalancePaidBody = zod.object({
+  amountMinor: zod.number().optional(),
+});
+
+export const MarkBookingBalancePaidResponse = zod
+  .object({
+    id: zod.string(),
+    businessId: zod.string(),
+    staffId: zod.string().nullish(),
+    serviceId: zod.string(),
+    customerId: zod.string(),
+    channelType: zod.enum([
+      "WEB",
+      "APP",
+      "WHATSAPP",
+      "SMS",
+      "INSTAGRAM",
+      "SNAPCHAT",
+      "EMAIL",
+    ]),
+    startAt: zod.coerce.date(),
+    endAt: zod.coerce.date(),
+    status: zod.enum([
+      "PENDING",
+      "CONFIRMED",
+      "CANCELLED",
+      "COMPLETED",
+      "NO_SHOW",
+    ]),
+    pendingReason: zod
+      .string()
+      .nullish()
+      .describe(
+        "Machine reason while status is PENDING (awaiting_staff_confirm, awaiting_deposit, etc.)",
+      ),
+    notes: zod.string().nullish(),
+    internalNotes: zod.string().nullish(),
+    cancellationReason: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      service: zod.object({
+        id: zod.string(),
+        businessId: zod.string(),
+        name: zod.string(),
+        description: zod.string().nullish(),
+        category: zod.string().nullish(),
+        durationMinutes: zod.number(),
+        bufferBeforeMinutes: zod.number(),
+        bufferAfterMinutes: zod.number(),
+        priceMinor: zod.number(),
+        currency: zod.string(),
+        imageUrl: zod.string().nullish(),
+        isActive: zod.boolean(),
+        sortOrder: zod.number(),
+        aftercareInstructions: zod.string().nullish(),
+        serviceKind: zod.string().nullish(),
+        rebookIntervalDays: zod.number().nullish(),
+        requiresPatchTest: zod.boolean().optional(),
+        createdAt: zod.coerce.date(),
+        updatedAt: zod.coerce.date(),
+      }),
+      customer: zod.object({
+        id: zod.string(),
+        businessId: zod.string(),
+        firstName: zod.string().nullish(),
+        lastName: zod.string().nullish(),
+        displayName: zod.string().nullish(),
+        email: zod.string().nullish(),
+        phone: zod.string().nullish(),
+        notes: zod.string().nullish(),
+        tags: zod.array(zod.string()).nullish(),
+        isBlocked: zod.boolean(),
+        createdAt: zod.coerce.date(),
+        updatedAt: zod.coerce.date(),
+      }),
+      staff: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            businessId: zod.string(),
+            userId: zod.string().nullish(),
+            firstName: zod.string(),
+            lastName: zod.string().nullish(),
+            displayName: zod.string(),
+            email: zod.string().nullish(),
+            phone: zod.string().nullish(),
+            photoUrl: zod.string().nullish(),
+            bio: zod.string().nullish(),
+            color: zod.string().nullish(),
+            isActive: zod.boolean(),
+            createdAt: zod.coerce.date(),
+            updatedAt: zod.coerce.date(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+      resource: zod
+        .union([
+          zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            resourceType: zod.enum(["room", "equipment", "thermal"]),
+            capacity: zod.number(),
+            isActive: zod.boolean(),
+            sortOrder: zod.number(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+    }),
+  );
+
+/**
  * @summary List availability rules for a business or staff member
  */
 export const ListAvailabilityRulesParams = zod.object({
@@ -2506,6 +2630,12 @@ export const GetDashboardSummaryResponse = zod.object({
   lowFeedbackCount: zod.number().optional(),
   commerce: zod.record(zod.string(), zod.unknown()).optional(),
   wellnessTomorrowStress: zod.string().nullish(),
+  operatingPulse: zod
+    .record(zod.string(), zod.unknown())
+    .optional()
+    .describe(
+      "Owner operating pulse — Liv handling \/ guest completing \/ needs you",
+    ),
 });
 
 /**
@@ -2793,6 +2923,39 @@ export const GetOwnerIntelligenceResponse = zod.object({
       zod.null(),
     ])
     .optional(),
+  policyEvolutionProposals: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+  qualityRegistry: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+});
+
+/**
+ * @summary Policy evolution proposals and quality registry
+ */
+export const GetPolicyEvolutionParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetPolicyEvolutionResponse = zod.object({
+  proposals: zod.array(zod.record(zod.string(), zod.unknown())).optional(),
+  qualityRegistry: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+});
+
+/**
+ * @summary Accept a policy evolution proposal
+ */
+export const AcceptPolicyEvolutionParams = zod.object({
+  businessId: zod.coerce.string(),
+  proposalId: zod.coerce.string(),
+});
+
+export const AcceptPolicyEvolutionResponse = zod.object({
+  ok: zod.boolean().optional(),
+  proposalId: zod.string().optional(),
 });
 
 /**

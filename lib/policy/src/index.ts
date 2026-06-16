@@ -89,6 +89,7 @@ export * from "./emergent-trust-program";
 export * from "./package-catalog-program";
 export * from "./policy-evolution-program";
 export * from "./quality-registry-program";
+export * from "./balance-at-visit-program";
 export * from "./production-readiness-program";
 export * from "./vertical-announcement";
 export * from "./guest-public-experience";

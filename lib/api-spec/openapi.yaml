@@ -1257,6 +1257,37 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
+  /businesses/{businessId}/bookings/{bookingId}/mark-balance-paid:
+    post:
+      operationId: markBookingBalancePaid
+      tags: [bookings]
+      summary: Record in-person or manual balance payment
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - $ref: "#/components/parameters/BookingId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amountMinor:
+                  type: integer
+      responses:
+        "200":
+          description: Updated booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   # ─── Availability ─────────────────────────────────────────────────────────
   /businesses/{businessId}/availability:
     get:
@@ -1544,6 +1575,65 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/policy-evolution:
+    get:
+      operationId: getPolicyEvolution
+      tags: [businesses]
+      summary: Policy evolution proposals and quality registry
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Proposals and quality signals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  proposals:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  qualityRegistry:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /businesses/{businessId}/policy-evolution/{proposalId}/accept:
+    post:
+      operationId: acceptPolicyEvolution
+      tags: [businesses]
+      summary: Accept a policy evolution proposal
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+        - name: proposalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Proposal applied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  proposalId:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /businesses/{businessId}/visit-feedback:
     get:
@@ -3713,6 +3803,8 @@ components:
             type: string
         isBlocked:
           type: boolean
+        trustedClient:
+          type: boolean
 
     # ── Booking ──
     Booking:
@@ -4007,6 +4099,10 @@ components:
           additionalProperties: true
         wellnessTomorrowStress:
           type: ["string", "null"]
+        operatingPulse:
+          type: object
+          additionalProperties: true
+          description: Owner operating pulse — Liv handling / guest completing / needs you
       required: [todayBookings, weekBookings, pendingCount, confirmedCount, completedTodayCount, noShowTodayCount, totalCustomers, upcomingBookings, voiceBookingsThisWeek, voiceRecoveredValueEurCents, voiceOutcomeShareEurCents]
 
     PackageCreditSummary:
@@ -4404,6 +4500,16 @@ components:
           oneOf:
             - $ref: "#/components/schemas/BusinessTwinHealth"
             - type: "null"
+        policyEvolutionProposals:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        qualityRegistry:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
       required: [businessId, generatedAt, commerce, capabilityBlockers, commerceCapabilityBlockers, livSuggestions, livPrompts, remediationTasks, ops, twinObservations, twinRisks, twinOpportunities]
 
     SetupGuidedFlowPhase:

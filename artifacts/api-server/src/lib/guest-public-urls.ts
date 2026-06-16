@@ -7,7 +7,7 @@ import {
 } from "@workspace/policy";
 import { getDashboardUrl } from "./public-urls";
 
-type GuestTokenSurface = "visit" | "proof" | "intake" | "pay" | "shop" | "waitlist";
+type GuestTokenSurface = "visit" | "proof" | "intake" | "pay" | "balance" | "shop" | "waitlist";
 
 export function guestBookUrlEnv(): GuestBookUrlEnv {
   const bookHostSuffix = process.env.GUEST_BOOK_HOST_SUFFIX ?? process.env.LIVIA_BOOK_HOST_SUFFIX;

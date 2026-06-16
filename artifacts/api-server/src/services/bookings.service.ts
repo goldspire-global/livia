@@ -15,11 +15,13 @@ import {
   sendBookingCancellationEmail,
 } from "./booking-emails.service";
 import { derivePendingReason, resolvePendingReasonForBooking } from "../lib/booking-pending";
-import { depositAppliesForBooking, depositAppliesForBookingContext, type OperationalPolicy } from "@workspace/policy";
+import { depositAppliesForBooking, depositAppliesForBookingContext, computeBalanceDueFromBooking, resolveTotalPaidMinor, PENDING_REASON_CODES, type OperationalPolicy } from "@workspace/policy";
 import { assertDepositPaidBeforeConfirm } from "../lib/booking-deposit-gate";
 import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { getPoliciesForBusinessId, policiesFromBusiness } from "./policies.service";
 import { businessesTable, bookingResourcesTable } from "@workspace/db";
+import { ensureBookingGuestAccess } from "./booking-guest-access.service";
+import { resolveGuestTokenUrl } from "../lib/guest-public-urls";
 import {
   resolveResourceForService,
   resourceCapacityAvailable,
@@ -244,7 +246,41 @@ export async function enrichBooking(
     }
   }
 
-  return { ...booking, pendingReason, service, customer, staff, media };
+  let guestPaymentLinks: { depositPayUrl?: string; balancePayUrl?: string } | undefined;
+  const [bizRow] = await db
+    .select({ slug: businessesTable.slug })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, booking.businessId))
+    .limit(1);
+  if (bizRow?.slug) {
+    try {
+      const token = await ensureBookingGuestAccess(booking.businessId, booking.id);
+      const totalPaidMinor = resolveTotalPaidMinor(booking);
+      const priceMinor = service?.priceMinor ?? 0;
+      const balanceDue = computeBalanceDueFromBooking({
+        priceMinor,
+        depositPaidEurCents: booking.depositPaidEurCents,
+        totalPaidEurCents: booking.totalPaidEurCents,
+      });
+      guestPaymentLinks = {};
+      if (booking.status === "PENDING" && pendingReason === PENDING_REASON_CODES.AWAITING_DEPOSIT) {
+        guestPaymentLinks.depositPayUrl = resolveGuestTokenUrl(bizRow.slug, "pay", token);
+      }
+      if (
+        balanceDue > 0 &&
+        ["CONFIRMED", "PENDING", "COMPLETED"].includes(booking.status.toUpperCase())
+      ) {
+        guestPaymentLinks.balancePayUrl = resolveGuestTokenUrl(bizRow.slug, "balance", token);
+      }
+      if (!guestPaymentLinks.depositPayUrl && !guestPaymentLinks.balancePayUrl) {
+        guestPaymentLinks = undefined;
+      }
+    } catch {
+      guestPaymentLinks = undefined;
+    }
+  }
+
+  return { ...booking, pendingReason, service, customer, staff, media, guestPaymentLinks };
 }
 
 export async function getBookingById(businessId: string, bookingId: string) {
@@ -504,13 +540,31 @@ export async function createBooking(
 
   const enriched = await enrichBooking(inserted);
 
+  let result = enriched;
+
+  if (biz.vertical === "event-vendors") {
+    const { applyEventQuoteDepositCreditOnBookingCreate } = await import(
+      "./quote-deposit-credit.service"
+    );
+    const credited = await applyEventQuoteDepositCreditOnBookingCreate({
+      businessId,
+      customerId: data.customerId,
+      bookingId: inserted.id,
+      servicePriceMinor: service.priceMinor,
+      vertical: biz.vertical,
+    }).catch(() => null);
+    if (credited) {
+      result = (await getBookingById(businessId, inserted.id)) ?? enriched;
+    }
+  }
+
   // Fire-and-forget: confirmation email.
   void sendBookingConfirmationEmail({
-    business: enriched.businessId,
-    booking: enriched as Parameters<typeof sendBookingConfirmationEmail>[0]["booking"],
+    business: result.businessId,
+    booking: result as Parameters<typeof sendBookingConfirmationEmail>[0]["booking"],
   });
 
-  return enriched;
+  return result;
 }
 
 export async function updateBookingStatus(
@@ -706,4 +760,36 @@ export async function rescheduleBooking(
   });
 
   return enrichBooking(inserted);
+}
+
+export async function staffMarkBalancePaid(
+  businessId: string,
+  bookingId: string,
+  opts?: { amountMinor?: number },
+) {
+  const booking = await getBookingById(businessId, bookingId);
+  if (!booking) return { ok: false as const, reason: "NOT_FOUND" };
+
+  const priceMinor = booking.service?.priceMinor ?? 0;
+  const balanceDue = computeBalanceDueFromBooking({
+    priceMinor,
+    depositPaidEurCents: booking.depositPaidEurCents,
+    totalPaidEurCents: booking.totalPaidEurCents,
+  });
+  if (balanceDue <= 0) return { ok: false as const, reason: "NO_BALANCE" };
+
+  const amountMinor = Math.min(opts?.amountMinor ?? balanceDue, balanceDue);
+  const { captureGuestBalancePayment } = await import("./guest-balance-pay.service");
+  const captured = await captureGuestBalancePayment({
+    businessId,
+    bookingId,
+    customerId: booking.customerId,
+    amountMinor,
+    currency: booking.service?.currency ?? "EUR",
+    simulated: true,
+  });
+  if (!captured.ok) return { ok: false as const, reason: "NOT_FOUND" };
+
+  const updated = await getBookingById(businessId, bookingId);
+  return { ok: true as const, booking: updated, applied: captured.applied };
 }

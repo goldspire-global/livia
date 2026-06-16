@@ -13,6 +13,7 @@ import {
   createBooking,
   updateBookingStatus,
   rescheduleBooking,
+  staffMarkBalancePaid,
 } from "../services/bookings.service";
 import { logEvent } from "../services/events.service";
 import { EventType } from "@workspace/db";
@@ -261,6 +262,39 @@ router.get(
     }
     const linkedInboxCase = await getLinkedInboxCaseForBooking(businessId, bookingId);
     res.json({ ...b, linkedInboxCase });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/bookings/:bookingId/mark-balance-paid",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const userId = getUserId(req);
+    const businessId = getBizId(req.params.businessId);
+    const bookingId = getBizId(req.params.bookingId);
+    const ctx = getRoleContext(req);
+    const existing = await getBookingById(businessId, bookingId);
+    if (!existing) {
+      sendError(res, req, 404, "Booking not found");
+      return;
+    }
+    if (ctx.effectiveRole === "STAFF" && existing.staffId !== ctx.actingStaffId) {
+      sendError(res, req, 404, "Booking not found");
+      return;
+    }
+    const amountMinor =
+      typeof req.body?.amountMinor === "number" ? req.body.amountMinor : undefined;
+    const result = await staffMarkBalancePaid(businessId, bookingId, { amountMinor });
+    if (!result.ok) {
+      sendError(res, req, 400, result.reason);
+      return;
+    }
+    await appendHumanAudit(businessId, userId, "human.booking.balance_paid", "booking", bookingId, {
+      amountMinor,
+      applied: result.applied,
+    });
+    res.json(result.booking);
   },
 );
 

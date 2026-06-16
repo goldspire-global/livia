@@ -4,9 +4,12 @@ import {
   resolvePolicyEvolutionProposals,
   applyPolicyEvolutionProposal,
   buildQualityRegistryEntries,
+  DEMO_POLICY_EVOLUTION_SHOWCASE_SLUGS,
+  demoPolicyEvolutionProposalForShowcase,
   type PolicyEvolutionProposal,
   type PolicyEvolutionProposalId,
 } from "@workspace/policy";
+import { isDemoPortalEnabled } from "../lib/demo-portal-config";
 import { getBusinessActivationSnapshot } from "./activation-metrics.service";
 import { patchOperationalPolicy } from "./operational-policy.service";
 import { getLivMandateForBusiness, patchLivMandateForBusiness } from "./liv-mandate.service";
@@ -109,7 +112,7 @@ export async function getPolicyEvolutionProposals(
 
   const monthsActive = monthsSince(biz.createdAt.toISOString());
 
-  return resolvePolicyEvolutionProposals({
+  let proposals = resolvePolicyEvolutionProposals({
     operational: policies.operational,
     livMandate: mandatePayload?.mandate ?? null,
     emergentTrust: {
@@ -127,6 +130,18 @@ export async function getPolicyEvolutionProposals(
     livTrustScore: mandatePayload?.mandate.trustScore,
     completedBookings: trustMetrics.completedBookings,
   });
+
+  if (
+    isDemoPortalEnabled() &&
+    biz.slug &&
+    DEMO_POLICY_EVOLUTION_SHOWCASE_SLUGS.has(biz.slug) &&
+    !policies.operational.emergentTrustProgram?.enabled &&
+    !proposals.some((p) => p.id === "emergent_trust_tier")
+  ) {
+    proposals = [demoPolicyEvolutionProposalForShowcase(), ...proposals];
+  }
+
+  return proposals;
 }
 
 export async function getQualityRegistryForBusiness(businessId: string) {

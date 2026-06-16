@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, CreditCard, MessageSquare, Sparkles, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PolicyEvolutionPanel } from "@/components/dashboard/policy-evolution-panel";
+import { QualityRegistryPanel } from "@/components/dashboard/quality-registry-panel";
 
 const SEVERITY_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   act: "destructive",
@@ -103,6 +104,11 @@ export function OwnerIntelligenceStack({ className, variant = "owner-home" }: St
         <PolicyEvolutionPanel
           proposals={(data as { policyEvolutionProposals?: import("@workspace/policy").PolicyEvolutionProposal[] })
             .policyEvolutionProposals}
+        />
+
+        <QualityRegistryPanel
+          entries={(data as { qualityRegistry?: import("@workspace/policy").QualityRegistryEntry[] })
+            .qualityRegistry}
         />
 
         {primary ? (

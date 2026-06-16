@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AcceptPolicyEvolution200,
   ActivityItem,
   AuditLogSearchResponse,
   AvailabilityRule,
@@ -62,6 +63,7 @@ import type {
   GetMyDayParams,
   GetMyNotificationUnreadCount200,
   GetMyNotificationUnreadCountParams,
+  GetPolicyEvolution200,
   GetPublicSlotsParams,
   GetVoiceStatus200,
   GetWellnessGuestVaultParams,
@@ -92,6 +94,7 @@ import type {
   LookupWellnessRedeemCodeBody,
   MarkAllMyNotificationsRead200,
   MarkAllMyNotificationsReadBody,
+  MarkBookingBalancePaidBody,
   MarkMyNotificationRead200,
   MarketingDemoGateVerifyResponse,
   MarketingLeadAck,
@@ -5089,6 +5092,127 @@ export const useUpdateBooking = <
 };
 
 /**
+ * @summary Record in-person or manual balance payment
+ */
+export const getMarkBookingBalancePaidUrl = (
+  businessId: string,
+  bookingId: string,
+) => {
+  return `/api/businesses/${businessId}/bookings/${bookingId}/mark-balance-paid`;
+};
+
+export const markBookingBalancePaid = async (
+  businessId: string,
+  bookingId: string,
+  markBookingBalancePaidBody: MarkBookingBalancePaidBody,
+  options?: RequestInit,
+): Promise<BookingDetail> => {
+  return customFetch<BookingDetail>(
+    getMarkBookingBalancePaidUrl(businessId, bookingId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(markBookingBalancePaidBody),
+    },
+  );
+};
+
+export const getMarkBookingBalancePaidMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markBookingBalancePaid>>,
+    TError,
+    {
+      businessId: string;
+      bookingId: string;
+      data: BodyType<MarkBookingBalancePaidBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markBookingBalancePaid>>,
+  TError,
+  {
+    businessId: string;
+    bookingId: string;
+    data: BodyType<MarkBookingBalancePaidBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["markBookingBalancePaid"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markBookingBalancePaid>>,
+    {
+      businessId: string;
+      bookingId: string;
+      data: BodyType<MarkBookingBalancePaidBody>;
+    }
+  > = (props) => {
+    const { businessId, bookingId, data } = props ?? {};
+
+    return markBookingBalancePaid(businessId, bookingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkBookingBalancePaidMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markBookingBalancePaid>>
+>;
+export type MarkBookingBalancePaidMutationBody =
+  BodyType<MarkBookingBalancePaidBody>;
+export type MarkBookingBalancePaidMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Record in-person or manual balance payment
+ */
+export const useMarkBookingBalancePaid = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markBookingBalancePaid>>,
+    TError,
+    {
+      businessId: string;
+      bookingId: string;
+      data: BodyType<MarkBookingBalancePaidBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markBookingBalancePaid>>,
+  TError,
+  {
+    businessId: string;
+    bookingId: string;
+    data: BodyType<MarkBookingBalancePaidBody>;
+  },
+  TContext
+> => {
+  return useMutation(getMarkBookingBalancePaidMutationOptions(options));
+};
+
+/**
  * @summary List availability rules for a business or staff member
  */
 export const getListAvailabilityRulesUrl = (
@@ -6236,6 +6360,191 @@ export function useGetOwnerIntelligence<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Policy evolution proposals and quality registry
+ */
+export const getGetPolicyEvolutionUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/policy-evolution`;
+};
+
+export const getPolicyEvolution = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<GetPolicyEvolution200> => {
+  return customFetch<GetPolicyEvolution200>(
+    getGetPolicyEvolutionUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetPolicyEvolutionQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/policy-evolution`] as const;
+};
+
+export const getGetPolicyEvolutionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPolicyEvolution>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPolicyEvolution>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPolicyEvolutionQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPolicyEvolution>>
+  > = ({ signal }) =>
+    getPolicyEvolution(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPolicyEvolution>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPolicyEvolutionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPolicyEvolution>>
+>;
+export type GetPolicyEvolutionQueryError = ErrorType<UnauthorizedResponse>;
+
+/**
+ * @summary Policy evolution proposals and quality registry
+ */
+
+export function useGetPolicyEvolution<
+  TData = Awaited<ReturnType<typeof getPolicyEvolution>>,
+  TError = ErrorType<UnauthorizedResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPolicyEvolution>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPolicyEvolutionQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Accept a policy evolution proposal
+ */
+export const getAcceptPolicyEvolutionUrl = (
+  businessId: string,
+  proposalId: string,
+) => {
+  return `/api/businesses/${businessId}/policy-evolution/${proposalId}/accept`;
+};
+
+export const acceptPolicyEvolution = async (
+  businessId: string,
+  proposalId: string,
+  options?: RequestInit,
+): Promise<AcceptPolicyEvolution200> => {
+  return customFetch<AcceptPolicyEvolution200>(
+    getAcceptPolicyEvolutionUrl(businessId, proposalId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getAcceptPolicyEvolutionMutationOptions = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptPolicyEvolution>>,
+    TError,
+    { businessId: string; proposalId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptPolicyEvolution>>,
+  TError,
+  { businessId: string; proposalId: string },
+  TContext
+> => {
+  const mutationKey = ["acceptPolicyEvolution"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptPolicyEvolution>>,
+    { businessId: string; proposalId: string }
+  > = (props) => {
+    const { businessId, proposalId } = props ?? {};
+
+    return acceptPolicyEvolution(businessId, proposalId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptPolicyEvolutionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptPolicyEvolution>>
+>;
+
+export type AcceptPolicyEvolutionMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse
+>;
+
+/**
+ * @summary Accept a policy evolution proposal
+ */
+export const useAcceptPolicyEvolution = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptPolicyEvolution>>,
+    TError,
+    { businessId: string; proposalId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptPolicyEvolution>>,
+  TError,
+  { businessId: string; proposalId: string },
+  TContext
+> => {
+  return useMutation(getAcceptPolicyEvolutionMutationOptions(options));
+};
 
 /**
  * @summary Recent visit feedback for staff

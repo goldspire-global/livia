@@ -20,7 +20,7 @@ import { CalendarPlus, Search, Calendar, Loader2 } from "lucide-react";
 import { usePersona } from "@/lib/persona";
 import { BookingCreateDialog } from "@/components/booking/booking-create-dialog";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
-import { bookingExperienceCopy, verticalOperationalCopy } from "@workspace/policy";
+import { bookingExperienceCopy, verticalOperationalCopy, classifyPendingBookingAttention } from "@workspace/policy";
 import { useOperationalChrome } from "@/lib/operational-chrome";
 import { cn } from "@/lib/utils";
 import { onContainedScrollWheel } from "@/lib/use-contained-scroll";
@@ -48,6 +48,7 @@ export default function BookingsPage() {
   const qc = useQueryClient();
   const [location, setLocation] = useLocation();
   const [statusFilter, setStatusFilter] = useState<string>("PENDING");
+  const [pendingLens, setPendingLens] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [guidedDialogOpen, setGuidedDialogOpen] = useState(false);
@@ -92,6 +93,13 @@ export default function BookingsPage() {
     if (params.get("status") === "PENDING") {
       setStatusFilter("PENDING");
       params.delete("status");
+      changed = true;
+    }
+    const lens = params.get("lens");
+    if (lens === "needs_you" || lens === "guest_action" || lens === "all") {
+      setPendingLens(lens);
+      setStatusFilter("PENDING");
+      params.delete("lens");
       changed = true;
     }
     if (changed) {
@@ -174,9 +182,20 @@ export default function BookingsPage() {
       })
     : accumulated;
 
+  const lensFiltered =
+    statusFilter === "PENDING" && pendingLens !== "all"
+      ? filtered.filter((b: { status: string; pendingReason?: string | null }) => {
+          if (b.status !== "PENDING") return true;
+          const bucket = classifyPendingBookingAttention(b.pendingReason);
+          if (pendingLens === "needs_you") return bucket === "needs_you";
+          if (pendingLens === "guest_action") return bucket === "guest_action";
+          return true;
+        })
+      : filtered;
+
   const listLoading = isLoading && offset === 0;
-  const pendingCount = filtered.filter((b: { status: string }) => b.status === "PENDING").length;
-  const completedCount = filtered.filter((b: { status: string }) => b.status === "COMPLETED").length;
+  const pendingCount = lensFiltered.filter((b: { status: string }) => b.status === "PENDING").length;
+  const completedCount = lensFiltered.filter((b: { status: string }) => b.status === "COMPLETED").length;
 
   const onAssignBookingToResource = useCallback(
     async (bookingId: string, resourceId: string | null) => {
@@ -272,6 +291,27 @@ export default function BookingsPage() {
             <SelectItem value="ALL">All statuses</SelectItem>
           </SelectContent>
         </Select>
+        {statusFilter === "PENDING" ? (
+          <div className="flex flex-wrap gap-1" data-testid="bookings-pending-lens">
+            {(
+              [
+                ["all", "All pending"],
+                ["needs_you", "Needs you"],
+                ["guest_action", "Guest completing"],
+              ] as const
+            ).map(([id, label]) => (
+              <Button
+                key={id}
+                size="sm"
+                variant={pendingLens === id ? "default" : "outline"}
+                className="h-8"
+                onClick={() => setPendingLens(id)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <Card className={op.panel()}>
@@ -289,7 +329,7 @@ export default function BookingsPage() {
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : lensFiltered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Calendar className="h-9 w-9 text-muted-foreground mb-3 opacity-40" />
               <p className="font-medium">{bookingCopy.listEmptyTitle}</p>
@@ -317,7 +357,7 @@ export default function BookingsPage() {
                   morph={bookingsMorph}
                   vertical={businessVertical}
                   category={businessCategory}
-                  bookings={filtered}
+                  bookings={lensFiltered}
                   pendingCount={pendingCount}
                   completedCount={completedCount}
                   packageCreditSummary={dashboardSummary?.packageCreditSummary ?? null}
@@ -334,7 +374,7 @@ export default function BookingsPage() {
               </div>
             ) : (
             <div className={op.listScroll()} onWheel={onContainedScrollWheel}>
-              {filtered.map((booking: any) => (
+              {lensFiltered.map((booking: any) => (
                 <BookingsMorphFallbackRow
                   key={booking.id}
                   booking={booking}

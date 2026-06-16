@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { usePathId } from "@/lib/detail-route-params";
 import { useBusiness } from "@/lib/business-context";
@@ -19,6 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Mail, Phone, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { customFetch } from "@workspace/api-client-react";
+import { trustedClientToggleGuidance } from "@workspace/policy";
 import { GuestRelationshipPanel } from "@/components/customers/guest-relationship-panel";
 import { ClientConsultPipelinePanel } from "@/components/event-vendor/client-consult-pipeline-panel";
 import {
@@ -55,6 +58,7 @@ export default function CustomerDetailPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [emergentTrustEnabled, setEmergentTrustEnabled] = useState(false);
 
   const bid = business?.id ?? "";
   const cid = customerId ?? "";
@@ -72,6 +76,17 @@ export default function CustomerDetailPage() {
 
   const updateCustomer = useUpdateCustomer();
   const { register, handleSubmit, reset } = useForm<CustomerForm>();
+
+  useEffect(() => {
+    if (!bid) return;
+    void customFetch<{ resolved?: { emergentTrustProgram?: { enabled?: boolean } } }>(
+      `/api/businesses/${bid}/operational-policy`,
+    )
+      .then((payload) =>
+        setEmergentTrustEnabled(Boolean(payload.resolved?.emergentTrustProgram?.enabled)),
+      )
+      .catch(() => setEmergentTrustEnabled(false));
+  }, [bid]);
 
   const c = customer as {
     id?: string;
@@ -166,6 +181,21 @@ export default function CustomerDetailPage() {
           toast({ title: c.isBlocked ? "Client unblocked" : "Client blocked" });
         },
         onError: () => toast({ title: "Failed to update client", variant: "destructive" }),
+      },
+    );
+  }
+
+  function toggleTrustedClient() {
+    if (!bid || !cid || !c || !canEdit) return;
+    updateCustomer.mutate(
+      { businessId: bid, customerId: cid, data: { trustedClient: !c.trustedClient } },
+      {
+        onSuccess: () => {
+          invalidateOperationalState(qc, bid);
+          qc.invalidateQueries({ queryKey: getGetCustomerQueryKey(bid, cid) });
+          toast({ title: c.trustedClient ? "Trusted removed" : "Marked trusted" });
+        },
+        onError: () => toast({ title: "Could not update trusted status", variant: "destructive" }),
       },
     );
   }
@@ -316,6 +346,26 @@ export default function CustomerDetailPage() {
                   <p className="text-sm whitespace-pre-wrap">{c.notes}</p>
                 </div>
               )}
+
+              {canEdit ? (
+                <div
+                  className="mt-4 pt-4 border-t flex items-start justify-between gap-4"
+                  data-testid="customer-trusted-toggle"
+                >
+                  <div>
+                    <p className="text-sm font-medium">Trusted client</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                      {trustedClientToggleGuidance(emergentTrustEnabled)}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={Boolean(c.trustedClient)}
+                    disabled={updateCustomer.isPending || !emergentTrustEnabled}
+                    onCheckedChange={() => toggleTrustedClient()}
+                    aria-label="Trusted client"
+                  />
+                </div>
+              ) : null}
 
               {(c.channelIdentities?.length ?? 0) > 0 ? (
                 <div className="mt-4 pt-4 border-t">

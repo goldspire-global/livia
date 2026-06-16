@@ -266,6 +266,8 @@ function syncPublicBookingServiceQuery(serviceId: string | null) {
   );
 }
 
+const PACK_GUEST_KEY = (slug: string) => `livia_pack_guest_${slug}`;
+
 export default function PublicBookingPage() {
   if (typeof window !== "undefined" && isPublicShopPath(window.location.pathname)) {
     return <PublicShopPage />;
@@ -332,6 +334,24 @@ export default function PublicBookingPage() {
     if (!sl || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("pack_purchased") === "1") {
+      try {
+        const raw = sessionStorage.getItem(PACK_GUEST_KEY(sl));
+        if (raw) {
+          const guest = JSON.parse(raw) as {
+            firstName?: string;
+            lastName?: string;
+            email?: string;
+            phone?: string;
+          };
+          if (guest.firstName) setFirstName(guest.firstName);
+          if (guest.lastName) setLastName(guest.lastName);
+          if (guest.email) setEmail(guest.email);
+          if (guest.phone) setPhone(guest.phone);
+          sessionStorage.removeItem(PACK_GUEST_KEY(sl));
+        }
+      } catch {
+        /* ignore */
+      }
       setUsePackageCredit(true);
       setPackBookNext(true);
       setSelectedService(null);
@@ -670,6 +690,19 @@ export default function PublicBookingPage() {
           return;
         }
         if (body.mode === "stripe" && body.checkoutUrl) {
+          try {
+            sessionStorage.setItem(
+              PACK_GUEST_KEY(sl),
+              JSON.stringify({
+                firstName: firstName.trim(),
+                lastName: lastName.trim() || "",
+                email: email.trim() || "",
+                phone: phone.trim() || "",
+              }),
+            );
+          } catch {
+            /* ignore */
+          }
           window.location.href = body.checkoutUrl;
           return;
         }

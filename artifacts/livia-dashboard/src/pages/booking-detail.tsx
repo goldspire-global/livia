@@ -18,6 +18,7 @@ import {
   bookingConfirmBlockedByDeposit,
   formatBookingStatusLabel,
   ownerBalanceAtVisitLine,
+  resolveTotalPaidMinor,
 } from "@workspace/policy";
 import { canMarkNoShow, noShowUnavailableHint } from "@/lib/booking-appointment-window";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,6 +127,7 @@ export default function BookingDetailPage() {
 
   const updateBooking = useUpdateBooking();
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [balanceBusy, setBalanceBusy] = useState(false);
 
   function handleTransition(newStatus: string) {
     if (!bid || !bkId) return;
@@ -202,13 +204,49 @@ export default function BookingDetailPage() {
     const priceMinor = svc?.priceMinor ?? (booking as { priceMinor?: number }).priceMinor ?? 0;
     const currency = svc?.currency ?? (booking as { currency?: string }).currency ?? "EUR";
     const depositPaid = (booking as { depositPaidEurCents?: number }).depositPaidEurCents ?? 0;
+    const totalPaid = resolveTotalPaidMinor({
+      depositPaidEurCents: depositPaid,
+      totalPaidEurCents: (booking as { totalPaidEurCents?: number }).totalPaidEurCents,
+    });
     return ownerBalanceAtVisitLine({
       priceMinor,
       depositPaidMinor: depositPaid,
+      totalPaidMinor: totalPaid,
       currency,
       status: bookingStatus,
     });
   }, [booking, bookingStatus]);
+
+  const guestPaymentLinks = (booking as { guestPaymentLinks?: { balancePayUrl?: string } })
+    ?.guestPaymentLinks;
+  const balancePayUrl = guestPaymentLinks?.balancePayUrl ?? null;
+
+  async function copyBalanceLink() {
+    if (!balancePayUrl) return;
+    try {
+      await navigator.clipboard.writeText(balancePayUrl);
+      toast({ title: "Balance link copied" });
+    } catch {
+      toast({ title: "Could not copy link", variant: "destructive" });
+    }
+  }
+
+  async function markBalancePaid() {
+    if (!bid || !bkId) return;
+    setBalanceBusy(true);
+    try {
+      await apiFetch(`/api/businesses/${bid}/bookings/${bkId}/mark-balance-paid`, {
+        method: "POST",
+      });
+      qc.invalidateQueries({ queryKey: getGetBookingQueryKey(bid, bkId) });
+      invalidateOperationalState(qc, bid);
+      toast({ title: "Balance marked paid" });
+    } catch {
+      toast({ title: "Could not record balance", variant: "destructive" });
+    } finally {
+      setBalanceBusy(false);
+    }
+  }
 
   return (
     <OperationalPageShell
@@ -274,9 +312,32 @@ export default function BookingDetailPage() {
                 </div>
               ) : null}
               {balanceAtVisitLine ? (
-                <p className="text-sm text-muted-foreground mb-3" data-testid="booking-balance-at-visit">
-                  {balanceAtVisitLine}
-                </p>
+                <div className="mb-3 space-y-2" data-testid="booking-balance-at-visit">
+                  <p className="text-sm text-muted-foreground">{balanceAtVisitLine}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {balancePayUrl ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => void copyBalanceLink()}
+                        data-testid="booking-copy-balance-link"
+                      >
+                        Copy balance link
+                      </Button>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      type="button"
+                      disabled={balanceBusy}
+                      onClick={() => void markBalancePaid()}
+                      data-testid="booking-mark-balance-paid"
+                    >
+                      {balanceBusy ? "Saving…" : "Mark balance paid"}
+                    </Button>
+                  </div>
+                </div>
               ) : null}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                 <Clock className="h-4 w-4" />

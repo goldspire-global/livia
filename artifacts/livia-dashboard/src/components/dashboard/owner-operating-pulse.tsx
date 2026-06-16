@@ -12,14 +12,39 @@ function PulseStat({
   bucket,
   count,
   active,
+  href,
 }: {
   bucket: OperatingAttentionBucket;
   count: number;
   active?: boolean;
+  href?: string;
 }) {
   const copy = operatingPulsePanelCopy(bucket);
   const Icon =
     bucket === "needs_you" ? UserRound : bucket === "guest_action" ? Users : Sparkles;
+  const body = (
+    <>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {copy.label}
+      </div>
+      <p className="text-2xl font-semibold tabular-nums mt-0.5">{count}</p>
+      <p className="text-[11px] text-muted-foreground leading-snug mt-1">{copy.description}</p>
+    </>
+  );
+  if (href && count > 0) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "rounded-lg border px-3 py-2 min-w-0 flex-1 block hover:border-primary/50 transition-colors",
+          active ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card/50",
+        )}
+      >
+        {body}
+      </Link>
+    );
+  }
   return (
     <div
       className={cn(
@@ -27,12 +52,7 @@ function PulseStat({
         active ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card/50",
       )}
     >
-      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        {copy.label}
-      </div>
-      <p className="text-2xl font-semibold tabular-nums mt-0.5">{count}</p>
-      <p className="text-[11px] text-muted-foreground leading-snug mt-1">{copy.description}</p>
+      {body}
     </div>
   );
 }
@@ -76,8 +96,17 @@ export function OwnerOperatingPulse({
       </div>
       <div className="p-3 flex flex-col sm:flex-row gap-2">
         <PulseStat bucket="liv_handling" count={livCount} active={needsCount === 0} />
-        <PulseStat bucket="guest_action" count={guestCount} />
-        <PulseStat bucket="needs_you" count={needsCount} active={needsCount > 0} />
+        <PulseStat
+          bucket="guest_action"
+          count={guestCount}
+          href="/bookings?status=PENDING&lens=guest_action"
+        />
+        <PulseStat
+          bucket="needs_you"
+          count={needsCount}
+          active={needsCount > 0}
+          href="/bookings?status=PENDING&lens=needs_you"
+        />
       </div>
     </section>
   );

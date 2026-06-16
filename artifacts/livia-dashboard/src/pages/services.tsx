@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBusiness } from "@/lib/business-context";
 import {
   useListServices,
@@ -30,6 +30,7 @@ import {
   resolveVerticalKey,
   type BeautyServiceKind,
   BEAUTY_SERVICE_KINDS,
+  serviceDepositPercentHint,
 } from "@workspace/policy";
 
 interface ServiceForm {
@@ -107,6 +108,45 @@ export default function ServicesPage() {
   });
   const draftImageUrl = watch("imageUrl");
   const draftCurrency = watch("currency") || business?.currency || "EUR";
+  const draftCategory = watch("category");
+  const draftName = watch("name");
+  const draftServiceKind = watch("serviceKind");
+  const draftDuration = watch("durationMinutes");
+
+  const [depositPolicy, setDepositPolicy] = useState<{
+    depositRequired: boolean;
+    depositPercent: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!bid) return;
+    void customFetch<{ resolved?: { depositRequired: boolean; depositPercent: number } }>(
+      `/api/businesses/${bid}/operational-policy`,
+    )
+      .then((payload) => {
+        const resolved = payload.resolved;
+        if (resolved) {
+          setDepositPolicy({
+            depositRequired: resolved.depositRequired,
+            depositPercent: resolved.depositPercent,
+          });
+        }
+      })
+      .catch(() => undefined);
+  }, [bid]);
+
+  const serviceDepositHint = useMemo(() => {
+    if (!depositPolicy?.depositRequired) return null;
+    return serviceDepositPercentHint({
+      operational: depositPolicy,
+      service: {
+        category: draftCategory || null,
+        name: draftName || null,
+        serviceKind: draftServiceKind || null,
+        durationMinutes: Number(draftDuration) || 0,
+      },
+    });
+  }, [depositPolicy, draftCategory, draftName, draftServiceKind, draftDuration]);
 
   const svcList =
     (services as {
@@ -367,6 +407,11 @@ export default function ServicesPage() {
                     />
                   </div>
                 ) : null}
+                {serviceDepositHint ? (
+                  <p className="text-xs text-muted-foreground" data-testid="service-deposit-hint">
+                    {serviceDepositHint}
+                  </p>
+                ) : null}
                 {isBeauty ? (
                   <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-3">
                     <div className="space-y-2">
@@ -554,6 +599,9 @@ export default function ServicesPage() {
                 <Label>Category</Label>
                 <Input {...register("category")} placeholder="e.g. Balloons, Tables" />
               </div>
+            ) : null}
+            {serviceDepositHint ? (
+              <p className="text-xs text-muted-foreground">{serviceDepositHint}</p>
             ) : null}
             {!isEventVendor ? (
             <div className="grid grid-cols-2 gap-4">

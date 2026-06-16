@@ -34,7 +34,7 @@ export function guestEventVendorPath(slug: string, segment = ""): string {
 /** Token surfaces on book host (visit, proof, pay, …). */
 export function guestBookTokenPath(
   slug: string,
-  surface: "visit" | "proof" | "intake" | "pay" | "shop" | "waitlist",
+  surface: "visit" | "proof" | "intake" | "pay" | "balance" | "shop" | "waitlist",
   token: string,
 ): string {
   return `/book/${slug}/${surface}/${encodeURIComponent(token)}`;

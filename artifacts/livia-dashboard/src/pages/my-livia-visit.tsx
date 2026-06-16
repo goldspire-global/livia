@@ -48,6 +48,7 @@ type VisitPayload = {
     depositDueMinor?: number;
     pendingReason?: string | null;
     depositLine?: { label: string; tone: "paid" | "due" | "hold" | "none" } | null;
+    balanceAtVisitLine?: string | null;
     logoUrl: string | null;
   };
   prepNotes: string[];
@@ -90,6 +91,7 @@ type VisitPayload = {
   bookUrl: string;
   shopRelationshipUrl: string;
   depositPayUrl?: string | null;
+  balancePayUrl?: string | null;
 };
 
 export default function MyLiviaVisitPage() {
@@ -308,6 +310,8 @@ export default function MyLiviaVisitPage() {
             depositRequired={b.depositRequired}
             depositLineLabel={b.depositLine?.label}
             depositPayUrl={data.depositPayUrl}
+            balancePayUrl={data.balancePayUrl}
+            balanceAtVisitLine={b.balanceAtVisitLine}
             timezone={b.timezone}
             compact
           />

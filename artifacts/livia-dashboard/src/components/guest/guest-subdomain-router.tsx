@@ -6,6 +6,7 @@ import PublicProofPage from "@/pages/public-proof";
 import PublicIntakePage from "@/pages/public-intake";
 import PublicWaitlistPage from "@/pages/public-waitlist";
 import PublicPayPage from "@/pages/public-pay";
+import PublicBalancePage from "@/pages/public-balance";
 import PublicShopPage from "@/pages/public-shop";
 import PublicEventVendorSitePage from "@/pages/public-event-vendor-site";
 import PublicEventVendorGalleryPage from "@/pages/public-event-vendor-gallery";
@@ -56,6 +57,7 @@ export function GuestSubdomainRouter() {
       <Route path="/intake/:token" component={PublicIntakePage} />
       <Route path="/waitlist/:token" component={PublicWaitlistPage} />
       <Route path="/pay/:token" component={PublicPayPage} />
+      <Route path="/balance/:token" component={PublicBalancePage} />
       <Route path="/q/:token" component={PublicEventVendorQuotePage} />
       <Route path="/mood/:token" component={PublicEventVendorMoodPage} />
       <Route path="/planner/:token" component={PublicEventVendorPlannerPage} />

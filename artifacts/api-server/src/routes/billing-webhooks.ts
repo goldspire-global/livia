@@ -142,6 +142,18 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
             await upsertPaymentFromStripeIntent(pi);
           }
         }
+        if (session.mode === "payment" && session.metadata?.kind === "guest_balance") {
+          const bid = session.metadata.businessId;
+          const bookingId = session.metadata.bookingId;
+          if (bid && bookingId && session.payment_intent) {
+            const piId =
+              typeof session.payment_intent === "string"
+                ? session.payment_intent
+                : session.payment_intent.id;
+            const pi = await stripe.paymentIntents.retrieve(piId);
+            await upsertPaymentFromStripeIntent(pi);
+          }
+        }
         if (session.mode === "payment" && session.metadata?.kind === "guest_quote_deposit") {
           const bid = session.metadata.businessId;
           const quoteId = session.metadata.quoteId;

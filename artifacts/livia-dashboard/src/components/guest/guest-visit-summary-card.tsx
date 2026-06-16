@@ -18,6 +18,8 @@ export function GuestVisitSummaryCard({
   depositRequired,
   depositLineLabel,
   depositPayUrl,
+  balancePayUrl,
+  balanceAtVisitLine,
   timezone,
   compact = false,
 }: {
@@ -33,6 +35,8 @@ export function GuestVisitSummaryCard({
   depositRequired?: boolean;
   depositLineLabel?: string | null;
   depositPayUrl?: string | null;
+  balancePayUrl?: string | null;
+  balanceAtVisitLine?: string | null;
   timezone?: string;
   /** Hero already shows treatment / time / staff — sidebar is status + money only. */
   compact?: boolean;
@@ -85,9 +89,19 @@ export function GuestVisitSummaryCard({
             {depositLineLabel}
           </p>
         ) : null}
+        {balanceAtVisitLine ? (
+          <p className="text-sm text-muted-foreground pt-2 border-t border-border">
+            {balanceAtVisitLine}
+          </p>
+        ) : null}
         {depositPayUrl && (depositDueMinor ?? 0) > 0 ? (
           <Button asChild className="w-full mt-2" data-testid="guest-hub-visit-pay-deposit">
             <a href={depositPayUrl}>Pay deposit</a>
+          </Button>
+        ) : null}
+        {balancePayUrl && balanceAtVisitLine ? (
+          <Button asChild className="w-full mt-2" variant="secondary" data-testid="guest-hub-visit-pay-balance">
+            <a href={balancePayUrl}>Pay balance</a>
           </Button>
         ) : null}
       </CardContent>

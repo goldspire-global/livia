@@ -925,6 +925,7 @@ export interface UpdateCustomerBody {
   notes?: string;
   tags?: string[];
   isBlocked?: boolean;
+  trustedClient?: boolean;
 }
 
 export interface BookingListResponse {
@@ -1051,6 +1052,11 @@ export interface SlotListResponse {
 
 export type DashboardSummaryCommerce = { [key: string]: unknown };
 
+/**
+ * Owner operating pulse — Liv handling / guest completing / needs you
+ */
+export type DashboardSummaryOperatingPulse = { [key: string]: unknown };
+
 export interface PackageCreditSummary {
   ledgerCount: number;
   activePackages: number;
@@ -1110,6 +1116,8 @@ export interface DashboardSummary {
   commerce?: DashboardSummaryCommerce;
   /** @nullable */
   wellnessTomorrowStress?: string | null;
+  /** Owner operating pulse — Liv handling / guest completing / needs you */
+  operatingPulse?: DashboardSummaryOperatingPulse;
 }
 
 export type ActivityItemLevel =
@@ -1333,6 +1341,14 @@ export type OwnerIntelligenceBundleTwinObservationsItem = {
   [key: string]: unknown;
 };
 
+export type OwnerIntelligenceBundlePolicyEvolutionProposalsItem = {
+  [key: string]: unknown;
+};
+
+export type OwnerIntelligenceBundleQualityRegistryItem = {
+  [key: string]: unknown;
+};
+
 export interface OwnerIntelligenceBundle {
   businessId: string;
   generatedAt: string;
@@ -1353,6 +1369,8 @@ export interface OwnerIntelligenceBundle {
   twinRisks: TwinRiskOrOpportunity[];
   twinOpportunities: TwinRiskOrOpportunity[];
   twinHealth?: BusinessTwinHealth | null;
+  policyEvolutionProposals?: OwnerIntelligenceBundlePolicyEvolutionProposalsItem[];
+  qualityRegistry?: OwnerIntelligenceBundleQualityRegistryItem[];
 }
 
 export interface SetupGuidedFlowPhase {
@@ -1916,6 +1934,10 @@ export const ListBookingsStatus = {
   NO_SHOW: "NO_SHOW",
 } as const;
 
+export type MarkBookingBalancePaidBody = {
+  amountMinor?: number;
+};
+
 export type ListAvailabilityRulesParams = {
   staffId?: string;
 };
@@ -1946,6 +1968,22 @@ export const PatchTenantCapabilityInstanceBodyAction = {
 
 export type PatchTenantCapabilityInstanceBody = {
   action: PatchTenantCapabilityInstanceBodyAction;
+};
+
+export type GetPolicyEvolution200ProposalsItem = { [key: string]: unknown };
+
+export type GetPolicyEvolution200QualityRegistryItem = {
+  [key: string]: unknown;
+};
+
+export type GetPolicyEvolution200 = {
+  proposals?: GetPolicyEvolution200ProposalsItem[];
+  qualityRegistry?: GetPolicyEvolution200QualityRegistryItem[];
+};
+
+export type AcceptPolicyEvolution200 = {
+  ok?: boolean;
+  proposalId?: string;
 };
 
 export type GetPublicSlotsParams = {

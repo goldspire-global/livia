@@ -238,6 +238,12 @@ run("Owner operating ritual (Liv handled pulse)", [
   "../../lib/policy/src/__tests__/owner-operating-ritual.test.ts",
 ]);
 
+run("Balance at visit rail", [
+  "--import",
+  "tsx/esm",
+  "../../lib/policy/src/__tests__/balance-at-visit-program.test.ts",
+]);
+
 run("Emergent trust programs (VIP evolves from data)", [
   "--import",
   "tsx/esm",

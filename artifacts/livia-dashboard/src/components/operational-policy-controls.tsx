@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customFetch } from "@workspace/api-client-react";
-import { normalizeDepositPercent } from "@workspace/policy";
+import { normalizeDepositPercent, emergentTrustSettingsCopy, CARD_ON_FILE_RAIL_COPY } from "@workspace/policy";
 import { invalidateCommerceIntelligence } from "@/lib/commerce-intelligence-cache";
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { Shield } from "lucide-react";
@@ -24,8 +24,11 @@ type OperationalPolicyPayload = {
     autoConfirmWhenNoDeposit: boolean;
     bookingContinuityEnabled?: boolean;
     bookingContinuityMode?: string;
+    emergentTrustProgram?: { enabled?: boolean; acceptedAt?: string | null };
   };
-  resolved: Record<string, unknown>;
+  resolved: Record<string, unknown> & {
+    emergentTrustProgram?: { enabled?: boolean; acceptedAt?: string | null };
+  };
   depositPolicySummary?: string;
   bookingTermsBlock?: string;
 };
@@ -244,6 +247,40 @@ export default function OperationalPolicyControls() {
               setState({ ...state, policy: { ...p, bookingContinuityEnabled: v } })
             }
           />
+        </div>
+
+        <div
+          id="emergent-trust"
+          className="rounded-lg border border-border/60 p-4 space-y-2 scroll-mt-24"
+          data-testid="emergent-trust-settings"
+        >
+          {(() => {
+            const trust = state.resolved.emergentTrustProgram;
+            const copy = emergentTrustSettingsCopy({
+              enabled: Boolean(trust?.enabled),
+              acceptedAt: trust?.acceptedAt ?? null,
+            });
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{copy.headline}</p>
+                  <span className="text-xs text-muted-foreground">{copy.statusLabel}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{copy.body}</p>
+                {!trust?.enabled ? (
+                  <p className="text-xs text-muted-foreground">
+                    Accept the proposal on your owner home when Liv surfaces it — or use the demo
+                    showcase accept card on luxe-salon-spa.
+                  </p>
+                ) : null}
+              </>
+            );
+          })()}
+        </div>
+
+        <div className="rounded-lg border border-dashed border-border/60 p-4 space-y-1">
+          <p className="text-sm font-medium">{CARD_ON_FILE_RAIL_COPY.title}</p>
+          <p className="text-xs text-muted-foreground">{CARD_ON_FILE_RAIL_COPY.body}</p>
         </div>
 
         <Button onClick={() => void save()} disabled={saving}>

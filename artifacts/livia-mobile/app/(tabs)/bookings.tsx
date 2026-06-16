@@ -31,7 +31,7 @@ import { SPRING_QUICK } from "@/constants/motion";
 import { fonts, type } from "@/constants/typography";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { useTenantExperience } from "@/hooks/useTenantExperience";
-import { pendingApprovalsEmptyHint, pendingApprovalsEmptyLine, verticalOperationalCopy } from "@workspace/policy";
+import { pendingApprovalsEmptyHint, pendingApprovalsEmptyLine, verticalOperationalCopy, classifyPendingBookingAttention } from "@workspace/policy";
 import {
   MobileBookingsMorphHeader,
   MobileBookingsMorphLayout,
@@ -46,6 +46,7 @@ import { useManualRefresh } from "@/lib/manual-refresh";
 
 type Filter = "day" | "week" | "month";
 type StatusFilter = "all" | "PENDING";
+type PendingLens = "all" | "needs_you" | "guest_action";
 
 function getDateParams(filter: Filter) {
   const now = new Date();
@@ -80,13 +81,18 @@ export default function BookingsScreen() {
   const opCopy = verticalOperationalCopy(bizVertical, currentBusiness?.category);
   const roomsTitle = opCopy.bookingsPageTitle;
   const { nativeMorph } = usePresentationMorph();
-  const params = useLocalSearchParams<{ status?: string }>();
+  const params = useLocalSearchParams<{ status?: string; lens?: string }>();
   const [filter, setFilter] = useState<Filter>("day");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [pendingLens, setPendingLens] = useState<PendingLens>("all");
 
   useEffect(() => {
     if (params.status === "PENDING") setStatusFilter("PENDING");
-  }, [params.status]);
+    if (params.lens === "needs_you" || params.lens === "guest_action") {
+      setPendingLens(params.lens);
+      setStatusFilter("PENDING");
+    }
+  }, [params.status, params.lens]);
 
   const indicator = useSharedValue({ x: 0, w: 0 });
   const [layouts, setLayouts] = useState<Record<Filter, { x: number; w: number }>>(
@@ -177,8 +183,20 @@ export default function BookingsScreen() {
   );
 
   const bookings = data?.data ?? [];
-  const pendingCount = bookings.filter((b) => b.status === "PENDING").length;
-  const completedCount = bookings.filter((b) => b.status === "COMPLETED").length;
+  const lensFiltered =
+    statusFilter === "PENDING" && pendingLens !== "all"
+      ? bookings.filter((b) => {
+          if (b.status !== "PENDING") return true;
+          const bucket = classifyPendingBookingAttention(
+            (b as { pendingReason?: string | null }).pendingReason,
+          );
+          if (pendingLens === "needs_you") return bucket === "needs_you";
+          if (pendingLens === "guest_action") return bucket === "guest_action";
+          return true;
+        })
+      : bookings;
+  const pendingCount = lensFiltered.filter((b) => b.status === "PENDING").length;
+  const completedCount = lensFiltered.filter((b) => b.status === "COMPLETED").length;
   const useMorphList = Boolean(nativeMorph);
   const { refreshing: pullRefreshing, onRefresh: onPullRefresh } = useManualRefresh(refetch);
 
@@ -258,6 +276,37 @@ export default function BookingsScreen() {
             ))}
           </View>
 
+          {statusFilter === "PENDING" ? (
+            <View style={styles.statusRow}>
+              {(
+                [
+                  ["all", "All pending"],
+                  ["needs_you", "Needs you"],
+                  ["guest_action", "Guest completing"],
+                ] as const
+              ).map(([id, label]) => (
+                <Pressable
+                  key={id}
+                  onPress={() => {
+                    haptics.selection();
+                    setPendingLens(id);
+                  }}
+                  style={[
+                    styles.statusChip,
+                    {
+                      borderColor: pendingLens === id ? colors.primary : colors.border,
+                      backgroundColor: pendingLens === id ? colors.primary + "18" : colors.card,
+                    },
+                  ]}
+                >
+                  <Text style={{ color: colors.foreground, fontFamily: fonts.bodyMed, fontSize: 12 }}>
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+
           <View
             style={[
               styles.segWrap,
@@ -302,7 +351,7 @@ export default function BookingsScreen() {
           morph={nativeMorph}
           pendingCount={pendingCount}
           completedCount={completedCount}
-          total={bookings.length}
+          total={lensFiltered.length}
           accent={colors.primary}
           vertical={bizVertical}
           category={currentBusiness?.category}
@@ -310,7 +359,7 @@ export default function BookingsScreen() {
       ) : null}
       {useMorphList && nativeMorph ? (
         <ScrollView
-          contentContainerStyle={[styles.list, bookings.length === 0 && styles.listEmpty]}
+          contentContainerStyle={[styles.list, lensFiltered.length === 0 && styles.listEmpty]}
           refreshControl={
             <RefreshControl
               refreshing={pullRefreshing}
@@ -319,7 +368,7 @@ export default function BookingsScreen() {
             />
           }
         >
-          {bookings.length === 0 ? (
+          {lensFiltered.length === 0 ? (
             <EmptyState
               icon="calendar"
               title={isLoading ? "Loading…" : "No appointments in this view"}
@@ -349,7 +398,7 @@ export default function BookingsScreen() {
         </ScrollView>
       ) : (
       <FlatList
-        data={bookings}
+        data={lensFiltered}
         keyExtractor={(b) => b.id}
         renderItem={({ item, index }) => {
           const customerName =
@@ -371,7 +420,7 @@ export default function BookingsScreen() {
         }}
         contentContainerStyle={[
           styles.list,
-          bookings.length === 0 && styles.listEmpty,
+          lensFiltered.length === 0 && styles.listEmpty,
         ]}
         ListEmptyComponent={
           <EmptyState
@@ -394,7 +443,7 @@ export default function BookingsScreen() {
             tintColor={colors.primary}
           />
         }
-        scrollEnabled={bookings.length > 0}
+        scrollEnabled={lensFiltered.length > 0}
       />
       )}
 

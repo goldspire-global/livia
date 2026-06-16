@@ -75,6 +75,7 @@ import PublicProofPage from "@/pages/public-proof";
 import PublicIntakePage from "@/pages/public-intake";
 import PublicWaitlistPage from "@/pages/public-waitlist";
 import PublicPayPage from "@/pages/public-pay";
+import PublicBalancePage from "@/pages/public-balance";
 import PublicShopPage from "@/pages/public-shop";
 import MyLiviaPage from "@/pages/my-livia";
 import MyLiviaAccountPage from "@/pages/my-livia-account";
@@ -157,11 +158,13 @@ function AuthenticatedRoutes() {
       const proofMatch = location.match(/^\/(?:b|book)\/([^/]+)\/proof\/([^/]+)/);
       const intakeMatch = location.match(/^\/(?:b|book)\/([^/]+)\/intake\/([^/]+)/);
       const payMatch = location.match(/^\/(?:b|book)\/([^/]+)\/pay\/([^/]+)/);
+      const balanceMatch = location.match(/^\/(?:b|book)\/([^/]+)\/balance\/([^/]+)/);
       const waitlistMatch = location.match(/^\/(?:b|book)\/([^/]+)\/waitlist\/([^/]+)/);
       const bookingOnlyMatch = location.match(/^\/(?:b|book)\/([^/]+)\/?$/);
       if (proofMatch) return <PublicProofPage />;
       if (intakeMatch) return <PublicIntakePage />;
       if (payMatch) return <PublicPayPage />;
+      if (balanceMatch) return <PublicBalancePage />;
       if (waitlistMatch) return <PublicWaitlistPage />;
       if (visitMatch) return <PublicVisitPage />;
       if (bookingOnlyMatch) return <PublicBookingPage />;
@@ -392,6 +395,7 @@ function AppRouter() {
       <Route path="/book/:slug/intake/:token" component={PublicIntakePage} />
       <Route path="/book/:slug/waitlist/:token" component={PublicWaitlistPage} />
       <Route path="/book/:slug/pay/:token" component={PublicPayPage} />
+      <Route path="/book/:slug/balance/:token" component={PublicBalancePage} />
       <Route path="/book/:slug/shop/:token" component={PublicShopPage} />
       <Route path="/book/:slug/visit/:token" component={PublicVisitPage} />
       <Route path="/book/:slug" component={PublicBookingPage} />
@@ -399,6 +403,7 @@ function AppRouter() {
       <Route path="/b/:slug/intake/:token">{() => <LegacyGuestBookRedirect />}</Route>
       <Route path="/b/:slug/waitlist/:token">{() => <LegacyGuestBookRedirect />}</Route>
       <Route path="/b/:slug/pay/:token">{() => <LegacyGuestBookRedirect />}</Route>
+      <Route path="/b/:slug/balance/:token">{() => <LegacyGuestBookRedirect />}</Route>
       <Route path="/b/:slug/shop/:token">{() => <LegacyGuestBookRedirect />}</Route>
       <Route path="/b/:slug/visit/:token">{() => <LegacyGuestBookRedirect />}</Route>
       <Route path="/b/:slug">{() => <LegacyGuestBookRedirect />}</Route>

@@ -217,3 +217,29 @@ export function quoteDepositCreditMinor(args: {
   if (args.quoteSubtotalMinor <= 0) return 0;
   return Math.min(args.quoteDepositPaidMinor, args.quoteSubtotalMinor);
 }
+
+/** Demo slugs — surface policy-evolution accept card without year-one metrics. */
+export const DEMO_POLICY_EVOLUTION_SHOWCASE_SLUGS: ReadonlySet<string> = new Set([
+  "luxe-salon-spa",
+  "bloom-beauty-dublin",
+  "harbour-wellness-cork",
+]);
+
+export function demoPolicyEvolutionProposalForShowcase(): PolicyEvolutionProposal {
+  return {
+    id: "emergent_trust_tier",
+    title: "Trusted client tier — demo preview",
+    body: "Showcase tenant — accept to enable Trusted tier for deposit waivers on regulars.",
+    projectedBenefit: "Founder UAT: accept → policy patch without waiting 10 months.",
+    confidence: "medium",
+    acceptLabel: "Enable trusted-client tier (demo)",
+    href: "/settings?tab=booking-rules#emergent-trust",
+    operationalPatch: {
+      emergentTrustProgram: {
+        enabled: true,
+        acceptedAt: new Date().toISOString(),
+        proposalKey: "emergent_trust_tier_demo",
+      },
+    },
+  };
+}

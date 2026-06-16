@@ -7,7 +7,7 @@ import {
   parsePublicTokenPath,
 } from "@/lib/public-guest-route-params";
 
-type GuestTokenSegment = "visit" | "proof" | "intake" | "pay" | "shop" | "waitlist";
+type GuestTokenSegment = "visit" | "proof" | "intake" | "pay" | "balance" | "shop" | "waitlist";
 
 /** Resolve book slug from route params, subdomain host, or `/book/{slug}` path. */
 export function useGuestBookSlug(): string | undefined {

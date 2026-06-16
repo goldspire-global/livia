@@ -20,6 +20,8 @@ import {
   beautyClientPatchTestLabel,
   depositAppliesForBookingContext,
   ownerBalanceAtVisitLine,
+  resolveTotalPaidMinor,
+  computeBalanceDueFromBooking,
   type BusinessVertical,
 } from "@workspace/policy";
 import { resolveGuestBookUrl, resolveGuestTokenUrl } from "../lib/guest-public-urls";
@@ -68,6 +70,7 @@ async function assertGuestBookingAccess(
     priceMinor: number;
     currency: string;
     depositPaidEurCents: number;
+    totalPaidEurCents: number;
   };
 }> {
   const session = await getGuestHubSession(hubToken);
@@ -84,6 +87,7 @@ async function assertGuestBookingAccess(
       startAt: bookingsTable.startAt,
       endAt: bookingsTable.endAt,
       depositPaidEurCents: bookingsTable.depositPaidEurCents,
+      totalPaidEurCents: bookingsTable.totalPaidEurCents,
       businessName: businessesTable.name,
       slug: businessesTable.slug,
       vertical: businessesTable.vertical,
@@ -267,6 +271,7 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
   const { session, booking } = await assertGuestBookingAccess(hubToken, slug, bookingId);
   const visitToken = await ensureBookingGuestAccess(booking.businessId, booking.bookingId);
   let depositPayUrl: string | null = null;
+  let balancePayUrl: string | null = null;
   let depositPercent = 0;
   let depositRequired = false;
   let depositDueMinor = 0;
@@ -310,6 +315,21 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
       : 0;
     if (booking.status === "PENDING" && depositDueMinor > 0) {
       depositPayUrl = resolveGuestTokenUrl(slug, "pay", visitToken);
+    }
+    const totalPaidMinor = resolveTotalPaidMinor({
+      depositPaidEurCents: booking.depositPaidEurCents,
+      totalPaidEurCents: booking.totalPaidEurCents,
+    });
+    const balanceDueMinor = computeBalanceDueFromBooking({
+      priceMinor: booking.priceMinor,
+      depositPaidEurCents: booking.depositPaidEurCents,
+      totalPaidEurCents: booking.totalPaidEurCents,
+    });
+    if (
+      balanceDueMinor > 0 &&
+      ["CONFIRMED", "PENDING", "COMPLETED"].includes(booking.status.toUpperCase())
+    ) {
+      balancePayUrl = resolveGuestTokenUrl(slug, "balance", visitToken);
     }
   }
 
@@ -395,6 +415,10 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
       balanceAtVisitLine: ownerBalanceAtVisitLine({
         priceMinor: booking.priceMinor,
         depositPaidMinor: booking.depositPaidEurCents ?? 0,
+        totalPaidMinor: resolveTotalPaidMinor({
+          depositPaidEurCents: booking.depositPaidEurCents,
+          totalPaidEurCents: booking.totalPaidEurCents,
+        }),
         currency: booking.currency,
         status: booking.status,
       }),
@@ -411,6 +435,7 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
     bookUrl: guestBookUrlForSlug(slug, `service=${encodeURIComponent(booking.serviceId)}`),
     shopRelationshipUrl: guestShopRelationshipPath(slug),
     depositPayUrl,
+    balancePayUrl,
   };
 }
 

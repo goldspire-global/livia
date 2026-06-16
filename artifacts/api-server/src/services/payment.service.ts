@@ -352,6 +352,18 @@ export async function upsertPaymentFromStripeIntent(
       providerChargeId: chargeId,
       paymentId,
     });
+  } else if (bookingId && businessId && kind === "guest_balance") {
+    const { captureGuestBalancePayment } = await import("./guest-balance-pay.service");
+    await captureGuestBalancePayment({
+      businessId,
+      bookingId,
+      customerId: intentRecord?.customerId,
+      amountMinor: pi.amount_received || pi.amount,
+      currency: pi.currency.toUpperCase(),
+      paymentIntentRecordId: recordId,
+      providerChargeId: chargeId,
+      paymentId,
+    });
   } else if (businessId && kind === "guest_quote_deposit") {
     const quoteId = pi.metadata?.quoteId ?? bookingId;
     if (quoteId) {

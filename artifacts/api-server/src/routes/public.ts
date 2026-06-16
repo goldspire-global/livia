@@ -1260,6 +1260,61 @@ router.post("/public/b/:slug/pay/:token/confirm", async (req, res): Promise<void
   }
 });
 
+router.get("/public/b/:slug/balance/:token", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const { getGuestBalancePayView } = await import("../services/guest-balance-pay.service");
+  const view = await getGuestBalancePayView(slug, token);
+  if (!view) {
+    sendError(res, req, 404, "Balance link not found or expired");
+    return;
+  }
+  res.json(view);
+});
+
+router.post("/public/b/:slug/balance/:token/checkout", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const { createGuestBalanceCheckout } = await import("../services/guest-balance-pay.service");
+  try {
+    const result = await createGuestBalanceCheckout(slug, token);
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message);
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    sendError(res, req, 500, err instanceof Error ? err.message : "Checkout failed");
+  }
+});
+
+router.post("/public/b/:slug/balance/:token/confirm", async (req, res): Promise<void> => {
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  const sessionId =
+    typeof req.body?.sessionId === "string"
+      ? req.body.sessionId
+      : typeof req.query.session_id === "string"
+        ? req.query.session_id
+        : null;
+  if (!sessionId) {
+    sendError(res, req, 400, "Missing checkout session");
+    return;
+  }
+  const { confirmGuestBalanceCheckout } = await import("../services/guest-balance-pay.service");
+  try {
+    const result = await confirmGuestBalanceCheckout(slug, token, sessionId);
+    if (result.mode === "error") {
+      sendError(res, req, 400, result.message ?? "Could not confirm payment");
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    logRouteError(req, err, "[public] guest balance pay confirm failed");
+    sendError(res, req, 500, err instanceof Error ? err.message : "Could not confirm payment");
+  }
+});
+
 router.post("/public/b/:slug/pay/:token/checkout-combined", async (req, res): Promise<void> => {
   const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
   const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
