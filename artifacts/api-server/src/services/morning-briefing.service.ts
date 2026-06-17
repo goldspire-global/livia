@@ -15,12 +15,18 @@ import {
   synthesizeOrgAdminPortfolioLine,
   synthesizeLivMorningNarrative,
 } from "./liv-morning-narrative";
-import { getOwnerIntelligenceBundle, type OwnerIntelligenceBundle } from "./owner-intelligence.service";
+import {
+  getBusinessTwinBriefingSlice,
+  getBusinessTwinBundle,
+  loadBusinessTwinContext,
+} from "./business-twin.service";
+import {
+  listActiveTwinObservations,
+  twinRisksAndOpportunitiesFromObservations,
+} from "./twin-observations.service";
 import { listAtRiskGuestPreviews } from "./relationship.service";
 import { listRecentVisitFeedback } from "./visit-feedback.service";
 import { formatCommerceMinor } from "./commerce-intelligence.service";
-import { getCommerceSignalsBundle } from "./commerce-signals.service";
-import { getTenantCapabilities } from "./capability-resolution.service";
 import { logger } from "../lib/logger";
 
 export type MorningBriefingSource = "liv" | "stats_fallback";
@@ -68,7 +74,6 @@ function aiEnabledForBusiness(row: { aiEnabled: string } | undefined): boolean {
 export async function gatherMorningBriefingFacts(
   businessId: string,
   timezone: string,
-  preloadedIntel?: OwnerIntelligenceBundle | null,
 ): Promise<MorningBriefingContent> {
   const [biz] = await db
     .select({
@@ -134,21 +139,19 @@ export async function gatherMorningBriefingFacts(
       ),
     );
 
-  const [atRiskGuests, recentFeedback, ownerIntel] = await Promise.all([
+  const [twinCtx, atRiskGuests, recentFeedback, twinSlice, twinObservations] = await Promise.all([
+    loadBusinessTwinContext(businessId),
     listAtRiskGuestPreviews(businessId, { limit: 5 }),
     listRecentVisitFeedback(businessId, 14),
-    preloadedIntel !== undefined
-      ? Promise.resolve(preloadedIntel)
-      : getOwnerIntelligenceBundle(businessId),
+    getBusinessTwinBriefingSlice(businessId),
+    listActiveTwinObservations(businessId, 6),
   ]);
 
-  const commerceBundle = ownerIntel
-    ? { signals: ownerIntel.commerce.signals, snapshot: ownerIntel.commerce.snapshot }
-    : await getCommerceSignalsBundle(businessId);
+  const { twinRisks, twinOpportunities } =
+    twinRisksAndOpportunitiesFromObservations(twinObservations);
+  const commerceBundle = { signals: twinCtx.commerceSignals, snapshot: twinCtx.commerce };
   const commerce = commerceBundle.snapshot;
-  const caps = ownerIntel
-    ? { capabilityHealth: ownerIntel.capabilityHealth }
-    : await getTenantCapabilities(businessId);
+  const caps = twinCtx.capabilities;
   const lowFeedbackCount = recentFeedback.filter((r) => r.score <= 3).length;
 
   const todayBookings = enriched.map((b) => {
@@ -234,14 +237,14 @@ export async function gatherMorningBriefingFacts(
       body: s.body,
     })),
     capabilityHealth: caps?.capabilityHealth,
-    twinHeadline: ownerIntel?.twinHeadline ?? null,
-    twinSubline: ownerIntel?.twinSubline ?? null,
-    twinRisks: ownerIntel?.twinRisks?.map((r) => ({ title: r.title, body: r.body })),
-    twinOpportunities: ownerIntel?.twinOpportunities?.map((o) => ({
+    twinHeadline: twinSlice?.headline ?? null,
+    twinSubline: twinSlice?.subline ?? null,
+    twinRisks: twinRisks.map((r) => ({ title: r.title, body: r.body })),
+    twinOpportunities: twinOpportunities.map((o) => ({
       title: o.title,
       body: o.body,
     })),
-    twinObservations: ownerIntel?.twinObservations?.slice(0, 2).map((o) => ({
+    twinObservations: twinObservations.slice(0, 2).map((o) => ({
       title: o.title,
       body: o.body,
       domain: o.domain,
@@ -300,8 +303,8 @@ async function composeBriefingContent(
     .from(businessesTable)
     .where(eq(businessesTable.id, businessId));
 
-  const ownerIntel = await getOwnerIntelligenceBundle(businessId);
-  const facts = await gatherMorningBriefingFacts(businessId, timezone, ownerIntel);
+  const twinBundle = await getBusinessTwinBundle(businessId);
+  const facts = await gatherMorningBriefingFacts(businessId, timezone);
 
   if (!biz || !aiEnabledForBusiness(biz) || !isAnthropicConfigured()) {
     return facts;
@@ -314,19 +317,16 @@ async function composeBriefingContent(
     timezone,
     briefingDate,
     facts,
-    twin: ownerIntel?.twinHeadline
+    twin: twinBundle
       ? {
-          headline: ownerIntel.twinHeadline,
-          subline: ownerIntel.twinSubline ?? "",
-          recommendations: ownerIntel.twinTopRecommendation
-            ? [
-                {
-                  title: ownerIntel.twinTopRecommendation.title,
-                  reason: ownerIntel.twinTopRecommendation.reason,
-                  priority: ownerIntel.twinTopRecommendation.priority,
-                },
-              ]
-            : [],
+          headline: twinBundle.summary.headline,
+          subline: twinBundle.summary.subline,
+          recommendations:
+            twinBundle.recommendations?.recommendations.slice(0, 3).map((r) => ({
+              title: r.title,
+              reason: r.reason,
+              priority: r.priority,
+            })) ?? [],
         }
       : null,
   });

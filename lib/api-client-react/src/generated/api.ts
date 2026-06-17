@@ -28,6 +28,9 @@ import type {
   BookingListResponse,
   Business,
   BusinessCommunications,
+  BusinessTwinHealth,
+  BusinessTwinRecommendations,
+  BusinessTwinSummary,
   ChainRollup,
   ClearDevWorkspace200,
   CommerceSignalsBundle,
@@ -64,6 +67,11 @@ import type {
   ForbiddenResponse,
   GetActivityFeedParams,
   GetAvailableSlotsParams,
+  GetMeCapabilitiesParams,
+  GetMeTwinHealthParams,
+  GetMeTwinObservationsParams,
+  GetMeTwinRecommendationsParams,
+  GetMeTwinSummaryParams,
   GetMyDayParams,
   GetMyNotificationUnreadCount200,
   GetMyNotificationUnreadCountParams,
@@ -144,6 +152,7 @@ import type {
   TwilioVoiceGatherParams,
   TwilioVoiceInboundBody,
   TwilioVoiceStatusBody,
+  TwinObservationsBundle,
   UnauthorizedResponse,
   UpdateBookingBody,
   UpdateBusinessBody,
@@ -1109,6 +1118,533 @@ export const useRegisterDeviceToken = <
 > => {
   return useMutation(getRegisterDeviceTokenMutationOptions(options));
 };
+
+/**
+ * @summary Resolved capability graph for the signed-in owner (Era 2 Q2)
+ */
+export const getGetMeCapabilitiesUrl = (params?: GetMeCapabilitiesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/me/capabilities?${stringifiedParams}`
+    : `/api/me/capabilities`;
+};
+
+export const getMeCapabilities = async (
+  params?: GetMeCapabilitiesParams,
+  options?: RequestInit,
+): Promise<TenantCapabilitiesResponse> => {
+  return customFetch<TenantCapabilitiesResponse>(
+    getGetMeCapabilitiesUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetMeCapabilitiesQueryKey = (
+  params?: GetMeCapabilitiesParams,
+) => {
+  return [`/api/me/capabilities`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMeCapabilitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMeCapabilities>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeCapabilitiesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeCapabilities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMeCapabilitiesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMeCapabilities>>
+  > = ({ signal }) => getMeCapabilities(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMeCapabilities>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeCapabilitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMeCapabilities>>
+>;
+export type GetMeCapabilitiesQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Resolved capability graph for the signed-in owner (Era 2 Q2)
+ */
+
+export function useGetMeCapabilities<
+  TData = Awaited<ReturnType<typeof getMeCapabilities>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeCapabilitiesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeCapabilities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeCapabilitiesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin summary for the signed-in owner (Era 2 hub)
+ */
+export const getGetMeTwinSummaryUrl = (params?: GetMeTwinSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/me/twin/summary?${stringifiedParams}`
+    : `/api/me/twin/summary`;
+};
+
+export const getMeTwinSummary = async (
+  params?: GetMeTwinSummaryParams,
+  options?: RequestInit,
+): Promise<BusinessTwinSummary> => {
+  return customFetch<BusinessTwinSummary>(getGetMeTwinSummaryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMeTwinSummaryQueryKey = (
+  params?: GetMeTwinSummaryParams,
+) => {
+  return [`/api/me/twin/summary`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMeTwinSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMeTwinSummary>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMeTwinSummaryQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMeTwinSummary>>
+  > = ({ signal }) => getMeTwinSummary(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMeTwinSummary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeTwinSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMeTwinSummary>>
+>;
+export type GetMeTwinSummaryQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin summary for the signed-in owner (Era 2 hub)
+ */
+
+export function useGetMeTwinSummary<
+  TData = Awaited<ReturnType<typeof getMeTwinSummary>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeTwinSummaryQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin domain health scores
+ */
+export const getGetMeTwinHealthUrl = (params?: GetMeTwinHealthParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/me/twin/health?${stringifiedParams}`
+    : `/api/me/twin/health`;
+};
+
+export const getMeTwinHealth = async (
+  params?: GetMeTwinHealthParams,
+  options?: RequestInit,
+): Promise<BusinessTwinHealth> => {
+  return customFetch<BusinessTwinHealth>(getGetMeTwinHealthUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMeTwinHealthQueryKey = (params?: GetMeTwinHealthParams) => {
+  return [`/api/me/twin/health`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMeTwinHealthQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMeTwinHealth>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinHealthParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinHealth>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMeTwinHealthQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeTwinHealth>>> = ({
+    signal,
+  }) => getMeTwinHealth(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMeTwinHealth>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeTwinHealthQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMeTwinHealth>>
+>;
+export type GetMeTwinHealthQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin domain health scores
+ */
+
+export function useGetMeTwinHealth<
+  TData = Awaited<ReturnType<typeof getMeTwinHealth>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinHealthParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinHealth>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeTwinHealthQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+export const getGetMeTwinRecommendationsUrl = (
+  params?: GetMeTwinRecommendationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/me/twin/recommendations?${stringifiedParams}`
+    : `/api/me/twin/recommendations`;
+};
+
+export const getMeTwinRecommendations = async (
+  params?: GetMeTwinRecommendationsParams,
+  options?: RequestInit,
+): Promise<BusinessTwinRecommendations> => {
+  return customFetch<BusinessTwinRecommendations>(
+    getGetMeTwinRecommendationsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetMeTwinRecommendationsQueryKey = (
+  params?: GetMeTwinRecommendationsParams,
+) => {
+  return [`/api/me/twin/recommendations`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMeTwinRecommendationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMeTwinRecommendations>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinRecommendationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMeTwinRecommendationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMeTwinRecommendations>>
+  > = ({ signal }) =>
+    getMeTwinRecommendations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMeTwinRecommendations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeTwinRecommendationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMeTwinRecommendations>>
+>;
+export type GetMeTwinRecommendationsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+
+export function useGetMeTwinRecommendations<
+  TData = Awaited<ReturnType<typeof getMeTwinRecommendations>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinRecommendationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeTwinRecommendationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Active persisted Twin observations
+ */
+export const getGetMeTwinObservationsUrl = (
+  params?: GetMeTwinObservationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/me/twin/observations?${stringifiedParams}`
+    : `/api/me/twin/observations`;
+};
+
+export const getMeTwinObservations = async (
+  params?: GetMeTwinObservationsParams,
+  options?: RequestInit,
+): Promise<TwinObservationsBundle> => {
+  return customFetch<TwinObservationsBundle>(
+    getGetMeTwinObservationsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetMeTwinObservationsQueryKey = (
+  params?: GetMeTwinObservationsParams,
+) => {
+  return [`/api/me/twin/observations`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMeTwinObservationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMeTwinObservations>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinObservationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinObservations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMeTwinObservationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMeTwinObservations>>
+  > = ({ signal }) =>
+    getMeTwinObservations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMeTwinObservations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeTwinObservationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMeTwinObservations>>
+>;
+export type GetMeTwinObservationsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Active persisted Twin observations
+ */
+
+export function useGetMeTwinObservations<
+  TData = Awaited<ReturnType<typeof getMeTwinObservations>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | NotFoundResponse
+  >,
+>(
+  params?: GetMeTwinObservationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMeTwinObservations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeTwinObservationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Staff-scoped "my day" slate (today's bookings, next-up, my customers)
@@ -6360,6 +6896,398 @@ export function useGetOwnerIntelligence<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetOwnerIntelligenceQueryOptions(businessId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin summary (admin scope)
+ */
+export const getGetBusinessTwinSummaryUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/twin/summary`;
+};
+
+export const getBusinessTwinSummary = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<BusinessTwinSummary> => {
+  return customFetch<BusinessTwinSummary>(
+    getGetBusinessTwinSummaryUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBusinessTwinSummaryQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/twin/summary`] as const;
+};
+
+export const getGetBusinessTwinSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBusinessTwinSummary>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetBusinessTwinSummaryQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBusinessTwinSummary>>
+  > = ({ signal }) =>
+    getBusinessTwinSummary(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBusinessTwinSummary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBusinessTwinSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBusinessTwinSummary>>
+>;
+export type GetBusinessTwinSummaryQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin summary (admin scope)
+ */
+
+export function useGetBusinessTwinSummary<
+  TData = Awaited<ReturnType<typeof getBusinessTwinSummary>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBusinessTwinSummaryQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin domain health scores
+ */
+export const getGetBusinessTwinHealthUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/twin/health`;
+};
+
+export const getBusinessTwinHealth = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<BusinessTwinHealth> => {
+  return customFetch<BusinessTwinHealth>(
+    getGetBusinessTwinHealthUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBusinessTwinHealthQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/twin/health`] as const;
+};
+
+export const getGetBusinessTwinHealthQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBusinessTwinHealth>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinHealth>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetBusinessTwinHealthQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBusinessTwinHealth>>
+  > = ({ signal }) =>
+    getBusinessTwinHealth(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBusinessTwinHealth>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBusinessTwinHealthQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBusinessTwinHealth>>
+>;
+export type GetBusinessTwinHealthQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin domain health scores
+ */
+
+export function useGetBusinessTwinHealth<
+  TData = Awaited<ReturnType<typeof getBusinessTwinHealth>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinHealth>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBusinessTwinHealthQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+export const getGetBusinessTwinRecommendationsUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/twin/recommendations`;
+};
+
+export const getBusinessTwinRecommendations = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<BusinessTwinRecommendations> => {
+  return customFetch<BusinessTwinRecommendations>(
+    getGetBusinessTwinRecommendationsUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBusinessTwinRecommendationsQueryKey = (
+  businessId: string,
+) => {
+  return [`/api/businesses/${businessId}/twin/recommendations`] as const;
+};
+
+export const getGetBusinessTwinRecommendationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBusinessTwinRecommendations>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetBusinessTwinRecommendationsQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBusinessTwinRecommendations>>
+  > = ({ signal }) =>
+    getBusinessTwinRecommendations(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBusinessTwinRecommendations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBusinessTwinRecommendationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBusinessTwinRecommendations>>
+>;
+export type GetBusinessTwinRecommendationsQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+
+export function useGetBusinessTwinRecommendations<
+  TData = Awaited<ReturnType<typeof getBusinessTwinRecommendations>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBusinessTwinRecommendationsQueryOptions(
+    businessId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Active persisted Twin observations
+ */
+export const getGetBusinessTwinObservationsUrl = (businessId: string) => {
+  return `/api/businesses/${businessId}/twin/observations`;
+};
+
+export const getBusinessTwinObservations = async (
+  businessId: string,
+  options?: RequestInit,
+): Promise<TwinObservationsBundle> => {
+  return customFetch<TwinObservationsBundle>(
+    getGetBusinessTwinObservationsUrl(businessId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBusinessTwinObservationsQueryKey = (businessId: string) => {
+  return [`/api/businesses/${businessId}/twin/observations`] as const;
+};
+
+export const getGetBusinessTwinObservationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBusinessTwinObservations>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinObservations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetBusinessTwinObservationsQueryKey(businessId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBusinessTwinObservations>>
+  > = ({ signal }) =>
+    getBusinessTwinObservations(businessId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!businessId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBusinessTwinObservations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBusinessTwinObservationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBusinessTwinObservations>>
+>;
+export type GetBusinessTwinObservationsQueryError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Active persisted Twin observations
+ */
+
+export function useGetBusinessTwinObservations<
+  TData = Awaited<ReturnType<typeof getBusinessTwinObservations>>,
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+>(
+  businessId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBusinessTwinObservations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBusinessTwinObservationsQueryOptions(
+    businessId,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

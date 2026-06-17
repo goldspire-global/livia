@@ -46,7 +46,7 @@ export async function handleStaffLivAssist(args: {
   conversationId: string;
   message: string;
   staffUserId: string;
-  livMode?: "setup" | "ops";
+  livMode?: "setup" | "ops" | "advisor";
 }): Promise<{ reply: string; bookingId?: string; suggestions: string[]; toolsUsed: string[] }> {
   const business = await getBusinessById(args.businessId);
   if (!business) throw new Error("BUSINESS_NOT_FOUND");
@@ -422,19 +422,19 @@ export async function handleOwnerLivOps(args: {
   const promptOverrides = await getActivePromptOverrides(args.businessId);
   const pack = loadVerticalPack(cached.business.vertical, cached.packConfig);
 
-  const [services, staff, briefing, twinBlock, operatorLearningBlock, intelligence] = await Promise.all([
+  const [services, staff, briefing, twinBlock, operatorLearningBlock, twinBundle] = await Promise.all([
     listServices(args.businessId, true),
     listStaff(args.businessId, { isActive: true }),
     getMorningBriefing(args.businessId),
     buildBusinessTwinPromptBlock(args.businessId),
     buildOperatorLearningPromptBlock(args.businessId),
-    import("./owner-intelligence.service").then((m) => m.getOwnerIntelligenceBundle(args.businessId)),
+    import("./business-twin.service").then((m) => m.getBusinessTwinBundle(args.businessId)),
   ]);
 
   const tools = await resolveLivToolsForBusiness(args.businessId, {
     profile: "tenant_staff",
     canBookDirectly: false,
-    livMode: "ops",
+    livMode: "advisor",
     extraToolIds: pack.extraToolIds,
   });
 
@@ -442,15 +442,20 @@ export async function handleOwnerLivOps(args: {
     ? `\n\nMORNING BRIEFING (${briefing.briefingDate}):\n${(briefing.content as { summary?: string }).summary ?? ""}\n`
     : "";
 
-  const intelBlock = intelligence
-    ? `\n\nOWNER INTELLIGENCE (cached facts):\n${JSON.stringify(
+  const twinIntelBlock = twinBundle
+    ? `\n\nBUSINESS TWIN (advisor facts — cite evidence when recommending):\n${JSON.stringify(
         {
-          topSignal: intelligence.commerce.topSignal,
-          capabilityHealth: intelligence.capabilityHealth,
-          remediationTasks: intelligence.remediationTasks.slice(0, 3),
-          twinTop: intelligence.twinTopRecommendation,
-          twinHeadline: intelligence.twinHeadline,
-          twinSubline: intelligence.twinSubline,
+          headline: twinBundle.summary.headline,
+          subline: twinBundle.summary.subline,
+          healthScore: twinBundle.health?.overallScore,
+          topRecommendations: twinBundle.recommendations?.recommendations.slice(0, 4).map((r) => ({
+            title: r.title,
+            reason: r.reason,
+            priority: r.priority,
+            confidence: r.confidence,
+            expectedOutcome: r.expectedOutcome,
+            evidence: r.evidence,
+          })),
         },
         null,
         2,
@@ -483,7 +488,7 @@ export async function handleOwnerLivOps(args: {
       })),
       staff: staff.map((s) => ({ id: s.id, displayName: s.displayName })),
     }) +
-    `\n\nOWNER OPS MODE: Coach the owner on Today — commerce, capability health, Twin, and ops queue. Start with get_owner_intelligence when facts are stale. Do not message customers. Link to Settings → Billing for deposit/Stripe fixes.${briefingBlock}${intelBlock}${operatorLearningBlock}${twinBlock}`;
+    `\n\nLIV ADVISOR MODE (Era 2): Coach the owner using Business Twin only — start with get_business_twin when facts are stale. Every recommendation must cite evidence and confidence. Do not message customers. Link to Settings → Billing for deposit/Stripe fixes.${briefingBlock}${twinIntelBlock}${operatorLearningBlock}${twinBlock}`;
 
   const anthropicTools: Anthropic.Tool[] = tools.map((t) => ({
     name: t.name,
@@ -553,17 +558,26 @@ export async function handleOwnerLivOps(args: {
   await appendHumanAudit(
     args.businessId,
     args.staffUserId,
-    "human.liv.owner_ops",
+    "human.liv.owner_advisor",
     "business",
     args.businessId,
     { toolsUsed, messagePreview: args.message.slice(0, 120) },
   ).catch(() => undefined);
 
   const suggestions = ownerLivOpsDynamicSuggestions(
-    intelligence
+    twinBundle?.recommendations
       ? {
-          remediationTasks: intelligence.remediationTasks,
-          livPrompts: intelligence.livPrompts,
+          remediationTasks: twinBundle.recommendations.recommendations
+            .filter((r) => r.priority === "high")
+            .map((r) => ({
+              id: r.id,
+              severity: "act" as const,
+              title: r.title,
+              ownerPrompt: r.reason,
+              body: r.reason,
+              href: r.href,
+            })),
+          livPrompts: twinBundle.recommendations.recommendations.slice(0, 3).map((r) => r.title),
         }
       : null,
   ).slice(0, 4);

@@ -137,6 +137,7 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 
 | Date | Change |
 |------|--------|
+| 2026-06-16 | **Era 2 engineering complete (Q1–Q3)** — Twin hub API, `/me/capabilities`, advisor Liv mode, Twin-only briefing/presence, recommendation confidence; V1 activation proof (Bucket C) still open |
 | 2026-06-15 | Era 1 D0–D4 engineering wave — guest thread GET, vault modules, Mary artifacts, BookingRescheduled, activation funnel |
 | 2026-06-15 | Era 1 Q1 kickoff — D0 owner book-link parity; readiness rubric; Bucket C 80% |
 | 2026-06-15 | Guest placement contract + Liv Era 1 doc (§16); `/book` deposit in summary, silent hub autofill, universal deposits |

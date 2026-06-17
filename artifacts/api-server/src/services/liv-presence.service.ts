@@ -12,9 +12,14 @@ import { listActiveLivMoments, type LivMoment } from "./liv-signals.service";
 import {
   resolveCommerceOwnerBriefingCta,
   resolveOwnerPresenceIntelLine,
+  topCommerceSignal,
   type OwnerPresenceIntelSlice,
 } from "@workspace/policy";
-import { getOwnerIntelligenceBundle } from "./owner-intelligence.service";
+import {
+  getBusinessTwinBriefingSlice,
+  getBusinessTwinRecommendations,
+  loadBusinessTwinContext,
+} from "./business-twin.service";
 import type { LivSignalPriority } from "@workspace/liv-runtime";
 
 export type LivPresenceContext =
@@ -161,7 +166,8 @@ export async function getLivPresenceForBusiness(args: {
 
   const ownerIntelContext = context === "owner_today" || context === "manager_today";
 
-  const [briefing, summary, openConversations, moments, ownerIntel] = await Promise.all([
+  const [briefing, summary, openConversations, moments, twinSlice, twinCtx, twinRecs] =
+    await Promise.all([
     ["owner_today", "manager_today", "reception_today"].includes(context)
       ? getMorningBriefing(businessId)
       : Promise.resolve(null),
@@ -172,18 +178,21 @@ export async function getLivPresenceForBusiness(args: {
       ? countOpenConversations(businessId)
       : Promise.resolve(0),
     listActiveLivMoments(businessId, 6),
-    ownerIntelContext ? getOwnerIntelligenceBundle(businessId) : Promise.resolve(null),
+    ownerIntelContext ? getBusinessTwinBriefingSlice(businessId) : Promise.resolve(null),
+    ownerIntelContext ? loadBusinessTwinContext(businessId) : Promise.resolve(null),
+    ownerIntelContext ? getBusinessTwinRecommendations(businessId) : Promise.resolve(null),
   ]);
 
-  const intelSlice: OwnerPresenceIntelSlice | undefined = ownerIntel
-    ? {
-        twinHeadline: ownerIntel.twinHeadline,
-        twinSubline: ownerIntel.twinSubline,
-        commerceTopSignal: ownerIntel.commerce.topSignal,
-        remediationActCount: ownerIntel.remediationTasks.filter((t) => t.severity === "act")
-          .length,
-      }
-    : undefined;
+  const intelSlice: OwnerPresenceIntelSlice | undefined =
+    twinSlice || twinCtx
+      ? {
+          twinHeadline: twinSlice?.headline,
+          twinSubline: twinSlice?.subline,
+          commerceTopSignal: twinCtx ? topCommerceSignal(twinCtx.commerceSignals) : undefined,
+          remediationActCount:
+            twinRecs?.recommendations.filter((r) => r.priority === "high").length ?? 0,
+        }
+      : undefined;
 
   if (context === "staff_today") {
     const myDay = await getMyDay(businessId, staffId ?? null);
@@ -237,7 +246,7 @@ export async function getLivPresenceForBusiness(args: {
   const intelPayload = intelSlice
     ? {
         ...intelSlice,
-        commerceHref: ownerIntel?.commerce.topSignal?.href ?? "/settings?tab=billing",
+        commerceHref: intelSlice.commerceTopSignal?.href ?? "/settings?tab=billing",
       }
     : undefined;
 

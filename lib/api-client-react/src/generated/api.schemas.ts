@@ -1299,6 +1299,33 @@ export interface TwinDomainScore {
   trajectory: TwinDomainScoreTrajectory;
 }
 
+export interface TwinFact {
+  key: string;
+  label: string;
+  value: string | number;
+  domain: string;
+}
+
+export type BusinessTwinSummaryCommerce = {
+  capturedMinor30d: number;
+  /** @nullable */
+  captureRatePercent?: number | null;
+  paymentCount30d: number;
+  currency: string;
+  capturedLabel: string;
+};
+
+export interface BusinessTwinSummary {
+  businessId: string;
+  generatedAt: string;
+  headline: string;
+  subline: string;
+  facts: TwinFact[];
+  activationStatus: string;
+  sacredMetricMet: boolean;
+  commerce?: BusinessTwinSummaryCommerce;
+}
+
 export interface BusinessTwinHealth {
   businessId: string;
   generatedAt: string;
@@ -1306,11 +1333,67 @@ export interface BusinessTwinHealth {
   domains: TwinDomainScore[];
 }
 
+export type TwinRecommendationPriority =
+  (typeof TwinRecommendationPriority)[keyof typeof TwinRecommendationPriority];
+
+export const TwinRecommendationPriority = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
+export type TwinRecommendationConfidence =
+  (typeof TwinRecommendationConfidence)[keyof typeof TwinRecommendationConfidence];
+
+export const TwinRecommendationConfidence = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
 export interface TwinRecommendation {
+  id: string;
   title: string;
   reason: string;
-  priority: string;
+  priority: TwinRecommendationPriority;
   href?: string;
+  confidence: TwinRecommendationConfidence;
+  expectedOutcome: string;
+  domain: string;
+  evidence: string[];
+}
+
+export interface BusinessTwinRecommendations {
+  businessId: string;
+  generatedAt: string;
+  recommendations: TwinRecommendation[];
+}
+
+export interface TwinObservationEvidence {
+  type: string;
+  id: string;
+  label: string;
+}
+
+export interface TwinObservation {
+  id: string;
+  businessId: string;
+  domain: string;
+  layer: string;
+  observationKey: string;
+  title: string;
+  body: string;
+  confidence: string;
+  evidence: TwinObservationEvidence[];
+  /** @nullable */
+  href?: string | null;
+  createdAt: string;
+}
+
+export interface TwinObservationsBundle {
+  businessId: string;
+  generatedAt: string;
+  observations: TwinObservation[];
 }
 
 export type TwinRiskOrOpportunityKind =
@@ -1900,6 +1983,32 @@ export type MarkAllMyNotificationsRead200 = {
 
 export type MarkMyNotificationRead200 = {
   ok?: boolean;
+};
+
+export type GetMeCapabilitiesParams = {
+  /**
+   * Optional business scope when the user owns multiple locations.
+   */
+  businessId?: string;
+};
+
+export type GetMeTwinSummaryParams = {
+  /**
+   * Optional business scope when the user owns multiple locations.
+   */
+  businessId?: string;
+};
+
+export type GetMeTwinHealthParams = {
+  businessId?: string;
+};
+
+export type GetMeTwinRecommendationsParams = {
+  businessId?: string;
+};
+
+export type GetMeTwinObservationsParams = {
+  businessId?: string;
 };
 
 export type GetMyDayParams = {

@@ -12,7 +12,7 @@ export type LivRuntimeProfile =
 
 export type LivToolRisk = "low" | "medium" | "high";
 
-export type LivCopilotMode = "setup" | "ops";
+export type LivCopilotMode = "setup" | "ops" | "advisor";
 
 export type RegisteredLivTool = LivToolDefinition & {
   id: string;
@@ -380,9 +380,9 @@ const CATALOG: RegisteredLivTool[] = [
     name: LIV_TOOL_GET_BUSINESS_TWIN,
     risk: "low",
     profiles: ["tenant_staff"],
-    livModes: ["setup", "ops"],
+    livModes: ["setup", "ops", "advisor"],
     description:
-      "Read Business Twin — domain health scores, headline, and prioritized recommendations. Use before advising owner on setup or day strategy.",
+      "Read Business Twin — domain health scores, headline, and prioritized recommendations with evidence and confidence. Primary tool in advisor mode before coaching the owner.",
     input_schema: { type: "object", properties: {}, required: [] },
   },
   {
@@ -390,7 +390,7 @@ const CATALOG: RegisteredLivTool[] = [
     name: LIV_TOOL_GET_COMMERCE_SNAPSHOT,
     risk: "low",
     profiles: ["tenant_staff"],
-    livModes: ["setup", "ops"],
+    livModes: ["setup", "ops", "advisor"],
     description:
       "Read 30-day commerce snapshot — captured revenue, payment count, capture rate, refunds. Use when advising on deposits, Stripe, or revenue health.",
     input_schema: { type: "object", properties: {}, required: [] },
@@ -400,7 +400,7 @@ const CATALOG: RegisteredLivTool[] = [
     name: LIV_TOOL_GET_COMMERCE_SIGNALS,
     risk: "low",
     profiles: ["tenant_staff"],
-    livModes: ["setup", "ops"],
+    livModes: ["setup", "ops", "advisor"],
     description:
       "Read structured commerce signals (uncaptured demand, low capture, refunds). Prefer over raw snapshot when coaching owner strategy.",
     input_schema: { type: "object", properties: {}, required: [] },
@@ -410,7 +410,7 @@ const CATALOG: RegisteredLivTool[] = [
     name: LIV_TOOL_LIST_CAPABILITY_BLOCKERS,
     risk: "low",
     profiles: ["tenant_staff"],
-    livModes: ["setup", "ops"],
+    livModes: ["setup", "ops", "advisor"],
     description:
       "List capability readiness blockers and health score. Use before advising on setup or which capability to fix next.",
     input_schema: { type: "object", properties: {}, required: [] },

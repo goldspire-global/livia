@@ -17,6 +17,12 @@ import { getBetaSignupMode } from "../lib/beta-signup-gate";
 import { getBusinessesForUser } from "../services/businesses.service";
 import { getChainRollupForOwner, getOrgShapeSignalsForOwner } from "../services/chain-rollup.service";
 import { getTenantCapabilities } from "../services/capability-resolution.service";
+import {
+  getBusinessTwinBriefingSlice,
+  getBusinessTwinHealth,
+  getBusinessTwinRecommendations,
+  getBusinessTwinSummary,
+} from "../services/business-twin.service";
 import { resolveOrgShapeProfile } from "@workspace/policy";
 import { getBrandPortfolioForOwner } from "../services/brand-portfolio.service";
 import { getFranchiseRollupForOwner } from "../services/franchise-rollup.service";
@@ -244,6 +250,79 @@ router.get("/me/capabilities", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   res.json(payload);
+});
+
+async function resolveMeTwinBusiness(
+  userId: string,
+  businessId: string | undefined,
+): Promise<{ businessId: string } | { status: 403 | 404 }> {
+  const businesses = await getBusinessesForUser(userId);
+  const bid = businessId ?? businesses[0]?.id;
+  if (!bid) return { status: 404 };
+  const role = await resolveMembership(userId, bid);
+  if (!role || role === "STAFF") return { status: 403 };
+  return { businessId: bid };
+}
+
+/** Era 2 — Business Twin summary for active tenant (defaults to first owned shop). */
+router.get("/me/twin/summary", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+  const resolved = await resolveMeTwinBusiness(userId, businessId);
+  if ("status" in resolved) {
+    sendError(res, req, resolved.status, resolved.status === 403 ? "Forbidden" : "No business on account");
+    return;
+  }
+  const payload = await getBusinessTwinSummary(resolved.businessId);
+  if (!payload) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  res.json(payload);
+});
+
+router.get("/me/twin/health", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+  const resolved = await resolveMeTwinBusiness(userId, businessId);
+  if ("status" in resolved) {
+    sendError(res, req, resolved.status, resolved.status === 403 ? "Forbidden" : "No business on account");
+    return;
+  }
+  const payload = await getBusinessTwinHealth(resolved.businessId);
+  if (!payload) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  res.json(payload);
+});
+
+router.get("/me/twin/recommendations", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+  const resolved = await resolveMeTwinBusiness(userId, businessId);
+  if ("status" in resolved) {
+    sendError(res, req, resolved.status, resolved.status === 403 ? "Forbidden" : "No business on account");
+    return;
+  }
+  const payload = await getBusinessTwinRecommendations(resolved.businessId);
+  if (!payload) {
+    sendError(res, req, 404, "Business not found");
+    return;
+  }
+  res.json(payload);
+});
+
+router.get("/me/twin/observations", requireAuth, async (req, res): Promise<void> => {
+  const userId = getUserId(req);
+  const businessId = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
+  const resolved = await resolveMeTwinBusiness(userId, businessId);
+  if ("status" in resolved) {
+    sendError(res, req, resolved.status, resolved.status === 403 ? "Forbidden" : "No business on account");
+    return;
+  }
+  const { getTwinObservationsBundle } = await import("../services/twin-observations.service");
+  res.json(await getTwinObservationsBundle(resolved.businessId));
 });
 
 /** Org-admin / multi-location Liv ritual line (portfolio scope). */

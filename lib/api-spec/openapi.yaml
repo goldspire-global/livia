@@ -288,6 +288,133 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /me/capabilities:
+    get:
+      operationId: getMeCapabilities
+      tags: [me, dashboard]
+      summary: Resolved capability graph for the signed-in owner (Era 2 Q2)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: businessId
+          in: query
+          required: false
+          schema: { type: string }
+          description: Optional business scope when the user owns multiple locations.
+      responses:
+        "200":
+          description: Tenant capability graph
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantCapabilitiesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/twin/summary:
+    get:
+      operationId: getMeTwinSummary
+      tags: [me, dashboard]
+      summary: Business Twin summary for the signed-in owner (Era 2 hub)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: businessId
+          in: query
+          required: false
+          schema: { type: string }
+          description: Optional business scope when the user owns multiple locations.
+      responses:
+        "200":
+          description: Twin summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/twin/health:
+    get:
+      operationId: getMeTwinHealth
+      tags: [me, dashboard]
+      summary: Business Twin domain health scores
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: businessId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Twin health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinHealth"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/twin/recommendations:
+    get:
+      operationId: getMeTwinRecommendations
+      tags: [me, dashboard]
+      summary: Business Twin prioritized recommendations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: businessId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Twin recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinRecommendations"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/twin/observations:
+    get:
+      operationId: getMeTwinObservations
+      tags: [me, dashboard]
+      summary: Active persisted Twin observations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: businessId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Twin observations bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TwinObservationsBundle"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /businesses/{businessId}/my-day:
     get:
       operationId: getMyDay
@@ -1571,6 +1698,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OwnerIntelligenceBundle"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/twin/summary:
+    get:
+      operationId: getBusinessTwinSummary
+      tags: [dashboard]
+      summary: Business Twin summary (admin scope)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Twin summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/twin/health:
+    get:
+      operationId: getBusinessTwinHealth
+      tags: [dashboard]
+      summary: Business Twin domain health scores
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Twin health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinHealth"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/twin/recommendations:
+    get:
+      operationId: getBusinessTwinRecommendations
+      tags: [dashboard]
+      summary: Business Twin prioritized recommendations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Twin recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessTwinRecommendations"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /businesses/{businessId}/twin/observations:
+    get:
+      operationId: getBusinessTwinObservations
+      tags: [dashboard]
+      summary: Active persisted Twin observations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/BusinessId"
+      responses:
+        "200":
+          description: Twin observations bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TwinObservationsBundle"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -4560,6 +4767,58 @@ components:
           enum: [strengthening, stable, weakening, unknown]
       required: [domain, score, label, summary, trajectory]
 
+    TwinFact:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+        domain:
+          type: string
+      required: [key, label, value, domain]
+
+    BusinessTwinSummary:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        headline:
+          type: string
+        subline:
+          type: string
+        facts:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinFact"
+        activationStatus:
+          type: string
+        sacredMetricMet:
+          type: boolean
+        commerce:
+          type: object
+          properties:
+            capturedMinor30d:
+              type: integer
+            captureRatePercent:
+              type: ["number", "null"]
+            paymentCount30d:
+              type: integer
+            currency:
+              type: string
+            capturedLabel:
+              type: string
+          required: [capturedMinor30d, paymentCount30d, currency, capturedLabel]
+      required:
+        [businessId, generatedAt, headline, subline, facts, activationStatus, sacredMetricMet]
+
     BusinessTwinHealth:
       type: object
       properties:
@@ -4579,15 +4838,99 @@ components:
     TwinRecommendation:
       type: object
       properties:
+        id:
+          type: string
         title:
           type: string
         reason:
           type: string
         priority:
           type: string
+          enum: [high, medium, low]
         href:
           type: string
-      required: [title, reason, priority]
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        expectedOutcome:
+          type: string
+        domain:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+      required: [id, title, reason, priority, confidence, expectedOutcome, domain, evidence]
+
+    BusinessTwinRecommendations:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinRecommendation"
+      required: [businessId, generatedAt, recommendations]
+
+    TwinObservationEvidence:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        label:
+          type: string
+      required: [type, id, label]
+
+    TwinObservation:
+      type: object
+      properties:
+        id:
+          type: string
+        businessId:
+          type: string
+        domain:
+          type: string
+        layer:
+          type: string
+        observationKey:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        confidence:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinObservationEvidence"
+        href:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        [id, businessId, domain, layer, observationKey, title, body, confidence, evidence, createdAt]
+
+    TwinObservationsBundle:
+      type: object
+      properties:
+        businessId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        observations:
+          type: array
+          items:
+            $ref: "#/components/schemas/TwinObservation"
+      required: [businessId, generatedAt, observations]
 
     TwinRiskOrOpportunity:
       type: object

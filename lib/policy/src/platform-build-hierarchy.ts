@@ -238,6 +238,66 @@ export const PLATFORM_BUILD_ROOTS: BuildHierarchyNode[] = [
         summary: "Show autonomy impact before Liv promotion accept.",
         status: "planned",
       },
+      {
+        id: "twin-hub-api",
+        title: "Twin hub API (Era 2 Q1)",
+        summary: "GET /me/twin/* + business scope; briefing and Liv presence consume Twin slice.",
+        status: "shipped",
+      },
+    ],
+  },
+  {
+    id: "era-2-capability-graph",
+    title: "Capability graph (Era 2 Q2)",
+    summary: "Instances persistence, resolved graph API, readiness-driven onboarding.",
+    status: "shipped",
+    surfaces: ["policy", "api", "dashboard", "mobile"],
+    children: [
+      {
+        id: "capability-instances-store",
+        title: "Capability instances persistence",
+        summary: "JSON store on business row; reconcile on capability events.",
+        status: "shipped",
+      },
+      {
+        id: "me-capabilities-api",
+        title: "GET /me/capabilities",
+        summary: "Owner-scoped resolved graph — OpenAPI + codegen.",
+        status: "shipped",
+      },
+      {
+        id: "readiness-onboarding-engine",
+        title: "Readiness → onboarding acts",
+        summary: "Capability health drives setup guided flow and auto-advance.",
+        status: "shipped",
+      },
+    ],
+  },
+  {
+    id: "era-2-liv-advisor",
+    title: "Liv Advisor (Era 2 Q3)",
+    summary: "Twin → Liv pipeline; evidence-backed recommendations; Twin-only briefing intel.",
+    status: "shipped",
+    surfaces: ["api", "liv-runtime", "dashboard"],
+    children: [
+      {
+        id: "twin-liv-advisor-mode",
+        title: "Advisor Liv mode",
+        summary: "Owner assist uses advisor mode + get_business_twin as primary read tool.",
+        status: "shipped",
+      },
+      {
+        id: "twin-recommendation-confidence",
+        title: "Recommendation evidence + confidence",
+        summary: "TwinRecommendation includes evidence, confidence, expectedOutcome.",
+        status: "shipped",
+      },
+      {
+        id: "briefing-twin-only",
+        title: "Briefing from Twin",
+        summary: "Morning briefing intel + Liv narrative sourced from Twin bundle.",
+        status: "shipped",
+      },
     ],
   },
   {
@@ -250,7 +310,7 @@ export const PLATFORM_BUILD_ROOTS: BuildHierarchyNode[] = [
       {
         id: "cross-openapi-contract",
         title: "OpenAPI + codegen",
-        summary: "Public pay/balance, policy-evolution, dashboard pulse fields.",
+        summary: "Public pay/balance, policy-evolution, twin hub, /me/capabilities.",
         status: "shipped",
       },
       {

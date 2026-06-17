@@ -55,6 +55,8 @@ export type TwinRecommendation = {
   href?: string;
   domain: TwinDomainId;
   evidence: string[];
+  confidence: "high" | "medium" | "low";
+  expectedOutcome: string;
 };
 
 export type BusinessTwinSummary = {
@@ -89,6 +91,37 @@ export type BusinessTwinRecommendations = {
 
 function clampScore(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function twinRecommendationConfidence(
+  priority: TwinRecommendation["priority"],
+  evidenceCount: number,
+): TwinRecommendation["confidence"] {
+  if (priority === "high" && evidenceCount >= 2) return "high";
+  if (priority === "high" || evidenceCount >= 2) return "medium";
+  return "low";
+}
+
+function twinRecommendationExpectedOutcome(domain: TwinDomainId): string {
+  const outcomes: Record<TwinDomainId, string> = {
+    operational: "Fewer pending bookings and smoother day-of flow",
+    revenue: "Higher payment capture and clearer revenue picture",
+    relationship: "Guests return before they drift away",
+    trust: "Stronger post-visit reputation signals",
+    growth: "Activation milestone reached with live bookings",
+    capability: "Capability active and readiness blockers cleared",
+  };
+  return outcomes[domain];
+}
+
+function withTwinRecommendationMeta(
+  rec: Omit<TwinRecommendation, "confidence" | "expectedOutcome">,
+): TwinRecommendation {
+  return {
+    ...rec,
+    confidence: twinRecommendationConfidence(rec.priority, rec.evidence.length),
+    expectedOutcome: twinRecommendationExpectedOutcome(rec.domain),
+  };
 }
 
 function scoreOperational(args: {
@@ -437,7 +470,7 @@ export function buildTwinRecommendationsFromContext(
 ): BusinessTwinRecommendations | null {
   if (!ctx.capabilities) return null;
 
-  const recs: TwinRecommendation[] = [];
+  const recs: Array<Omit<TwinRecommendation, "confidence" | "expectedOutcome">> = [];
 
   const commerceSignals = ctx.commerceSignals;
   for (const signal of commerceSignals.filter((s) => s.severity !== "info")) {
@@ -561,7 +594,7 @@ export function buildTwinRecommendationsFromContext(
   return {
     businessId,
     generatedAt: new Date().toISOString(),
-    recommendations: recs.slice(0, 8),
+    recommendations: recs.slice(0, 8).map(withTwinRecommendationMeta),
   };
 }
 
@@ -652,6 +685,40 @@ export async function getBusinessTwinRecommendations(
 ): Promise<BusinessTwinRecommendations | null> {
   const ctx = await loadBusinessTwinContext(businessId);
   return buildTwinRecommendationsFromContext(businessId, ctx);
+}
+
+export type BusinessTwinBundle = {
+  summary: BusinessTwinSummary;
+  health: BusinessTwinHealth | null;
+  recommendations: BusinessTwinRecommendations | null;
+};
+
+/** Era 2 — single Twin load for surfaces that need the full picture. */
+export async function getBusinessTwinBundle(
+  businessId: string,
+): Promise<BusinessTwinBundle | null> {
+  const summary = await getBusinessTwinSummary(businessId);
+  if (!summary) return null;
+  const [health, recommendations] = await Promise.all([
+    getBusinessTwinHealth(businessId),
+    getBusinessTwinRecommendations(businessId),
+  ]);
+  return { summary, health, recommendations };
+}
+
+/** Briefing / Liv presence slice — Twin owns headline + top recommendation. */
+export async function getBusinessTwinBriefingSlice(businessId: string): Promise<{
+  headline: string;
+  subline: string;
+  topRecommendation: TwinRecommendation | null;
+} | null> {
+  const bundle = await getBusinessTwinBundle(businessId);
+  if (!bundle) return null;
+  return {
+    headline: bundle.summary.headline,
+    subline: bundle.summary.subline,
+    topRecommendation: bundle.recommendations?.recommendations[0] ?? null,
+  };
 }
 
 /** Compact twin context for Liv system prompts — advisor mode v1. */

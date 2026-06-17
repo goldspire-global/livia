@@ -280,6 +280,185 @@ export const RegisterDeviceTokenResponse = zod.object({
 });
 
 /**
+ * @summary Resolved capability graph for the signed-in owner (Era 2 Q2)
+ */
+export const GetMeCapabilitiesQueryParams = zod.object({
+  businessId: zod.coerce
+    .string()
+    .optional()
+    .describe("Optional business scope when the user owns multiple locations."),
+});
+
+export const GetMeCapabilitiesResponse = zod.object({
+  businessId: zod.string(),
+  vertical: zod.string(),
+  platformCapabilities: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      state: zod.enum([
+        "defined",
+        "installed",
+        "configured",
+        "active",
+        "suspended",
+      ]),
+      readinessBlockers: zod.array(zod.string()),
+    }),
+  ),
+  verticalCapabilities: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        name: zod.string().optional(),
+        status: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  deferredVerticalCapabilities: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
+  capabilityHealth: zod
+    .object({
+      score: zod.number(),
+      grade: zod.string(),
+    })
+    .optional(),
+  readinessFacts: zod.record(zod.string(), zod.unknown()).optional(),
+  capabilityInstances: zod.record(zod.string(), zod.unknown()).optional(),
+  activation: zod
+    .object({
+      status: zod.string(),
+      sacredMetricMet: zod.boolean(),
+      timeToFirstBookingLabel: zod.string().nullish(),
+      activationSource: zod.string().nullish(),
+      activationStepsComplete: zod.number(),
+      activationStepsTotal: zod.number(),
+      firstBookingAt: zod.string().nullish(),
+      firstBookingId: zod.string().nullish(),
+      paymentsConnected: zod.boolean().optional(),
+    })
+    .optional(),
+  onboardingAutoAdvanced: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Business Twin summary for the signed-in owner (Era 2 hub)
+ */
+export const GetMeTwinSummaryQueryParams = zod.object({
+  businessId: zod.coerce
+    .string()
+    .optional()
+    .describe("Optional business scope when the user owns multiple locations."),
+});
+
+export const GetMeTwinSummaryResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  headline: zod.string(),
+  subline: zod.string(),
+  facts: zod.array(
+    zod.object({
+      key: zod.string(),
+      label: zod.string(),
+      value: zod.union([zod.string(), zod.number()]),
+      domain: zod.string(),
+    }),
+  ),
+  activationStatus: zod.string(),
+  sacredMetricMet: zod.boolean(),
+  commerce: zod
+    .object({
+      capturedMinor30d: zod.number(),
+      captureRatePercent: zod.number().nullish(),
+      paymentCount30d: zod.number(),
+      currency: zod.string(),
+      capturedLabel: zod.string(),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Business Twin domain health scores
+ */
+export const GetMeTwinHealthQueryParams = zod.object({
+  businessId: zod.coerce.string().optional(),
+});
+
+export const GetMeTwinHealthResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  overallScore: zod.number(),
+  domains: zod.array(
+    zod.object({
+      domain: zod.string(),
+      score: zod.number(),
+      label: zod.string(),
+      summary: zod.string(),
+      trajectory: zod.enum(["strengthening", "stable", "weakening", "unknown"]),
+    }),
+  ),
+});
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+export const GetMeTwinRecommendationsQueryParams = zod.object({
+  businessId: zod.coerce.string().optional(),
+});
+
+export const GetMeTwinRecommendationsResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  recommendations: zod.array(
+    zod.object({
+      id: zod.string(),
+      title: zod.string(),
+      reason: zod.string(),
+      priority: zod.enum(["high", "medium", "low"]),
+      href: zod.string().optional(),
+      confidence: zod.enum(["high", "medium", "low"]),
+      expectedOutcome: zod.string(),
+      domain: zod.string(),
+      evidence: zod.array(zod.string()),
+    }),
+  ),
+});
+
+/**
+ * @summary Active persisted Twin observations
+ */
+export const GetMeTwinObservationsQueryParams = zod.object({
+  businessId: zod.coerce.string().optional(),
+});
+
+export const GetMeTwinObservationsResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  observations: zod.array(
+    zod.object({
+      id: zod.string(),
+      businessId: zod.string(),
+      domain: zod.string(),
+      layer: zod.string(),
+      observationKey: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      confidence: zod.string(),
+      evidence: zod.array(
+        zod.object({
+          type: zod.string(),
+          id: zod.string(),
+          label: zod.string(),
+        }),
+      ),
+      href: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
  * @summary Staff-scoped "my day" slate (today's bookings, next-up, my customers)
  */
 export const GetMyDayParams = zod.object({
@@ -2865,10 +3044,15 @@ export const GetOwnerIntelligenceResponse = zod.object({
   twinTopRecommendation: zod
     .union([
       zod.object({
+        id: zod.string(),
         title: zod.string(),
         reason: zod.string(),
-        priority: zod.string(),
+        priority: zod.enum(["high", "medium", "low"]),
         href: zod.string().optional(),
+        confidence: zod.enum(["high", "medium", "low"]),
+        expectedOutcome: zod.string(),
+        domain: zod.string(),
+        evidence: zod.array(zod.string()),
       }),
       zod.null(),
     ])
@@ -2929,6 +3113,119 @@ export const GetOwnerIntelligenceResponse = zod.object({
   qualityRegistry: zod
     .array(zod.record(zod.string(), zod.unknown()))
     .optional(),
+});
+
+/**
+ * @summary Business Twin summary (admin scope)
+ */
+export const GetBusinessTwinSummaryParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetBusinessTwinSummaryResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  headline: zod.string(),
+  subline: zod.string(),
+  facts: zod.array(
+    zod.object({
+      key: zod.string(),
+      label: zod.string(),
+      value: zod.union([zod.string(), zod.number()]),
+      domain: zod.string(),
+    }),
+  ),
+  activationStatus: zod.string(),
+  sacredMetricMet: zod.boolean(),
+  commerce: zod
+    .object({
+      capturedMinor30d: zod.number(),
+      captureRatePercent: zod.number().nullish(),
+      paymentCount30d: zod.number(),
+      currency: zod.string(),
+      capturedLabel: zod.string(),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Business Twin domain health scores
+ */
+export const GetBusinessTwinHealthParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetBusinessTwinHealthResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  overallScore: zod.number(),
+  domains: zod.array(
+    zod.object({
+      domain: zod.string(),
+      score: zod.number(),
+      label: zod.string(),
+      summary: zod.string(),
+      trajectory: zod.enum(["strengthening", "stable", "weakening", "unknown"]),
+    }),
+  ),
+});
+
+/**
+ * @summary Business Twin prioritized recommendations
+ */
+export const GetBusinessTwinRecommendationsParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetBusinessTwinRecommendationsResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  recommendations: zod.array(
+    zod.object({
+      id: zod.string(),
+      title: zod.string(),
+      reason: zod.string(),
+      priority: zod.enum(["high", "medium", "low"]),
+      href: zod.string().optional(),
+      confidence: zod.enum(["high", "medium", "low"]),
+      expectedOutcome: zod.string(),
+      domain: zod.string(),
+      evidence: zod.array(zod.string()),
+    }),
+  ),
+});
+
+/**
+ * @summary Active persisted Twin observations
+ */
+export const GetBusinessTwinObservationsParams = zod.object({
+  businessId: zod.coerce.string(),
+});
+
+export const GetBusinessTwinObservationsResponse = zod.object({
+  businessId: zod.string(),
+  generatedAt: zod.coerce.date(),
+  observations: zod.array(
+    zod.object({
+      id: zod.string(),
+      businessId: zod.string(),
+      domain: zod.string(),
+      layer: zod.string(),
+      observationKey: zod.string(),
+      title: zod.string(),
+      body: zod.string(),
+      confidence: zod.string(),
+      evidence: zod.array(
+        zod.object({
+          type: zod.string(),
+          id: zod.string(),
+          label: zod.string(),
+        }),
+      ),
+      href: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
 });
 
 /**
