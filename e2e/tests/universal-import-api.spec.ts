@@ -64,5 +64,17 @@ E2E,Import${suffix},e2e-import-${suffix}@test.livia.local,+35387${suffix}`;
     const parityBody = (await parity.json()) as { scorePercent: number; gaps: unknown[] };
     expect(parityBody.scorePercent).toBeGreaterThan(0);
     expect(Array.isArray(parityBody.gaps)).toBeTruthy();
+
+    const waitlist = await page.request.get(`${apiBase}/api/businesses/${businessId}/waitlist`);
+    expect(waitlist.ok()).toBeTruthy();
+    const waitlistBody = (await waitlist.json()) as { data: unknown[] };
+    expect(Array.isArray(waitlistBody.data)).toBeTruthy();
+
+    const hostRes = await page.request.get(
+      `${apiBase}/api/public/resolve-book-host?host=bloom-beauty-dublin.livia-hq.com`,
+    );
+    expect(hostRes.ok()).toBeTruthy();
+    const hostBody = (await hostRes.json()) as { slug: string };
+    expect(hostBody.slug).toBeTruthy();
   });
 });

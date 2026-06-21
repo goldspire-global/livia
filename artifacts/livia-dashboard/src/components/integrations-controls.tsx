@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { MigrationBrokersPanel } from "@/components/settings/migration-brokers-panel";
+import { ParallelRunPanel } from "@/components/settings/parallel-run-panel";
 import { UniversalImportPanel } from "@/components/settings/universal-import-panel";
 import { customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -182,6 +183,7 @@ export default function IntegrationsControls() {
       </Card>
 
       <MigrationBrokersPanel brokers={brokers} />
+      <ParallelRunPanel businessId={bid} />
 
       <SettingsDisclosure
         title="Outbound webhooks"

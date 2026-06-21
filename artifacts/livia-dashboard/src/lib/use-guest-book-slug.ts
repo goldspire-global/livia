@@ -1,5 +1,9 @@
 import { useParams } from "wouter";
-import { guestBookSlugFromWindow } from "@/lib/guest-host-routing";
+import { useEffect, useState } from "react";
+import {
+  guestBookSlugFromWindow,
+  resolveGuestBookSlugFromWindow,
+} from "@/lib/guest-host-routing";
 import {
   parsePublicBookingSlug,
   parsePublicEventVendorPathSlug,
@@ -9,11 +13,31 @@ import {
 
 type GuestTokenSegment = "visit" | "proof" | "intake" | "pay" | "balance" | "shop" | "waitlist";
 
-/** Resolve book slug from route params, subdomain host, or `/book/{slug}` path. */
+/** Resolve book slug from route params, subdomain host, custom domain, or `/book/{slug}` path. */
 export function useGuestBookSlug(): string | undefined {
   const { slug: routeSlug } = useParams<{ slug?: string }>();
+  const [hostSlug, setHostSlug] = useState<string | undefined>(() => {
+    if (routeSlug) return routeSlug;
+    return guestBookSlugFromWindow() ?? undefined;
+  });
+
+  useEffect(() => {
+    if (routeSlug) {
+      setHostSlug(routeSlug);
+      return;
+    }
+    const sync = guestBookSlugFromWindow();
+    if (sync) setHostSlug(sync);
+  }, [routeSlug]);
+
+  useEffect(() => {
+    if (routeSlug || hostSlug) return;
+    void resolveGuestBookSlugFromWindow().then((s) => {
+      if (s) setHostSlug(s);
+    });
+  }, [routeSlug, hostSlug]);
+
   if (routeSlug) return routeSlug;
-  const hostSlug = guestBookSlugFromWindow();
   if (hostSlug) return hostSlug;
   if (typeof window !== "undefined") {
     return parsePublicBookingSlug(window.location.pathname) ?? undefined;

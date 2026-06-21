@@ -15,7 +15,10 @@ import { sendAiEmail } from "./ai-outbound.service";
 import { policiesFromBusiness } from "./policies.service";
 import { logger } from "../lib/logger";
 import { resolveGuestBookUrl } from "../lib/guest-public-urls";
-import { guestVisitReminderPrepSnippet, guestVerticalPrepSmsBody } from "@workspace/policy";
+import {
+  guestVisitReminderPrepSnippet,
+  guestVerticalReminderSmsBody,
+} from "@workspace/policy";
 import { createTwilioClient } from "@workspace/integrations-twilio";
 
 interface EnrichedBooking extends Booking {
@@ -41,7 +44,10 @@ function customerFirstName(c: EnrichedBooking["customer"]): string {
 }
 
 function manageUrl(business: Business, _booking: Booking): string {
-  return resolveGuestBookUrl(business.slug);
+  return resolveGuestBookUrl(business.slug, "", {
+    customBookDomain: business.customBookDomain,
+    customBookDomainVerified: business.customBookDomainVerified,
+  });
 }
 
 function buildContext(args: {
@@ -138,7 +144,7 @@ export async function sendBookingReminderEmail(args: {
   });
 }
 
-/** T-24h prep SMS for allied-health, medspa, wellness (Innovation P0). */
+/** T-24h reminder SMS — all verticals with vertical-specific prep copy. */
 export async function sendBookingReminderPrepSms(args: {
   business: Business | string;
   booking: EnrichedBooking;
@@ -146,8 +152,8 @@ export async function sendBookingReminderPrepSms(args: {
   const business = await loadBusinessIfMissing(args.business);
   if (!business) return { sent: false, reason: "no_business" };
 
-  const body = guestVerticalPrepSmsBody(business.vertical, business.name);
-  if (!body) return { sent: false, reason: "no_vertical_prep" };
+  const startAtFormatted = formatStartAt(args.booking.startAt, business.timezone);
+  const body = guestVerticalReminderSmsBody(business.vertical, business.name, startAtFormatted);
 
   const to = args.booking.customer.phone;
   if (!to) return { sent: false, reason: "no_phone" };

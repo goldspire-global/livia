@@ -47,6 +47,7 @@ interface ServiceForm {
   requiresPatchTest?: boolean;
   quoteUnit?: string;
   stockCount?: number | "";
+  depositPercent?: number | "";
 }
 
 function serviceNamePlaceholder(vertical: string): string {
@@ -215,7 +216,14 @@ export default function ServicesPage() {
       requiresPatchTest: (svc as { requiresPatchTest?: boolean }).requiresPatchTest ?? false,
       quoteUnit: (svc as { quoteUnit?: string | null }).quoteUnit ?? "flat",
       stockCount: (svc as { stockCount?: number | null }).stockCount ?? "",
+      depositPercent: (svc as { depositPercent?: number | null }).depositPercent ?? "",
     });
+  }
+
+  function depositPayload(vals: ServiceForm) {
+    if (!depositPolicy?.depositRequired) return {};
+    if (vals.depositPercent === "" || vals.depositPercent == null) return { depositPercent: null };
+    return { depositPercent: Math.min(100, Math.max(0, Number(vals.depositPercent))) };
   }
 
   function saveEdit(vals: ServiceForm) {
@@ -235,6 +243,7 @@ export default function ServicesPage() {
           imageUrl: vals.imageUrl?.trim() || undefined,
           ...beautyPayload(vals),
           ...eventVendorPayload(vals),
+          ...depositPayload(vals),
         },
       },
       {
@@ -265,6 +274,7 @@ export default function ServicesPage() {
           imageUrl: vals.imageUrl?.trim() || undefined,
           ...beautyPayload(vals),
           ...eventVendorPayload(vals),
+          ...depositPayload(vals),
         },
       },
       {
@@ -411,6 +421,19 @@ export default function ServicesPage() {
                   <p className="text-xs text-muted-foreground" data-testid="service-deposit-hint">
                     {serviceDepositHint}
                   </p>
+                ) : null}
+                {depositPolicy?.depositRequired ? (
+                  <div className="space-y-2">
+                    <Label>Deposit % override</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="Leave blank for auto"
+                      {...register("depositPercent")}
+                      data-testid="input-service-deposit-percent"
+                    />
+                  </div>
                 ) : null}
                 {isBeauty ? (
                   <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-3">
@@ -602,6 +625,18 @@ export default function ServicesPage() {
             ) : null}
             {serviceDepositHint ? (
               <p className="text-xs text-muted-foreground">{serviceDepositHint}</p>
+            ) : null}
+            {depositPolicy?.depositRequired ? (
+              <div className="space-y-2">
+                <Label>Deposit % override</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  placeholder="Leave blank for auto"
+                  {...register("depositPercent")}
+                />
+              </div>
             ) : null}
             {!isEventVendor ? (
             <div className="grid grid-cols-2 gap-4">

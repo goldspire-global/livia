@@ -101,5 +101,37 @@ export function guestVerticalPrepSmsBody(
     const line = guestPublicVisitPrep("wellness", null)[0];
     return line ? `${businessName}: ${line}` : null;
   }
-  return null;
+  if (key === "hair") {
+    return `${businessName}: tomorrow's appointment — arrive with clean dry hair. Reply on your visit link if you need to reschedule.`;
+  }
+  if (key === "beauty") {
+    return `${businessName}: reminder for tomorrow — arrive makeup-free for lash/brow services. Your visit link has prep details.`;
+  }
+  if (key === "fitness") {
+    return `${businessName}: class tomorrow — arrive 10 minutes early. Hydrate and bring a towel. Visit link for changes.`;
+  }
+  if (key === "pet-grooming") {
+    return `${businessName}: groom tomorrow — ensure your pet has had a toilet break before drop-off. Visit link for details.`;
+  }
+  if (key === "automotive-detailing") {
+    return `${businessName}: detail tomorrow — please remove personal items from the vehicle. Visit link for drop-off notes.`;
+  }
+  if (key === "body-art") {
+    return `${businessName}: session tomorrow — eat well, stay hydrated, and avoid alcohol. Visit link for aftercare prep.`;
+  }
+  if (key === "event-vendors") {
+    return `${businessName}: your event date is approaching — confirm setup access times on your visit link.`;
+  }
+  return `${businessName}: reminder — your appointment is tomorrow. Open your visit link for details or to reschedule.`;
+}
+
+/** T-24h appointment reminder SMS (all verticals). */
+export function guestVerticalReminderSmsBody(
+  vertical: string | null | undefined,
+  businessName: string,
+  startLabel: string,
+): string {
+  const prep = guestVerticalPrepSmsBody(vertical, businessName);
+  if (prep) return prep;
+  return `${businessName}: see you ${startLabel}. Open your visit link for details.`;
 }

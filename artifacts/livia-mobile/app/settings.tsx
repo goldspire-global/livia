@@ -109,6 +109,7 @@ export default function SettingsScreen() {
   const { mutateAsync: patchBusiness, isPending } = useUpdateBusiness();
   const [aiOn, setAiOn] = useState<boolean | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [customDomain, setCustomDomain] = useState<string | null>(null);
   const canEditShopFields = canEditShop(persona);
 
   const resolvedAi = useMemo(() => {
@@ -117,6 +118,8 @@ export default function SettingsScreen() {
   }, [aiOn, business]);
 
   const resolvedLogo = logoUrl ?? business?.logoUrl ?? "";
+  const resolvedDomain =
+    customDomain ?? (business as { customBookDomain?: string | null })?.customBookDomain ?? "";
   const { timeZone: tzLabel } = useBusinessTimezone();
 
   const pack = verticalPackUi(
@@ -139,6 +142,22 @@ export default function SettingsScreen() {
       });
       await refetch();
       setLogoUrl(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const saveCustomDomain = async (next: string) => {
+    if (!bid || !canEditShopFields) return;
+    const trimmed = next.trim();
+    try {
+      await patchBusiness({
+        businessId: bid,
+        data: { customBookDomain: trimmed || null },
+      });
+      await refetch();
+      setCustomDomain(null);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -301,6 +320,38 @@ export default function SettingsScreen() {
                 <Feather name="external-link" size={18} color={colors.primary} />
               </Pressable>
             ) : null}
+            <Text style={[styles.rowMeta, { color: colors.mutedForeground, marginTop: 8 }]}>
+              Custom book domain
+            </Text>
+            {canEditShopFields ? (
+              <TextInput
+                value={resolvedDomain}
+                onChangeText={(v) => setCustomDomain(v)}
+                onBlur={() => {
+                  if (customDomain === null) return;
+                  void saveCustomDomain(customDomain);
+                }}
+                placeholder="book.yourstudio.ie"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={[
+                  styles.logoInput,
+                  { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card },
+                ]}
+              />
+            ) : (
+              <Text style={[styles.rowValue, { color: colors.foreground }]}>
+                {resolvedDomain || "—"}
+              </Text>
+            )}
+            <Pressable
+              onPress={() => router.push(asHref("/waitlist"))}
+              style={[styles.navBtn, { borderColor: colors.border, marginTop: 8 }]}
+            >
+              <Text style={[styles.navBtnText, { color: colors.primary }]}>Slot waitlist</Text>
+              <Feather name="chevron-right" size={18} color={colors.primary} />
+            </Pressable>
             <Text style={[styles.rowMeta, { color: colors.mutedForeground, marginTop: 8 }]}>Logo URL</Text>
             {canEditShopFields ? (
               <TextInput

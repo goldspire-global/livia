@@ -18,6 +18,8 @@ import { fetchTenantExperience } from "@/lib/tenant-experience";
 import { verticalAccentHex } from "@/lib/vertical-theme";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
 import { isOnboardingAppUnlocked, type OnboardingState } from "@workspace/policy";
+import { UniversalImportPanel } from "@/components/UniversalImportPanel";
+import { persistOnboardingState } from "@/lib/onboarding-blocking";
 import { webOnboardingUrl } from "@/lib/cross-surface-handoff";
 import { getPublicBookingUrl } from "@/lib/public-booking-url";
 
@@ -110,6 +112,24 @@ export default function OnboardingContinueScreen() {
             {experience?.playbook.publicCta ?? "Test booking page"}
           </Text>
         </Pressable>
+      ) : null}
+
+      {bid ? (
+        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card, marginTop: 16 }]}>
+          <Text style={[styles.row, { color: colors.foreground, fontWeight: "600", marginBottom: 8 }]}>
+            Import from CSV (optional)
+          </Text>
+          <UniversalImportPanel
+            businessId={bid}
+            onImported={() => {
+              void persistOnboardingState(
+                bid,
+                { checklist: { migrationImported: true } },
+                state,
+              );
+            }}
+          />
+        </View>
       ) : null}
 
       {appUnlocked ? (

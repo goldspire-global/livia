@@ -6,7 +6,7 @@ import {
   notificationLogsTable,
 } from "@workspace/db";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
-import { beautyRebookSmsBody } from "@workspace/policy";
+import { beautyRebookSmsBody, customerAllowsMarketingSms } from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { resolveGuestBookUrl } from "../lib/guest-public-urls";
 import { createConversation, attachCustomer } from "./conversations.service";
@@ -117,12 +117,14 @@ export async function sendBeautyFillCycleNudges(
       phone: customersTable.phone,
       firstName: customersTable.firstName,
       displayName: customersTable.displayName,
+      consent: customersTable.consent,
     })
     .from(customersTable)
     .where(
       and(eq(customersTable.businessId, businessId), inArray(customersTable.id, customerIds)),
     );
   const phoneById = new Map(customers.map((c) => [c.id, c.phone]));
+  const consentById = new Map(customers.map((c) => [c.id, c.consent]));
 
   const result: FillCycleNudgeResult = {
     attempted: 0,
@@ -142,6 +144,11 @@ export async function sendBeautyFillCycleNudges(
     const phone = phoneById.get(row.customerId)?.trim();
     if (!phone) {
       result.skipped.push({ customerId: row.customerId, reason: "no_phone" });
+      continue;
+    }
+
+    if (!customerAllowsMarketingSms(consentById.get(row.customerId))) {
+      result.skipped.push({ customerId: row.customerId, reason: "sms_consent" });
       continue;
     }
 

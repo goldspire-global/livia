@@ -17,17 +17,12 @@ import PublicEventVendorQuotePage from "@/pages/public-event-vendor-quote";
 import PublicEventVendorMoodPage from "@/pages/public-event-vendor-mood";
 import PublicEventVendorPlannerPage from "@/pages/public-event-vendor-planner";
 import { PublicSurfaceLoading } from "@/components/public/public-surface-chrome";
-import { guestBookSlugFromWindow } from "@/lib/guest-host-routing";
+import { resolveGuestBookSlugFromWindow } from "@/lib/guest-host-routing";
 
-function GuestSubdomainHome() {
-  const slug = guestBookSlugFromWindow();
+function GuestSubdomainHome({ slug }: { slug: string }) {
   const [mode, setMode] = useState<"loading" | "event" | "book">("loading");
 
   useEffect(() => {
-    if (!slug) {
-      setMode("book");
-      return;
-    }
     let cancelled = false;
     void fetch(`/api/public/${encodeURIComponent(slug)}/event-site`)
       .then((res) => {
@@ -46,9 +41,23 @@ function GuestSubdomainHome() {
   return <PublicBookingPage />;
 }
 
-/** When hostname is `{slug}.livia-hq.com`, render guest surfaces without `/book` or `/e` prefix. */
-export function GuestSubdomainRouter() {
-  const slug = guestBookSlugFromWindow();
+type GuestSubdomainRouterProps = {
+  slug?: string;
+};
+
+/** When hostname is `{slug}.livia-hq.com` or a verified custom domain, render guest surfaces. */
+export function GuestSubdomainRouter({ slug: slugProp }: GuestSubdomainRouterProps) {
+  const [slug, setSlug] = useState<string | null | undefined>(slugProp ?? undefined);
+
+  useEffect(() => {
+    if (slugProp) {
+      setSlug(slugProp);
+      return;
+    }
+    void resolveGuestBookSlugFromWindow().then(setSlug);
+  }, [slugProp]);
+
+  if (slug === undefined) return <PublicSurfaceLoading />;
   if (!slug) return null;
 
   return (
@@ -67,11 +76,13 @@ export function GuestSubdomainRouter() {
       <Route path="/about" component={PublicEventVendorAboutPage} />
       <Route path="/shop/:token" component={PublicShopPage} />
       <Route path="/visit/:token" component={PublicVisitPage} />
-      <Route component={GuestSubdomainHome} />
+      <Route>{() => <GuestSubdomainHome slug={slug} />}</Route>
     </Switch>
   );
 }
 
+import { mightBeGuestBookHost } from "@/lib/guest-host-routing";
+
 export function isGuestSubdomainHost(): boolean {
-  return guestBookSlugFromWindow() != null;
+  return mightBeGuestBookHost();
 }

@@ -53,6 +53,7 @@ export default function ServiceDetailScreen() {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [active, setActive] = useState(true);
+  const [depositPercent, setDepositPercent] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function ServiceDetailScreen() {
     );
     setDescription(service.description ?? "");
     setActive(service.isActive !== false);
+    const dp = (service as { depositPercent?: number | null }).depositPercent;
+    setDepositPercent(dp != null ? String(dp) : "");
   }, [service]);
 
   useEffect(() => {
@@ -101,6 +104,10 @@ export default function ServiceDetailScreen() {
           priceMinor: price.trim() ? Math.round(parseFloat(price) * 100) : 0,
           currency,
           isActive: active,
+          depositPercent:
+            depositPercent.trim() === ""
+              ? null
+              : Math.min(100, Math.max(0, Number.parseInt(depositPercent, 10) || 0)),
         },
       });
       invalidateOperationalState(qc, bid);
@@ -167,6 +174,17 @@ export default function ServiceDetailScreen() {
               onChangeText={setPrice}
             />
           </View>
+        </View>
+        <View style={{ gap: 6 }}>
+          <Text style={[styles.label, { color: colors.mutedForeground }]}>Deposit % override</Text>
+          <TextInput
+            style={inputStyle}
+            keyboardType="number-pad"
+            placeholder="Blank = auto from rules"
+            placeholderTextColor={colors.mutedForeground}
+            value={depositPercent}
+            onChangeText={setDepositPercent}
+          />
         </View>
         <TextInput
           style={[inputStyle, styles.multiline]}

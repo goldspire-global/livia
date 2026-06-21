@@ -132,4 +132,47 @@ router.get(
   },
 );
 
+router.get(
+  "/businesses/:businessId/migration/parallel-run",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const external =
+      req.query.external === "fresha" ? "fresha" : ("mindbody" as "mindbody" | "fresha");
+    const { getParallelRunDiff } = await import("../services/wellness-parallel-run.service");
+    res.json(await getParallelRunDiff(bizId(req.params.businessId), external));
+  },
+);
+
+router.post(
+  "/businesses/:businessId/import/oauth/start",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const brokerId = typeof req.body?.brokerId === "string" ? req.body.brokerId : "";
+    const { INTEGRATION_CATALOG } = await import("@workspace/policy");
+    const entry = INTEGRATION_CATALOG.find((e) => e.id === brokerId);
+    if (!entry || entry.mode !== "oauth") {
+      sendError(res, req, 400, "Unknown OAuth import broker");
+      return;
+    }
+    if (entry.envKey && !process.env[entry.envKey]) {
+      res.json({
+        status: "pending_credentials",
+        brokerId,
+        label: entry.label,
+        message: `Connect ${entry.label} when workspace credentials are configured. Use CSV import meanwhile.`,
+      });
+      return;
+    }
+    res.json({
+      status: "stub",
+      brokerId,
+      label: entry.label,
+      authorizeUrl: null,
+      message: "OAuth connect flow is queued — CSV import is available today.",
+    });
+  },
+);
+
 export default router;

@@ -34,6 +34,7 @@ export async function depositDueMinorForBooking(
       category: servicesTable.category,
       name: servicesTable.name,
       durationMinutes: servicesTable.durationMinutes,
+      depositPercent: servicesTable.depositPercent,
     })
     .from(servicesTable)
     .where(and(eq(servicesTable.id, row.serviceId), eq(servicesTable.businessId, businessId)))

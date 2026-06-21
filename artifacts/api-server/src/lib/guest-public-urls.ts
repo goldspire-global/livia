@@ -1,5 +1,6 @@
 import {
   guestBookAbsoluteUrl,
+  guestBookAbsoluteUrlForBusiness,
   guestBookPath,
   guestBookTokenPath,
   guestManageVisitPath,
@@ -21,9 +22,15 @@ export function guestBookUrlEnv(): GuestBookUrlEnv {
   };
 }
 
-export function resolveGuestBookUrl(slug: string, query = ""): string {
+export function resolveGuestBookUrl(
+  slug: string,
+  query = "",
+  business?: { customBookDomain?: string | null; customBookDomainVerified?: boolean },
+): string {
   const env = guestBookUrlEnv();
-  const base = guestBookAbsoluteUrl(slug, env);
+  const base = business
+    ? guestBookAbsoluteUrlForBusiness(slug, business, env)
+    : guestBookAbsoluteUrl(slug, env);
   if (!query) return base;
   const q = query.startsWith("?") ? query : `?${query}`;
   return `${base}${q}`;

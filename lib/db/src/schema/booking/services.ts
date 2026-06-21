@@ -34,6 +34,8 @@ export const servicesTable = pgTable(
     quoteUnit: text("quote_unit"),
     /** Event-vendor hire stock — warn when quote qty exceeds available units */
     stockCount: integer("stock_count"),
+    /** Override tenant deposit % for this service (null = use heuristics + tenant default) */
+    depositPercent: integer("deposit_percent"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

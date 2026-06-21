@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, jsonb, integer, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, jsonb, integer, uniqueIndex, index, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -134,6 +134,9 @@ export const businessesTable = pgTable(
       }>()
       .notNull()
       .default({ enabled: false, title: "Take home", postSessionSuggest: true }),
+    /** Verified custom domain for public book (Phase 3). */
+    customBookDomain: text("custom_book_domain"),
+    customBookDomainVerified: boolean("custom_book_domain_verified").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

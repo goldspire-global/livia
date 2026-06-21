@@ -22,6 +22,7 @@ export const LazyHostPage = lazyPage(() => import("@/pages/host"));
 export const LazyBrandsPage = lazyPage(() => import("@/pages/brands"));
 export const LazyRotaPage = lazyPage(() => import("@/pages/rota"));
 export const LazyClassesPage = lazyPage(() => import("@/pages/classes"));
+export const LazyWaitlistQueuePage = lazyPage(() => import("@/pages/waitlist-queue"));
 export const LazyFranchisePage = lazyPage(() => import("@/pages/franchise"));
 export const LazyDesignProofsPage = lazyPage(() => import("@/pages/design-proofs"));
 export const LazyEnquiriesRedirect = lazyPage(() => import("@/pages/enquiries-redirect"));

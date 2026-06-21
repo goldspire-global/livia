@@ -56,6 +56,7 @@ import {
   LazyStaffDetailPage,
   LazyStaffPage,
   LazyToolkitPage,
+  LazyWaitlistQueuePage,
 } from "@/lib/lazy-pages";
 
 import NotFound from "@/pages/not-found";
@@ -81,7 +82,13 @@ import MyLiviaPage from "@/pages/my-livia";
 import MyLiviaAccountPage from "@/pages/my-livia-account";
 import MyLiviaShopPage from "@/pages/my-livia-shop";
 import MyLiviaVisitPage from "@/pages/my-livia-visit";
-import { GuestSubdomainRouter, isGuestSubdomainHost } from "@/components/guest/guest-subdomain-router";
+import { GuestSubdomainRouter } from "@/components/guest/guest-subdomain-router";
+import { PublicSurfaceLoading } from "@/components/public/public-surface-chrome";
+import {
+  guestBookSlugFromWindow,
+  mightBeGuestBookHost,
+  resolveGuestBookSlugFromWindow,
+} from "@/lib/guest-host-routing";
 import { LegacyGuestBookRedirect } from "@/components/guest/legacy-guest-book-redirect";
 import WellnessCorporatePage from "@/pages/wellness-corporate";
 import PublicPremisesPage from "@/pages/public-premises";
@@ -287,6 +294,7 @@ function AuthenticatedRoutes() {
               </WedgeRouteGuard>
             )}
           </Route>
+          <Route path="/waitlist">{() => <LazyRoute page={LazyWaitlistQueuePage} />}</Route>
           <Route path="/franchise">
             {() => (
               <WedgeRouteGuard path="/franchise">
@@ -352,9 +360,24 @@ function AuthenticatedRoutes() {
 
 function AppRouter() {
   const [location] = useLocation();
+  const [guestSlug, setGuestSlug] = useState<string | null | undefined>(() => {
+    const sub = guestBookSlugFromWindow();
+    if (sub) return sub;
+    if (!mightBeGuestBookHost()) return null;
+    return undefined;
+  });
 
-  if (isGuestSubdomainHost()) {
-    return <GuestSubdomainRouter />;
+  useEffect(() => {
+    if (guestSlug !== undefined) return;
+    void resolveGuestBookSlugFromWindow().then((slug) => setGuestSlug(slug));
+  }, [guestSlug]);
+
+  if (guestSlug === undefined) {
+    return <PublicSurfaceLoading />;
+  }
+
+  if (guestSlug) {
+    return <GuestSubdomainRouter slug={guestSlug} />;
   }
 
   const quoteCanonical = canonicalizeEventVendorQuotePath(location);

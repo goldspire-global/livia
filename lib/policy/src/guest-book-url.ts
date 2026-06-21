@@ -62,6 +62,20 @@ export function guestBookAbsoluteUrl(slug: string, env: GuestBookUrlEnv = {}): s
   return `https://${guestBookHostForSlug(slug, env.bookHostSuffix)}`;
 }
 
+/** Verified custom domain overrides slug subdomain when set. */
+export function guestBookAbsoluteUrlForBusiness(
+  slug: string,
+  business: { customBookDomain?: string | null; customBookDomainVerified?: boolean },
+  env: GuestBookUrlEnv = {},
+): string {
+  const raw = business.customBookDomain?.trim();
+  if (raw && business.customBookDomainVerified) {
+    const host = raw.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    return `https://${host}`;
+  }
+  return guestBookAbsoluteUrl(slug, env);
+}
+
 export function guestEventVendorAbsoluteUrl(slug: string, env: GuestBookUrlEnv = {}): string {
   if (env.forcePathMode || !env.bookHostSuffix) {
     const origin = (env.appOrigin ?? "https://app.livia-hq.com").replace(/\/$/, "");
@@ -71,6 +85,27 @@ export function guestEventVendorAbsoluteUrl(slug: string, env: GuestBookUrlEnv =
 }
 
 /** Parse slug from book subdomain (`bloom.livia-hq.com`). */
+export function normalizeBookHost(hostname: string): string {
+  const host = hostname.toLowerCase().split(":")[0] ?? hostname;
+  return host.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+}
+
+/** True when hostname is not a reserved Livia app/API host (custom domain candidate). */
+export function isCustomBookHostCandidate(hostname: string): boolean {
+  const host = normalizeBookHost(hostname);
+  if (host === "localhost" || host === "127.0.0.1") return false;
+  if (RESERVED_SUBDOMAINS.has(host.split(".")[0] ?? "")) return false;
+  const allowedSuffixes = ["livia-hq.com", "localhost", "livia-stg.livia-hq.com"];
+  const parts = host.split(".");
+  if (parts.length >= 2) {
+    const suffix = parts.slice(1).join(".");
+    if (allowedSuffixes.some((s) => suffix === s || suffix.endsWith(`.${s}`))) {
+      return false;
+    }
+  }
+  return host.includes(".");
+}
+
 export function parseGuestBookSlugFromHost(hostname: string): string | null {
   const host = hostname.toLowerCase().split(":")[0] ?? hostname;
   if (host === "localhost" || host === "127.0.0.1") return null;

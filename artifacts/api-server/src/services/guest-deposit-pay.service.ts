@@ -46,11 +46,12 @@ export function computeDepositDueMinor(args: {
 
 export function resolveBookingDepositPercent(args: {
   operational: Pick<OperationalPolicy, "depositPercent" | "depositRequired">;
-  service?: {
+    service?: {
     category?: string | null;
     serviceKind?: string | null;
     name?: string | null;
     durationMinutes?: number;
+    depositPercent?: number | null;
   } | null;
 }): number {
   return resolveDepositPercentForService({
@@ -81,6 +82,7 @@ export async function getGuestDepositPayView(
       serviceKind: servicesTable.serviceKind,
       name: servicesTable.name,
       durationMinutes: servicesTable.durationMinutes,
+      depositPercent: servicesTable.depositPercent,
     })
     .from(bookingsTable)
     .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
@@ -160,6 +162,7 @@ export async function captureGuestDepositPayment(args: {
       serviceKind: servicesTable.serviceKind,
       name: servicesTable.name,
       durationMinutes: servicesTable.durationMinutes,
+      depositPercent: servicesTable.depositPercent,
     })
     .from(bookingsTable)
     .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
@@ -395,6 +398,7 @@ export async function createGuestDepositCheckout(
       serviceKind: servicesTable.serviceKind,
       name: servicesTable.name,
       durationMinutes: servicesTable.durationMinutes,
+      depositPercent: servicesTable.depositPercent,
     })
     .from(bookingsTable)
     .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))

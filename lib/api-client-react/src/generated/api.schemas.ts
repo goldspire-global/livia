@@ -260,6 +260,9 @@ export interface Business {
   createdAt: string;
   updatedAt: string;
   onboardingState?: OnboardingState;
+  /** @nullable */
+  customBookDomain?: string | null;
+  customBookDomainVerified?: boolean;
 }
 
 export type SupportTicketCategory =
@@ -469,6 +472,9 @@ export interface UpdateBusinessBody {
   aiKnowledge?: string;
   aiCanBookDirectly?: string;
   onboardingState?: OnboardingState;
+  /** @nullable */
+  customBookDomain?: string | null;
+  customBookDomainVerified?: boolean;
 }
 
 export type MembershipRole =
@@ -649,6 +655,8 @@ export interface Service {
   /** @nullable */
   rebookIntervalDays?: number | null;
   requiresPatchTest?: boolean;
+  /** @nullable */
+  depositPercent?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -818,6 +826,8 @@ export interface CreateServiceBody {
   /** @nullable */
   rebookIntervalDays?: number | null;
   requiresPatchTest?: boolean;
+  /** @nullable */
+  depositPercent?: number | null;
 }
 
 export interface UpdateServiceBody {
@@ -838,6 +848,8 @@ export interface UpdateServiceBody {
   /** @nullable */
   rebookIntervalDays?: number | null;
   requiresPatchTest?: boolean;
+  /** @nullable */
+  depositPercent?: number | null;
 }
 
 export interface CustomerListResponse {

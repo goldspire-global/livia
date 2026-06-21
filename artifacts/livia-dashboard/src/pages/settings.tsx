@@ -28,6 +28,7 @@ import { Settings, Sparkles, Palette, UserCircle } from "lucide-react";
 import { LivOutboundTemplatesSection } from "@/components/event-vendor/liv-outbound-templates-section";
 import { QuoteTemplatesSection } from "@/components/event-vendor/quote-templates-section";
 import { PublicBookLinkCard } from "@/components/settings/public-book-link-card";
+import { CustomBookDomainCard } from "@/components/settings/custom-book-domain-card";
 import { GuestVaultOwnerCallout } from "@/components/customers/guest-vault-owner-callout";
 import { useForm, Controller } from "react-hook-form";
 import CommunicationsControls from "@/components/communications-controls";
@@ -346,6 +347,12 @@ export default function SettingsPage() {
                       title: businessVertical === "event-vendors" ? "Website link copied" : "Booking link copied",
                     })
                   }
+                />
+                <CustomBookDomainCard
+                  businessId={bid}
+                  slug={bookingSlug}
+                  initialDomain={(b as { customBookDomain?: string | null })?.customBookDomain}
+                  initialVerified={(b as { customBookDomainVerified?: boolean })?.customBookDomainVerified}
                 />
                 <GuestVaultOwnerCallout
                   slug={bookingSlug}

@@ -20,6 +20,7 @@ const HREF_SECTION: Record<string, NavSectionId> = {
   "/staff": "people",
   "/rota": "people",
   "/classes": "people",
+  "/waitlist": "people",
   "/host": "business",
   "/brands": "business",
   "/franchise": "business",

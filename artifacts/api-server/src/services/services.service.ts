@@ -37,6 +37,7 @@ export async function createService(
     linkedRetailProductId?: string | null;
     quoteUnit?: string | null;
     stockCount?: number | null;
+    depositPercent?: number | null;
   },
 ) {
   let currency = data.currency;
@@ -67,6 +68,7 @@ export async function createService(
       linkedRetailProductId: data.linkedRetailProductId ?? null,
       quoteUnit: data.quoteUnit ?? null,
       stockCount: data.stockCount ?? null,
+      depositPercent: data.depositPercent ?? null,
     })
     .returning();
   return s;

@@ -136,6 +136,8 @@ export const GetMyBusinessesResponseItem = zod.object({
     })
     .optional()
     .describe("Self-serve wizard progress (acts A1–A12)"),
+  customBookDomain: zod.string().nullish(),
+  customBookDomainVerified: zod.boolean().optional(),
 });
 export const GetMyBusinessesResponse = zod.array(GetMyBusinessesResponseItem);
 
@@ -532,6 +534,7 @@ export const GetMyDayResponse = zod.object({
             serviceKind: zod.string().nullish(),
             rebookIntervalDays: zod.number().nullish(),
             requiresPatchTest: zod.boolean().optional(),
+            depositPercent: zod.number().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -645,6 +648,7 @@ export const GetMyDayResponse = zod.object({
               serviceKind: zod.string().nullish(),
               rebookIntervalDays: zod.number().nullish(),
               requiresPatchTest: zod.boolean().optional(),
+              depositPercent: zod.number().nullish(),
               createdAt: zod.coerce.date(),
               updatedAt: zod.coerce.date(),
             }),
@@ -759,6 +763,7 @@ export const GetMyDayResponse = zod.object({
               serviceKind: zod.string().nullish(),
               rebookIntervalDays: zod.number().nullish(),
               requiresPatchTest: zod.boolean().optional(),
+              depositPercent: zod.number().nullish(),
               createdAt: zod.coerce.date(),
               updatedAt: zod.coerce.date(),
             }),
@@ -1232,6 +1237,8 @@ export const GetBusinessResponse = zod.object({
     })
     .optional()
     .describe("Self-serve wizard progress (acts A1–A12)"),
+  customBookDomain: zod.string().nullish(),
+  customBookDomainVerified: zod.boolean().optional(),
 });
 
 /**
@@ -1315,6 +1322,8 @@ export const UpdateBusinessBody = zod.object({
     })
     .optional()
     .describe("Self-serve wizard progress (acts A1–A12)"),
+  customBookDomain: zod.string().nullish(),
+  customBookDomainVerified: zod.boolean().optional(),
 });
 
 export const updateBusinessResponseOnboardingStatePercentCompleteMin = 0;
@@ -1405,6 +1414,8 @@ export const UpdateBusinessResponse = zod.object({
     })
     .optional()
     .describe("Self-serve wizard progress (acts A1–A12)"),
+  customBookDomain: zod.string().nullish(),
+  customBookDomainVerified: zod.boolean().optional(),
 });
 
 /**
@@ -1550,6 +1561,7 @@ export const GetStaffServicesResponseItem = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1585,6 +1597,7 @@ export const SetStaffServicesResponseItem = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1619,6 +1632,7 @@ export const ListServicesResponseItem = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1656,6 +1670,7 @@ export const CreateServiceBody = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
 });
 
 /**
@@ -1684,6 +1699,7 @@ export const GetServiceResponse = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1712,6 +1728,7 @@ export const UpdateServiceBody = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
 });
 
 export const UpdateServiceResponse = zod.object({
@@ -1732,6 +1749,7 @@ export const UpdateServiceResponse = zod.object({
   serviceKind: zod.string().nullish(),
   rebookIntervalDays: zod.number().nullish(),
   requiresPatchTest: zod.boolean().optional(),
+  depositPercent: zod.number().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -2083,6 +2101,7 @@ export const ListBookingsResponse = zod.object({
             serviceKind: zod.string().nullish(),
             rebookIntervalDays: zod.number().nullish(),
             requiresPatchTest: zod.boolean().optional(),
+            depositPercent: zod.number().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -2227,6 +2246,7 @@ export const GetBookingResponse = zod
         serviceKind: zod.string().nullish(),
         rebookIntervalDays: zod.number().nullish(),
         requiresPatchTest: zod.boolean().optional(),
+        depositPercent: zod.number().nullish(),
         createdAt: zod.coerce.date(),
         updatedAt: zod.coerce.date(),
       }),
@@ -2405,6 +2425,7 @@ export const MarkBookingBalancePaidResponse = zod
         serviceKind: zod.string().nullish(),
         rebookIntervalDays: zod.number().nullish(),
         requiresPatchTest: zod.boolean().optional(),
+        depositPercent: zod.number().nullish(),
         createdAt: zod.coerce.date(),
         updatedAt: zod.coerce.date(),
       }),
@@ -2683,6 +2704,7 @@ export const GetDashboardSummaryResponse = zod.object({
             serviceKind: zod.string().nullish(),
             rebookIntervalDays: zod.number().nullish(),
             requiresPatchTest: zod.boolean().optional(),
+            depositPercent: zod.number().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -3485,6 +3507,7 @@ export const GetPublicBusinessResponse = zod.object({
       serviceKind: zod.string().nullish(),
       rebookIntervalDays: zod.number().nullish(),
       requiresPatchTest: zod.boolean().optional(),
+      depositPercent: zod.number().nullish(),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     }),

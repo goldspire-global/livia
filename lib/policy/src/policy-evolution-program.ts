@@ -159,9 +159,13 @@ export function resolveDepositPercentForService(args: {
     serviceKind?: string | null;
     name?: string | null;
     durationMinutes?: number;
+    depositPercent?: number | null;
   } | null;
 }): number {
   if (!args.operational.depositRequired) return 0;
+  if (typeof args.service?.depositPercent === "number" && args.service.depositPercent >= 0) {
+    return Math.min(100, args.service.depositPercent);
+  }
   const base = args.operational.depositPercent ?? 0;
   const cat = (args.service?.category ?? "").toLowerCase();
   const name = (args.service?.name ?? "").toLowerCase();

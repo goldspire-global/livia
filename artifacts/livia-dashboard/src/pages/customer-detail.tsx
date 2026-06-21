@@ -42,6 +42,7 @@ import { OperationalPageShell } from "@/components/layout/operational-page-shell
 import { invalidateOperationalState } from "@/lib/operational-cache";
 import { BeautyClientPanel } from "@/components/beauty/beauty-client-panel";
 import { AlliedClinicalNotesPanel } from "@/components/allied-health/allied-clinical-notes-panel";
+import { CustomerPackageCreditsPanel } from "@/components/customers/customer-package-credits-panel";
 
 interface CustomerForm {
   firstName: string;
@@ -410,6 +411,7 @@ export default function CustomerDetailPage() {
           ) : null}
 
           {showCareSeries ? <CareSeriesPanel customerId={cid} canEdit={canEdit} /> : null}
+          <CustomerPackageCreditsPanel businessId={bid} customerId={cid} canEdit={canEdit} />
           {vertical === "allied-health" ? <AlliedClinicalNotesPanel customerId={cid} /> : null}
 
           <CustomerPetsPanel

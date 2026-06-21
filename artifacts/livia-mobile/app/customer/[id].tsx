@@ -33,7 +33,7 @@ export default function CustomerDetailScreen() {
   const bid = currentBusiness?.id ?? "";
   const chrome = useOperationalChrome(bid);
   const vertical = (currentBusiness as { vertical?: string } | undefined)?.vertical;
-  type ClientSection = "relationship" | "memory" | "care" | "notes" | "bookings";
+  type ClientSection = "relationship" | "memory" | "care" | "notes" | "bookings" | "packages";
   const [openSection, setOpenSection] = useState<ClientSection | null>("bookings");
   const toggleSection = (id: ClientSection) => {
     setOpenSection((prev) => (prev === id ? null : id));
@@ -47,6 +47,25 @@ export default function CustomerDetailScreen() {
       sessions?: Array<{ sessionNumber: number; status?: string }>;
     }>
   >([]);
+  const [packageCredits, setPackageCredits] = useState<
+    Array<{ id: string; packageName: string; creditsRemaining: number; creditsTotal: number }>
+  >([]);
+
+  const loadPackageCredits = useCallback(async () => {
+    if (!bid || !id) return;
+    try {
+      const rows = await customFetch<
+        Array<{ id: string; packageName: string; creditsRemaining: number; creditsTotal: number }>
+      >(`/api/businesses/${bid}/package-credits?customerId=${encodeURIComponent(id)}`);
+      setPackageCredits(Array.isArray(rows) ? rows : []);
+    } catch {
+      setPackageCredits([]);
+    }
+  }, [bid, id]);
+
+  useEffect(() => {
+    void loadPackageCredits();
+  }, [loadPackageCredits]);
 
   const loadCareSeries = useCallback(async () => {
     if (!bid || !id || !showCareSeries) return;
@@ -247,6 +266,24 @@ export default function CustomerDetailScreen() {
               </View>
             );
           })}
+        </CollapsibleSettingsSection>
+      ) : null}
+
+      {packageCredits.length > 0 ? (
+        <CollapsibleSettingsSection
+          id="packages"
+          icon="gift"
+          title="Prepaid packs"
+          subtitle={`${packageCredits.length} balance${packageCredits.length === 1 ? "" : "s"}`}
+          expanded={openSection === "packages"}
+          onToggle={() => toggleSection("packages")}
+          chrome={chrome}
+        >
+          {packageCredits.map((p) => (
+            <Text key={p.id} style={[styles.noteText, { color: colors.foreground }]}>
+              {p.packageName} — {p.creditsRemaining}/{p.creditsTotal} left
+            </Text>
+          ))}
         </CollapsibleSettingsSection>
       ) : null}
 

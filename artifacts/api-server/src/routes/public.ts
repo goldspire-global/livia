@@ -144,6 +144,25 @@ async function enforcePublicBookingRateLimit(req: Request, res: Response): Promi
   return true;
 }
 
+router.get("/public/resolve-book-host", async (req, res): Promise<void> => {
+  const rawHost =
+    typeof req.query.host === "string" ? req.query.host : String(req.headers.host ?? "");
+  const { normalizeBookHost, parseGuestBookSlugFromHost } = await import("@workspace/policy");
+  const host = normalizeBookHost(rawHost);
+  const fromSub = parseGuestBookSlugFromHost(host);
+  if (fromSub) {
+    res.json({ slug: fromSub, source: "subdomain" });
+    return;
+  }
+  const { getBusinessSlugByCustomBookHost } = await import("../services/businesses.service");
+  const slug = await getBusinessSlugByCustomBookHost(host);
+  if (!slug) {
+    sendError(res, req, 404, "Unknown book host");
+    return;
+  }
+  res.json({ slug, source: "custom_domain" });
+});
+
 /** Pre-auth tenant skin preview on W2 sign-in (no secrets). */
 router.get("/public/sign-in-appearance-hint", async (req, res): Promise<void> => {
   if (!(await enforcePublicBookingRateLimit(req, res))) return;

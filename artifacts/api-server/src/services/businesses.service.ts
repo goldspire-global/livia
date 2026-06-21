@@ -33,6 +33,28 @@ export async function getBusinessBySlug(slug: string) {
   return biz ?? null;
 }
 
+/** Verified custom book domain → tenant slug (public host routing). */
+export async function getBusinessSlugByCustomBookHost(host: string) {
+  const normalized = host
+    .toLowerCase()
+    .replace(/^https?:\/\//i, "")
+    .split("/")[0]
+    ?.split(":")[0]
+    ?.trim();
+  if (!normalized) return null;
+  const [row] = await db
+    .select({ slug: businessesTable.slug })
+    .from(businessesTable)
+    .where(
+      and(
+        eq(businessesTable.customBookDomainVerified, true),
+        eq(businessesTable.customBookDomain, normalized),
+      ),
+    )
+    .limit(1);
+  return row?.slug ?? null;
+}
+
 export async function getBusinessesForUser(userId: string) {
   const memberships = await db
     .select({ businessId: businessMembershipsTable.businessId })
