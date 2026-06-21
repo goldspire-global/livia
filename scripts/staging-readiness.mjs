@@ -157,12 +157,12 @@ await check("Marketing pricing bundle (PLAN_CATALOGUE solo floor)", async () => 
 
 await check("Marketing demo funnel (book-demo request)", async () => {
   const bundles = await fetchMarketingSpaBundles("/book-demo");
-  return marketingBundlesContain(bundles, ["/book-demo", "Request demo", "secure key"]);
+  return marketingBundlesContain(bundles, ["/book-demo", "Enter demo room", "seven days"]);
 });
 
 await check("Marketing concierge gate (/demo invited path)", async () => {
   const bundles = await fetchMarketingSpaBundles("/demo");
-  return marketingBundlesContain(bundles, ["Checking demo access", "Invited guests"]);
+  return marketingBundlesContain(bundles, ["Checking demo access", "Your demo room"]);
 });
 
 await check("Presentation presets gate (E7)", async () => {
