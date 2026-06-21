@@ -26,20 +26,33 @@ const DEFAULT_KINDS: LivMemoryKindOption[] = [
   { value: "ritual", label: "Ritual" },
 ];
 
+const AUTOMOTIVE_KINDS: LivMemoryKindOption[] = [
+  { value: "note", label: "Note" },
+  { value: "vehicle", label: "Vehicle detail" },
+  { value: "preference", label: "Service preference" },
+];
+
+const AUTOMOTIVE_PLACEHOLDER =
+  "e.g. Ceramic coat 2021 · prefers hand wash · reg ABC123";
+
 export function livMemoryPlaceholder(
   vertical?: string | null,
   category?: string | null,
 ): string {
-  return resolveVerticalKey(vertical, category) === "wellness"
-    ? WELLNESS_PLACEHOLDER
-    : DEFAULT_PLACEHOLDER;
+  const key = resolveVerticalKey(vertical, category);
+  if (key === "wellness") return WELLNESS_PLACEHOLDER;
+  if (vertical === "automotive-detailing") return AUTOMOTIVE_PLACEHOLDER;
+  return DEFAULT_PLACEHOLDER;
 }
 
 export function livMemoryKindOptions(
   vertical?: string | null,
   category?: string | null,
 ): LivMemoryKindOption[] {
-  return resolveVerticalKey(vertical, category) === "wellness" ? WELLNESS_KINDS : DEFAULT_KINDS;
+  const key = resolveVerticalKey(vertical, category);
+  if (key === "wellness") return WELLNESS_KINDS;
+  if (vertical === "automotive-detailing") return AUTOMOTIVE_KINDS;
+  return DEFAULT_KINDS;
 }
 
 export function isAllowedLivMemoryKind(

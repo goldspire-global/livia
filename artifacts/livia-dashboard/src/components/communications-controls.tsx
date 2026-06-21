@@ -88,8 +88,12 @@ export default function CommunicationsControls({ businessId }: { businessId: str
     ingressReady?: boolean;
     message?: string;
     outcomeShareRate?: number;
+    usage?: { usedMinutes: number; capMinutes: number; remainingMinutes: number; atCap: boolean };
   } | null>(null);
   const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceCalls, setVoiceCalls] = useState<
+    Array<{ callSid: string; customerPhone: string; turnCount: number; createdAt: string; conversationId: string }>
+  >([]);
 
   async function refresh() {
     setLoadError(null);
@@ -133,10 +137,22 @@ export default function CommunicationsControls({ businessId }: { businessId: str
         ingressReady?: boolean;
         message?: string;
         outcomeShareRate?: number;
+        usage?: { usedMinutes: number; capMinutes: number; remainingMinutes: number; atCap: boolean };
       }>(`/businesses/${businessId}/voice/status`);
       setVoiceStatus(v);
+      const calls = await api<{
+        calls: Array<{
+          callSid: string;
+          customerPhone: string;
+          turnCount: number;
+          createdAt: string;
+          conversationId: string;
+        }>;
+      }>(`/businesses/${businessId}/voice/calls`);
+      setVoiceCalls(calls.calls ?? []);
     } catch {
       setVoiceStatus(null);
+      setVoiceCalls([]);
     } finally {
       setVoiceLoading(false);
     }
@@ -399,9 +415,9 @@ export default function CommunicationsControls({ businessId }: { businessId: str
       </section>
 
       <section className="space-y-2 rounded-md border p-4 bg-muted/30">
-        <h3 className="text-sm font-semibold">Phone receptionist (UK)</h3>
+        <h3 className="text-sm font-semibold">Phone receptionist</h3>
         <p className="text-xs text-muted-foreground">
-          Inbound call handling for UK shops. Online booking and Liv chat work without this.
+          Inbound call handling for IE/UK shops. Uses the same Twilio number as SMS above.
           Callers hear the required disclosure before any recording.
         </p>
         {config?.channelPack?.voice ? (
@@ -412,20 +428,36 @@ export default function CommunicationsControls({ businessId }: { businessId: str
               <>
                 <p>
                   <b>Status:</b>{" "}
-                  {voiceStatus.ingressReady ? "Platform ready — provision your shop number above" : "Awaiting platform voice config"}
+                  {voiceStatus.ingressReady
+                    ? config.twilioPhoneNumber
+                      ? "Live — calls route to Liv on your shop number"
+                      : "Platform ready — provision your shop number above"
+                    : "Awaiting platform voice config"}
                 </p>
+                {voiceStatus.usage ? (
+                  <p className="text-muted-foreground">
+                    Minutes this month: {voiceStatus.usage.usedMinutes} / {voiceStatus.usage.capMinutes}
+                    {voiceStatus.usage.atCap ? " (cap reached — callers asked to text instead)" : ""}
+                  </p>
+                ) : null}
                 {voiceStatus.message ? (
                   <p className="text-muted-foreground">{voiceStatus.message}</p>
                 ) : null}
-                {typeof voiceStatus.outcomeShareRate === "number" ? (
-                  <p className="text-muted-foreground">
-                    Outcome share this period: {(voiceStatus.outcomeShareRate * 100).toFixed(0)}%
-                  </p>
-                ) : null}
+                {voiceCalls.length > 0 ? (
+                  <ul className="space-y-1 border-t border-border/60 pt-2">
+                    {voiceCalls.slice(0, 5).map((c) => (
+                      <li key={c.callSid}>
+                        {c.customerPhone} · {c.turnCount} turn{c.turnCount === 1 ? "" : "s"}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">No voice calls yet this period.</p>
+                )}
               </>
             ) : (
               <p className="text-muted-foreground">
-                Voice add-on active on your plan — provision a UK number in the SMS section above.
+                Voice add-on active on your plan — provision a number in the SMS section above.
               </p>
             )}
             <Button type="button" size="sm" variant="outline" disabled={voiceLoading} onClick={() => void loadVoiceStatus()}>

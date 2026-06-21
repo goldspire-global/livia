@@ -150,12 +150,36 @@ router.post(
   requireRole("ADMIN"),
   async (req, res): Promise<void> => {
     const brokerId = typeof req.body?.brokerId === "string" ? req.body.brokerId : "";
+    const businessId = bizId(req.params.businessId);
     const { INTEGRATION_CATALOG } = await import("@workspace/policy");
     const entry = INTEGRATION_CATALOG.find((e) => e.id === brokerId);
     if (!entry || (entry.mode !== "oauth" && entry.mode !== "api_read")) {
       sendError(res, req, 400, "Unknown OAuth import broker");
       return;
     }
+
+    const {
+      buildAuthorizeUrl,
+      OAUTH_BROKER_CONFIGS,
+      upsertTenantIntegrationConnection,
+    } = await import("../services/integration-oauth.service");
+
+    if (entry.mode === "api_read" && typeof req.body?.apiKey === "string" && req.body.apiKey.trim()) {
+      await upsertTenantIntegrationConnection({
+        businessId,
+        brokerId,
+        accessToken: req.body.apiKey.trim(),
+        metadata: { connectMode: "api_key" },
+      });
+      res.json({
+        status: "connected",
+        brokerId,
+        label: entry.label,
+        message: `${entry.label} API key saved for your shop.`,
+      });
+      return;
+    }
+
     if (entry.envKey && !process.env[entry.envKey]) {
       res.json({
         status: "pending_credentials",
@@ -165,14 +189,69 @@ router.post(
       });
       return;
     }
+
+    const authorizeUrl = OAUTH_BROKER_CONFIGS[brokerId]
+      ? buildAuthorizeUrl(brokerId, businessId)
+      : null;
+
+    if (authorizeUrl) {
+      res.json({
+        status: "redirect",
+        brokerId,
+        label: entry.label,
+        authorizeUrl,
+        message: "Redirecting to connect…",
+      });
+      return;
+    }
+
     res.json({
-      status: "stub",
+      status: "api_key_required",
       brokerId,
       label: entry.label,
-      authorizeUrl: null,
-      message: "OAuth connect flow is queued — CSV import is available today.",
+      message: "Paste your read-only API key in the connect dialog, or use CSV import today.",
     });
   },
 );
+
+router.get("/import/oauth/callback", async (req, res): Promise<void> => {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const dashboardBase =
+    process.env.DASHBOARD_PUBLIC_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:5173";
+
+  if (!code || !state) {
+    res.redirect(`${dashboardBase}/settings?tab=integrations&oauth=error`);
+    return;
+  }
+
+  const {
+    verifyOAuthState,
+    exchangeOAuthCode,
+    upsertTenantIntegrationConnection,
+  } = await import("../services/integration-oauth.service");
+
+  const parsed = verifyOAuthState(state);
+  if (!parsed) {
+    res.redirect(`${dashboardBase}/settings?tab=integrations&oauth=invalid_state`);
+    return;
+  }
+
+  const tokens = await exchangeOAuthCode(parsed.brokerId, code);
+  if (!tokens) {
+    res.redirect(`${dashboardBase}/settings?tab=integrations&oauth=exchange_failed`);
+    return;
+  }
+
+  await upsertTenantIntegrationConnection({
+    businessId: parsed.businessId,
+    brokerId: parsed.brokerId,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresAt: tokens.expiresAt,
+  });
+
+  res.redirect(`${dashboardBase}/settings?tab=integrations&oauth=connected&broker=${parsed.brokerId}`);
+});
 
 export default router;

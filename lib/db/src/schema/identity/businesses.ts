@@ -137,6 +137,7 @@ export const businessesTable = pgTable(
     /** Verified custom domain for public book (Phase 3). */
     customBookDomain: text("custom_book_domain"),
     customBookDomainVerified: boolean("custom_book_domain_verified").notNull().default(false),
+    customBookDomainSslStatus: text("custom_book_domain_ssl_status"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -138,6 +138,10 @@ export function MigrationBrokersPanel({ brokers }: Props) {
         method: "POST",
         body: JSON.stringify({ brokerId }),
       });
+      if (res.status === "redirect" && res.authorizeUrl) {
+        window.location.href = res.authorizeUrl;
+        return;
+      }
       if (res.authorizeUrl) {
         window.location.href = res.authorizeUrl;
         return;

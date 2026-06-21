@@ -87,6 +87,10 @@ export function showOwnerLivMemoryPanel(vertical: string | null | undefined): bo
   return !isConsultFirstVertical(vertical);
 }
 
+export function showOwnerVehiclePanel(vertical: string | null | undefined): boolean {
+  return vertical === "automotive-detailing";
+}
+
 /** Demo seed cap — solo decor has a handful of real enquirers, not 20+ salon guests. */
 export function consultFirstDemoCustomerCap(): number {
   return 6;

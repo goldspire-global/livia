@@ -58,6 +58,26 @@ export default function IntegrationsControls() {
   const [busy, setBusy] = useState(false);
   const [brokers, setBrokers] = useState<BrokerStatus[]>([]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauth = params.get("oauth");
+    if (oauth === "connected") {
+      toast({ title: "Integration connected", description: "Your shop is linked — sync runs from Integrations." });
+      params.delete("oauth");
+      params.delete("broker");
+      const next = `${window.location.pathname}?${params.toString()}`.replace(/\?$/, "");
+      window.history.replaceState({}, "", next);
+    } else if (oauth === "error" || oauth === "exchange_failed" || oauth === "invalid_state") {
+      toast({
+        title: "Connect incomplete",
+        description: "Try again or use CSV import meanwhile.",
+        variant: "destructive",
+      });
+      params.delete("oauth");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [toast]);
+
   async function load() {
     if (!bid) return;
     setLoading(true);

@@ -12,6 +12,7 @@ type Props = {
   slug: string;
   initialDomain?: string | null;
   initialVerified?: boolean;
+  initialSslStatus?: string | null;
 };
 
 export function CustomBookDomainCard({
@@ -19,17 +20,20 @@ export function CustomBookDomainCard({
   slug,
   initialDomain,
   initialVerified = false,
+  initialSslStatus,
 }: Props) {
   const { toast } = useToast();
   const [domain, setDomain] = useState(initialDomain ?? "");
   const [verified, setVerified] = useState(initialVerified);
+  const [sslStatus, setSslStatus] = useState(initialSslStatus ?? null);
   const [busy, setBusy] = useState(false);
   const cnameTarget = guestBookHostForSlug(slug, "livia-hq.com");
 
   useEffect(() => {
     setDomain(initialDomain ?? "");
     setVerified(initialVerified);
-  }, [initialDomain, initialVerified]);
+    setSslStatus(initialSslStatus ?? null);
+  }, [initialDomain, initialVerified, initialSslStatus]);
 
   async function save() {
     setBusy(true);
@@ -63,11 +67,13 @@ export function CustomBookDomainCard({
         verified: boolean;
         message: string;
         target?: string;
+        sslStatus?: string;
         customBookDomainVerified?: boolean;
       }>(`/api/businesses/${businessId}/custom-book-domain/verify`, {
         method: "POST",
       });
       setVerified(Boolean(result.verified || result.customBookDomainVerified));
+      if (result.sslStatus) setSslStatus(result.sslStatus);
       toast({
         title: result.verified ? "Domain verified" : "DNS not ready yet",
         description: result.message,
@@ -93,6 +99,11 @@ export function CustomBookDomainCard({
         {verified && domain ? (
           <Badge variant="outline" className="text-[10px]">
             Verified
+          </Badge>
+        ) : null}
+        {sslStatus && sslStatus !== "skipped" ? (
+          <Badge variant="outline" className="text-[10px]">
+            SSL {sslStatus}
           </Badge>
         ) : null}
       </div>

@@ -6,6 +6,7 @@ import {
   type IntegrationMode,
 } from "@workspace/policy";
 import { runWellnessBrokerSync } from "./wellness-broker-sync.service";
+import { listTenantIntegrationConnections } from "./integration-oauth.service";
 
 /** @deprecated Use IntegrationCatalogEntry.id — kept for wellness broker sync routing. */
 export type BrokerId =
@@ -41,17 +42,23 @@ function envConfigured(key: string): boolean {
   return typeof v === "string" && v.length > 0;
 }
 
-export function listIntegrationBrokers(_businessId: string): BrokerStatus[] {
+export async function listIntegrationBrokers(businessId: string): Promise<BrokerStatus[]> {
+  const tenantConnections = await listTenantIntegrationConnections(businessId);
+  const connectedBrokers = new Set(tenantConnections.map((c) => c.brokerId));
+
   return listIntegrationCatalog().map((entry) => {
     const status = integrationCatalogStatus(entry, envConfigured);
+    const tenantConnected = connectedBrokers.has(entry.id);
     return {
       id: entry.id,
       label: entry.label,
       category: entry.category,
       mode: entry.mode,
-      connected: status.connected,
+      connected: status.connected || tenantConnected,
       selfServe: entry.selfServe,
-      note: status.note,
+      note: tenantConnected
+        ? `${entry.label} connected for your shop.`
+        : status.note,
       importKind: entry.importKind,
     };
   });
@@ -79,7 +86,7 @@ export async function triggerBrokerSyncJob(
   businessId: string,
   brokerId: string,
 ): Promise<{ ok: boolean; message: string; payload?: unknown }> {
-  const brokers = listIntegrationBrokers(businessId);
+  const brokers = await listIntegrationBrokers(businessId);
   const resolvedId = LEGACY_SYNC_MAP[brokerId] ?? brokerId;
   const b = brokers.find((x) => x.id === resolvedId || x.id === brokerId);
   if (!b) return { ok: false, message: "Unknown integration" };

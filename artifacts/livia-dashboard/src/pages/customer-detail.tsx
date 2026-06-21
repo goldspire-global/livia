@@ -32,10 +32,12 @@ import {
   showOwnerConsultPipelinePanel,
   showOwnerGuestRelationshipPanel,
   showOwnerLivMemoryPanel,
+  showOwnerVehiclePanel,
 } from "@workspace/policy";
 import { LivMemoryPanel } from "@/components/customers/liv-memory-panel";
 import { GuestHistoryPanel } from "@/components/customers/guest-history-panel";
 import { CustomerPetsPanel } from "@/components/customer-pets-panel";
+import { CustomerVehiclesPanel } from "@/components/customer-vehicles-panel";
 import { CareSeriesPanel } from "@/components/customers/care-series-panel";
 import { useForm } from "react-hook-form";
 import { OperationalPageShell } from "@/components/layout/operational-page-shell";
@@ -419,6 +421,14 @@ export default function CustomerDetailPage() {
             customerId={cid}
             vertical={(business as { vertical?: string } | undefined)?.vertical}
           />
+
+          {showOwnerVehiclePanel(vertical) ? (
+            <CustomerVehiclesPanel
+              businessId={bid}
+              customerId={cid}
+              vertical={vertical}
+            />
+          ) : null}
 
           {showOwnerLivMemoryPanel(vertical) ? (
           <LivMemoryPanel

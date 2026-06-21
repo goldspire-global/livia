@@ -267,6 +267,43 @@ router.post(
 );
 
 router.get(
+  "/businesses/:businessId/customers/:customerId/vehicles",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const customerId = getBizId(req.params.customerId);
+    const { listVehiclesForCustomer } = await import("../services/vehicles.service");
+    const vehicles = await listVehiclesForCustomer(businessId, customerId);
+    res.json({ vehicles });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/customers/:customerId/vehicles",
+  requireAuth,
+  requireRole("STAFF"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const customerId = getBizId(req.params.customerId);
+    const { make, model, registration, colour, notes } = req.body;
+    if (!model || typeof model !== "string") {
+      sendError(res, req, 400, "model is required");
+      return;
+    }
+    const { createVehicle } = await import("../services/vehicles.service");
+    const vehicle = await createVehicle(businessId, customerId, {
+      make,
+      model,
+      registration,
+      colour,
+      notes,
+    });
+    res.status(201).json(vehicle);
+  },
+);
+
+router.get(
   "/businesses/:businessId/customers/:customerId/liv-memory",
   requireAuth,
   requireRole("STAFF"),

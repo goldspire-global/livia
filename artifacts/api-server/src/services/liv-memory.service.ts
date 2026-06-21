@@ -9,7 +9,8 @@ export type LivMemoryKind =
   | "procedural"
   | "pressure"
   | "therapist_pref"
-  | "health_light";
+  | "health_light"
+  | "vehicle";
 
 export async function listLivMemoryForEntity(args: {
   businessId: string;

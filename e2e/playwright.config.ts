@@ -434,6 +434,26 @@ export default defineConfig({
       },
     },
     {
+      name: "public-book-perf",
+      testMatch: /public-book-perf\.spec\.ts/,
+      timeout: 120_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
+      name: "dm-booking-flow",
+      testMatch: /dm-booking-flow\.spec\.ts/,
+      timeout: 300_000,
+      workers: 1,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: dashboardBase,
+      },
+    },
+    {
       name: "dual-entry-uat",
       testMatch: /dual-entry-uat\.spec\.ts/,
       timeout: 600_000,

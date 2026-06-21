@@ -3,6 +3,7 @@ import { db, businessesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { guestBookHostForSlug, normalizeBookHost } from "@workspace/policy";
 import { getBusinessById } from "./businesses.service";
+import { attachDomainToVercelProject } from "./vercel-domain.service";
 
 export function expectedBookCnameTarget(slug: string): string {
   const suffix = process.env.GUEST_BOOK_HOST_SUFFIX ?? process.env.LIVIA_BOOK_HOST_SUFFIX ?? "livia-hq.com";
@@ -11,7 +12,7 @@ export function expectedBookCnameTarget(slug: string): string {
 
 export async function verifyCustomBookDomain(
   businessId: string,
-): Promise<{ verified: boolean; message: string; target?: string }> {
+): Promise<{ verified: boolean; message: string; target?: string; sslStatus?: string | null }> {
   const biz = await getBusinessById(businessId);
   if (!biz?.slug) return { verified: false, message: "Business not found" };
   const raw = biz.customBookDomain?.trim();
@@ -33,11 +34,25 @@ export async function verifyCustomBookDomain(
         target,
       };
     }
+
+    const vercel = await attachDomainToVercelProject(domain);
+
     await db
       .update(businessesTable)
-      .set({ customBookDomainVerified: true, customBookDomain: domain, updatedAt: new Date() })
+      .set({
+        customBookDomainVerified: true,
+        customBookDomain: domain,
+        customBookDomainSslStatus: vercel.sslStatus,
+        updatedAt: new Date(),
+      })
       .where(eq(businessesTable.id, businessId));
-    return { verified: true, message: "Domain verified — guests can book on your branded URL.", target };
+
+    return {
+      verified: true,
+      message: vercel.message,
+      target,
+      sslStatus: vercel.sslStatus,
+    };
   } catch {
     return {
       verified: false,

@@ -36,7 +36,22 @@ router.get(
       message: voiceIngress
         ? "Voice receptionist active — provision your shop number in Settings → Communications."
         : "Set TWILIO_* and PUBLIC_BASE_URL to enable voice webhooks.",
+      usage: await import("../services/voice-usage.service").then((m) =>
+        m.voiceUsageSummary(businessId),
+      ),
     });
+  },
+);
+
+router.get(
+  "/businesses/:businessId/voice/calls",
+  requireAuth,
+  requireRole("ADMIN"),
+  requireEntitlement("voice_receptionist"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const { listRecentVoiceCalls } = await import("../services/voice-usage.service");
+    res.json({ calls: await listRecentVoiceCalls(businessId) });
   },
 );
 

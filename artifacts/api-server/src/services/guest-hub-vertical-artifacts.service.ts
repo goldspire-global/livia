@@ -161,6 +161,12 @@ export async function loadGuestVerticalArtifacts(args: {
   }
 
   if (vertical === "automotive-detailing") {
+    const { primaryVehicleHighlight } = await import("./vehicles.service");
+    const vehicleRow = await primaryVehicleHighlight(businessId, customerId);
+    if (vehicleRow) {
+      out.vehicleHighlight = vehicleRow;
+      return out;
+    }
     const memories = await listLivMemoryForEntity({
       businessId,
       entityType: "customer",

@@ -341,6 +341,19 @@ async function ensureMaryGuestHubArtifacts(): Promise<{ shopsTouched: number }> 
     }
 
     if (slug === "shine-studio-belfast") {
+      const { createVehicle } = await import("./vehicles.service");
+      const existingVehicles = await import("./vehicles.service").then((m) =>
+        m.listVehiclesForCustomer(biz.id, customerId),
+      );
+      if (existingVehicles.length === 0) {
+        await createVehicle(biz.id, customerId, {
+          make: "Audi",
+          model: "A4",
+          registration: "NI21 ABC",
+          colour: "Grey",
+          notes: "Ceramic coat due spring",
+        });
+      }
       const { appendLivMemory } = await import("./liv-memory.service");
       await appendLivMemory({
         businessId: biz.id,

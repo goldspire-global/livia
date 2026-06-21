@@ -353,6 +353,7 @@ export default function SettingsPage() {
                   slug={bookingSlug}
                   initialDomain={(b as { customBookDomain?: string | null })?.customBookDomain}
                   initialVerified={(b as { customBookDomainVerified?: boolean })?.customBookDomainVerified}
+                  initialSslStatus={(b as { customBookDomainSslStatus?: string | null })?.customBookDomainSslStatus}
                 />
                 <GuestVaultOwnerCallout
                   slug={bookingSlug}

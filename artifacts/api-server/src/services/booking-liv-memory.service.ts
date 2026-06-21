@@ -31,13 +31,15 @@ export async function recordVisitMemoryForBooking(args: {
 
   const vertical = biz.vertical ?? "hair";
   const kind =
-    vertical === "allied-health" || vertical === "wellness"
-      ? "therapist_pref"
-      : vertical === "beauty" || vertical === "hair"
-        ? "preference"
-        : vertical === "pet-grooming"
-          ? "note"
-          : "note";
+    vertical === "automotive-detailing"
+      ? "vehicle"
+      : vertical === "allied-health" || vertical === "wellness"
+        ? "therapist_pref"
+        : vertical === "beauty" || vertical === "hair"
+          ? "preference"
+          : vertical === "pet-grooming"
+            ? "note"
+            : "note";
 
   await appendLivMemory({
     businessId: args.businessId,

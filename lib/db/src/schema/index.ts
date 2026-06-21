@@ -29,6 +29,7 @@ export * from "./booking/day-packages";
 export * from "./booking/care-series";
 export * from "./booking/allied-health";
 export * from "./booking/pets";
+export * from "./booking/vehicles";
 export * from "./booking/medspa";
 export * from "./booking/booking-guest-access";
 export * from "./booking/medical-intake-guest-access";

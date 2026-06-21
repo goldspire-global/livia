@@ -44,6 +44,11 @@ export function SocialChannelsControls({
         <p className="text-xs text-muted-foreground mt-1">
           Step-by-step setup — one Liv inbox for every DM and booking enquiry.
         </p>
+        {comms?.messagingChannels?.whatsapp?.phoneNumberId ? (
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+            DM booking active — WhatsApp messages route to Liv and can create bookings.
+          </p>
+        ) : null}
       </div>
       <ChannelSetupWizard
         businessId={businessId}
