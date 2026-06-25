@@ -184,7 +184,7 @@ export async function captureMobileOwner(page: Page, spec: VerticalCaptureSpec, 
     await page.goto(spec.mobilePath, { waitUntil: "networkidle", timeout: 60_000 });
     await page.locator(spec.mobileReadySelector ?? "main").first().waitFor({ state: "visible", timeout: 60_000 });
     await page.waitForTimeout(800);
-    await page.screenshot({ path: dest, fullPage: true, animations: "disabled" });
+    await page.screenshot({ path: dest, fullPage: false, animations: "disabled" });
     return;
   }
 
@@ -234,5 +234,5 @@ export async function captureHomeBooking(page: Page, dest: string) {
   await page.goto(`/b/${HOME_DEMO_SLUG}`, { waitUntil: "networkidle", timeout: 60_000 });
   await page.locator('[data-testid="public-book-storefront"]').waitFor({ state: "visible", timeout: 60_000 });
   await page.waitForTimeout(800);
-  await page.screenshot({ path: dest, fullPage: true, animations: "disabled" });
+  await page.screenshot({ path: dest, fullPage: false, animations: "disabled" });
 }

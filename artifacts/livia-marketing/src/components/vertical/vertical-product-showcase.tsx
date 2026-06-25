@@ -32,13 +32,7 @@ export function VerticalProductShowcase({ slug }: { slug: string }) {
 
         <figure className="cst-vertical-showcase__card">
           <p className="cst-showcase__label">{entry.mobile.label}</p>
-          <div
-            className={
-              entry.mobile.fullPage
-                ? "cst-vertical-showcase__frame cst-vertical-showcase__frame--phone cst-vertical-showcase__frame--phone-scroll"
-                : "cst-vertical-showcase__frame cst-vertical-showcase__frame--phone"
-            }
-          >
+          <div className="cst-vertical-showcase__frame cst-vertical-showcase__frame--phone">
             <img
               src={`${base}/showcase/verticals/${folder}/mobile.png`}
               alt={entry.mobile.caption}

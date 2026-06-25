@@ -76,14 +76,14 @@ export function ProductShowcase({ locale }: ProductShowcaseProps) {
           <div className="cst-showcase__phones">
             <figure className="cst-showcase__device cst-showcase__device--booking">
               <figcaption className="cst-showcase__label">{t.bookingLabel}</figcaption>
-              <div className="cst-showcase__frame cst-showcase__frame--phone cst-showcase__frame--phone-scroll">
+              <div className="cst-showcase__frame cst-showcase__frame--phone">
                 <img
                   src={`${base}/showcase/booking-page.png`}
                   alt={t.bookingAlt}
                   loading="lazy"
                   decoding="async"
                   width={390}
-                  height={1200}
+                  height={844}
                 />
               </div>
             </figure>
