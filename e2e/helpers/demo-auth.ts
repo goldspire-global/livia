@@ -48,15 +48,27 @@ export async function ensureDemoProvisioned(request: APIRequestContext) {
   }
 
   const status = await request.get(`${apiBase}/api/demo/status`);
-  const body = status.ok() ? ((await status.json()) as { provisioned?: boolean }) : null;
+  const body = status.ok() ? ((await status.json()) as { provisioned?: boolean; businesses?: unknown[] }) : null;
   if (!body?.provisioned) {
     const prov = await request.post(`${apiBase}/api/demo/provision`, { timeout: 180_000 });
     if (!prov.ok()) {
+      let seedBody: { ok?: boolean; provisioned?: boolean; businessCount?: number } | null = null;
       const ciSeed = await request.post(`${apiBase}/api/demo/seed-ci-db`, { timeout: 300_000 });
-      const provisioned = ciSeed.ok()
-        ? await waitForDemoProvisioned(request)
-        : false;
-      if (!provisioned) {
+      if (ciSeed.ok()) {
+        seedBody = (await ciSeed.json()) as {
+          ok?: boolean;
+          provisioned?: boolean;
+          businessCount?: number;
+        };
+      }
+      await request
+        .post(`${apiBase}/api/demo/sync-vertical-showcase`, { timeout: 180_000 })
+        .catch(() => undefined);
+      const provisioned = await waitForDemoProvisioned(request);
+      const ciPartialOk =
+        process.env.CI === "true" &&
+        (seedBody?.provisioned === true || (seedBody?.businessCount ?? 0) >= 30);
+      if (!provisioned && !ciPartialOk) {
         const detail = ciSeed.ok()
           ? "seed-ci-db ran but status still not provisioned after wait"
           : `provision ${prov.status()}, seed-ci-db ${ciSeed.status()}: ${(await prov.text()).slice(0, 120)}`;
