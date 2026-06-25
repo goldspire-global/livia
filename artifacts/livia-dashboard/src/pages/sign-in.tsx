@@ -93,7 +93,7 @@ export default function SignInPage() {
       >
         <LiviaEmailSignInForm
           bare
-          redirectUrl={redirectAfterSignIn ?? "/dashboard"}
+          redirectUrl={redirectAfterSignIn ?? undefined}
           onEmailChange={setEmailForHint}
         />
       </SignInTenantPreview>

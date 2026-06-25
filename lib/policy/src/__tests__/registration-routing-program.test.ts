@@ -6,6 +6,7 @@ import {
   pickOnboardingResumeBusiness,
   pickPrimarySessionBusiness,
   resolvePostLegalDestination,
+  resolvePostSignInLandingPath,
 } from "../registration-routing-program";
 
 assert.equal(isDemoWorldSlug("dublin-barber-collective"), true);
@@ -89,6 +90,34 @@ assert.equal(
     "user-real",
   ).length,
   1,
+);
+
+assert.equal(
+  resolvePostSignInLandingPath({
+    businesses: [],
+    clerkUserId: "user-new",
+    email: "founder@gmail.com",
+    requestedRedirect: "/onboarding",
+  }),
+  "/onboarding",
+);
+
+assert.equal(
+  resolvePostSignInLandingPath({
+    businesses: [
+      {
+        id: "shop-1",
+        slug: "my-shop",
+        ownerId: "user-1",
+        onboardingState: { currentAct: "complete", completedActs: [], percentComplete: 100 },
+        vertical: "hair",
+      },
+    ],
+    clerkUserId: "user-1",
+    email: "founder@gmail.com",
+    requestedRedirect: "/onboarding",
+  }),
+  "/dashboard",
 );
 
 console.log("registration-routing-program.test.ts OK");

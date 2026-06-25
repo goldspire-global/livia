@@ -28,26 +28,27 @@ test.describe("Cross-surface route audit", () => {
     }
   });
 
-  test("marketing get-started sign-in links to dashboard (not staging)", async ({ page }) => {
+  test("marketing get-started sign-in links to dashboard onboarding handoff (not staging)", async ({ page }) => {
     await page.goto(`${marketingBase}/get-started`);
     const signIn = page.getByRole("link", { name: /^sign in$/i });
     await expect(signIn).toBeVisible({ timeout: 15_000 });
     const href = await signIn.getAttribute("href");
     expect(href).toBeTruthy();
-    expect(href).toMatch(/\/sign-in\/?$/);
+    expect(href).toMatch(/redirect_url=%2Fonboarding/);
     expect(href).not.toMatch(/staging/i);
     if (marketingBase.includes("127.0.0.1") || marketingBase.includes("localhost")) {
       expect(href).toMatch(/127\.0\.0\.1:5173|localhost:5173/);
     } else if (marketingBase.includes("livia-hq.com") && !marketingBase.includes("staging")) {
-      expect(href).toMatch(/^https:\/\/app\.livia-hq\.com\/sign-in\/?$/);
+      expect(href).toMatch(/^https:\/\/app\.livia-hq\.com\/sign-in\?redirect_url=%2Fonboarding$/);
     }
   });
 
-  test("marketing sign-in navigates to dashboard auth form", async ({ page }) => {
+  test("marketing sign-in navigates to dashboard auth form with onboarding redirect", async ({ page }) => {
     await page.goto(`${marketingBase}/get-started`);
     const signIn = page.getByRole("link", { name: /^sign in$/i });
     await signIn.click();
     await page.waitForURL(/\/sign-in/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/redirect_url=%2Fonboarding/);
     await expect(page.getByTestId("livia-sign-in-form")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator("body")).not.toContainText(/internal server error/i);
   });

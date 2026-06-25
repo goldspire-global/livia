@@ -1,5 +1,9 @@
 /** Marketing routes + dashboard handoff — host-aware (prod vs staging vs local). */
-import { isMarketingDemoWedgeUnlocked, type BusinessVertical } from "@workspace/policy";
+import {
+  FOUNDER_MARKETING_SIGN_IN_REDIRECT,
+  isMarketingDemoWedgeUnlocked,
+  type BusinessVertical,
+} from "@workspace/policy";
 import {
   resolveApiBaseUrl,
   resolveDashboardDemoUrl,
@@ -52,8 +56,13 @@ export function dashboardDemoUrl(): string {
   return resolveDashboardDemoUrl();
 }
 
-export function dashboardSignInUrl(): string {
-  return resolveDashboardSignInUrl();
+export function dashboardSignInUrl(redirectPath?: string): string {
+  return resolveDashboardSignInUrl(redirectPath);
+}
+
+/** Get-started / founder CTAs — land on setup, not owner dashboard. */
+export function dashboardFounderSignInUrl(): string {
+  return resolveDashboardSignInUrl(FOUNDER_MARKETING_SIGN_IN_REDIRECT);
 }
 
 export function dashboardSignUpUrl(): string {

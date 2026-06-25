@@ -1,7 +1,7 @@
 import { MarketingLayout } from "@/components/marketing-layout";
 import { ConstellationInnerPage } from "@/components/constellation/constellation-inner-page";
 import { ConstellationGlassCard } from "@/components/constellation/constellation-spine";
-import { dashboardSignInUrl, dashboardSignUpUrl } from "@/lib/marketing-links";
+import { dashboardFounderSignInUrl, dashboardSignUpUrl } from "@/lib/marketing-links";
 import { Link } from "wouter";
 import { ArrowRight, Check } from "lucide-react";
 
@@ -58,7 +58,7 @@ export default function GetStartedPage() {
           </a>
           <p className="text-xs text-muted-foreground">
             Already have an account?{" "}
-            <a href={dashboardSignInUrl()} className="text-[#d9c39a] hover:underline">
+            <a href={dashboardFounderSignInUrl()} className="text-[#d9c39a] hover:underline">
               Sign in
             </a>
           </p>

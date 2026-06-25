@@ -18,6 +18,7 @@ import { isOnboardingAppUnlocked, type OnboardingState } from "@workspace/policy
 import {
   filterSessionBusinesses,
   pickPrimarySessionBusiness,
+  resolvePostLegalDestination,
   shouldSkipLegalToDashboard,
   type SessionBusinessLike,
 } from "@workspace/policy";
@@ -215,6 +216,15 @@ function BusinessDataLoader({
   }
 
   const hasAny = list.length > 0;
+
+  const sessionLanding = resolvePostLegalDestination({
+    businesses: list as SessionBusinessLike[],
+    clerkUserId,
+    email,
+  });
+  if (sessionLanding === "/onboarding" && location === "/dashboard") {
+    return <Redirect to="/onboarding" />;
+  }
 
   if (!hasAny && location !== "/onboarding" && location !== "/legal-acceptance") {
     // Demo roster accounts need provisioned world + membership — send to launcher, not self-serve onboarding.

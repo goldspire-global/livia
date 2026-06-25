@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSignIn, useClerk } from "@clerk/clerk-react";
+import { useSignIn, useClerk, useUser } from "@clerk/clerk-react";
 import { useLocation } from "wouter";
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { GatewayAuthCard } from "@/components/gateway/gateway-auth-card";
 import { formatClerkAuthError } from "@/lib/clerk-auth-errors";
 import { readSignInRedirectPath } from "@/lib/local-dashboard-auth";
+import { fetchPostSignInLandingPath } from "@/lib/post-sign-in-landing";
 
 type Props = {
   redirectUrl?: string;
@@ -18,7 +19,8 @@ type Props = {
 
 export function LiviaEmailSignInForm({ redirectUrl, onEmailChange, bare = false }: Props) {
   const { signIn, isLoaded } = useSignIn();
-  const { setActive } = useClerk();
+  const { setActive, user: clerkUser } = useClerk();
+  const { user } = useUser();
   const [, navigate] = useLocation();
 
   const [email, setEmail] = useState("");
@@ -40,7 +42,14 @@ export function LiviaEmailSignInForm({ redirectUrl, onEmailChange, bare = false 
 
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId });
-        navigate(redirectUrl ?? readSignInRedirectPath() ?? "/dashboard");
+        const clerkUserId = clerkUser?.id ?? user?.id ?? "";
+        const requested = redirectUrl ?? readSignInRedirectPath();
+        const landing = await fetchPostSignInLandingPath({
+          clerkUserId,
+          email: clerkUser?.primaryEmailAddress?.emailAddress ?? user?.primaryEmailAddress?.emailAddress ?? email.trim(),
+          requestedRedirect: requested,
+        });
+        navigate(landing);
         return;
       }
 

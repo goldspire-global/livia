@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { GatewayAuthPageShell } from "@/components/gateway/gateway-auth-page-shell";
-import { readSignInRedirectPath } from "@/lib/local-dashboard-auth";
+import { usePostSignInLandingPath } from "@/lib/post-sign-in-landing";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -19,11 +19,13 @@ export function GatewayAuthSessionGate({
   const { user } = useUser();
   const { signOut } = useClerk();
   const [, navigate] = useLocation();
+  const resolveLanding = isLoaded && isSignedIn && mode === "sign-in";
+  const { loading: landingLoading, path: landingPath } = usePostSignInLandingPath(resolveLanding);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || mode !== "sign-in") return;
-    navigate(readSignInRedirectPath() ?? "/dashboard", { replace: true });
-  }, [isLoaded, isSignedIn, mode, navigate]);
+    if (!resolveLanding || landingLoading || !landingPath) return;
+    navigate(landingPath, { replace: true });
+  }, [resolveLanding, landingLoading, landingPath, navigate]);
 
   if (!isLoaded) {
     return (

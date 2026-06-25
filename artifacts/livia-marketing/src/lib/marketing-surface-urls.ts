@@ -52,13 +52,18 @@ export function resolveDashboardOrigin(): string {
   return tierHosts(tier).dashboard;
 }
 
-export function resolveDashboardSignInUrl(): string {
+export function resolveDashboardSignInUrl(redirectPath?: string): string {
   const tier = detectMarketingSurface();
+  let base: string;
   if (tier === "local") {
     const override = import.meta.env.VITE_DASHBOARD_SIGN_IN_URL as string | undefined;
-    if (override) return override.replace(/\/+$/, "");
+    base = override ? override.replace(/\/+$/, "") : `${resolveDashboardOrigin()}/sign-in`;
+  } else {
+    base = `${resolveDashboardOrigin()}/sign-in`;
   }
-  return `${resolveDashboardOrigin()}/sign-in`;
+  if (!redirectPath?.startsWith("/")) return base;
+  const params = new URLSearchParams({ redirect_url: redirectPath });
+  return `${base}?${params.toString()}`;
 }
 
 export function resolveDashboardSignUpUrl(): string {

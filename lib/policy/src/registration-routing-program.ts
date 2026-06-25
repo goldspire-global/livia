@@ -92,6 +92,34 @@ export function pickOnboardingResumeBusiness<T extends SessionBusinessLike>(
 
 export type PostLegalDestination = "/onboarding" | "/dashboard";
 
+/** Marketing get-started and founder handoffs — resume setup, not owner dashboard. */
+export const FOUNDER_MARKETING_SIGN_IN_REDIRECT = "/onboarding";
+
+function isSafeInAppRedirect(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//");
+}
+
+/**
+ * Where to send a signed-in founder after Clerk auth.
+ * Honors ?redirect_url= when safe; upgrades /onboarding → /dashboard when setup is complete.
+ */
+export function resolvePostSignInLandingPath(args: {
+  businesses: SessionBusinessLike[];
+  clerkUserId: string;
+  email?: string | null;
+  requestedRedirect?: string | null;
+}): string {
+  const sessionDest = resolvePostLegalDestination(args);
+  const requested = args.requestedRedirect?.trim();
+  if (requested && isSafeInAppRedirect(requested)) {
+    if (requested === "/onboarding" || requested.startsWith("/onboarding?")) {
+      return sessionDest === "/dashboard" ? "/dashboard" : requested;
+    }
+    return requested;
+  }
+  return sessionDest;
+}
+
 /** After platform legal — new founders always create a shop first. */
 export function resolvePostLegalDestination(args: {
   businesses: SessionBusinessLike[];
