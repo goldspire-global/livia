@@ -330,10 +330,6 @@ export default function OnboardingPage() {
           window.location.href = "/lifecycle#chain";
           return;
         }
-        if (businessSlug) {
-          window.location.href = `/book/${businessSlug}?welcome=1`;
-          return;
-        }
         window.location.href = "/dashboard";
       }}
     />
