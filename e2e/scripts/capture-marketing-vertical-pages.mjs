@@ -3,12 +3,12 @@ import path from "node:path";
 import { mkdirSync } from "node:fs";
 
 const base = process.env.MARKETING_URL ?? "http://127.0.0.1:5174";
-const slugs = ["", "hair", "beauty", "wellness", "fitness", "medspa", "body-art"];
+const slugs = ["hair", "beauty", "wellness", "fitness", "medspa", "body-art", "barber", "tattoo", "allied-health", "pet-grooming", "automotive-detailing"];
 const out = path.resolve(import.meta.dirname, "..", "visual-captures", "marketing-verticals");
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
 for (const slug of slugs) {
   const url = slug ? `${base}/verticals/${slug}` : `${base}/`;

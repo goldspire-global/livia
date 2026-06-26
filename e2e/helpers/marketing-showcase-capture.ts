@@ -274,6 +274,13 @@ export async function captureWebOwner(page: Page, spec: VerticalCaptureSpec, des
   await waitForPresentationSkin(page, spec.presentationCssPreset);
   await waitForWebShowcaseContent(page, spec);
 
+  await page.waitForFunction(
+    (expected) => document.documentElement.getAttribute("data-presentation") === expected,
+    spec.presentationCssPreset,
+    { timeout: 15_000 },
+  );
+  await page.waitForTimeout(600);
+
   if (spec.openThread) {
     const row = page.getByRole("button", { name: new RegExp(spec.openThread, "i") }).first();
     if (await row.isVisible().catch(() => false)) {

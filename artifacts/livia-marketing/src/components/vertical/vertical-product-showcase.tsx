@@ -10,13 +10,13 @@ export function VerticalProductShowcase({ slug }: { slug: string }) {
   const folder = entry.assetSlug;
 
   return (
-    <section className="mt-10" aria-labelledby={`vertical-showcase-${slug}`}>
+    <section className="cst-vertical-showcase-section mt-10" aria-labelledby={`vertical-showcase-${slug}`}>
       <p className="cst-section-label">The product</p>
       <h2 id={`vertical-showcase-${slug}`} className="text-lg font-medium mb-4">
         Livia for this trade
       </h2>
       <div className="cst-vertical-showcase">
-        <figure className="cst-vertical-showcase__card">
+        <figure className="cst-vertical-showcase__card cst-vertical-showcase__card--web">
           <p className="cst-showcase__label">{entry.web.label}</p>
           <div className="cst-vertical-showcase__frame cst-vertical-showcase__frame--web">
             <img
@@ -31,7 +31,7 @@ export function VerticalProductShowcase({ slug }: { slug: string }) {
           <figcaption className="cst-vertical-showcase__caption">{entry.web.caption}</figcaption>
         </figure>
 
-        <figure className="cst-vertical-showcase__card">
+        <figure className="cst-vertical-showcase__card cst-vertical-showcase__card--mobile">
           <p className="cst-showcase__label">{entry.mobile.label}</p>
           <div className="cst-vertical-showcase__frame cst-vertical-showcase__frame--phone">
             <div className="cst-vertical-showcase__phone-screen">

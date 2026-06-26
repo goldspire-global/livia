@@ -4,6 +4,7 @@ import {
   resolvePresentationColorMode,
 } from "@/lib/experience-theme";
 import type { PersonaKind } from "@/lib/persona";
+import { shouldApplyUrlPreviewToDocument } from "@/lib/appearance-preview-mode";
 import { tenantExperienceQueryKey } from "@/lib/prefetch-tenant-dashboard";
 import type { TenantExperienceResponse } from "@/lib/tenant-experience-api";
 
@@ -91,6 +92,7 @@ export function applyTenantPresentationSkin(
   skin: TenantPresentationSkin,
   persona?: PersonaKind | null,
 ): void {
+  if (shouldApplyUrlPreviewToDocument()) return;
   applyTenantPresentationSurface({
     vertical: skin.vertical,
     category: skin.category,
