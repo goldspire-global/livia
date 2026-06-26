@@ -90,7 +90,7 @@ export function AccountSettingsPanel() {
 
           <p className="text-xs text-muted-foreground leading-relaxed">
             Opens secure account settings in a focused panel — update your name, email, password,
-            two-factor auth, active sessions, or delete your login when Clerk shows that option.
+            two-step verification, active sessions, or delete your login when that option is available.
           </p>
         </CardContent>
       </Card>

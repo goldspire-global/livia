@@ -167,7 +167,7 @@ export function buildFounderCommandCenterLinks(): {
     });
   }
 
-  const github = process.env.FOUNDER_GITHUB_URL?.trim() || "https://github.com/goldspire-global/livia";
+  const github = process.env.FOUNDER_GITHUB_URL?.trim() || "https://github.com/goldspireventures/livia";
   links.push({
     id: "github",
     label: "GitHub repo",

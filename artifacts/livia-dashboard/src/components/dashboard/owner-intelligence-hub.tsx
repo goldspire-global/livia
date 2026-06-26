@@ -140,7 +140,7 @@ export function OwnerIntelligenceHub({ className }: { className?: string }) {
                 className="h-8 rounded-full gap-1"
                 asChild
               >
-                <Link href={`/my-livia?q=${encodeURIComponent(prompt)}`}>
+                <Link href={`/toolkit?q=${encodeURIComponent(prompt)}`}>
                   <MessageSquare className="h-3 w-3 opacity-60" />
                   {prompt.length > 42 ? `${prompt.slice(0, 40)}…` : prompt}
                 </Link>

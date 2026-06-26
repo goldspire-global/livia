@@ -68,8 +68,8 @@ export function buildExecHatPanels(snapshot: ExecHatSnapshotInput): ExecHatPanel
         { label: "Demo on API", value: release.demoEnabled ? "yes" : "no" },
       ],
       actions: [
-        { label: "North-star dashboard (doc)", href: "https://github.com/goldspire-global/livia/blob/main/docs/company/NORTH-STAR-DASHBOARD.md" },
-        { label: "Founder ship lane (doc)", href: "https://github.com/goldspire-global/livia/blob/main/docs/product/FOUNDER-SHIP-LANE.md" },
+        { label: "North-star dashboard (doc)", href: "https://github.com/goldspireventures/livia/blob/main/docs/company/NORTH-STAR-DASHBOARD.md" },
+        { label: "Founder ship lane (doc)", href: "https://github.com/goldspireventures/livia/blob/main/docs/product/FOUNDER-SHIP-LANE.md" },
       ],
       focus: "Ten design-partner shops with real weekly bookings — everything else defers.",
     },

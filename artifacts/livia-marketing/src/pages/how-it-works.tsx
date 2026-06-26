@@ -3,12 +3,16 @@ import { MarketingLayout } from "@/components/marketing-layout";
 import { ConstellationPageHeader } from "@/components/constellation/constellation-page-header";
 import { ConstellationPageFooter } from "@/components/constellation/constellation-inner-page";
 import { ConstellationSpine } from "@/components/constellation/constellation-spine";
-import { marketingGetStartedPath } from "@/lib/marketing-links";
+import { marketingGetStartedPath, guestHubUrl } from "@/lib/marketing-links";
 
 const CHAPTERS = [
   {
     title: "Book",
     body: "Clients book on your branded page — no app download, no account. Phone and email are enough to start the conversation.",
+  },
+  {
+    title: "My Livia",
+    body: "Guests verify once with their booking number — upcoming visits, messages, session packs, and rebooking in one place on web or mobile.",
   },
   {
     title: "Inbox",
@@ -43,6 +47,9 @@ export default function HowItWorksPage() {
         <p>Every trade shares the same basics — your calendar, client history, booking rules, and messages in one place.</p>
         <Link href={marketingGetStartedPath} data-testid="marketing-get-started-link" className="cst-page-link">
           Get started →
+        </Link>
+        <Link href={guestHubUrl()} className="cst-page-link cst-page-link--muted">
+          My Livia for guests →
         </Link>
         <Link href="/pricing" className="cst-page-link cst-page-link--muted">
           View pricing

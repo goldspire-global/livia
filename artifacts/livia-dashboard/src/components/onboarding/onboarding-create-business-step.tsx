@@ -48,6 +48,7 @@ import {
   readOnboardingFormDraft,
   writeOnboardingFormDraft,
 } from "@/lib/onboarding-form-draft";
+import { readOnboardingVerticalIntent } from "@/lib/onboarding-vertical-intent";
 
 const CREATE_BUSINESS_DRAFT_KEY = "create-business";
 
@@ -182,6 +183,17 @@ export function OnboardingCreateBusinessStep({
       ...readOnboardingFormDraft<FormValues>(CREATE_BUSINESS_DRAFT_KEY),
     },
   });
+
+  useEffect(() => {
+    if (!catalog) return;
+    const intent = readOnboardingVerticalIntent();
+    if (!intent || intent === "event-vendors") return;
+    if (!catalog.verticals.some((v) => v.vertical === intent)) return;
+    form.setValue("vertical", intent);
+    const def = defaultSubverticalProfile(intent);
+    form.setValue("subverticalProfileId", def.id);
+    onVerticalPreview?.(intent);
+  }, [catalog, form, onVerticalPreview]);
 
   useEffect(() => {
     const sub = form.watch((values) => {

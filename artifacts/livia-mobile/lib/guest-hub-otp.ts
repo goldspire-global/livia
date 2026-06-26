@@ -3,9 +3,11 @@ import { isProductionCustomerSurface } from "./production-surface";
 
 export type GuestOtpRequestResult = {
   sessionToken: string;
+  authChannel?: "phone" | "email";
   devOtp?: string;
   magicOtpCode?: string;
   phoneE164?: string;
+  email?: string;
 };
 
 function parseApiError(body: unknown, status: number): string {
@@ -20,15 +22,15 @@ function isNetworkError(err: unknown): boolean {
   return /network request failed|failed to fetch|network error/i.test(msg);
 }
 
-/** POST /api/public/guest-hub/otp/request — surfaces API + connectivity errors for mobile UI. */
+/** POST /api/public/guest-hub/otp/request — phone or email. */
 export async function requestGuestHubOtpMobile(
   apiBase: string,
-  phone: string,
-  country = "IE",
+  input: { phone?: string; email?: string; country?: string },
 ): Promise<GuestOtpRequestResult> {
-  const trimmed = phone.trim();
-  if (!trimmed) {
-    throw new Error("Enter your mobile number");
+  const phone = input.phone?.trim() ?? "";
+  const email = input.email?.trim() ?? "";
+  if (!phone && !email) {
+    throw new Error("Enter your mobile number or email");
   }
 
   let res: Response;
@@ -36,7 +38,9 @@ export async function requestGuestHubOtpMobile(
     res = await fetch(`${apiBase}/api/public/guest-hub/otp/request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: trimmed, country }),
+      body: JSON.stringify({
+        ...(email ? { email } : { phone, country: input.country ?? "IE" }),
+      }),
     });
   } catch (err) {
     if (isNetworkError(err)) {

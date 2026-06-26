@@ -12,7 +12,7 @@ import {
   servicesTable,
   staffTable,
 } from "@workspace/db";
-import { eq, and, desc, gte, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, gte, inArray, sql, or } from "drizzle-orm";
 import {
   curateGuestHubUpcoming,
   guestBookPath,
@@ -21,18 +21,14 @@ import {
   guestShopRelationshipPath,
   guestPreferredModalitySchema,
   normalizeGuestHubPhone,
+  normalizeGuestHubEmail,
+  type GuestHubAuthChannel,
 } from "@workspace/policy";
 import { generateId } from "../lib/id";
 import { resolveGuestBookUrl } from "../lib/guest-public-urls";
 import { getStagingRelaxations } from "../lib/staging-relaxations";
 const OTP_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-
-/** Match customer.phone whether stored as +353871000001 or +353 87 100 0001. */
-function customerPhoneMatchesE164(phoneE164: string) {
-  const digits = phoneE164.replace(/\D/g, "");
-  return sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${digits}`;
-}
 
 function sessionToken(): string {
   return randomBytes(24).toString("base64url");
@@ -42,7 +38,64 @@ function otpCode(): string {
   return String(randomInt(100000, 999999));
 }
 
-export async function requestGuestHubOtp(rawPhone: string, defaultCountry = "IE") {
+/** Match customer.phone whether stored as +353871000001 or +353 87 100 0001. */
+function customerPhoneMatchesE164(phoneE164: string) {
+  const digits = phoneE164.replace(/\D/g, "");
+  return sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${digits}`;
+}
+
+function customerEmailMatches(email: string) {
+  const normalized = email.trim().toLowerCase();
+  return sql`lower(trim(coalesce(${customersTable.email}, ''))) = ${normalized}`;
+}
+
+function customerMatchesGuest(contact: { phoneE164?: string | null; email?: string | null }) {
+  const parts = [];
+  if (contact.phoneE164?.trim()) {
+    parts.push(customerPhoneMatchesE164(contact.phoneE164));
+  }
+  if (contact.email?.trim()) {
+    parts.push(customerEmailMatches(contact.email));
+  }
+  if (parts.length === 0) return sql`false`;
+  if (parts.length === 1) return parts[0]!;
+  return or(...parts);
+}
+
+function otpSessionPayload(
+  relax: ReturnType<typeof getStagingRelaxations>,
+  code: string,
+  expires: Date,
+  extras: { phoneE164?: string | null; email?: string | null; authChannel: GuestHubAuthChannel },
+) {
+  const exposeDevOtp = relax.guestHub.exposeDevOtp;
+  return {
+    ...extras,
+    /** Relaxed staging/local — code shown in UI instead of SMS/email. */
+    devOtp: exposeDevOtp ? code : undefined,
+    magicOtpCode: relax.guestHub.magicOtpCode ?? undefined,
+    otpMode: relax.guestHub.otpMode,
+    expiresAt: expires.toISOString(),
+  };
+}
+
+export async function requestGuestHubOtp(
+  input: string | { phone?: string; email?: string; country?: string },
+  defaultCountry = "IE",
+) {
+  const body =
+    typeof input === "string"
+      ? { phone: input, country: defaultCountry }
+      : { country: defaultCountry, ...input };
+
+  if (body.email?.trim()) {
+    return requestGuestHubEmailOtp(body.email);
+  }
+  if (!body.phone?.trim()) throw new Error("INVALID_IDENTIFIER");
+  return requestGuestHubPhoneOtp(body.phone, body.country ?? defaultCountry);
+}
+
+export async function requestGuestHubPhoneOtp(rawPhone: string, defaultCountry = "IE") {
   const relax = getStagingRelaxations();
   const phoneMode = relax.active ? relax.guestHub.phoneMode : "strict";
   const phoneE164 = normalizeGuestHubPhone(rawPhone, defaultCountry, phoneMode);
@@ -55,20 +108,37 @@ export async function requestGuestHubOtp(rawPhone: string, defaultCountry = "IE"
   await db.insert(guestSessionsTable).values({
     token,
     phoneE164,
+    authChannel: "phone",
     otpCode: code,
     otpExpiresAt: expires,
   });
 
-  const exposeDevOtp = relax.guestHub.exposeDevOtp;
+  return {
+    sessionToken: token,
+    ...otpSessionPayload(relax, code, expires, { phoneE164, authChannel: "phone" }),
+  };
+}
+
+export async function requestGuestHubEmailOtp(rawEmail: string) {
+  const email = normalizeGuestHubEmail(rawEmail);
+  if (!email) throw new Error("INVALID_EMAIL");
+
+  const relax = getStagingRelaxations();
+  const token = sessionToken();
+  const code = otpCode();
+  const expires = new Date(Date.now() + OTP_TTL_MS);
+
+  await db.insert(guestSessionsTable).values({
+    token,
+    email,
+    authChannel: "email",
+    otpCode: code,
+    otpExpiresAt: expires,
+  });
 
   return {
     sessionToken: token,
-    phoneE164,
-    /** Relaxed staging/local — code shown in UI instead of SMS. */
-    devOtp: exposeDevOtp ? code : undefined,
-    magicOtpCode: relax.guestHub.magicOtpCode ?? undefined,
-    otpMode: relax.guestHub.otpMode,
-    expiresAt: expires.toISOString(),
+    ...otpSessionPayload(relax, code, expires, { email, authChannel: "email" }),
   };
 }
 
@@ -89,17 +159,25 @@ export async function verifyGuestHubOtp(sessionTokenValue: string, code: string)
   }
 
   let guestId = session.guestId;
+  const authChannel = (session.authChannel ?? "phone") as GuestHubAuthChannel;
   if (!guestId) {
-    const [existing] = await db
-      .select({ id: guestIdentitiesTable.id })
-      .from(guestIdentitiesTable)
-      .where(eq(guestIdentitiesTable.phoneE164, session.phoneE164))
-      .limit(1);
+    const [existing] = session.email
+      ? await db
+          .select({ id: guestIdentitiesTable.id })
+          .from(guestIdentitiesTable)
+          .where(eq(guestIdentitiesTable.email, session.email))
+          .limit(1)
+      : await db
+          .select({ id: guestIdentitiesTable.id })
+          .from(guestIdentitiesTable)
+          .where(eq(guestIdentitiesTable.phoneE164, session.phoneE164!))
+          .limit(1);
     guestId = existing?.id ?? generateId();
     if (!existing) {
       await db.insert(guestIdentitiesTable).values({
         id: guestId,
-        phoneE164: session.phoneE164,
+        phoneE164: session.phoneE164 ?? null,
+        email: session.email ?? null,
         verifiedAt: new Date(),
       });
     } else {
@@ -114,11 +192,20 @@ export async function verifyGuestHubOtp(sessionTokenValue: string, code: string)
   await db.insert(guestSessionsTable).values({
     token: hubToken,
     guestId,
-    phoneE164: session.phoneE164,
+    phoneE164: session.phoneE164 ?? null,
+    email: session.email ?? null,
+    authChannel,
     verifiedAt: new Date(),
   });
 
-  return { ok: true as const, hubToken, guestId, expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString() };
+  return {
+    ok: true as const,
+    hubToken,
+    guestId,
+    authChannel,
+    isNewGuest: !session.guestId,
+    expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
+  };
 }
 
 export async function getGuestHubSession(hubToken: string) {
@@ -138,10 +225,22 @@ export async function getGuestHubView(hubToken: string) {
   if (!session?.guestId) return null;
 
   const [guestIdentity] = await db
-    .select({ preferredModality: guestIdentitiesTable.preferredModality })
+    .select({
+      preferredModality: guestIdentitiesTable.preferredModality,
+      phoneE164: guestIdentitiesTable.phoneE164,
+      email: guestIdentitiesTable.email,
+      displayName: guestIdentitiesTable.displayName,
+      createdAt: guestIdentitiesTable.createdAt,
+      welcomeCompletedAt: guestIdentitiesTable.welcomeCompletedAt,
+    })
     .from(guestIdentitiesTable)
     .where(eq(guestIdentitiesTable.id, session.guestId))
     .limit(1);
+
+  const guestContact = {
+    phoneE164: guestIdentity?.phoneE164 ?? session.phoneE164,
+    email: guestIdentity?.email ?? session.email,
+  };
 
   const shops = await db
     .select({
@@ -190,7 +289,7 @@ export async function getGuestHubView(hubToken: string) {
           .leftJoin(staffTable, eq(bookingsTable.staffId, staffTable.id))
           .where(
             and(
-              customerPhoneMatchesE164(session.phoneE164),
+              customerMatchesGuest(guestContact),
               inArray(bookingsTable.businessId, businessIds),
               gte(bookingsTable.startAt, now),
               inArray(bookingsTable.status, ["PENDING", "CONFIRMED"]),
@@ -226,7 +325,7 @@ export async function getGuestHubView(hubToken: string) {
           .innerJoin(servicesTable, eq(bookingsTable.serviceId, servicesTable.id))
           .where(
             and(
-              customerPhoneMatchesE164(session.phoneE164),
+              customerMatchesGuest(guestContact),
               inArray(bookingsTable.businessId, businessIds),
               inArray(bookingsTable.status, ["PENDING", "CONFIRMED", "COMPLETED"]),
             ),
@@ -262,18 +361,9 @@ export async function getGuestHubView(hubToken: string) {
   );
 
   const { listGuestPackageCreditsForGuest } = await import("./package-credits.service");
-  const packageCredits = await listGuestPackageCreditsForGuest(
-    session.guestId,
-    session.phoneE164,
-  );
+  const packageCredits = await listGuestPackageCreditsForGuest(session.guestId, guestContact);
 
-  return {
-    guestId: session.guestId,
-    phoneE164: session.phoneE164,
-    preferredModality: guestIdentity?.preferredModality ?? "ANY",
-    packageCredits,
-    upcomingBookings,
-    shops: shops.map((s) => {
+  const shopsMapped = shops.map((s) => {
       const last = lastByBusiness.get(s.businessId);
       const bookUrl = last
         ? resolveGuestBookUrl(s.slug, `service=${encodeURIComponent(last.serviceId)}&hub=1`)
@@ -288,30 +378,62 @@ export async function getGuestHubView(hubToken: string) {
         manageVisitUrl: visitByBusiness.get(s.businessId) ?? null,
         lastServiceName: last?.serviceName ?? null,
       };
-    }),
+    });
+
+  return {
+    guestId: session.guestId,
+    phoneE164: guestContact.phoneE164 ?? "",
+    email: guestContact.email ?? null,
+    displayName: guestIdentity?.displayName ?? null,
+    authChannel: (session.authChannel ?? "phone") as GuestHubAuthChannel,
+    memberSince: guestIdentity?.createdAt?.toISOString() ?? null,
+    welcomeCompleted: Boolean(guestIdentity?.welcomeCompletedAt),
+    isColdStart: shopsMapped.length === 0 && upcomingBookings.length === 0,
+    preferredModality: guestIdentity?.preferredModality ?? "ANY",
+    packageCredits,
+    upcomingBookings,
+    shops: shopsMapped,
   };
 }
 
 export async function patchGuestHubPreferences(
   hubToken: string,
-  body: { preferredModality?: string },
+  body: { preferredModality?: string; displayName?: string; welcomeCompleted?: boolean },
 ) {
   const session = await getGuestHubSession(hubToken);
   if (!session?.guestId) return null;
 
+  const updates: {
+    preferredModality?: string;
+    displayName?: string | null;
+    welcomeCompletedAt?: Date | null;
+  } = {};
+
   if (body.preferredModality != null) {
     const parsed = guestPreferredModalitySchema.safeParse(body.preferredModality);
     if (!parsed.success) throw new Error("INVALID_PREFERENCE");
+    updates.preferredModality = parsed.data;
+  }
+
+  if (body.displayName != null) {
+    const trimmed = body.displayName.trim();
+    updates.displayName = trimmed.length > 0 ? trimmed.slice(0, 80) : null;
+  }
+
+  if (body.welcomeCompleted === true) {
+    updates.welcomeCompletedAt = new Date();
+  } else if (body.welcomeCompleted === false) {
+    updates.welcomeCompletedAt = null;
+  }
+
+  if (Object.keys(updates).length > 0) {
     await db
       .update(guestIdentitiesTable)
-      .set({ preferredModality: parsed.data })
+      .set(updates)
       .where(eq(guestIdentitiesTable.id, session.guestId));
   }
 
-  const view = await getGuestHubView(hubToken);
-  return view
-    ? { preferredModality: view.preferredModality, guestId: view.guestId, phoneE164: view.phoneE164 }
-    : null;
+  return getGuestHubView(hubToken);
 }
 
 /** Resolve legacy `/my?visit=token` links to the public visit route. */

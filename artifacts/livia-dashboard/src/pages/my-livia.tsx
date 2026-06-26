@@ -6,8 +6,10 @@ import { PublicSurfaceLoading } from "@/components/public/public-surface-chrome"
 import { GuestHubPageHeader, GuestHubShell, GuestHubUpcomingHero } from "@/components/guest/guest-hub-chrome";
 import { GuestHubLivChat } from "@/components/guest/guest-hub-liv-chat";
 import { GuestHubSignIn } from "@/components/guest/guest-hub-sign-in";
+import { GuestHubWelcome } from "@/components/guest/guest-hub-welcome";
+import { GuestHubProfileCard } from "@/components/guest/guest-hub-profile-card";
 import { formatDateTime } from "@/lib/format";
-import { GUEST_HUB_COPY, type GuestPreferredModality } from "@workspace/policy";
+import { GUEST_HUB_COPY, getVerticalPack, type GuestPreferredModality, businessVerticalSchema } from "@workspace/policy";
 import { GuestHubAccountSettings } from "@/components/guest/guest-hub-account-settings";
 import { extractGuestVisitToken, normalizeGuestVisitUrl } from "@/lib/guest-visit-path";
 import { GuestShopAvatar } from "@/components/guest/guest-shop-avatar";
@@ -69,6 +71,12 @@ type PackageCreditRow = {
 type HubView = {
   guestId: string;
   phoneE164: string;
+  email?: string | null;
+  displayName?: string | null;
+  memberSince?: string | null;
+  welcomeCompleted?: boolean;
+  isColdStart?: boolean;
+  authChannel?: "phone" | "email";
   preferredModality?: GuestPreferredModality;
   shops: HubShop[];
   upcomingBookings: UpcomingBooking[];
@@ -97,6 +105,8 @@ export default function MyLiviaPage() {
   const [view, setView] = useState<HubView | null>(null);
   const [loading, setLoading] = useState(Boolean(hubToken));
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
   const [otpSession, setOtpSession] = useState<string | null>(null);
   const [devOtp, setDevOtp] = useState<string | null>(null);
   const [magicOtp, setMagicOtp] = useState<string | null>(null);
@@ -189,10 +199,14 @@ export default function MyLiviaPage() {
     setBusy(true);
     setErr(null);
     try {
+      const body =
+        authMethod === "email"
+          ? { email: email.trim() }
+          : { phone, country: "IE" };
       const r = await fetch("/api/public/guest-hub/otp/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify(body),
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -267,8 +281,17 @@ export default function MyLiviaPage() {
   if (!hubToken || !view) {
     return (
       <GuestHubSignIn
+        authMethod={authMethod}
+        onAuthMethodChange={(m) => {
+          setAuthMethod(m);
+          setOtpSession(null);
+          setCode("");
+          setErr(null);
+        }}
         phone={phone}
         onPhoneChange={setPhone}
+        email={email}
+        onEmailChange={setEmail}
         phonePlaceholder={phonePlaceholder}
         code={code}
         onCodeChange={setCode}
@@ -299,7 +322,7 @@ export default function MyLiviaPage() {
         }
         onRequestOtp={() => void requestOtp()}
         onVerifyOtp={() => void verifyOtp()}
-        onChangePhone={() => {
+        onChangeIdentifier={() => {
           setOtpSession(null);
           setCode("");
           setDevOtp(null);
@@ -332,10 +355,27 @@ export default function MyLiviaPage() {
     <GuestHubShell
       testId="guest-hub-home"
       phoneE164={view.phoneE164}
+      email={view.email}
       hubToken={hubToken}
       onSignOut={signOut}
       sidebarShops={view.shops}
     >
+      <GuestHubWelcome
+        guestId={view.guestId}
+        hubToken={hubToken}
+        welcomeCompleted={view.welcomeCompleted}
+        onCompleted={() => setView((v) => (v ? { ...v, welcomeCompleted: true } : v))}
+      />
+
+      <GuestHubProfileCard
+        hubToken={hubToken}
+        phoneE164={view.phoneE164}
+        email={view.email}
+        displayName={view.displayName}
+        memberSince={view.memberSince}
+        onUpdated={(displayName) => setView((v) => (v ? { ...v, displayName } : v))}
+      />
+
       <GuestHubPageHeader
         title={GUEST_HUB_COPY.vaultTitle}
         subtitle={GUEST_HUB_COPY.vaultSubtitle}
@@ -377,39 +417,81 @@ export default function MyLiviaPage() {
           ) : null}
         </section>
       ) : (
-        <Card className="border-dashed">
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            No upcoming visits — book at a studio you love and it will show up here.
+        <Card className="border-dashed" data-testid="guest-hub-empty-upcoming">
+          <CardContent className="py-8 text-center space-y-2 max-w-md mx-auto">
+            <p className="text-sm font-medium text-foreground">{GUEST_HUB_COPY.emptyUpcomingTitle}</p>
+            <p className="text-sm text-muted-foreground">{GUEST_HUB_COPY.emptyUpcomingBody}</p>
+            {view.shops.length === 0 ? (
+              <p className="text-xs text-muted-foreground pt-2">{GUEST_HUB_COPY.coldStartHint}</p>
+            ) : null}
           </CardContent>
         </Card>
       )}
 
       {view.shops.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground max-w-lg mx-auto">
-            {GUEST_HUB_COPY.emptyShops}
+        <Card data-testid="guest-hub-empty-shops">
+          <CardContent className="py-12 text-center text-sm text-muted-foreground max-w-lg mx-auto space-y-2">
+            <p>{GUEST_HUB_COPY.emptyShops}</p>
+            <p className="text-xs">{GUEST_HUB_COPY.coldStartHint}</p>
           </CardContent>
         </Card>
       ) : (
-        <ShopSection
-          title={GUEST_HUB_COPY.allShopsSection}
-          shops={otherShops.length > 0 ? [...favoriteShops, ...otherShops] : view.shops}
-          favoriteBusy={favoriteBusy}
-          onToggleFavorite={toggleFavorite}
-        />
+        <>
+          {favoriteShops.length > 0 ? (
+            <ShopSection
+              title={GUEST_HUB_COPY.favoritesSection}
+              shops={favoriteShops}
+              favoriteBusy={favoriteBusy}
+              onToggleFavorite={toggleFavorite}
+            />
+          ) : null}
+          {otherShops.length > 0 ? (
+            <ShopSection
+              title={favoriteShops.length > 0 ? GUEST_HUB_COPY.moreShopsSection : GUEST_HUB_COPY.allShopsSection}
+              shops={otherShops}
+              favoriteBusy={favoriteBusy}
+              onToggleFavorite={toggleFavorite}
+            />
+          ) : favoriteShops.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                {GUEST_HUB_COPY.favoritesEmpty}
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
       )}
 
       <GuestHubAccountSettings
         hubToken={hubToken}
         phoneE164={view.phoneE164}
+        email={view.email}
+        displayName={view.displayName}
         preferredModality={view.preferredModality ?? "ANY"}
         packageCredits={view.packageCredits ?? []}
         onPreferredUpdated={(next) => setView((v) => (v ? { ...v, preferredModality: next } : v))}
+        onVaultUpdated={(next) =>
+          setView((v) =>
+            v
+              ? {
+                  ...v,
+                  packageCredits: next.packageCredits ?? v.packageCredits,
+                  shops: (next.shops as HubShop[]) ?? v.shops,
+                }
+              : v,
+          )
+        }
       />
 
       <GuestHubLivChat hubToken={hubToken} variant="panel" />
     </GuestHubShell>
   );
+}
+
+function verticalLabel(slug: string): string {
+  const parsed = businessVerticalSchema.safeParse(slug);
+  if (parsed.success) return getVerticalPack(parsed.data).label;
+  return slug.replace(/-/g, " ");
 }
 
 function ShopSection({
@@ -444,7 +526,7 @@ function ShopSection({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{shop.businessName}</p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {shop.vertical.replace(/-/g, " ")}
+                    {verticalLabel(shop.vertical)}
                     {shop.lastServiceName ? ` · last: ${shop.lastServiceName}` : ""}
                   </p>
                 </div>

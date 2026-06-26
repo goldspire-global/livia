@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Heart, LogOut } from "lucide-react";
-import { GUEST_HUB_COPY } from "@workspace/policy";
+import { GUEST_HUB_COPY, guestHubContactLabel } from "@workspace/policy";
 import { LiviaLogoLink } from "@/components/brand/livia-logo-link";
 import { PublicSurfaceFooter } from "@/components/public/public-surface-chrome";
 import { Button } from "@/components/ui/button";
@@ -53,11 +53,14 @@ export function GuestHubPageHeader({
 
 function GuestHubTopNav({
   phoneE164,
+  email,
   onSignOut,
 }: {
   phoneE164?: string;
+  email?: string | null;
   onSignOut?: () => void;
 }) {
+  const contact = phoneE164 || email ? guestHubContactLabel({ phoneE164, email }) : "";
   return (
     <header className="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -67,14 +70,14 @@ function GuestHubTopNav({
           <Link href="/my" className="text-sm font-medium truncate text-foreground">
             {GUEST_HUB_COPY.productName}
           </Link>
-          {phoneE164 ? (
+          {contact ? (
             <span className="hidden md:inline text-xs text-muted-foreground font-mono truncate">
-              {phoneE164}
+              {contact}
             </span>
           ) : null}
         </div>
         <nav className="flex items-center gap-1 sm:gap-2">
-          {phoneE164 && onSignOut ? (
+          {contact && onSignOut ? (
             <Button
               variant="ghost"
               size="sm"
@@ -136,6 +139,7 @@ export function GuestHubShell({
   children,
   testId,
   phoneE164,
+  email,
   hubToken,
   onSignOut,
   centered,
@@ -144,6 +148,7 @@ export function GuestHubShell({
   children: ReactNode;
   testId?: string;
   phoneE164?: string;
+  email?: string | null;
   hubToken?: string | null;
   onSignOut?: () => void;
   centered?: boolean;
@@ -161,7 +166,7 @@ export function GuestHubShell({
       className="min-h-screen flex flex-col bg-background guest-hub-shell guest-hub-platform"
       data-testid={testId}
     >
-      <GuestHubTopNav phoneE164={phoneE164} onSignOut={onSignOut} />
+      <GuestHubTopNav phoneE164={phoneE164} email={email} onSignOut={onSignOut} />
 
       <div className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         {centered ? (

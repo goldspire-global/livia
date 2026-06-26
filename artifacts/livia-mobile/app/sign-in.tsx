@@ -41,6 +41,7 @@ import {
 import { clearDemoSession, persistDemoSession } from "@/lib/demo-session";
 import { isDemoLoginEnabled, setDevPersonaOverride } from "@/hooks/usePersona";
 import { GATEWAY_PASSWORD_HINT, humanizeGatewayAuthError, LIVIA_MOBILE_ENTRY_COPY, LIVIA_FORM_EXAMPLES } from "@workspace/policy";
+import { isProductionCustomerSurface } from "@/lib/production-surface";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -147,7 +148,7 @@ export default function SignInScreen() {
           "Demo sign-in needs the demo password from your invite. Make sure you are online and try again.",
         );
       } else {
-        setError("Almost there — extra verification needed. Try Google for now.");
+        setError("Extra verification is required. Contact support@goldspireventures.com if you need help.");
       }
     } catch (err: unknown) {
       const e = err as { errors?: Array<{ message: string; code?: string }> };
@@ -260,6 +261,9 @@ export default function SignInScreen() {
 
   const submit = mode === "verify" ? handleVerify : mode === "sign-in" ? handleSignIn : handleSignUp;
   const submitLabel = mode === "verify" ? "Verify email" : mode === "sign-in" ? "Sign in" : "Create account";
+  const emailPlaceholder = isProductionCustomerSurface()
+    ? LIVIA_FORM_EXAMPLES.ownerEmail
+    : `${LIVIA_FORM_EXAMPLES.ownerEmail} or demo slug (conors-cut-co)`;
   const tagline =
     mode === "verify"
       ? "We just sent a 6-digit code to your inbox."
@@ -364,7 +368,7 @@ export default function SignInScreen() {
                     borderColor: focused === "email" ? colors.primary : colors.border,
                   },
                 ]}
-                placeholder={`${LIVIA_FORM_EXAMPLES.ownerEmail} or demo slug (conors-cut-co)`}
+                placeholder={emailPlaceholder}
                 placeholderTextColor={colors.mutedForeground}
                 value={email}
                 onChangeText={setEmail}

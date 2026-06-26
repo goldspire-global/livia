@@ -119,7 +119,7 @@ const TOUR_STEPS: TourStep[] = [
 
     title: "Inbox",
 
-    body: "WhatsApp, Instagram DMs, SMS, and web chat in one queue. Hand off to your team anytime.",
+    body: "WhatsApp, Instagram DMs, SMS, and web chat in one queue when your shop is enabled. Hand off to your team anytime.",
 
     href: "/inbox",
 
@@ -151,7 +151,7 @@ const TOUR_STEPS: TourStep[] = [
 
     title: "Communications",
 
-    body: "Connect WhatsApp and Instagram with the step-by-step wizard. Provision SMS for reminders and day-of texts.",
+    body: "Connect SMS today; WhatsApp and Instagram when your shop is enabled. Step-by-step wizard in Settings.",
 
     href: "/settings?tab=comms",
 
@@ -187,7 +187,7 @@ const TOUR_STEPS: TourStep[] = [
 
     title: "Settings & integrations",
 
-    body: "Team, services, billing, Booksy/CSV import, and partner webhooks — everything else lives here.",
+    body: "Team, services, billing, and spreadsheet import from your old tool — everything else lives here.",
 
     href: "/settings",
 

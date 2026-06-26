@@ -531,7 +531,9 @@ export default function InboxPage() {
       ? "Nothing needs you right now"
       : queueLens === "all" && conversations.filter((c) => c.status !== "CLOSED").length === 0
         ? "Inbox clear — Liv is watching your channels"
-        : `No threads in “${INBOX_QUEUE_LENS_LABELS[queueLens].short}”`
+        : queueLens === "liv_handling"
+          ? "No threads Liv is handling right now"
+          : `No threads in “${INBOX_QUEUE_LENS_LABELS[queueLens].short}”`
     : "No conversations yet";
 
   const emptyInboxSubtitle = showRitual

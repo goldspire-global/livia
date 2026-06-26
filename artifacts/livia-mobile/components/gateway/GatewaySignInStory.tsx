@@ -27,7 +27,7 @@ export function GatewaySignInStory() {
           Three no-shows avoided this week.
         </Text>
         <Text style={[styles.briefingSub, { color: colors.mutedForeground }]}>
-          Marie&apos;s chair: worth a chat Friday.
+          Thursday has three open slots — worth a nudge.
         </Text>
       </View>
     </View>

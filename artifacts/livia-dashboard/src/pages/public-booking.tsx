@@ -101,7 +101,7 @@ import {
 } from "@/lib/public-booking-helpers";
 import { PublicBookingTimePicker } from "@/components/public-booking/public-booking-time-picker";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { businessVocabulary, guestPublicExperience, resolveWellnessExperience, LIVIA_FORM_EXAMPLES } from "@workspace/policy";
+import { businessVocabulary, guestPublicExperience, resolveWellnessExperience, LIVIA_FORM_EXAMPLES, GUEST_HUB_COPY } from "@workspace/policy";
 import { cn } from "@/lib/utils";
 
 type Step = "services" | "slots" | "details" | "consent" | "confirmed";
@@ -1880,6 +1880,20 @@ export default function PublicBookingPage() {
                 ) : null}
               </CardContent>
             </Card>
+
+            {confirmation.savedToMyLivia && !hubAuthenticated ? (
+              <Card className="border-primary/20 bg-primary/5" data-testid="post-book-my-livia-nudge">
+                <CardContent className="py-4 space-y-2 text-center">
+                  <p className="text-sm font-medium">{GUEST_HUB_COPY.postBookVerifyTitle}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {GUEST_HUB_COPY.postBookVerifyBody}
+                  </p>
+                  <Button asChild className="w-full mt-1" variant="default">
+                    <Link href="/my">{GUEST_HUB_COPY.postBookVerifyCta}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
 
             {confirmation.visitPath || confirmation.myLiviaPath ? (
               <Link href={confirmation.visitPath ?? confirmation.myLiviaPath ?? "/my"}>

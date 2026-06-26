@@ -21,6 +21,8 @@ import { dpaUrl, privacyPolicyUrl, termsOfServiceUrl } from "@/lib/marketing-leg
 import { acceptPlatformLegal, fetchMeProfile } from "@/lib/platform-legal";
 import {
   platformLegalAcceptanceBullets,
+  platformLegalAcceptanceCheckboxLabel,
+  platformLegalAcceptanceContinueCta,
   platformLegalAcceptanceDescription,
   platformLegalAcceptanceTitle,
 } from "@workspace/policy";
@@ -145,8 +147,7 @@ export default function LegalAcceptanceScreen() {
             {agreed ? <Feather name="check" size={14} color={colors.primaryForeground} /> : null}
           </View>
           <Text style={[styles.checkLabel, { color: colors.foreground }]}>
-            I agree to the Livia Terms of Service and Privacy Policy on behalf of the business I am
-            setting up, and I confirm I am authorised to do so.
+            {platformLegalAcceptanceCheckboxLabel()}
           </Text>
         </Pressable>
 
@@ -163,7 +164,9 @@ export default function LegalAcceptanceScreen() {
           {saving ? (
             <ActivityIndicator color={colors.primaryForeground} />
           ) : (
-            <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>Continue to setup</Text>
+            <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>
+              {platformLegalAcceptanceContinueCta()}
+            </Text>
           )}
         </Pressable>
       </KeyboardAwareScrollViewCompat>

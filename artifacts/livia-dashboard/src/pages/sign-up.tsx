@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearch } from "wouter";
 import { GatewayAuthPageShell } from "@/components/gateway/gateway-auth-page-shell";
 import { GatewayAuthSessionGate } from "@/components/gateway/gateway-auth-session-gate";
 import { LiviaEmailSignUpForm } from "@/components/gateway/livia-email-sign-up-form";
+import { captureOnboardingVerticalFromUrl } from "@/lib/onboarding-vertical-intent";
 
 export default function SignUpPage() {
   const [step, setStep] = useState<"form" | "verify">("form");
+  const search = useSearch();
+
+  useEffect(() => {
+    captureOnboardingVerticalFromUrl();
+  }, [search]);
 
   return (
     <GatewayAuthSessionGate mode="sign-up">

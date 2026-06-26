@@ -113,11 +113,6 @@ export function CommsChannelsBlock({
               : "Social inbox linking is not configured yet — your studio admin completes this in Settings."}
             {extended.metaDevSimulate ? " Dev simulate is on for demos." : ""}
           </Text>
-          {extended.metaWebhookUrl ? (
-            <Text style={[styles.mono, { color: colors.mutedForeground }]} numberOfLines={2}>
-              Webhook: {extended.metaWebhookUrl}
-            </Text>
-          ) : null}
           <Text style={[styles.rowMeta, { color: colors.mutedForeground, marginTop: 6 }]}>
             Replies from this app go back on the same channel (WhatsApp, IG, or Messenger) once IDs are saved.
           </Text>

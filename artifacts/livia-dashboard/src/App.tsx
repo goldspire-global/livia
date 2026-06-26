@@ -82,6 +82,7 @@ import MyLiviaPage from "@/pages/my-livia";
 import MyLiviaAccountPage from "@/pages/my-livia-account";
 import MyLiviaShopPage from "@/pages/my-livia-shop";
 import MyLiviaVisitPage from "@/pages/my-livia-visit";
+import { MyLiviaAliasRedirect } from "@/components/guest/my-livia-alias-redirect";
 import { GuestSubdomainRouter } from "@/components/guest/guest-subdomain-router";
 import { PublicSurfaceLoading } from "@/components/public/public-surface-chrome";
 import {
@@ -401,6 +402,11 @@ function AppRouter() {
     <Switch>
       <Route path="/sign-in" component={SignInPage} />
       <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/my-livia/:slug/visit/:bookingId" component={MyLiviaAliasRedirect} />
+      <Route path="/my-livia/account" component={MyLiviaAliasRedirect} />
+      <Route path="/my-livia/:slug" component={MyLiviaAliasRedirect} />
+      <Route path="/my-livia" component={MyLiviaAliasRedirect} />
+      <Route path="/my-livia/" component={MyLiviaAliasRedirect} />
       <Route path="/my/:slug/visit/:bookingId" component={MyLiviaVisitPage} />
       <Route path="/my/account" component={MyLiviaAccountPage} />
       <Route path="/my/:slug" component={MyLiviaShopPage} />

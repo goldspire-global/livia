@@ -3,7 +3,6 @@ import { MarketingLayout } from "@/components/marketing-layout";
 import { ConstellationPageHeader } from "@/components/constellation/constellation-page-header";
 import { ConstellationInnerPage, ConstellationPainList } from "@/components/constellation/constellation-inner-page";
 import { ConstellationGlassCard } from "@/components/constellation/constellation-spine";
-import { MarketingForm } from "@/components/marketing-form";
 import { VerticalProductShowcase } from "@/components/vertical/vertical-product-showcase";
 import { marketingGetStartedUrl } from "@/lib/marketing-links";
 
@@ -131,9 +130,14 @@ export default function VerticalPage() {
           </Link>
         </p>
 
-        <section className="cst-page-section pt-8">
-          <h2 className="cst-waitlist__title">Join the beta</h2>
-          <MarketingForm />
+        <section className="cst-page-section pt-8 border-t border-border/40">
+          <h2 className="cst-waitlist__title">Questions about {v.title.toLowerCase()}?</h2>
+          <p className="text-muted-foreground text-sm mb-4 max-w-lg">
+            Create your account above, or get in touch if you want to talk before you start.
+          </p>
+          <Link href="/contact" className="cst-page-link">
+            Contact us →
+          </Link>
         </section>
 
         <p className="mt-8">

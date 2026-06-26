@@ -152,7 +152,7 @@ Sign-in at app with exec email → redirect to ops portal. See [`EXEC-COMMAND-CE
 
 | Variable | Example |
 |----------|---------|
-| `FOUNDER_GITHUB_URL` | `https://github.com/goldspire-global/livia` |
+| `FOUNDER_GITHUB_URL` | `https://github.com/goldspireventures/livia` |
 | `FOUNDER_VERCEL_URL` | Vercel project dashboard |
 | `FOUNDER_RAILWAY_URL` | Railway project dashboard |
 | `API_STAGING_URL` | Set when staging exists (cockpit staging status) |

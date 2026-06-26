@@ -43,6 +43,42 @@ test.describe("Guest hub smoke", () => {
   test("/my sign-in page loads", async ({ page }) => {
     await page.goto("/my", { waitUntil: "domcontentloaded", timeout: 45_000 });
     await expect(page.getByTestId("guest-hub-sign-in")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("guest-hub-auth-email")).toBeVisible();
+  });
+
+  test("cold-start email guest gets empty vault profile", async ({ request }) => {
+    const email = `cold-${Date.now()}@example.com`;
+    const otpReq = await request.post(`${apiBase}/api/public/guest-hub/otp/request`, {
+      data: { email },
+    });
+    expect(otpReq.ok()).toBeTruthy();
+    const { sessionToken, devOtp, magicOtpCode } = (await otpReq.json()) as {
+      sessionToken: string;
+      devOtp?: string;
+      magicOtpCode?: string;
+    };
+    const code = devOtp ?? magicOtpCode ?? "000000";
+    const verify = await request.post(`${apiBase}/api/public/guest-hub/otp/verify`, {
+      data: { sessionToken, code },
+    });
+    expect(verify.ok()).toBeTruthy();
+    const { hubToken } = (await verify.json()) as { hubToken: string };
+    const me = await request.get(`${apiBase}/api/public/guest-hub/me`, {
+      headers: { "X-Guest-Hub-Token": hubToken },
+    });
+    expect(me.ok()).toBeTruthy();
+    const body = (await me.json()) as {
+      guestId: string;
+      email: string;
+      isColdStart: boolean;
+      shops: unknown[];
+      upcomingBookings: unknown[];
+    };
+    expect(body.email).toBe(email);
+    expect(body.isColdStart).toBe(true);
+    expect(body.shops).toEqual([]);
+    expect(body.upcomingBookings).toEqual([]);
+    expect(body.guestId).toBeTruthy();
   });
 
   test("Mary shop relationship shows medspa or physio artifacts", async ({ page, request }) => {

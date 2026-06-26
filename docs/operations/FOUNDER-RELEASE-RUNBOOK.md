@@ -58,7 +58,7 @@ Set on Railway API (optional — cockpit links appear when set):
 
 | Variable | Example |
 |----------|---------|
-| `FOUNDER_GITHUB_URL` | `https://github.com/goldspire-global/livia` |
+| `FOUNDER_GITHUB_URL` | `https://github.com/goldspireventures/livia` |
 | `FOUNDER_VERCEL_URL` | Your Vercel team/project URL |
 | `FOUNDER_RAILWAY_URL` | Your Railway project URL |
 

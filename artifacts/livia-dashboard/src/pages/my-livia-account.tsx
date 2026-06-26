@@ -20,7 +20,10 @@ type HubShop = {
 };
 
 type HubView = {
+  guestId: string;
   phoneE164: string;
+  email?: string | null;
+  displayName?: string | null;
   preferredModality?: GuestPreferredModality;
   packageCredits?: Array<{
     ledgerId: string;
@@ -33,6 +36,7 @@ type HubView = {
     redemptionCode: string | null;
   }>;
   shops: HubShop[];
+  upcomingBookings?: unknown[];
 };
 
 export default function MyLiviaAccountPage() {
@@ -87,6 +91,7 @@ export default function MyLiviaAccountPage() {
     <GuestHubShell
       testId="guest-hub-account"
       phoneE164={view.phoneE164}
+      email={view.email}
       hubToken={hubToken}
       sidebarShops={view.shops}
     >
@@ -101,9 +106,21 @@ export default function MyLiviaAccountPage() {
       <GuestHubAccountSettings
         hubToken={hubToken}
         phoneE164={view.phoneE164}
+        email={view.email}
+        displayName={view.displayName}
         preferredModality={view.preferredModality ?? "ANY"}
         packageCredits={view.packageCredits ?? []}
         onPreferredUpdated={(next) => setView((v) => (v ? { ...v, preferredModality: next } : v))}
+        onVaultUpdated={(next) =>
+          setView((v) =>
+            v
+              ? {
+                  ...v,
+                  packageCredits: next.packageCredits ?? v.packageCredits,
+                }
+              : v,
+          )
+        }
       />
     </GuestHubShell>
   );

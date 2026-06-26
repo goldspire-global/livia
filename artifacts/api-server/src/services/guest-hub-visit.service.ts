@@ -177,7 +177,10 @@ export async function getGuestShopRelationship(hubToken: string, slug: string) {
     ? await getRelationshipSummary(shop.businessId, customer.id).catch(() => null)
     : null;
 
-  const packageCredits = await listGuestPackageCreditsForGuest(session.guestId, session.phoneE164);
+  const packageCredits = await listGuestPackageCreditsForGuest(session.guestId, {
+    phoneE164: session.phoneE164,
+    email: session.email,
+  });
   const shopCredits = packageCredits.filter((p) => p.slug === slug);
 
   const lastBook = customer
@@ -337,7 +340,10 @@ export async function getGuestVisitManage(hubToken: string, slug: string, bookin
     () => null,
   );
 
-  const packageCredits = await listGuestPackageCreditsForGuest(session.guestId!, session.phoneE164!);
+  const packageCredits = await listGuestPackageCreditsForGuest(session.guestId!, {
+    phoneE164: session.phoneE164,
+    email: session.email,
+  });
   const shopCredits = packageCredits.filter((p) => p.slug === slug);
 
   const beautyPrefs =

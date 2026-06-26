@@ -28,7 +28,7 @@ export function MarketingShell({ locale, children, onJoinBeta }: MarketingShellP
 
   const joinHandler = onJoinBeta ?? ((e: React.MouseEvent) => {
     e.preventDefault();
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+    window.location.href = "/contact";
   });
 
   const navLinks = (

@@ -63,13 +63,20 @@ function ClerkLoadingScreen() {
   if (timedOut) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <p className="text-lg font-medium text-foreground">Sign-in could not load</p>
+        <p className="text-lg font-medium text-foreground">Sign-in is taking longer than usual</p>
         <p className="max-w-md text-sm text-muted-foreground">
-          Clerk auth did not finish loading. Run{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">pnpm prod:smoke</code> and
-          fix Railway <code className="rounded bg-muted px-1 py-0.5 text-xs">DASHBOARD_URL</code>{" "}
-          (see docs/operations/ENV-VARIABLES.md). Check DevTools → Network for failed{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">clerk</code> requests.
+          {import.meta.env.DEV ? (
+            <>
+              Clerk auth did not finish loading. Check DevTools → Network for failed{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">clerk</code> requests, then run{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs">pnpm prod:smoke</code>.
+            </>
+          ) : (
+            <>
+              This is usually a temporary connection issue. Wait a moment, then try again. If it keeps
+              happening, email support@goldspireventures.com.
+            </>
+          )}
         </p>
         <a
           href="/sign-in"

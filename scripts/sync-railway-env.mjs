@@ -4,7 +4,7 @@
  *
  * Setup once:
  *   npm i -g @railway/cli   OR   npx @railway/cli login
- *   railway link            # pick goldspire-global/livia → livia-api
+ *   railway link            # pick goldspireventures/livia → livia-api
  *   cp railway.production.env.example railway.production.env
  *   # edit railway.production.env with real values (never commit)
  *

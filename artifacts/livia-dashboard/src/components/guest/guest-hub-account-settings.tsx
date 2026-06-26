@@ -10,12 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 import { clientGuestBookAbsoluteUrl } from "@/lib/guest-book-url";
-import {
-  GUEST_HUB_COPY,
-  GUEST_PREFERRED_MODALITY_LABELS,
-  type GuestPreferredModality,
-} from "@workspace/policy";
+import { GUEST_HUB_COPY, GUEST_PREFERRED_MODALITY_LABELS, guestHubContactLabel, type GuestPreferredModality } from "@workspace/policy";
 import { useState } from "react";
+import { GuestHubRedeemPanel } from "@/components/guest/guest-hub-redeem-panel";
 
 const MODALITIES = Object.keys(GUEST_PREFERRED_MODALITY_LABELS) as GuestPreferredModality[];
 
@@ -30,18 +27,35 @@ type PackageCreditRow = {
   redemptionCode: string | null;
 };
 
+type HubShop = { businessId: string; slug: string };
+
 export function GuestHubAccountSettings({
   hubToken,
   phoneE164,
+  email,
+  displayName,
   preferredModality,
   packageCredits,
   onPreferredUpdated,
+  onVaultUpdated,
 }: {
   hubToken: string;
   phoneE164: string;
+  email?: string | null;
+  displayName?: string | null;
   preferredModality: GuestPreferredModality;
   packageCredits: PackageCreditRow[];
   onPreferredUpdated: (next: GuestPreferredModality) => void;
+  onVaultUpdated?: (view: {
+    guestId: string;
+    phoneE164: string;
+    email?: string | null;
+    displayName?: string | null;
+    preferredModality?: GuestPreferredModality;
+    packageCredits?: PackageCreditRow[];
+    shops: HubShop[];
+    upcomingBookings?: unknown[];
+  }) => void;
 }) {
   const [channel, setChannel] = useState(preferredModality);
   const [saving, setSaving] = useState(false);
@@ -60,13 +74,17 @@ export function GuestHubAccountSettings({
         body: JSON.stringify({ preferredModality: channel }),
       });
       if (!r.ok) throw new Error("save");
-      onPreferredUpdated(channel);
+      const body = (await r.json()) as { preferredModality?: GuestPreferredModality };
+      const next = body.preferredModality ?? channel;
+      onPreferredUpdated(next);
     } catch {
       setErr("Could not save — try again");
     } finally {
       setSaving(false);
     }
   }
+
+  const contact = guestHubContactLabel({ phoneE164, email });
 
   return (
     <section className="space-y-4" id="account-settings" data-testid="guest-hub-account-settings">
@@ -79,7 +97,10 @@ export function GuestHubAccountSettings({
           <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
             <div>
               <Label className="text-xs text-muted-foreground">Signed in as</Label>
-              <p className="text-sm font-mono mt-1 tabular-nums">{phoneE164}</p>
+              <p className="text-sm font-mono mt-1 tabular-nums break-all">{contact}</p>
+              {displayName ? (
+                <p className="text-xs text-muted-foreground mt-1">{displayName}</p>
+              ) : null}
             </div>
             <div className="grid gap-2">
               <Label>{GUEST_HUB_COPY.commsChannelLabel}</Label>
@@ -109,6 +130,17 @@ export function GuestHubAccountSettings({
                 {saving ? "Saving…" : "Save"}
               </Button>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 pt-4">
+            <GuestHubRedeemPanel
+              hubToken={hubToken}
+              onRedeemed={(view) => {
+                if (onVaultUpdated) {
+                  onVaultUpdated(view as Parameters<NonNullable<typeof onVaultUpdated>>[0]);
+                }
+              }}
+            />
           </div>
 
           <div className="border-t border-border/60 pt-4 space-y-3">

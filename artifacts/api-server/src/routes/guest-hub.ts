@@ -19,12 +19,23 @@ router.get("/public/surface-config", (_req, res): void => {
 router.post("/public/guest-hub/otp/request", async (req, res): Promise<void> => {
   try {
     const phone = typeof req.body?.phone === "string" ? req.body.phone : "";
+    const email = typeof req.body?.email === "string" ? req.body.email : "";
     const country = typeof req.body?.country === "string" ? req.body.country : "IE";
-    const result = await requestGuestHubOtp(phone, country);
+    const result = email.trim()
+      ? await requestGuestHubOtp({ email, country })
+      : await requestGuestHubOtp({ phone, country });
     res.status(201).json(result);
   } catch (e) {
     if (e instanceof Error && e.message === "INVALID_PHONE") {
       sendError(res, req, 400, "Enter a valid mobile number");
+      return;
+    }
+    if (e instanceof Error && e.message === "INVALID_EMAIL") {
+      sendError(res, req, 400, "Enter a valid email address");
+      return;
+    }
+    if (e instanceof Error && e.message === "INVALID_IDENTIFIER") {
+      sendError(res, req, 400, "Enter a mobile number or email");
       return;
     }
     throw e;
@@ -96,6 +107,9 @@ router.patch("/public/guest-hub/preferences", async (req, res): Promise<void> =>
     const result = await patchGuestHubPreferences(token, {
       preferredModality:
         typeof req.body?.preferredModality === "string" ? req.body.preferredModality : undefined,
+      displayName: typeof req.body?.displayName === "string" ? req.body.displayName : undefined,
+      welcomeCompleted:
+        typeof req.body?.welcomeCompleted === "boolean" ? req.body.welcomeCompleted : undefined,
     });
     if (!result) {
       sendError(res, req, 401, "Session expired");
@@ -288,6 +302,42 @@ router.post("/public/guest-hub/favorites/:businessId", async (req, res): Promise
       return;
     }
     throw e;
+  }
+});
+
+router.post("/public/guest-hub/redeem", async (req, res): Promise<void> => {
+  const token = typeof req.headers["x-guest-hub-token"] === "string" ? req.headers["x-guest-hub-token"] : "";
+  const code = typeof req.body?.code === "string" ? req.body.code : "";
+  if (!token) {
+    sendError(res, req, 401, "Guest hub token required");
+    return;
+  }
+  if (!code.trim()) {
+    sendError(res, req, 400, "code is required");
+    return;
+  }
+  try {
+    const { redeemGuestHubPackCode } = await import("../services/guest-hub-redeem.service");
+    const result = await redeemGuestHubPackCode(token, code);
+    if (!result.ok) {
+      const msg =
+        result.reason === "not_found"
+          ? "Code not found"
+          : result.reason === "depleted"
+            ? "No sessions left on this code"
+            : "Session expired";
+      sendError(res, req, result.reason === "session" ? 401 : 404, msg);
+      return;
+    }
+    res.json({
+      ok: true,
+      packageName: result.packageName,
+      businessName: result.businessName,
+      view: result.view,
+    });
+  } catch (e) {
+    logRouteError(req, e, "Guest hub redeem failed");
+    sendError(res, req, 500, safeClientMessage(e, "Redeem failed"));
   }
 });
 

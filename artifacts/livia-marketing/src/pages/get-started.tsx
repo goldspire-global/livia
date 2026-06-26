@@ -2,7 +2,7 @@ import { MarketingLayout } from "@/components/marketing-layout";
 import { ConstellationInnerPage } from "@/components/constellation/constellation-inner-page";
 import { ConstellationGlassCard } from "@/components/constellation/constellation-spine";
 import { dashboardFounderSignInUrl, dashboardSignUpUrl } from "@/lib/marketing-links";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { ArrowRight, Check } from "lucide-react";
 
 const STEPS = [
@@ -15,13 +15,15 @@ const STEPS = [
 
 const INCLUDED = [
   "Bookings, clients, and your branded booking page",
-  "Liv on Today and Inbox — vertical copy, not generic chat",
+  "Liv on Today and Inbox — speaks in your trade's language",
   "Guest hub so returning clients manage visits without calling",
   "Import from your previous tool via spreadsheet",
 ] as const;
 
 export default function GetStartedPage() {
-  const signUpHref = dashboardSignUpUrl();
+  const search = useSearch();
+  const vertical = new URLSearchParams(search).get("vertical") ?? undefined;
+  const signUpHref = dashboardSignUpUrl(vertical);
 
   return (
     <MarketingLayout active="Get started">
@@ -80,10 +82,6 @@ export default function GetStartedPage() {
           Questions first?{" "}
           <Link href="/contact" className="text-[#d9c39a] hover:underline">
             Get in touch
-          </Link>
-          {" "}or{" "}
-          <Link href="/#waitlist" className="text-[#d9c39a] hover:underline">
-            join the waitlist
           </Link>
           . Retail and Event Operator add-ons unlock from Billing after you&apos;re live — see{" "}
           <Link href="/pricing" className="text-[#d9c39a] hover:underline">

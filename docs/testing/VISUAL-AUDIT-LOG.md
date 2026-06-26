@@ -207,6 +207,49 @@ pnpm maestro:visual-capture
 
 ---
 
+## 2026-06-26 — GTM alignment + full-path QA (goldspireventures/livia)
+
+| Surface | Route / area | Finding | Fix | Status |
+|---------|----------------|---------|-----|--------|
+| Repo / ops | GitHub URLs | 7 refs still `goldspire-global/livia` | Updated to `goldspireventures/livia` in code + ops docs | **Done** |
+| Marketing GTM | FAQ + nav | Waitlist vs self-serve conflict | FAQ + founder CTA → instant signup; nav "Contact" not waitlist scroll | **Done** |
+| Marketing → app | `/get-started?vertical=` | Trade lost at sign-up | `dashboardSignUpUrl(vertical)` + session vertical intent → onboarding pre-select | **Done** |
+| Auth (web) | Clerk load timeout | Dev jargon on user screen | Prod-friendly copy; dev details only in `import.meta.env.DEV` | **Done** |
+| Auth (web) | Sign-in | No forgot-password; errors mention Google | Added forgot-password email; removed Clerk/Google jargon | **Done** |
+| Auth (mobile) | Sign-in placeholder | Demo slug in prod placeholder | `isProductionCustomerSurface()` — email only | **Done** |
+| Settings | Account panel | "when Clerk shows" | "when that option is available" | **Done** |
+| Mobile comms | Settings block | Raw webhook URL | Hidden — status + open web only | **Done** |
+| Liv setup guide | Platform tour | Booksy/webhook jargon; WA/IG overclaim | Plain import + honest SMS-first channel copy | **Done** |
+| E2E local | Dashboard dev | Transient Tailwind overlay during parallel runs | Re-run after single `pnpm dev:dashboard`; prod `app.livia-hq.com` 200 | **Verify** |
+| E2E local | Guest hub Mary | 0 shops after long demo provision | Re-run `pnpm e2e:prep` to completion then `dual-entry-uat` | **Verify** |
+
+**Prod smoke:** `livia-hq.com/get-started` 200 · `app.livia-hq.com/sign-in` 200 · `api.livia-hq.com/healthz` ok · CI green on `goldspireventures/livia`.
+
+**Remaining P2 (not blocking GTM):** Home page waitlist form (footer leads); mobile Liv chat on `/my-livia` (web has it); gift/pack redeem UI; email-only guest sign-in (planned).
+
+---
+
+## 2026-06-26 — `/my` guest hub depth pass
+
+| Surface | Finding | Fix | Status |
+|---------|---------|-----|--------|
+| `/my` home | Favourites merged into one list | Split favourites + more studios sections | **Done** |
+| `/my` shops | Raw vertical slug (`allied health`) | `getVerticalPack().label` | **Done** |
+| `/my` empty states | Thin copy | Policy `emptyUpcoming*`, `coldStartHint`, `favoritesEmpty` | **Done** |
+| Post-book | Vault linked but no session → dead end | Nudge card + Open My Livia CTA on confirmation | **Done** |
+| Web `/my-livia` | Broken alias on dashboard | Redirect routes → `/my` | **Done** |
+| Owner quick actions | Ask Liv → guest hub | Fixed to `/toolkit` | **Done** |
+| Marketing discovery | No public entry to guest hub | Footer + how-it-works My Livia chapter/link | **Done** |
+| Vertical pages | Waitlist below get-started | Contact CTA only | **Done** |
+| Inbox lens | Empty state said `No threads in "Liv on"` | Friendly copy per lens | **Done** |
+| Mobile legal | Hand-written checkbox | Policy `platformLegalAcceptance*` | **Done** |
+
+**`/my` entry model (GTM):** Book on `/book/{slug}` (no account) → optional save to My Livia → OTP at `app.livia-hq.com/my` or mobile `/my-livia` with same number → vault. Cold start: marketing footer, how-it-works, mobile gateway, post-book nudge, demo Mary.
+
+**Still R∞ for `/my`:** Email OTP; native Liv chat; gift redeem; post-OTP first-run carousel; `my.livia-hq.com` subdomain when DNS ready.
+
+---
+
 ## Template for next entries
 
 ```markdown

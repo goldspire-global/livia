@@ -3,9 +3,12 @@ import { businessesTable } from "../identity/businesses";
 
 export const guestIdentitiesTable = pgTable("guest_identities", {
   id: text("id").primaryKey(),
-  phoneE164: text("phone_e164").notNull().unique(),
+  phoneE164: text("phone_e164"),
+  email: text("email"),
+  displayName: text("display_name"),
   preferredModality: text("preferred_modality").notNull().default("ANY"),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  welcomeCompletedAt: timestamp("welcome_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -14,7 +17,9 @@ export const guestSessionsTable = pgTable(
   {
     token: text("token").primaryKey(),
     guestId: text("guest_id").references(() => guestIdentitiesTable.id, { onDelete: "cascade" }),
-    phoneE164: text("phone_e164").notNull(),
+    phoneE164: text("phone_e164"),
+    email: text("email"),
+    authChannel: text("auth_channel").notNull().default("phone"),
     otpCode: text("otp_code"),
     otpExpiresAt: timestamp("otp_expires_at", { withTimezone: true }),
     verifiedAt: timestamp("verified_at", { withTimezone: true }),

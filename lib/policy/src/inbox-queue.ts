@@ -98,7 +98,7 @@ export const INBOX_QUEUE_LENS_LABELS: Record<
     description: "Open threads waiting for a human — Liv is paused or not assigned.",
   },
   liv_handling: {
-    short: "Liv on",
+    short: "Liv handling",
     description: "Open threads Liv is handling — take over anytime.",
   },
   taken_over: {

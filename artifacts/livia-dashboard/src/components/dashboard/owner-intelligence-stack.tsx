@@ -203,7 +203,7 @@ export function OwnerIntelligenceStack({ className, variant = "owner-home" }: St
 
         {prompt ? (
           <Button size="sm" variant="outline" className="h-8 rounded-full gap-1" asChild>
-            <Link href={`/my-livia?q=${encodeURIComponent(prompt)}`}>
+            <Link href={`/toolkit?q=${encodeURIComponent(prompt)}`}>
               <MessageSquare className="h-3 w-3 opacity-60" />
               {prompt.length > 48 ? `${prompt.slice(0, 46)}…` : prompt}
             </Link>

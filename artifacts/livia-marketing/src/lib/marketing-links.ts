@@ -9,6 +9,7 @@ import {
   resolveDashboardDemoUrl,
   resolveDashboardSignInUrl,
   resolveDashboardSignUpUrl,
+  resolveGuestHubUrl,
   resolveLegalBase,
   resolveMarketingOrigin,
 } from "@/lib/marketing-surface-urls";
@@ -65,8 +66,12 @@ export function dashboardFounderSignInUrl(): string {
   return resolveDashboardSignInUrl(FOUNDER_MARKETING_SIGN_IN_REDIRECT);
 }
 
-export function dashboardSignUpUrl(): string {
-  return resolveDashboardSignUpUrl();
+export function dashboardSignUpUrl(verticalSlug?: string): string {
+  return resolveDashboardSignUpUrl(verticalSlug);
+}
+
+export function guestHubUrl(path = "/my"): string {
+  return resolveGuestHubUrl(path);
 }
 
 export function apiBaseUrl(): string {

@@ -165,7 +165,7 @@ function soloQuickActions(vertical: BusinessVertical): OperatorQuickAction[] {
     { id: "new-booking", label: "New booking", href: "/bookings?create=1", mobileRoute: "/bookings" },
     { id: "inbox", label: "Review inbox", href: "/inbox", mobileRoute: "/inbox" },
     { id: "share-book", label: "Share book page", href: "/settings?tab=public", mobileRoute: "/settings" },
-    { id: "ask-liv", label: "Ask Liv", href: "/my-livia", mobileRoute: "/my-livia" },
+    { id: "ask-liv", label: "Ask Liv", href: "/toolkit", mobileRoute: "/toolkit" },
   ];
   if (vertical === "wellness") {
     return [
@@ -184,7 +184,7 @@ function soloQuickActions(vertical: BusinessVertical): OperatorQuickAction[] {
       { id: "enquiries", label: "Open inbox", href: "/inbox", mobileRoute: "/inbox" },
       { id: "quotes", label: "Draft quote", href: "/quotes", mobileRoute: "/quotes" },
       { id: "share-website", label: "Share website", href: "/event-site", mobileRoute: "/event-site" },
-      { id: "ask-liv", label: "Ask Liv", href: "/my-livia", mobileRoute: "/my-livia" },
+      { id: "ask-liv", label: "Ask Liv", href: "/toolkit", mobileRoute: "/toolkit" },
     ];
   }
   return base;

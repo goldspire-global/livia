@@ -7,8 +7,15 @@ export const GUEST_HUB_COPY = {
   productName: "My Livia",
   tagline: "Your bookings and visits, all in one place",
   signInTitle: "Sign in with your phone",
+  signInTitleEmail: "Sign in with your email",
+  signInMethodPhone: "Mobile",
+  signInMethodEmail: "Email",
   signInBody:
     "Use the same mobile number you book with — we'll show upcoming visits and every studio you've used.",
+  signInBodyEmail:
+    "Use the email you book with — we'll text or email a one-time code. Your profile works even before your first visit.",
+  signInBodyColdStart:
+    "Downloaded the app? Verify once and your My Livia profile is ready — book later and everything links automatically.",
   signInBulletSingleSignIn: "One sign-in for every Livia studio you book with — no passwords.",
   signInBulletHistory:
     "Upcoming visits, session packs, design proofs, and messages — together in My Livia.",
@@ -25,6 +32,29 @@ export const GUEST_HUB_COPY = {
   accountSettingsLink: "Account & preferences",
   commsChannelLabel: "How Liv reaches you",
   manageVisitCta: "Manage visit →",
+  emptyUpcomingTitle: "Nothing on the calendar yet",
+  emptyUpcomingBody:
+    "When you book at a Livia studio, your next visit shows up here — manage, message, or reschedule in one tap.",
+  coldStartHint:
+    "New here? Verify below — your profile is ready now. Book at any Livia studio later and it all links up.",
+  profileSection: "Your profile",
+  profileDisplayNameLabel: "Name (optional)",
+  profileDisplayNamePlaceholder: "How studios should greet you",
+  profileMemberSince: "Member since",
+  profileSaveCta: "Save profile",
+  profileSaved: "Profile saved",
+  welcomeTitle: "Welcome to My Livia",
+  welcomeSkip: "Skip",
+  welcomeNext: "Next",
+  welcomeDone: "Go to my vault",
+  redeemSuccess: "Code applied — your session pack is in your vault.",
+  redeemNotFound: "We couldn't find that code — check spelling or ask the studio.",
+  redeemAlreadyUsed: "This code has no sessions left.",
+  postBookVerifyTitle: "Saved to My Livia",
+  postBookVerifyBody:
+    "Sign in with your booking number to see this visit, message the studio, and rebook faster next time.",
+  postBookVerifyCta: "Open My Livia",
+  favoritesEmpty: "Heart a studio after a visit — it pins here for quick rebooking.",
   emptyShops:
     "Book at any Livia studio — when you're signed in here, your history with them shows up automatically.",
   bookAgainCta: "Book again",

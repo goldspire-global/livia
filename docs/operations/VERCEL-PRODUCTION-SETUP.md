@@ -39,7 +39,7 @@ Redeploy after env changes.
 ### Project (live)
 
 - **Vercel project:** `livia-marketing` (team: ayo's projects)
-- **GitHub:** `goldspire-global/livia` connected
+- **GitHub:** `goldspireventures/livia` connected
 - **Production env:** `VITE_DASHBOARD_*`, `VITE_MARKETING_URL`, `VITE_API_BASE_URL`, `VITE_LEGAL_BASE_URL` set
 
 **Vercel → Settings → General → Root Directory:** `artifacts/livia-marketing` (so `main` pushes build the marketing app, not the dashboard).

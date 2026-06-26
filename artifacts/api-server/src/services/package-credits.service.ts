@@ -85,7 +85,7 @@ export type GuestPackageCreditRow = {
 
 export async function listGuestPackageCreditsForGuest(
   guestId: string,
-  phoneE164: string,
+  contact: { phoneE164?: string | null; email?: string | null },
 ): Promise<GuestPackageCreditRow[]> {
   const links = await db
     .select({ businessId: guestShopLinksTable.businessId })
@@ -94,14 +94,27 @@ export async function listGuestPackageCreditsForGuest(
   const businessIds = [...new Set(links.map((l) => l.businessId))];
   if (!businessIds.length) return [];
 
-  const phoneDigits = phoneE164.replace(/\D/g, "");
+  const phoneDigits = (contact.phoneE164 ?? "").replace(/\D/g, "");
+  const emailNorm = (contact.email ?? "").trim().toLowerCase();
+
+  const matchParts = [];
+  if (phoneDigits) {
+    matchParts.push(
+      sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`,
+    );
+  }
+  if (emailNorm) {
+    matchParts.push(sql`lower(trim(coalesce(${customersTable.email}, ''))) = ${emailNorm}`);
+  }
+  if (!matchParts.length) return [];
+
   const customerRows = await db
     .select({ id: customersTable.id })
     .from(customersTable)
     .where(
       and(
         inArray(customersTable.businessId, businessIds),
-        sql`regexp_replace(coalesce(${customersTable.phone}, ''), '[^0-9]', '', 'g') = ${phoneDigits}`,
+        matchParts.length === 1 ? matchParts[0]! : or(...matchParts),
       ),
     );
 

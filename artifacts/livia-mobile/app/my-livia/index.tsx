@@ -23,14 +23,16 @@ import {
 } from "@/lib/guest-hub";
 import {
   DEMO_GUEST_CLIENT_COPY,
-  GUEST_PREFERRED_MODALITY_LABELS,
+  GUEST_HUB_COPY,
   LIVIA_MOBILE_ENTRY_COPY,
+  guestHubContactLabel,
   type GuestPreferredModality,
 } from "@workspace/policy";
 import { DEMO_GUEST_PHONE, requestGuestHubOtpMobile } from "@/lib/guest-hub-otp";
 import { isProductionCustomerSurface } from "@/lib/production-surface";
-
-const GUEST_MODALITIES = Object.keys(GUEST_PREFERRED_MODALITY_LABELS) as GuestPreferredModality[];
+import { GuestHubLivChat } from "@/components/guest/GuestHubLivChat";
+import { GuestHubWelcome } from "@/components/guest/GuestHubWelcome";
+import { GuestHubRedeemPanel } from "@/components/guest/GuestHubRedeemPanel";
 
 type HubShop = {
   businessId: string;
@@ -45,8 +47,21 @@ type HubShop = {
 };
 
 type HubView = {
+  guestId: string;
   phoneE164: string;
+  email?: string | null;
+  displayName?: string | null;
+  welcomeCompleted?: boolean;
+  isColdStart?: boolean;
   preferredModality?: GuestPreferredModality;
+  packageCredits?: Array<{
+    ledgerId: string;
+    businessName: string;
+    slug: string;
+    packageName: string;
+    creditsRemaining: number;
+    creditsTotal: number;
+  }>;
   shops: HubShop[];
   upcomingBookings: Array<{
     bookingId: string;
@@ -66,13 +81,15 @@ export default function MyLiviaHubScreen() {
   const [view, setView] = useState<HubView | null>(null);
   const [loading, setLoading] = useState(true);
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
+  const [displayName, setDisplayName] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
   const [otpSession, setOtpSession] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [magicOtp, setMagicOtp] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [channel, setChannel] = useState<GuestPreferredModality>("ANY");
-  const [channelSaving, setChannelSaving] = useState(false);
 
   const loadView = useCallback(
     async (token: string) => {
@@ -96,7 +113,7 @@ export default function MyLiviaHubScreen() {
       try {
         const v = await loadView(stored);
         setView(v);
-        setChannel(v.preferredModality ?? "ANY");
+        setDisplayName(v.displayName ?? "");
       } catch {
         await AsyncStorage.removeItem(GUEST_HUB_TOKEN_KEY);
         setHubToken(null);
@@ -110,7 +127,10 @@ export default function MyLiviaHubScreen() {
     setBusy(true);
     setErr(null);
     try {
-      const j = await requestGuestHubOtpMobile(api, forPhone, "IE");
+      const j = await requestGuestHubOtpMobile(
+        api,
+        authMethod === "email" ? { email } : { phone: forPhone, country: "IE" },
+      );
       setOtpSession(j.sessionToken);
       const shownCode = j.magicOtpCode ?? j.devOtp ?? null;
       setMagicOtp(shownCode);
@@ -144,7 +164,7 @@ export default function MyLiviaHubScreen() {
         setHubToken(j.hubToken);
         const v = await loadView(j.hubToken);
         setView(v);
-        setChannel(v.preferredModality ?? "ANY");
+        setDisplayName(v.displayName ?? "");
         setOtpSession(null);
       } catch {
         setErr("Could not sign in — try Verify manually with code 000000");
@@ -170,7 +190,7 @@ export default function MyLiviaHubScreen() {
       setHubToken(j.hubToken);
       const v = await loadView(j.hubToken);
       setView(v);
-      setChannel(v.preferredModality ?? "ANY");
+      setDisplayName(v.displayName ?? "");
       setOtpSession(null);
     } catch {
       setErr("Incorrect code");
@@ -192,9 +212,9 @@ export default function MyLiviaHubScreen() {
     if (r.ok) setView(await r.json());
   }
 
-  async function saveChannel(next: GuestPreferredModality) {
+  async function saveProfile() {
     if (!hubToken) return;
-    setChannelSaving(true);
+    setProfileSaving(true);
     try {
       const r = await fetch(`${api}/api/public/guest-hub/preferences`, {
         method: "PATCH",
@@ -202,15 +222,15 @@ export default function MyLiviaHubScreen() {
           "Content-Type": "application/json",
           "X-Guest-Hub-Token": hubToken,
         },
-        body: JSON.stringify({ preferredModality: next }),
+        body: JSON.stringify({ displayName }),
       });
       if (!r.ok) throw new Error("save");
-      setChannel(next);
-      setView((v) => (v ? { ...v, preferredModality: next } : v));
+      const v = (await r.json()) as HubView;
+      setView((prev) => (prev ? { ...prev, displayName: v.displayName ?? displayName } : prev));
     } catch {
-      setErr("Could not save channel preference");
+      setErr("Could not save profile");
     } finally {
-      setChannelSaving(false);
+      setProfileSaving(false);
     }
   }
 
@@ -245,15 +265,34 @@ export default function MyLiviaHubScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </Pressable>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={[type.title, { color: colors.foreground }]}>My Livia</Text>
+          <Text style={[type.title, { color: colors.foreground }]}>{GUEST_HUB_COPY.productName}</Text>
           <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 8 }]}>
-            Your bookings across every Livia shop — verify once with your mobile.
+            {authMethod === "email" ? GUEST_HUB_COPY.signInBodyEmail : GUEST_HUB_COPY.signInBody}
           </Text>
           <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 6 }]}>
-            {isProductionCustomerSurface()
-              ? "We will text you a one-time code."
-              : DEMO_GUEST_CLIENT_COPY.phoneHint}
+            {GUEST_HUB_COPY.signInBodyColdStart}
           </Text>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+            {(["phone", "email"] as const).map((m) => (
+              <Pressable
+                key={m}
+                disabled={Boolean(otpSession)}
+                onPress={() => setAuthMethod(m)}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor: authMethod === m ? colors.primary : colors.border,
+                    backgroundColor: authMethod === m ? colors.primary + "18" : "transparent",
+                  },
+                ]}
+                testID={m === "phone" ? "guest-hub-auth-phone" : "guest-hub-auth-email"}
+              >
+                <Text style={[type.caption, { color: authMethod === m ? colors.primary : colors.mutedForeground }]}>
+                  {m === "phone" ? GUEST_HUB_COPY.signInMethodPhone : GUEST_HUB_COPY.signInMethodEmail}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
           {!isProductionCustomerSurface() && magicOtp ? (
             <Text style={[type.caption, { color: colors.primary, marginTop: 12 }]}>
               Staging code: {magicOtp}
@@ -261,16 +300,29 @@ export default function MyLiviaHubScreen() {
           ) : null}
           {!otpSession ? (
             <>
-              <TextInput
-                style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
-                placeholder="e.g. +353 87 100 0001"
-                placeholderTextColor={colors.mutedForeground}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-                testID="guest-hub-phone-input"
-              />
-              {!isProductionCustomerSurface() ? (
+              {authMethod === "email" ? (
+                <TextInput
+                  style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="you@example.com"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                  testID="guest-hub-email-input"
+                />
+              ) : (
+                <TextInput
+                  style={[styles.input, { borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="e.g. +353 87 100 0001"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                  testID="guest-hub-phone-input"
+                />
+              )}
+              {!isProductionCustomerSurface() && authMethod === "phone" ? (
                 <>
                   <Pressable
                     onPress={() => void signInAsMaryDemo()}
@@ -290,11 +342,15 @@ export default function MyLiviaHubScreen() {
                     <Text style={[type.caption, { color: colors.primary }]}>Use demo number only</Text>
                   </Pressable>
                 </>
+              ) : !isProductionCustomerSurface() ? (
+                <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 8 }]}>
+                  {DEMO_GUEST_CLIENT_COPY.phoneHint}
+                </Text>
               ) : null}
               <Pressable
                 style={[styles.btn, { backgroundColor: colors.primary }, busy && { opacity: 0.7 }]}
                 onPress={() => void requestOtp()}
-                disabled={busy || !phone.trim()}
+                disabled={busy || (authMethod === "email" ? !email.trim() : !phone.trim())}
                 testID="guest-hub-send-code"
               >
                 {busy ? (
@@ -337,43 +393,62 @@ export default function MyLiviaHubScreen() {
       <Pressable onPress={() => router.replace("/" as never)} style={styles.back}>
         <Feather name="arrow-left" size={22} color={colors.foreground} />
       </Pressable>
-      <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={[type.title, { color: colors.foreground }]}>My Livia</Text>
-        <Text style={[type.caption, { color: colors.mutedForeground }]}>{view.phoneE164}</Text>
+      <ScrollView contentContainerStyle={styles.pad} testID="guest-hub-home">
+        <View style={styles.rowBetween}>
+          <View style={{ flex: 1 }}>
+            <Text style={[type.title, { color: colors.foreground }]}>{GUEST_HUB_COPY.productName}</Text>
+            <Text style={[type.caption, { color: colors.mutedForeground }]}>
+              {guestHubContactLabel({ phoneE164: view.phoneE164, email: view.email })}
+            </Text>
+          </View>
+          <Pressable onPress={() => router.push("/my-livia/account" as never)} testID="guest-hub-account-link">
+            <Text style={[type.caption, { color: colors.primary }]}>{GUEST_HUB_COPY.accountSettingsLink}</Text>
+          </Pressable>
+        </View>
 
-        <View style={[styles.card, { borderColor: colors.border }]} testID="guest-channel-card">
+        <GuestHubWelcome
+          guestId={view.guestId}
+          hubToken={hubToken}
+          welcomeCompleted={view.welcomeCompleted}
+          onCompleted={() => setView((v) => (v ? { ...v, welcomeCompleted: true } : v))}
+        />
+
+        <View style={[styles.card, { borderColor: colors.border }]} testID="guest-hub-profile-card">
           <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
-            How Liv reaches you
+            {GUEST_HUB_COPY.profileSection}
           </Text>
           <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 4 }]}>
-            Aftercare and follow-ups use your preferred channel when possible.
+            {GUEST_HUB_COPY.signInBodyColdStart}
           </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-            {GUEST_MODALITIES.map((m) => (
-              <Pressable
-                key={m}
-                disabled={channelSaving}
-                onPress={() => void saveChannel(m)}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: channel === m ? colors.primary : colors.border,
-                    backgroundColor: channel === m ? colors.primary + "18" : "transparent",
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    type.caption,
-                    { color: channel === m ? colors.primary : colors.mutedForeground },
-                  ]}
-                >
-                  {GUEST_PREFERRED_MODALITY_LABELS[m]}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <TextInput
+            style={[styles.input, { borderColor: colors.border, color: colors.foreground, marginTop: 10 }]}
+            placeholder={GUEST_HUB_COPY.profileDisplayNamePlaceholder}
+            placeholderTextColor={colors.mutedForeground}
+            value={displayName}
+            onChangeText={setDisplayName}
+            testID="guest-hub-display-name"
+          />
+          <Pressable
+            style={[styles.btnSm, { borderColor: colors.primary, marginTop: 8 }]}
+            onPress={() => void saveProfile()}
+            disabled={profileSaving}
+          >
+            <Text style={[type.caption, { color: colors.primary, fontFamily: fonts.bodyMed }]}>
+              {profileSaving ? "Saving…" : GUEST_HUB_COPY.profileSaveCta}
+            </Text>
+          </Pressable>
         </View>
+
+        {view.upcomingBookings.length === 0 ? (
+          <View style={[styles.card, { borderColor: colors.border }]} testID="guest-hub-empty-upcoming">
+            <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>
+              {GUEST_HUB_COPY.emptyUpcomingTitle}
+            </Text>
+            <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 6 }]}>
+              {GUEST_HUB_COPY.emptyUpcomingBody}
+            </Text>
+          </View>
+        ) : null}
 
         {view.upcomingBookings.map((b) => (
           <Pressable
@@ -388,6 +463,29 @@ export default function MyLiviaHubScreen() {
             <Text style={[type.caption, { color: colors.primary, marginTop: 4 }]}>Manage visit →</Text>
           </Pressable>
         ))}
+
+        {view.shops.length === 0 ? (
+          <View style={[styles.card, { borderColor: colors.border }]} testID="guest-hub-empty-shops">
+            <Text style={[type.caption, { color: colors.mutedForeground }]}>{GUEST_HUB_COPY.emptyShops}</Text>
+            <Text style={[type.caption, { color: colors.mutedForeground, marginTop: 6 }]}>
+              {GUEST_HUB_COPY.coldStartHint}
+            </Text>
+          </View>
+        ) : null}
+
+        {(view.packageCredits ?? []).map((p) => (
+          <View key={p.ledgerId} style={[styles.card, { borderColor: colors.border }]}>
+            <Text style={[type.body, { fontFamily: fonts.bodyMed, color: colors.foreground }]}>{p.businessName}</Text>
+            <Text style={[type.caption, { color: colors.mutedForeground }]}>{p.packageName}</Text>
+            <Text style={[type.caption, { color: colors.foreground, marginTop: 4 }]}>
+              {p.creditsRemaining} of {p.creditsTotal} sessions left
+            </Text>
+          </View>
+        ))}
+
+        <View style={[styles.card, { borderColor: colors.border }]}>
+          <GuestHubRedeemPanel hubToken={hubToken} onRedeemed={(v) => setView(v as HubView)} />
+        </View>
 
         {view.shops.map((shop) => (
           <View key={shop.businessId} style={[styles.card, { borderColor: colors.border }]}>
@@ -439,8 +537,10 @@ export default function MyLiviaHubScreen() {
           </View>
         ))}
 
+        <GuestHubLivChat hubToken={hubToken} />
+
         <Pressable onPress={() => void signOutGuest()} style={{ marginTop: 16, alignSelf: "center" }}>
-          <Text style={[type.caption, { color: colors.mutedForeground }]}>Sign out of My Livia</Text>
+          <Text style={[type.caption, { color: colors.mutedForeground }]}>{GUEST_HUB_COPY.signOutCta}</Text>
         </Pressable>
         <Pressable onPress={() => router.push("/sign-in" as never)} style={{ marginTop: 8, alignSelf: "center" }}>
           <Text style={[type.caption, { color: colors.primary }]}>
@@ -492,6 +592,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
+  rowBetween: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
   shopAvatar: {
     width: 44,
     height: 44,

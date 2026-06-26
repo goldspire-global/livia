@@ -33,6 +33,29 @@ export function LiviaEmailSignInForm({ redirectUrl, onEmailChange, bare = false 
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+
+  async function sendPasswordReset() {
+    if (!isLoaded || !signIn || busy) return;
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("Enter your email first, then tap Forgot password.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      await signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: trimmed,
+      });
+      setResetSent(true);
+    } catch (err: unknown) {
+      setError(formatClerkAuthError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -106,7 +129,23 @@ export function LiviaEmailSignInForm({ redirectUrl, onEmailChange, bare = false 
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="text-xs text-primary hover:underline underline-offset-2"
+              onClick={() => void sendPasswordReset()}
+              disabled={busy || !isLoaded}
+            >
+              Forgot password?
+            </button>
+          </div>
         </div>
+        {resetSent ? (
+          <p className="text-sm text-muted-foreground">
+            If an account exists for that email, we sent a reset code. Check your inbox and follow the
+            instructions.
+          </p>
+        ) : null}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Button
           type="submit"

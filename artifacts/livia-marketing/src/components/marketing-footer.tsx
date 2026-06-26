@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { LiviaWordmark } from "@/components/brand/LiviaMark";
 import { LEGAL_FOOTER_LINE, MARKETING_FOOTER_TAGLINE } from "@/lib/company";
-import { legalBase } from "@/lib/marketing-links";
+import { guestHubUrl, legalBase } from "@/lib/marketing-links";
 import { MarketingLocaleSwitch } from "@/components/marketing-locale-switch";
 
 export type MarketingFooterLink = {
@@ -98,6 +98,7 @@ export function w1FooterLinks(): MarketingFooterLink[] {
   return [
   { href: "/pricing", label: "Pricing" },
   { href: "/how-it-works", label: "How it works" },
+  { href: guestHubUrl(), label: "My Livia", external: true },
   { href: "/verticals", label: "Verticals" },
   { href: "/europe", label: "Europe" },
   { href: "/changelog", label: "Changelog" },

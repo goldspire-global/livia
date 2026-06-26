@@ -12,7 +12,8 @@ import {
   clearGuestHubPlatformTheme,
 } from "@/lib/experience-theme";
 
-function StepIndicator({ step }: { step: 1 | 2 }) {
+function StepIndicator({ step, authMethod }: { step: 1 | 2; authMethod: "phone" | "email" }) {
+  const label = authMethod === "email" ? "Email" : "Phone";
   return (
     <div
       className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest"
@@ -25,7 +26,7 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
           step === 1 ? "bg-primary/15 text-primary" : "text-muted-foreground",
         )}
       >
-        1 · Phone
+        1 · {label}
       </span>
       <span className="text-muted-foreground/50" aria-hidden>
         →
@@ -43,8 +44,12 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
 }
 
 export function GuestHubSignIn({
+  authMethod,
+  onAuthMethodChange,
   phone,
   onPhoneChange,
+  email,
+  onEmailChange,
   phonePlaceholder,
   code,
   onCodeChange,
@@ -58,10 +63,14 @@ export function GuestHubSignIn({
   magicOtp,
   onRequestOtp,
   onVerifyOtp,
-  onChangePhone,
+  onChangeIdentifier,
 }: {
+  authMethod: "phone" | "email";
+  onAuthMethodChange: (m: "phone" | "email") => void;
   phone: string;
   onPhoneChange: (v: string) => void;
+  email: string;
+  onEmailChange: (v: string) => void;
   phonePlaceholder: string;
   code: string;
   onCodeChange: (v: string) => void;
@@ -75,9 +84,10 @@ export function GuestHubSignIn({
   magicOtp: string | null;
   onRequestOtp: () => void;
   onVerifyOtp: () => void;
-  onChangePhone: () => void;
+  onChangeIdentifier: () => void;
 }) {
   const step: 1 | 2 = otpSession ? 2 : 1;
+  const identifier = authMethod === "email" ? email : phone;
 
   useEffect(() => {
     applyGuestHubPlatformTheme();
@@ -125,9 +135,35 @@ export function GuestHubSignIn({
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-serif">{GUEST_HUB_COPY.signInTitle}</h2>
-              <p className="text-sm text-muted-foreground lg:hidden">{GUEST_HUB_COPY.signInBody}</p>
-              <StepIndicator step={step} />
+              <h2 className="text-2xl font-serif">
+                {authMethod === "email" ? GUEST_HUB_COPY.signInTitleEmail : GUEST_HUB_COPY.signInTitle}
+              </h2>
+              <p className="text-sm text-muted-foreground lg:hidden">
+                {authMethod === "email" ? GUEST_HUB_COPY.signInBodyEmail : GUEST_HUB_COPY.signInBody}
+              </p>
+              <p className="text-xs text-muted-foreground">{GUEST_HUB_COPY.signInBodyColdStart}</p>
+              <div className="flex gap-2 pt-1" role="tablist" aria-label="Sign-in method">
+                {(["phone", "email"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-selected={authMethod === m}
+                    disabled={Boolean(otpSession)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors min-h-[36px]",
+                      authMethod === m
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground",
+                    )}
+                    onClick={() => onAuthMethodChange(m)}
+                    data-testid={m === "phone" ? "guest-hub-auth-phone" : "guest-hub-auth-email"}
+                  >
+                    {m === "phone" ? GUEST_HUB_COPY.signInMethodPhone : GUEST_HUB_COPY.signInMethodEmail}
+                  </button>
+                ))}
+              </div>
+              <StepIndicator step={step} authMethod={authMethod} />
             </div>
 
             {stagingRelaxed && stagingHint ? stagingHint : null}
@@ -135,21 +171,35 @@ export function GuestHubSignIn({
             {!otpSession ? (
               <Card className="border-primary/15 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Your mobile number</CardTitle>
+                  <CardTitle className="text-base">
+                    {authMethod === "email" ? "Your email" : "Your mobile number"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Input
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder={phonePlaceholder}
-                    value={phone}
-                    onChange={(e) => onPhoneChange(e.target.value)}
-                    data-testid="guest-hub-phone"
-                    className="min-h-[48px] text-base"
-                  />
+                  {authMethod === "email" ? (
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => onEmailChange(e.target.value)}
+                      data-testid="guest-hub-email"
+                      className="min-h-[48px] text-base"
+                    />
+                  ) : (
+                    <Input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder={phonePlaceholder}
+                      value={phone}
+                      onChange={(e) => onPhoneChange(e.target.value)}
+                      data-testid="guest-hub-phone"
+                      className="min-h-[48px] text-base"
+                    />
+                  )}
                   <Button
                     className="w-full min-h-[48px]"
-                    disabled={busy || !phone.trim() || resendSec > 0}
+                    disabled={busy || !identifier.trim() || resendSec > 0}
                     aria-label={
                       busy
                         ? "Sending verification code"
@@ -173,7 +223,7 @@ export function GuestHubSignIn({
               <Card className="border-primary/15 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Enter the code we sent</CardTitle>
-                  <p className="text-xs text-muted-foreground font-mono mt-1 truncate">{phone}</p>
+                  <p className="text-xs text-muted-foreground font-mono mt-1 truncate">{identifier}</p>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {stagingRelaxed && devOtp ? (
@@ -214,9 +264,9 @@ export function GuestHubSignIn({
                       variant="ghost"
                       className="flex-1 text-xs text-muted-foreground min-h-[44px]"
                       disabled={busy}
-                      onClick={onChangePhone}
+                      onClick={onChangeIdentifier}
                     >
-                      Change number
+                      {authMethod === "email" ? "Change email" : "Change number"}
                     </Button>
                   </div>
                 </CardContent>

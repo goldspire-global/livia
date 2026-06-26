@@ -65,7 +65,7 @@ async function attemptPasswordFirstFactor(
 
 export function incompleteClerkSignInMessage(status: string): string {
   if (status === "needs_second_factor") {
-    return "This account uses two-factor authentication. Use Google sign-in, or add an authenticator code flow in Clerk settings.";
+    return "This account uses two-step verification. Try Google sign-in, or use the code from your authenticator app.";
   }
   if (status === "needs_new_password") {
     return "You need to set a new password before signing in. Use Forgot password or contact support.";

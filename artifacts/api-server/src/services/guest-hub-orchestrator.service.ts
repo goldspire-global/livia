@@ -44,10 +44,18 @@ export async function handleGuestHubChat(
   }
 
   if (view.shops.length === 0) {
+    if (/\b(redeem|gift|pack|code)\b/i.test(trimmed)) {
+      return {
+        reply:
+          "Open Account & preferences in My Livia and enter your gift or pack code — I'll link it to your vault.",
+        actions: [{ label: "Redeem a code", href: "/my/account#redeem" }],
+        mode: "rules",
+      };
+    }
     return {
       reply:
-        "Your vault is empty. Book at any Livia shop and opt in to My Livia — then I can help you rebook here.",
-      actions: [],
+        "Your profile is ready. Book at any Livia studio with the same number or email — or redeem a gift code under Account.",
+      actions: [{ label: "Account & preferences", href: "/my/account" }],
       mode: "rules",
     };
   }

@@ -56,8 +56,8 @@ function bundleForRole(role: InternalOpsRole, tier: WorkforceAccessTier): Workfo
         {
           id: "github",
           label: "GitHub org access",
-          detail: "goldspire-global/livia — branch protection, no direct main pushes for customer releases.",
-          href: "https://github.com/goldspire-global/livia",
+          detail: "goldspireventures/livia — branch protection, no direct main pushes for customer releases.",
+          href: "https://github.com/goldspireventures/livia",
         },
       ],
     };

@@ -66,13 +66,25 @@ export function resolveDashboardSignInUrl(redirectPath?: string): string {
   return `${base}?${params.toString()}`;
 }
 
-export function resolveDashboardSignUpUrl(): string {
+export function resolveGuestHubUrl(path = "/my"): string {
+  const base = resolveDashboardOrigin();
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized}`;
+}
+
+export function resolveDashboardSignUpUrl(verticalSlug?: string): string {
   const tier = detectMarketingSurface();
+  let base: string;
   if (tier === "local") {
     const override = import.meta.env.VITE_DASHBOARD_SIGN_UP_URL as string | undefined;
-    if (override) return override.replace(/\/+$/, "");
+    base = override ? override.replace(/\/+$/, "") : `${resolveDashboardOrigin()}/sign-up`;
+  } else {
+    base = `${resolveDashboardOrigin()}/sign-up`;
   }
-  return `${resolveDashboardOrigin()}/sign-up`;
+  const slug = verticalSlug?.replace(/^\/+/, "").trim().toLowerCase();
+  if (!slug) return base;
+  const params = new URLSearchParams({ vertical: slug });
+  return `${base}?${params.toString()}`;
 }
 
 export function resolveDashboardDemoUrl(): string {

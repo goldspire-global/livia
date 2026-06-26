@@ -187,7 +187,7 @@ const EN: EditorialCopy = {
     seeDemo: "How it works",
     pricing: "Pricing",
     howItWorks: "How it works",
-    joinBeta: "Join beta",
+    joinBeta: "Contact",
     tryBeta: "Try beta",
     product: "Product",
     solutions: "Solutions",
@@ -217,7 +217,7 @@ const EN: EditorialCopy = {
     getStarted: "Get started",
     bookDemo: "Book a demo",
     howItWorks: "How it works",
-    joinBeta: "Join beta",
+    joinBeta: "Contact",
   },
   homeFold: {
     physicsEyebrow: "What every shop shares",
@@ -252,7 +252,7 @@ const EN: EditorialCopy = {
       "<strong>Liv</strong> works inside Livia — replying, booking, and briefing you before the day starts.",
     seeDemo: "Get started",
     howItWorks: "How it works",
-    joinBeta: "Join beta",
+    joinBeta: "Contact",
     convergenceLabel: "Every channel in one inbox",
     channels: [
       { short: "DM", label: "Social" },
@@ -389,7 +389,7 @@ const EN: EditorialCopy = {
       },
       {
         q: "When can I get in?",
-        a: "Waitlist below. We invite in batches — IE, UK, EU.",
+        a: "Create your account on Get started — most owners are live the same day. IE, UK, and EU shops welcome.",
       },
       {
         q: "GDPR and EU AI Act?",
@@ -401,7 +401,7 @@ const EN: EditorialCopy = {
       },
       {
         q: "How do I apply?",
-        a: "Email in the form. We reply when a batch fits.",
+        a: "Tap Get started, create your account, and walk through setup. Questions? Use the contact form.",
       },
     ],
   },
@@ -409,8 +409,8 @@ const EN: EditorialCopy = {
     quote:
       "Better software for businesses that run on appointments. You shouldn't lose revenue because you were working.",
     attribution: "— Livia",
-    ctaTitle: "Join the beta",
-    ctaSubtitle: "We invite in batches.",
+    ctaTitle: "Ready to start?",
+    ctaSubtitle: "Create your account — setup takes an afternoon.",
   },
   form: {
     placeholder: LIVIA_FORM_EXAMPLES.ownerEmail,
