@@ -15,19 +15,12 @@ import {
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-function isDemoClerkEmail(email: string): boolean {
-  return email.toLowerCase().endsWith("@demo.livia-hq.com");
-}
-
-/** Re-key a user row when Clerk app changes but demo email stays the same. */
+/** Re-key a user row when Clerk user id changes but email stays the same (app migration, re-provision). */
 export async function reconcileClerkUserId(oldId: string, newId: string): Promise<void> {
   if (oldId === newId) return;
 
   const [oldUser] = await db.select().from(usersTable).where(eq(usersTable.id, oldId));
   if (!oldUser) return;
-  if (!isDemoClerkEmail(oldUser.email)) {
-    throw new Error(`Refusing to reconcile non-demo user ${oldUser.email}`);
-  }
 
   const [existingNew] = await db.select().from(usersTable).where(eq(usersTable.id, newId));
   if (existingNew) return;
