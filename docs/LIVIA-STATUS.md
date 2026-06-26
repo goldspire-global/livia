@@ -1,6 +1,6 @@
 # Livia — top-level status
 
-**Updated:** 2026-06-21 (Era 1 activation proof — engineering closure)  
+**Updated:** 2026-06-26 (Liv learning loop shipped)  
 **Readiness scores:** `pnpm readiness:score` · [`REPO-VS-BLUEPRINT-GAP-MATRIX.md`](product/REPO-VS-BLUEPRINT-GAP-MATRIX.md)  
 **Read this first** for “are we finished?” — execution sequencing: [`product/LIVIA-MASTER-EXECUTION-PLAN-V3.md`](product/LIVIA-MASTER-EXECUTION-PLAN-V3.md).  
 **GTM + vertical parity:** [`product/GTM-VERTICAL-DEPTH-PROGRAM.md`](product/GTM-VERTICAL-DEPTH-PROGRAM.md) · [`product/COMPETITIVE-PARITY-PROGRAM.md`](product/COMPETITIVE-PARITY-PROGRAM.md)  
@@ -93,6 +93,7 @@
 |------|-------|
 | **Guest placement P0–P3** | Shipped 2026-06-15 — [`GUEST-SURFACE-PLACEMENT-CONTRACT.md`](design/GUEST-SURFACE-PLACEMENT-CONTRACT.md) |
 | **Liv Era 1 mandate** | Policy OS + bounded agent — [`LIV-OPERATING-SYSTEM.md`](product/LIV-OPERATING-SYSTEM.md) §16 |
+| **Liv learning loop** | Shipped 2026-06-26 — [`LIV-LEARNING-PROGRAM.md`](product/LIV-LEARNING-PROGRAM.md) (usage triggers, memory, hypotheses, internal + external surfaces) |
 | **Production readiness rubric** | `pnpm readiness:score` — evidence-backed gap matrix figures |
 
 ---
@@ -139,6 +140,7 @@ Detail logs: `docs/operations/R1-BUILD-STATUS.md`, `PROGRAM-ENGINEERING-EXIT.md`
 
 | Date | Change |
 |------|--------|
+| 2026-06-26 | **Liv learning loop shipped** — policy hub, correction/override/hypothesis services, usage triggers (5/10/25/50 bookings), prompt injection on all Liv chats, owner-intel + internal ops bundle; migration `060` |
 | 2026-06-16 | **Era 2 engineering complete (Q1–Q3)** — Twin hub API, `/me/capabilities`, advisor Liv mode, Twin-only briefing/presence, recommendation confidence; V1 activation proof (Bucket C) still open |
 | 2026-06-15 | Era 1 D0–D4 engineering wave — guest thread GET, vault modules, Mary artifacts, BookingRescheduled, activation funnel |
 | 2026-06-15 | Era 1 Q1 kickoff — D0 owner book-link parity; readiness rubric; Bucket C 80% |

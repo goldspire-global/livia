@@ -24,8 +24,9 @@ import {
 import { getMorningBriefing } from "./morning-briefing.service";
 import { getSetupGuidedFlowForBusiness } from "./setup-guided-flow.service";
 import { buildBusinessTwinPromptBlock } from "./business-twin.service";
-import { buildLivMemoryBlockForBusiness, buildLivMemoryBlockForCustomer } from "./liv-memory.service";
-import { buildOperatorLearningPromptBlock } from "./liv-operator-learning.service";
+import { buildLivMemoryBlockForBusiness, buildLivMemoryBlockForCustomer, buildLivLearningPromptBlock } from "./liv-memory.service";
+import { buildLivPlatformAwarenessPromptBlock } from "./liv-platform-awareness.service";
+import { buildLivObservatoryPromptBlock } from "./liv-observatory.service";
 import { resolveLivToolsForBusiness } from "./liv-tool-catalog.service";
 import { recordEvalTraceForTool } from "../lib/eval-traces";
 
@@ -61,7 +62,7 @@ export async function handleStaffLivAssist(args: {
   const promptOverrides = await getActivePromptOverrides(args.businessId);
   const pack = loadVerticalPack(cached.business.vertical, cached.packConfig);
 
-  const [services, staff, history, briefing, memoryBlock, businessMemoryBlock, operatorLearningBlock, twinBlock] =
+  const [services, staff, history, briefing, memoryBlock, businessMemoryBlock, learningBlock, awarenessBlock, observatoryBlock, twinBlock] =
     await Promise.all([
     listServices(args.businessId, true),
     listStaff(args.businessId, { isActive: true }),
@@ -71,7 +72,9 @@ export async function handleStaffLivAssist(args: {
       ? buildLivMemoryBlockForCustomer(args.businessId, conversation.customerId)
       : Promise.resolve(""),
     buildLivMemoryBlockForBusiness(args.businessId),
-    buildOperatorLearningPromptBlock(args.businessId),
+    buildLivLearningPromptBlock(args.businessId),
+    buildLivPlatformAwarenessPromptBlock({ businessId: args.businessId, profile: "tenant_staff" }),
+    buildLivObservatoryPromptBlock(args.businessId),
     buildBusinessTwinPromptBlock(args.businessId),
   ]);
 
@@ -116,7 +119,7 @@ export async function handleStaffLivAssist(args: {
     }) +
     (livMode === "setup"
       ? `\n\nSETUP COPILOT MODE: Help the owner finish shop setup — presets, onboarding acts, activation status. Use read-only setup tools; do not book or message customers unless they switch to ops mode.${briefingBlock}${twinBlock}`
-      : `\n\nSTAFF ASSIST MODE: You are helping a team member manage this thread. Use tools to confirm/cancel/reschedule bookings or look up customers when asked. Prefer get_owner_intelligence or get_business_twin when advising strategy; use get_commerce_signals or get_commerce_snapshot for revenue; list_capability_blockers for setup gaps.${briefingBlock}${memoryBlock}${businessMemoryBlock}${operatorLearningBlock}${twinBlock}`);
+      : `\n\nSTAFF ASSIST MODE: You are helping a team member manage this thread. Use tools to confirm/cancel/reschedule bookings or look up customers when asked. Prefer get_owner_intelligence or get_business_twin when advising strategy; use get_commerce_signals or get_commerce_snapshot for revenue; list_capability_blockers for setup gaps.${briefingBlock}${memoryBlock}${businessMemoryBlock}${learningBlock}${awarenessBlock}${observatoryBlock}${twinBlock}`);
 
   const anthropicTools: Anthropic.Tool[] = tools.map((t) => ({
     name: t.name,
@@ -422,12 +425,15 @@ export async function handleOwnerLivOps(args: {
   const promptOverrides = await getActivePromptOverrides(args.businessId);
   const pack = loadVerticalPack(cached.business.vertical, cached.packConfig);
 
-  const [services, staff, briefing, twinBlock, operatorLearningBlock, twinBundle] = await Promise.all([
+  const [services, staff, briefing, twinBlock, learningBlock, awarenessBlock, observatoryBlock, twinBundle] =
+    await Promise.all([
     listServices(args.businessId, true),
     listStaff(args.businessId, { isActive: true }),
     getMorningBriefing(args.businessId),
     buildBusinessTwinPromptBlock(args.businessId),
-    buildOperatorLearningPromptBlock(args.businessId),
+    buildLivLearningPromptBlock(args.businessId),
+    buildLivPlatformAwarenessPromptBlock({ businessId: args.businessId, profile: "tenant_staff" }),
+    buildLivObservatoryPromptBlock(args.businessId),
     import("./business-twin.service").then((m) => m.getBusinessTwinBundle(args.businessId)),
   ]);
 
@@ -488,7 +494,7 @@ export async function handleOwnerLivOps(args: {
       })),
       staff: staff.map((s) => ({ id: s.id, displayName: s.displayName })),
     }) +
-    `\n\nLIV ADVISOR MODE (Era 2): Coach the owner using Business Twin only — start with get_business_twin when facts are stale. Every recommendation must cite evidence and confidence. Do not message customers. Link to Settings → Billing for deposit/Stripe fixes.${briefingBlock}${twinIntelBlock}${operatorLearningBlock}${twinBlock}`;
+    `\n\nLIV ADVISOR MODE (Era 2): Coach the owner using Business Twin only — start with get_business_twin when facts are stale. Every recommendation must cite evidence and confidence. Do not message customers. Link to Settings → Billing for deposit/Stripe fixes.${briefingBlock}${twinIntelBlock}${learningBlock}${awarenessBlock}${observatoryBlock}${twinBlock}`;
 
   const anthropicTools: Anthropic.Tool[] = tools.map((t) => ({
     name: t.name,

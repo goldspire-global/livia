@@ -125,6 +125,7 @@
 | Experience architecture | `design/EXPERIENCE-OS-SPEC.md` | `EXPERIENCE-ARCHITECTURE.md`, `PRESENTATION-PRESETS-AND-ROLLOUT.md` |
 | Capability graph | `engineering/CAPABILITY-GRAPH-SPEC.md` | `vertical-announcement.ts`, entitlements |
 | Business Twin | `product/BUSINESS-TWIN-SPEC.md` | liv-presence, liv-signals, briefing |
+| Liv learning loop | `product/LIV-LEARNING-PROGRAM.md` | `liv-learning-program.ts`, `liv-platform-awareness-program.ts`, `liv-observatory-program.ts` |
 | Event taxonomy | `engineering/EVENT-TAXONOMY.md` | `lib/event-bus`, domain-events |
 | Canonical data model | `engineering/CANONICAL-DATA-MODEL.md` | `data-model.md` (tables) |
 | Vertical registry (master) | `product/VERTICAL-REGISTRY-MASTER.md` | `verticals.ts`, coverage registry |

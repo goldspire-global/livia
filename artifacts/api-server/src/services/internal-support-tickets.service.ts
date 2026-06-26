@@ -352,6 +352,7 @@ export type LivIncidentBundle = {
   continuityHints: Array<{ businessId: string; slug: string; stuckLabel: string | null }>;
   trace: Awaited<ReturnType<typeof traceByRequestId>> | null;
   suggestedActions: string[];
+  learningMemory: Array<{ id: string; summary: string; source: string; createdAt: string }>;
 };
 
 export async function getLivIncidentBundleForTicket(
@@ -442,6 +443,7 @@ export async function getLivIncidentBundleForTicket(
   if (ticket.category === "liv_error") {
     suggestedActions.push(
       "Check continuity traces tab for stuck booking state.",
+      "Review Liv learning memory — correction should appear in recent rows.",
       "If systemic, pause Liv for tenant (on-call / founder only — not in portal v1).",
     );
   }
@@ -465,5 +467,8 @@ export async function getLivIncidentBundleForTicket(
     continuityHints,
     trace,
     suggestedActions,
+    learningMemory: await import("./liv-memory.service").then((m) =>
+      m.listRecentLearningMemoryForBusiness(ticket.businessId, 6),
+    ),
   };
 }

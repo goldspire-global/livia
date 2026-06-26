@@ -88,6 +88,11 @@ export async function publishDomainEvent<K extends EventName>(
       .catch((pushErr) => {
         logger.warn({ pushErr, name, businessId }, "push notifications failed");
       });
+    void import("../services/liv-observatory.service")
+      .then(({ processLivObservatoryForEvent }) => processLivObservatoryForEvent(name, payload))
+      .catch((obsErr) => {
+        logger.warn({ obsErr, name, businessId }, "liv observatory failed");
+      });
     return true;
   } catch (err) {
     await db.delete(domainEventDedupTable).where(eq(domainEventDedupTable.dedupeKey, dedupeKey));

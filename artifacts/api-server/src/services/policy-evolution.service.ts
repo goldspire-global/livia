@@ -23,7 +23,7 @@ function monthsSince(iso: string): number {
   return Math.max(0, Math.floor(ms / (30 * 24 * 60 * 60 * 1000)));
 }
 
-async function loadTrustMetrics(businessId: string) {
+export async function loadBusinessTrustMetrics(businessId: string) {
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
   const [completedRow] = await db
@@ -103,7 +103,7 @@ export async function getPolicyEvolutionProposals(
   const mandatePayload = await getLivMandateForBusiness(businessId);
   const activation = await getBusinessActivationSnapshot(businessId);
   const commerce = await getCommerceSnapshot(businessId);
-  const trustMetrics = await loadTrustMetrics(businessId);
+  const trustMetrics = await loadBusinessTrustMetrics(businessId);
   const feedback = await listRecentVisitFeedback(businessId, 90);
   const avgFeedback =
     feedback.length > 0
@@ -145,7 +145,7 @@ export async function getPolicyEvolutionProposals(
 }
 
 export async function getQualityRegistryForBusiness(businessId: string) {
-  const trustMetrics = await loadTrustMetrics(businessId);
+  const trustMetrics = await loadBusinessTrustMetrics(businessId);
   const feedback = await listRecentVisitFeedback(businessId, 90);
   const avgFeedback =
     feedback.length > 0

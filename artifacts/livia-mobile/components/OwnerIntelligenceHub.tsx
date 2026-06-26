@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
-import { TWIN_TRAJECTORY_COPY } from "@workspace/policy";
+import { TWIN_TRAJECTORY_COPY, type TwinDomainTrajectory } from "@workspace/policy";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { fonts, type } from "@/constants/typography";
@@ -36,11 +36,15 @@ type Bundle = {
   }>;
   twinRisks?: Array<{ id: string; title: string; body: string; href?: string }>;
   twinOpportunities?: Array<{ id: string; title: string; body: string; href?: string }>;
+  learningHypotheses?: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    domain: string;
+    confidence: string;
+  }>;
   twinHealth?: {
-    domains?: Array<{
-      domain: string;
-      trajectory?: "strengthening" | "stable" | "weakening" | "unknown";
-    }>;
+    domains?: Array<{ domain: string; trajectory?: TwinDomainTrajectory | null }>;
   } | null;
 };
 
@@ -66,6 +70,7 @@ export function OwnerIntelligenceHub({ businessId }: { businessId: string }) {
   const twin = data?.twinTopRecommendation;
   const snapshot = data?.commerce?.snapshot;
 
+  const hypotheses = data?.learningHypotheses ?? [];
   const show =
     top ||
     signals.length > 0 ||
@@ -76,6 +81,7 @@ export function OwnerIntelligenceHub({ businessId }: { businessId: string }) {
     observations.length > 0 ||
     risks.length > 0 ||
     opportunities.length > 0 ||
+    hypotheses.length > 0 ||
     data?.twinHeadline ||
     (health && health.score < 85);
 
@@ -114,7 +120,7 @@ export function OwnerIntelligenceHub({ businessId }: { businessId: string }) {
 
       {data?.twinHealth?.domains?.some((d) => d.trajectory === "weakening") ? (
         <View style={styles.trajectoryRow} testID="twin-domain-trajectory-strip">
-          {data.twinHealth.domains
+          {(data.twinHealth?.domains ?? [])
             .filter((d) => d.trajectory && d.trajectory !== "unknown")
             .slice(0, 3)
             .map((d) => (
@@ -215,6 +221,24 @@ export function OwnerIntelligenceHub({ businessId }: { businessId: string }) {
           <Text style={[styles.blockTitle, { color: colors.foreground }]}>{obs.title}</Text>
           <Text style={[styles.blockBody, { color: colors.mutedForeground }]} numberOfLines={2}>
             {obs.body}
+          </Text>
+        </Pressable>
+      ))}
+
+      {hypotheses.slice(0, 2).map((h) => (
+        <Pressable
+          key={h.id}
+          onPress={() => openBilling("/dashboard")}
+          style={styles.block}
+          testID="liv-learning-hypothesis-mobile"
+        >
+          <Text style={[styles.meta, { color: colors.primary }]}>Liv noticed</Text>
+          <Text style={[styles.blockTitle, { color: colors.foreground }]}>{h.title}</Text>
+          <Text style={[styles.blockBody, { color: colors.mutedForeground }]} numberOfLines={3}>
+            {h.summary}
+          </Text>
+          <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+            Confirm on web dashboard →
           </Text>
         </Pressable>
       ))}

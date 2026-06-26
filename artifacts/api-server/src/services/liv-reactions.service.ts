@@ -118,6 +118,26 @@ function formatSignalCopy(args: {
         title: args.twin?.title ?? "Business insight",
         body: args.twin?.body ?? "Liv noticed a pattern in your shop facts.",
       };
+    case "eval.rollback":
+      return {
+        title: "Liv correction logged",
+        body: "A Liv was wrong report is in triage — review the incident strip.",
+      };
+    case "liv.learning.correction":
+      return {
+        title: "Liv learned from your correction",
+        body: args.twin?.body ?? "Your feedback was saved to Liv's memory for this business.",
+      };
+    case "liv.learning.override":
+      return {
+        title: "Liv noticed your fix",
+        body: args.twin?.body ?? "Liv logged a booking change you made after her suggestion.",
+      };
+    case "liv.learning.hypothesis":
+      return {
+        title: args.twin?.title ?? "Liv spotted a pattern",
+        body: args.twin?.body ?? "Review Liv's new hypothesis on your home screen — confirm or dismiss.",
+      };
     default:
       return { title: "Liv noticed", body: "Something changed in your shop — check Today." };
   }
@@ -144,7 +164,10 @@ export async function processLivReactionsForEvent<K extends EventName>(
     riskId?: string;
     opportunityId?: string;
     confidence?: "high" | "medium" | "low";
-    href?: string;
+    hypothesisId?: string;
+    memoryId?: string;
+    overrideKind?: string;
+    summary?: string;
   };
 
   const [biz] = await db
@@ -171,7 +194,10 @@ export async function processLivReactionsForEvent<K extends EventName>(
       templateKey: reaction.templateKey,
       booking: bookingCtx,
       conversation: conversationCtx,
-      twin: p.title && p.body ? { title: p.title, body: p.body } : undefined,
+      twin:
+        p.title || p.summary
+          ? { title: p.title ?? "Liv learning", body: p.body ?? p.summary ?? "" }
+          : undefined,
     });
 
     const entityKey =
@@ -180,6 +206,8 @@ export async function processLivReactionsForEvent<K extends EventName>(
       p.observationKey ??
       p.riskId ??
       p.opportunityId ??
+      p.hypothesisId ??
+      p.memoryId ??
       name;
     const dedupeKey = `${p.businessId}:${reaction.templateKey}:${entityKey}:${dayKey}`;
 

@@ -27,6 +27,10 @@ const PLATFORM_DEFAULT_ROUTES: CapabilityRoute[] = [
       "vocabulary.ts",
       "booking-experience-copy.ts",
       "owner-home-bookings.ts",
+      "liv-learning-program.ts",
+      "liv-memory-copy.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
     ],
     bundleKeys: [
       "vocabulary.ownerTodayScheduleTitle",
@@ -43,6 +47,8 @@ const PLATFORM_DEFAULT_ROUTES: CapabilityRoute[] = [
     policyModules: [
       "booking-experience-copy.ts",
       "continuity-templates.ts",
+      "liv-learning-program.ts",
+      "liv-operator-learning-policy.ts",
     ],
     bundleKeys: [
       "booking.experience.continuityPanelTitle",
@@ -59,6 +65,9 @@ const PLATFORM_DEFAULT_ROUTES: CapabilityRoute[] = [
       "guest-public-experience.ts",
       "public-book-layout.ts",
       "booking-guards.ts",
+      "liv-learning-program.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
     ],
     bundleKeys: ["guest.public.heroTitle", "guest.public.catalogTitle", "playbook.publicCta"],
     surfaceIds: ["guest.public.book"],
@@ -83,6 +92,19 @@ const PLATFORM_DEFAULT_ROUTES: CapabilityRoute[] = [
     ],
     surfaceIds: ["tenant.bookings.list"],
     routePatterns: ["/bookings"],
+  },
+  {
+    id: "internal-support",
+    label: "Internal ops support / liv_error",
+    policyModules: [
+      "liv-learning-program.ts",
+      "liv-operator-learning-policy.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
+    ],
+    bundleKeys: [],
+    surfaceIds: ["internal.ops.support"],
+    routePatterns: ["/support"],
   },
   {
     id: "guest-hub",

@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { resolveLivTools, type LivToolDeps } from "@workspace/liv-runtime";
 import { searchInternalTenants, getInternalTenantDetail } from "./internal-ops.service";
 import { executeMandateGatedTool } from "./mandate-gated-tool.service";
+import { buildLivPlatformAwarenessPromptBlock } from "./liv-platform-awareness.service";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
 const MAX_TOOL_HOPS = 6;
@@ -72,6 +73,11 @@ export async function handleInternalLivAssist(args: {
     canBookDirectly: false,
   });
 
+  const awarenessBlock = await buildLivPlatformAwarenessPromptBlock({
+    profile: "livia_internal",
+    businessId: args.focusBusinessId,
+  });
+
   const systemPrompt = [
     "You are Liv for Livia Inc internal operators (support, success, engineering).",
     "You help triage tenants: search by name/slug/email/Stripe id, then open a health snapshot.",
@@ -79,6 +85,7 @@ export async function handleInternalLivAssist(args: {
     args.focusBusinessId
       ? `Operator is viewing tenant ${args.focusBusinessId} — prefer tenant_snapshot for that id when relevant.`
       : "",
+    awarenessBlock.trim() || null,
   ]
     .filter(Boolean)
     .join("\n");

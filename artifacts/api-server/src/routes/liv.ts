@@ -667,4 +667,132 @@ router.post(
   },
 );
 
+router.get(
+  "/businesses/:businessId/liv-learning/hypotheses",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const { listPendingHypotheses } = await import("../services/liv-hypothesis.service");
+    res.json({ data: await listPendingHypotheses(businessId, 6) });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/liv-learning/hypotheses/:hypothesisId/confirm",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const hypothesisId = getBizId(req.params.hypothesisId);
+    const { confirmHypothesis } = await import("../services/liv-hypothesis.service");
+    try {
+      const result = await confirmHypothesis({
+        businessId,
+        hypothesisId,
+        userId: getUserId(req),
+      });
+      await appendHumanAudit(
+        businessId,
+        getUserId(req),
+        "human.liv.hypothesis.confirm",
+        "ai_observation",
+        hypothesisId,
+        result,
+      );
+      res.json(result);
+    } catch {
+      sendError(res, req, 404, "Hypothesis not found");
+    }
+  },
+);
+
+router.post(
+  "/businesses/:businessId/liv-learning/hypotheses/:hypothesisId/dismiss",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const hypothesisId = getBizId(req.params.hypothesisId);
+    const { dismissHypothesis } = await import("../services/liv-hypothesis.service");
+    try {
+      await dismissHypothesis({
+        businessId,
+        hypothesisId,
+        userId: getUserId(req),
+      });
+      await appendHumanAudit(
+        businessId,
+        getUserId(req),
+        "human.liv.hypothesis.dismiss",
+        "ai_observation",
+        hypothesisId,
+        {},
+      );
+      res.json({ ok: true });
+    } catch {
+      sendError(res, req, 404, "Hypothesis not found");
+    }
+  },
+);
+
+router.post(
+  "/businesses/:businessId/twin/observations/:observationKey/confirm",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const observationKey = decodeURIComponent(getBizId(req.params.observationKey));
+    const { confirmTwinObservation } = await import("../services/twin-observations.service");
+    try {
+      const result = await confirmTwinObservation({
+        businessId,
+        observationKey,
+        userId: getUserId(req),
+      });
+      await appendHumanAudit(
+        businessId,
+        getUserId(req),
+        "human.twin.observation.confirm",
+        "twin_observation",
+        observationKey,
+        result,
+      );
+      res.json(result);
+    } catch {
+      sendError(res, req, 404, "Observation not found");
+    }
+  },
+);
+
+router.post(
+  "/businesses/:businessId/twin/observations/:observationKey/dismiss",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const businessId = getBizId(req.params.businessId);
+    const observationKey = decodeURIComponent(getBizId(req.params.observationKey));
+    const { dismissTwinObservation } = await import("../services/twin-observations.service");
+    try {
+      await dismissTwinObservation({
+        businessId,
+        observationKey,
+        userId: getUserId(req),
+      });
+      await appendHumanAudit(
+        businessId,
+        getUserId(req),
+        "human.twin.observation.dismiss",
+        "twin_observation",
+        observationKey,
+        {},
+      );
+      res.json({ ok: true });
+    } catch {
+      sendError(res, req, 404, "Observation not found");
+    }
+  },
+);
+
 export default router;
+

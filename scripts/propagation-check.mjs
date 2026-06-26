@@ -32,10 +32,21 @@ const tests = [
   "vertical-pending-copy-coverage.test.ts",
   "vertical-announcement.test.ts",
   "vertical-registry.test.ts",
+  "liv-learning-program.test.ts",
+  "liv-learning-propagation.test.ts",
+  "liv-platform-awareness.test.ts",
+  "liv-platform-awareness-propagation.test.ts",
+  "liv-observatory-program.test.ts",
 ];
 
 for (const file of tests) {
   run(`Policy: ${file}`, ["--import", "tsx/esm", `../../lib/policy/src/__tests__/${file}`]);
 }
+
+run("API: liv-observatory-sync.test.ts", [
+  "--import",
+  "tsx/esm",
+  "src/services/__tests__/liv-observatory-sync.test.ts",
+]);
 
 console.log("\n✓ propagation:check passed\n");

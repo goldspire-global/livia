@@ -15,6 +15,12 @@ import {
 } from "./business-twin.service";
 import { listAtRiskGuestPreviews } from "./relationship.service";
 import { listRecentVisitFeedback } from "./visit-feedback.service";
+import { loadBusinessTrustMetrics } from "./policy-evolution.service";
+import { getBusinessById } from "./businesses.service";
+import { policiesFromBusiness } from "./policies.service";
+import { recordLearningMemory } from "./liv-learning.service";
+import { twinConfirmMemorySummary } from "@workspace/policy";
+import { invalidateOwnerIntelligenceCache } from "./owner-intelligence-cache";
 
 export type TwinObservation = {
   id: string;
@@ -28,6 +34,7 @@ export type TwinObservation = {
   evidence: Array<{ type: string; id: string; label: string }>;
   href: string | null;
   createdAt: string;
+  ownerStatus?: string;
 };
 
 const DEFAULT_TTL_DAYS = 14;
@@ -36,6 +43,7 @@ function resolveInputFromContext(
   ctx: BusinessTwinLoadContext,
   atRiskCount: number,
   lowFeedbackCount: number,
+  emergentTrust?: Parameters<typeof resolveTwinObservationDrafts>[0]["emergentTrust"],
 ): Parameters<typeof resolveTwinObservationDrafts>[0] {
   const platformCaps = ctx.capabilities?.platformCapabilities ?? [];
   const blockerCount = platformCaps.reduce(
@@ -66,6 +74,7 @@ function resolveInputFromContext(
     capabilityScore: ctx.capabilities?.capabilityHealth?.score ?? 0,
     feedbackCount: ctx.reviews.count,
     avgFeedback: ctx.reviews.avgRating,
+    emergentTrust,
   };
 }
 
@@ -82,6 +91,7 @@ function rowToObservation(row: typeof twinObservationsTable.$inferSelect): TwinO
     evidence: (row.evidence as TwinObservation["evidence"]) ?? [],
     href: row.href,
     createdAt: row.createdAt.toISOString(),
+    ownerStatus: row.ownerStatus ?? "open",
   };
 }
 
@@ -233,21 +243,48 @@ async function publishTwinObservationEvents(
 
 /** Materialize policy observation drafts into twin_observations (deduped by key). */
 export async function syncTwinObservations(businessId: string): Promise<number> {
-  const [ctx, atRisk, feedback] = await Promise.all([
+  const [ctx, atRisk, feedback, biz, trustMetrics] = await Promise.all([
     loadBusinessTwinContext(businessId),
     listAtRiskGuestPreviews(businessId, { limit: 5 }),
     listRecentVisitFeedback(businessId, 14),
+    getBusinessById(businessId),
+    loadBusinessTrustMetrics(businessId),
   ]);
   if (!ctx.capabilities) return 0;
 
+  const policies = biz ? policiesFromBusiness(biz) : null;
+  const monthsActive = biz
+    ? Math.max(0, Math.floor((Date.now() - biz.createdAt.getTime()) / (30 * 86400000)))
+    : 0;
+
   const lowFeedbackCount = feedback.filter((r) => r.score <= 3).length;
   const drafts = resolveTwinObservationDrafts(
-    resolveInputFromContext(ctx, atRisk.length, lowFeedbackCount),
+    resolveInputFromContext(ctx, atRisk.length, lowFeedbackCount, {
+      monthsActive,
+      completedBookings: trustMetrics.completedBookings,
+      uniqueClients: trustMetrics.uniqueClients,
+      depositCaptureRatePercent: ctx.commerce.captureRatePercent,
+      repeatClientSharePercent: trustMetrics.repeatClientSharePercent,
+      noShowRatePercent: trustMetrics.noShowRatePercent,
+      trustProgramActive: Boolean(policies?.operational.emergentTrustProgram?.enabled),
+    }),
   );
+
+  const suppressed = await db
+    .select({ observationKey: twinObservationsTable.observationKey })
+    .from(twinObservationsTable)
+    .where(
+      and(
+        eq(twinObservationsTable.businessId, businessId),
+        eq(twinObservationsTable.ownerStatus, "dismissed"),
+      ),
+    );
+  const suppressedKeys = new Set(suppressed.map((r) => r.observationKey));
 
   let created = 0;
   const activeKeys = new Set(drafts.map((d) => d.observationKey));
   for (const draft of drafts) {
+    if (suppressedKeys.has(draft.observationKey)) continue;
     const result = await upsertObservation(businessId, draft);
     if (result === "created") {
       created += 1;
@@ -263,6 +300,7 @@ export async function syncTwinObservations(businessId: string): Promise<number> 
         and(
           eq(twinObservationsTable.businessId, businessId),
           isNull(twinObservationsTable.dismissedAt),
+          eq(twinObservationsTable.ownerStatus, "open"),
           notInArray(twinObservationsTable.observationKey, [...activeKeys]),
         ),
       );
@@ -283,6 +321,10 @@ export async function listActiveTwinObservations(
       and(
         eq(twinObservationsTable.businessId, businessId),
         isNull(twinObservationsTable.dismissedAt),
+        or(
+          eq(twinObservationsTable.ownerStatus, "open"),
+          eq(twinObservationsTable.ownerStatus, "confirmed"),
+        ),
         or(
           isNull(twinObservationsTable.expiresAt),
           gte(twinObservationsTable.expiresAt, now),
@@ -322,4 +364,77 @@ export function twinRisksAndOpportunitiesFromObservations(observations: TwinObse
   }));
   const { risks, opportunities } = resolveTwinRisksAndOpportunities(mapped);
   return { twinRisks: risks, twinOpportunities: opportunities };
+}
+
+export async function confirmTwinObservation(args: {
+  businessId: string;
+  observationKey: string;
+  userId: string;
+}): Promise<{ memoryId: string }> {
+  const [row] = await db
+    .select()
+    .from(twinObservationsTable)
+    .where(
+      and(
+        eq(twinObservationsTable.businessId, args.businessId),
+        eq(twinObservationsTable.observationKey, args.observationKey),
+      ),
+    );
+  if (!row) throw new Error("OBSERVATION_NOT_FOUND");
+
+  const summary = twinConfirmMemorySummary(row.title, row.body);
+  const { memoryId } = await recordLearningMemory({
+    businessId: args.businessId,
+    createdBy: "owner",
+    sourceRef: args.observationKey,
+    record: {
+      source: "twin_confirm",
+      summary,
+      entityType: "business",
+      entityId: args.businessId,
+      observationKey: args.observationKey,
+      evidenceRef: row.id,
+    },
+  });
+
+  await db
+    .update(twinObservationsTable)
+    .set({
+      ownerStatus: "confirmed",
+      ownerActedAt: new Date(),
+      ownerUserId: args.userId,
+    })
+    .where(eq(twinObservationsTable.id, row.id));
+
+  invalidateOwnerIntelligenceCache(args.businessId);
+  return { memoryId };
+}
+
+export async function dismissTwinObservation(args: {
+  businessId: string;
+  observationKey: string;
+  userId: string;
+}): Promise<void> {
+  const [row] = await db
+    .select({ id: twinObservationsTable.id })
+    .from(twinObservationsTable)
+    .where(
+      and(
+        eq(twinObservationsTable.businessId, args.businessId),
+        eq(twinObservationsTable.observationKey, args.observationKey),
+      ),
+    );
+  if (!row) throw new Error("OBSERVATION_NOT_FOUND");
+
+  await db
+    .update(twinObservationsTable)
+    .set({
+      ownerStatus: "dismissed",
+      ownerActedAt: new Date(),
+      ownerUserId: args.userId,
+      dismissedAt: new Date(),
+    })
+    .where(eq(twinObservationsTable.id, row.id));
+
+  invalidateOwnerIntelligenceCache(args.businessId);
 }

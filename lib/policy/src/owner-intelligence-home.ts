@@ -18,6 +18,7 @@ export type OwnerIntelHomeInput = {
   twinObservations?: unknown[];
   twinRisks?: unknown[];
   twinOpportunities?: unknown[];
+  learningHypotheses?: unknown[];
 };
 
 /** True when any owner-intelligence slice has content worth rendering. */
@@ -42,6 +43,7 @@ export function ownerIntelligenceHasSurfaceContent(
     (intel.twinObservations?.length ?? 0) > 0 ||
     (intel.twinRisks?.length ?? 0) > 0 ||
     (intel.twinOpportunities?.length ?? 0) > 0 ||
+    (intel.learningHypotheses?.length ?? 0) > 0 ||
     (health != null && health.score < 85) ||
     actionable.length > 0
   );

@@ -226,6 +226,22 @@ export function SupportThreadContextPane({
               </ul>
             </div>
           ) : null}
+          {livBundle?.learningMemory?.length ? (
+            <div style={{ marginTop: 12, borderTop: "1px solid #334155", paddingTop: 10 }}>
+              <h4 style={{ fontSize: 12, color: "#fbbf24", margin: "0 0 6px" }}>Liv learning memory</h4>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: "#94a3b8" }}>
+                {livBundle.learningMemory.map((row) => (
+                  <li key={row.id} style={{ marginBottom: 6 }}>
+                    <span style={{ color: "#e2e8f0" }}>{row.summary}</span>
+                    <br />
+                    <span style={{ fontSize: 10, color: "#64748b" }}>
+                      {row.source} · {new Date(row.createdAt).toLocaleString("en-IE", { dateStyle: "short", timeStyle: "short" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </>
       )}
     </section>

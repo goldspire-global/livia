@@ -16,7 +16,10 @@ export type LivReactionEventName =
   | "twin.insight.generated"
   | "twin.risk.detected"
   | "twin.opportunity.detected"
-  | "eval.rollback.triggered";
+  | "eval.rollback.triggered"
+  | "liv.learning.correction.recorded"
+  | "liv.learning.override.recorded"
+  | "liv.learning.hypothesis.proposed";
 
 export type LivReactionKind =
   | "briefing_increment"
@@ -127,6 +130,27 @@ export const LIV_EVENT_REACTIONS: LivEventReaction[] = [
     profiles: ["livia_internal"],
     priority: "act",
   },
+  {
+    event: "liv.learning.correction.recorded",
+    kind: "coach_owner",
+    templateKey: "liv.learning.correction",
+    profiles: ["tenant"],
+    priority: "watch",
+  },
+  {
+    event: "liv.learning.override.recorded",
+    kind: "briefing_increment",
+    templateKey: "liv.learning.override",
+    profiles: ["tenant"],
+    priority: "info",
+  },
+  {
+    event: "liv.learning.hypothesis.proposed",
+    kind: "coach_owner",
+    templateKey: "liv.learning.hypothesis",
+    profiles: ["tenant"],
+    priority: "watch",
+  },
 ];
 
 export function reactionsForEvent(
@@ -154,6 +178,9 @@ export function domainEventToLivReaction(
     "twin.risk.detected",
     "twin.opportunity.detected",
     "eval.rollback.triggered",
+    "liv.learning.correction.recorded",
+    "liv.learning.override.recorded",
+    "liv.learning.hypothesis.proposed",
   ];
   return allowed.includes(name as LivReactionEventName)
     ? (name as LivReactionEventName)

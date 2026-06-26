@@ -19,6 +19,9 @@ const REFRESH_EVENTS = [
   "twin.insight.generated",
   "twin.risk.detected",
   "twin.opportunity.detected",
+  "liv.learning.correction.recorded",
+  "liv.learning.override.recorded",
+  "liv.learning.hypothesis.proposed",
 ] as const;
 
 /**

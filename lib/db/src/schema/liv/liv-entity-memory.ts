@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, index, jsonb } from "drizzle-orm/pg-core";
 import { businessesTable } from "../identity/businesses";
 
 export const livEntityMemoryTable = pgTable(
@@ -13,6 +13,9 @@ export const livEntityMemoryTable = pgTable(
     kind: text("kind").notNull().default("note"),
     content: text("content").notNull(),
     createdBy: text("created_by").notNull().default("staff"),
+    supersedesId: text("supersedes_id"),
+    sourceRef: text("source_ref"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },

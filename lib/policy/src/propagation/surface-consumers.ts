@@ -14,7 +14,14 @@ const SURFACE_CONSUMER_EXTENSIONS: Record<
 > = {
   "tenant.owner.dashboard": {
     consumesCapabilities: ["owner-today"],
-    policyModules: ["vocabulary.ts", "booking-experience-copy.ts", "vertical-announcement.ts"],
+    policyModules: [
+      "vocabulary.ts",
+      "booking-experience-copy.ts",
+      "vertical-announcement.ts",
+      "liv-learning-program.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
+    ],
   },
   "tenant.staff.my-day": {
     consumesCapabilities: ["owner-today", "bookings-list"],
@@ -67,6 +74,9 @@ const SURFACE_CONSUMER_EXTENSIONS: Record<
       "public-book-layout.ts",
       "booking-guards.ts",
       "booking-experience-copy.ts",
+      "liv-learning-program.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
     ],
   },
   "guest.public.proof": {
@@ -88,6 +98,15 @@ const SURFACE_CONSUMER_EXTENSIONS: Record<
   "guest.public.hub": {
     consumesCapabilities: ["guest-hub", "visit-token"],
     policyModules: ["guest-hub-copy.ts", "guest-my-relationship.ts"],
+  },
+  "internal.ops.support": {
+    consumesCapabilities: ["internal-support"],
+    policyModules: [
+      "liv-learning-program.ts",
+      "liv-operator-learning-policy.ts",
+      "liv-platform-awareness-program.ts",
+      "liv-observatory-program.ts",
+    ],
   },
   "gateway.onboarding": {
     consumesCapabilities: ["owner-today"],

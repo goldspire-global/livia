@@ -85,6 +85,12 @@ export function propagationImpactForModule(modulePath: string): PropagationImpac
     "continuity-templates.ts": ["vertical-copy-program.test.ts"],
     "guest-public-experience.ts": ["vertical-copy-program.test.ts"],
     "vocabulary.ts": ["owner-home-bookings.test.ts", "vertical-copy-program.test.ts"],
+    "liv-learning-program.ts": ["liv-learning-program.test.ts", "liv-learning-propagation.test.ts"],
+    "liv-platform-awareness-program.ts": [
+      "liv-platform-awareness.test.ts",
+      "liv-platform-awareness-propagation.test.ts",
+    ],
+    "liv-observatory-program.ts": ["liv-observatory-program.test.ts"],
   };
 
   const verticals = [...businessVerticalSchema.options];

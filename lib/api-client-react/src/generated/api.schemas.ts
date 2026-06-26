@@ -1554,6 +1554,10 @@ export type OwnerIntelligenceBundleLivSuggestionsItem = {
   [key: string]: unknown;
 };
 
+export type OwnerIntelligenceBundleLearningHypothesesItem = {
+  [key: string]: unknown;
+};
+
 export type OwnerIntelligenceBundleOps = { [key: string]: unknown };
 
 export type OwnerIntelligenceBundleTwinObservationsItem = {
@@ -1584,6 +1588,7 @@ export interface OwnerIntelligenceBundle {
   twinHeadline?: string | null;
   /** @nullable */
   twinSubline?: string | null;
+  learningHypotheses?: OwnerIntelligenceBundleLearningHypothesesItem[];
   ops: OwnerIntelligenceBundleOps;
   twinObservations: OwnerIntelligenceBundleTwinObservationsItem[];
   twinRisks: TwinRiskOrOpportunity[];

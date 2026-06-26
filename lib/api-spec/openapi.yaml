@@ -5224,6 +5224,11 @@ components:
           type: ["string", "null"]
         twinSubline:
           type: ["string", "null"]
+        learningHypotheses:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
         ops:
           type: object
           additionalProperties: true

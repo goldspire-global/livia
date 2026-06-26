@@ -141,6 +141,7 @@ export type LivIncidentBundle = {
     sentrySearchUrl: string | null;
   } | null;
   suggestedActions: string[];
+  learningMemory: Array<{ id: string; summary: string; source: string; createdAt: string }>;
 };
 
 export type SupportTicketListFilters = {

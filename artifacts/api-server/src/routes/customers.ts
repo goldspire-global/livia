@@ -348,6 +348,8 @@ router.post(
     )
       ? kind
       : "note";
+    const supersedesMemoryId =
+      typeof req.body?.supersedesMemoryId === "string" ? req.body.supersedesMemoryId : undefined;
     const { appendLivMemory } = await import("../services/liv-memory.service");
     const row = await appendLivMemory({
       businessId,
@@ -356,6 +358,7 @@ router.post(
       kind: memoryKind as "note" | "preference" | "ritual" | "pressure" | "therapist_pref" | "health_light",
       content,
       createdBy: "staff",
+      supersedesId: supersedesMemoryId,
     });
     await appendHumanAudit(businessId, userId, "human.liv.memory.append", "customer", customerId, {
       memoryId: row.id,

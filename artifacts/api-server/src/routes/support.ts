@@ -70,20 +70,29 @@ router.post(
       /* non-blocking — ticket already persisted */
     });
 
-    if (category === "liv_error" && isInngestWorkflowsEnabled()) {
+    if (category === "liv_error") {
       const ctx =
         context && typeof context === "object" && !Array.isArray(context)
           ? (context as Record<string, unknown>)
           : {};
-      void inngest.send({
-        name: "support/liv_error.reported",
-        data: {
-          businessId,
-          ticketId: ticket.id,
-          conversationId: typeof ctx.conversationId === "string" ? ctx.conversationId : undefined,
-          bookingId: typeof ctx.bookingId === "string" ? ctx.bookingId : undefined,
-        },
-      });
+      const payload = {
+        businessId,
+        ticketId: ticket.id,
+        description: description.trim(),
+        conversationId: typeof ctx.conversationId === "string" ? ctx.conversationId : undefined,
+        bookingId: typeof ctx.bookingId === "string" ? ctx.bookingId : undefined,
+        reporterUserId: userId,
+      };
+      if (isInngestWorkflowsEnabled()) {
+        void inngest.send({
+          name: "support/liv_error.reported",
+          data: payload,
+        });
+      } else {
+        void import("../services/liv-correction.service").then(({ processLivErrorReport }) =>
+          processLivErrorReport(payload).catch(() => undefined),
+        );
+      }
     }
 
     res.status(201).json(ticket);

@@ -252,8 +252,7 @@ export async function handlePublicChat(args: {
     };
   }
 
-  const consultFirst = businessRow.vertical === "event-vendors";
-  const [services, staff, history, memoryBlock, operatorLearningBlock] = await Promise.all([
+  const [services, staff, history, memoryBlock, learningBlock, awarenessBlock, observatoryBlock] = await Promise.all([
     listServices(business.id, true),
     listStaff(business.id, { isActive: true }),
     listMessagesForConversation(conversation.id),
@@ -262,11 +261,15 @@ export async function handlePublicChat(args: {
           buildLivMemoryBlockForCustomer(business.id, conversation!.customerId!),
         )
       : Promise.resolve(""),
-    consultFirst
-      ? import("./liv-operator-learning.service").then(({ buildOperatorLearningPromptBlock }) =>
-          buildOperatorLearningPromptBlock(business.id),
-        )
-      : Promise.resolve(""),
+    import("./liv-memory.service").then(({ buildLivLearningPromptBlock }) =>
+      buildLivLearningPromptBlock(business.id),
+    ),
+    import("./liv-platform-awareness.service").then(({ buildLivPlatformAwarenessPromptBlock }) =>
+      buildLivPlatformAwarenessPromptBlock({ businessId: business.id, profile: "tenant_public" }),
+    ),
+    import("./liv-observatory.service").then(({ buildLivObservatoryPromptBlock }) =>
+      buildLivObservatoryPromptBlock(business.id),
+    ),
   ]);
 
   const pack = loadVerticalPack(businessRow.vertical, cached.packConfig);
@@ -313,7 +316,7 @@ export async function handlePublicChat(args: {
         phone: conversation.customerPhone ?? args.customerPhone ?? null,
       },
       channelType,
-    }) + memoryBlock + operatorLearningBlock;
+    }) + memoryBlock + learningBlock + awarenessBlock + observatoryBlock;
 
   const anthropicMessages: Anthropic.MessageParam[] = [];
   for (const m of history) {

@@ -155,6 +155,30 @@ export const eventRegistry = {
     rollbackClass: z.enum(["DETERMINISTIC", "POLICY_VIOLATION", "AGENT_LOOP", "UNKNOWN"]),
     requiresHumanApproval: z.boolean(),
   }),
+
+  // Liv learning loop
+  "liv.learning.correction.recorded": z.object({
+    businessId: z.string(),
+    ticketId: z.string(),
+    memoryId: z.string(),
+    bookingId: z.string().nullable(),
+    conversationId: z.string().nullable(),
+    summary: z.string().optional(),
+  }),
+  "liv.learning.override.recorded": z.object({
+    businessId: z.string(),
+    bookingId: z.string(),
+    memoryId: z.string(),
+    overrideKind: z.enum(["staff", "time"]),
+    summary: z.string().optional(),
+  }),
+  "liv.learning.hypothesis.proposed": z.object({
+    businessId: z.string(),
+    hypothesisId: z.string(),
+    title: z.string(),
+    body: z.string().optional(),
+    confidence: z.enum(["high", "medium", "low"]),
+  }),
 } as const satisfies Record<string, z.ZodType>;
 
 export type EventName = keyof typeof eventRegistry;

@@ -353,6 +353,16 @@ router.patch(
           req.body.cancellationReason,
         ).catch(() => undefined);
       }
+      if (before && req.body?.staffId && req.body.staffId !== before.staffId) {
+        void import("../services/liv-override-learning.service").then(({ maybeRecordBookingStaffOverride }) =>
+          maybeRecordBookingStaffOverride({
+            businessId,
+            bookingId,
+            previousStaffId: before.staffId,
+            nextStaffId: req.body.staffId,
+          }),
+        );
+      }
       res.json(updated);
     } catch (err: unknown) {
       if (replyDomainError(req, res, err)) return;
@@ -418,6 +428,16 @@ router.post(
             newStartAt: updated.startAt,
           },
         }).catch(() => undefined);
+      }
+      if (existing?.startAt && updated.startAt) {
+        void import("../services/liv-override-learning.service").then(({ maybeRecordBookingTimeOverride }) =>
+          maybeRecordBookingTimeOverride({
+            businessId,
+            bookingId,
+            previousStartAt: new Date(existing.startAt),
+            nextStartAt: new Date(updated.startAt),
+          }),
+        );
       }
       res.json(updated);
     } catch (err: unknown) {

@@ -3127,6 +3127,9 @@ export const GetOwnerIntelligenceResponse = zod.object({
     .optional(),
   twinHeadline: zod.string().nullish(),
   twinSubline: zod.string().nullish(),
+  learningHypotheses: zod
+    .array(zod.record(zod.string(), zod.unknown()))
+    .optional(),
   ops: zod.record(zod.string(), zod.unknown()),
   twinObservations: zod.array(zod.record(zod.string(), zod.unknown())),
   twinRisks: zod.array(

@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { businessesTable } from "../identity/businesses";
+import { usersTable } from "../identity/users";
 
 export const twinObservationsTable = pgTable(
   "twin_observations",
@@ -20,6 +21,9 @@ export const twinObservationsTable = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
+    ownerStatus: text("owner_status").notNull().default("open"),
+    ownerActedAt: timestamp("owner_acted_at", { withTimezone: true }),
+    ownerUserId: text("owner_user_id").references(() => usersTable.id, { onDelete: "set null" }),
   },
   (t) => [
     uniqueIndex("twin_observations_business_key_idx").on(t.businessId, t.observationKey),

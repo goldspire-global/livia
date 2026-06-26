@@ -23,6 +23,8 @@ import { refundLadderWorkflow } from "./refund-ladder";
 import { commerceIntelligenceDaily } from "./commerce-intelligence-daily";
 import { commerceWeeklyDigest } from "./commerce-weekly-digest";
 import { twinObservationsDaily } from "./twin-observations-daily";
+import { livHypothesisDaily } from "./liv-hypothesis-daily";
+import { livLearningOnUsage } from "./liv-learning-on-usage";
 import { migrationImportJob } from "./migration-import-job";
 
 export const workflowFunctions = [
@@ -51,5 +53,7 @@ export const workflowFunctions = [
   commerceIntelligenceDaily,
   commerceWeeklyDigest,
   twinObservationsDaily,
+  livHypothesisDaily,
+  livLearningOnUsage,
   migrationImportJob,
 ];
