@@ -8,6 +8,12 @@ import {
   updateHostRenterRentStatus,
   endHostRenterLink,
 } from "../services/chair-rental.service";
+import {
+  getChairHostingListing,
+  updateChairHostingListing,
+  listChairHostingEnquiries,
+  updateChairHostingEnquiryStatus,
+} from "../services/chair-hosting.service";
 import { appendHumanAudit } from "../lib/audit";
 
 import { sendError } from "../lib/http-errors";
@@ -21,6 +27,66 @@ router.get(
   async (req, res): Promise<void> => {
     const hostBusinessId = bizId(req.params.businessId);
     res.json(await getHostDashboardSummary(hostBusinessId));
+  },
+);
+
+router.get(
+  "/businesses/:businessId/host/listing",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const listing = await getChairHostingListing(bizId(req.params.businessId));
+    if (!listing) {
+      sendError(res, req, 404, "Business not found");
+      return;
+    }
+    res.json(listing);
+  },
+);
+
+router.patch(
+  "/businesses/:businessId/host/listing",
+  requireAuth,
+  requireRole("OWNER"),
+  async (req, res): Promise<void> => {
+    const listing = await updateChairHostingListing(bizId(req.params.businessId), req.body ?? {});
+    if (!listing) {
+      sendError(res, req, 404, "Business not found");
+      return;
+    }
+    res.json(listing);
+  },
+);
+
+router.get(
+  "/businesses/:businessId/host/enquiries",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    res.json(await listChairHostingEnquiries(bizId(req.params.businessId)));
+  },
+);
+
+router.patch(
+  "/businesses/:businessId/host/enquiries/:enquiryId",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res): Promise<void> => {
+    const status = req.body?.status as string;
+    if (!["new", "contacted", "linked", "declined"].includes(status)) {
+      sendError(res, req, 400, "Invalid status");
+      return;
+    }
+    const row = await updateChairHostingEnquiryStatus(
+      bizId(req.params.businessId),
+      bizId(req.params.enquiryId),
+      status as "new" | "contacted" | "linked" | "declined",
+    );
+    if (!row) {
+      sendError(res, req, 404, "Enquiry not found");
+      return;
+    }
+    res.json(row);
   },
 );
 

@@ -208,7 +208,7 @@ assert.deepEqual(
     ["todayBookings", "inboxHandoffs", "toConfirm", "completedToday"],
     { needsYou: 2, guestAction: 0 },
   ),
-  ["todayBookings", "completedToday"],
+  ["completedToday"],
 );
 
 assert.equal(

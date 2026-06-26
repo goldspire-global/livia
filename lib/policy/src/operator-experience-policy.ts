@@ -389,5 +389,5 @@ export function resolveSoloOwnerHomeFallback(
     signals.todayBookings > 0 ||
     signals.weekBookings > 0;
   if (busy) return null;
-  return { href: "/my-livia", label: "Tune Liv for your studio" };
+  return { href: "/settings?tab=liv", label: "Tune Liv for your studio" };
 }

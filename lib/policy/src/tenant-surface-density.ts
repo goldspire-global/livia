@@ -117,9 +117,10 @@ export function filterOwnerHomeKpiWhenOperatingPulseVisible(
   chips: OwnerHomeKpiId[],
   pulse?: { needsYou: number; guestAction: number } | null,
 ): OwnerHomeKpiId[] {
-  if (!pulse) return chips;
-  if (pulse.needsYou <= 0 && pulse.guestAction <= 0) return chips;
-  return chips.filter((id) => id !== "inboxHandoffs" && id !== "toConfirm");
+  let out = chips.filter((id) => id !== "todayBookings");
+  if (!pulse) return out;
+  if (pulse.needsYou <= 0 && pulse.guestAction <= 0) return out;
+  return out.filter((id) => id !== "inboxHandoffs" && id !== "toConfirm");
 }
 
 /** Briefing CTA duplicates operating pulse + queue panels when both are visible. */

@@ -132,9 +132,9 @@ export function LivSettingsOperationalPanel({
               Send
             </Button>
             <Button type="button" variant="ghost" size="sm" asChild>
-              <Link href="/my-livia">
+              <Link href="/settings?tab=liv">
                 <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                Open Liv hub
+                Open Liv settings
               </Link>
             </Button>
           </div>

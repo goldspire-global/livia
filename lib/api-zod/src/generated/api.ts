@@ -3088,6 +3088,14 @@ export const GetOwnerIntelligenceResponse = zod.object({
       href: zod.string(),
     }),
   ),
+  platformReadinessBlockers: zod.array(
+    zod.object({
+      capabilityId: zod.string(),
+      capabilityName: zod.string(),
+      blocker: zod.string(),
+      href: zod.string(),
+    }),
+  ),
   livSuggestions: zod.array(zod.record(zod.string(), zod.unknown())),
   livPrompts: zod.array(zod.string()),
   remediationTasks: zod.array(

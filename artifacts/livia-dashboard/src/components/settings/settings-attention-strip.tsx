@@ -1,12 +1,25 @@
 import { useMemo } from "react";
+import { Link } from "wouter";
 import { useGetOwnerIntelligence } from "@workspace/api-client-react";
 import { buildSettingsAttentionRows } from "@workspace/policy";
 import { useBusiness } from "@/lib/business-context";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
 import { CommerceSettingsLink } from "@/components/billing/commerce-settings-link";
 import { parseSettingsHref } from "@/lib/commerce-fix-navigation";
+
+function AttentionOpenLink({ href, className }: { href: string; className?: string }) {
+  if (href.includes("/settings")) {
+    return <CommerceSettingsLink href={href} label="Open" className={className} />;
+  }
+  return (
+    <Button size="sm" variant="outline" className={className} asChild>
+      <Link href={href}>Open</Link>
+    </Button>
+  );
+}
 
 export function useSettingsAttentionRows() {
   const { business } = useBusiness();
@@ -14,11 +27,7 @@ export function useSettingsAttentionRows() {
   const { data, isLoading } = useGetOwnerIntelligence(bid, {
     query: { enabled: !!bid, staleTime: 15_000, refetchOnWindowFocus: true } as never,
   });
-  const rows = useMemo(
-    () =>
-      buildSettingsAttentionRows(data ?? null).filter((r) => r.href.includes("/settings")),
-    [data],
-  );
+  const rows = useMemo(() => buildSettingsAttentionRows(data ?? null), [data]);
   const tabsWithAttention = useMemo(() => {
     const tabs = new Set<string>();
     for (const row of rows) {
@@ -48,7 +57,8 @@ export function SettingsAttentionStrip() {
       <div className="flex items-center gap-2 text-sm font-medium">
         <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
         <span>
-          {rows.length} item{rows.length === 1 ? "" : "s"} need attention in Settings
+          {rows.length} item{rows.length === 1 ? "" : "s"}{" "}
+          {rows.length === 1 ? "needs" : "need"} attention
         </span>
       </div>
       {rows.map((row) => (
@@ -65,7 +75,7 @@ export function SettingsAttentionStrip() {
             </div>
             <p className="text-muted-foreground text-xs leading-snug">{row.body}</p>
           </div>
-          <CommerceSettingsLink href={row.href} label="Open" className="shrink-0" />
+          <AttentionOpenLink href={row.href} className="shrink-0" />
         </div>
       ))}
     </div>

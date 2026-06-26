@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Scissors, Plus, Clock, Star } from "lucide-react";
+import { Scissors, Plus, Clock, Star, Calendar, Sparkles, Heart, Layers } from "lucide-react";
 import { customFetch } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { invalidateOperationalState } from "@/lib/operational-cache";
@@ -31,6 +31,8 @@ import {
   type BeautyServiceKind,
   BEAUTY_SERVICE_KINDS,
   serviceDepositPercentHint,
+  catalogEmptyState,
+  type CatalogEmptyIcon,
 } from "@workspace/policy";
 
 interface ServiceForm {
@@ -48,6 +50,22 @@ interface ServiceForm {
   quoteUnit?: string;
   stockCount?: number | "";
   depositPercent?: number | "";
+}
+
+function catalogEmptyIconNode(icon: CatalogEmptyIcon) {
+  const props = { className: "h-9 w-9 text-muted-foreground mb-3 opacity-40" };
+  switch (icon) {
+    case "scissors":
+      return <Scissors {...props} />;
+    case "sparkles":
+      return <Sparkles {...props} />;
+    case "heart":
+      return <Heart {...props} />;
+    case "calendar":
+      return <Calendar {...props} />;
+    default:
+      return <Layers {...props} />;
+  }
 }
 
 function serviceNamePlaceholder(vertical: string): string {
@@ -171,6 +189,9 @@ export default function ServicesPage() {
   );
   const isBeauty = verticalKey === "beauty";
   const isEventVendor = verticalKey === "event-vendors";
+  const catalogEmpty = catalogEmptyState(
+    (business as { vertical?: string } | null)?.vertical,
+  );
   const serviceLabel = isEventVendor ? vocab.publicBookCatalogTitle : vocab.serviceNoun;
   const itemNameLabel = isEventVendor ? "Catalogue item name" : `${serviceLabel} name`;
   const newItemLabel = isBeauty
@@ -737,11 +758,9 @@ export default function ServicesPage() {
       ) : svcList.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-            <Scissors className="h-9 w-9 text-muted-foreground mb-3 opacity-40" />
-            <p className="font-medium">No services yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create your first service to start taking bookings
-            </p>
+            {catalogEmptyIconNode(catalogEmpty.icon)}
+            <p className="font-medium">{catalogEmpty.title}</p>
+            <p className="text-sm text-muted-foreground mt-1">{catalogEmpty.body}</p>
           </CardContent>
         </Card>
       ) : (

@@ -760,6 +760,14 @@ export function OwnerHomeRitual({
           pulse={(summary as { operatingPulse?: import("@workspace/policy").OperatingPulseView })?.operatingPulse}
           loading={isLoadingSummary}
           showPrimaryAction={showPulsePrimaryAction}
+          todayBookings={todayTotal}
+          todayBookingsSub={
+            isLoadingSummary
+              ? undefined
+              : todayDelta === 0
+                ? "= week avg"
+                : `${todayDelta > 0 ? "+" : ""}${todayDelta} vs avg`
+          }
         />
       ) : null}
 

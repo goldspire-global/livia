@@ -4,6 +4,7 @@ import {
   topCommerceSignal,
   buildCommerceRemediationTasks,
   resolveCommerceCapabilityBlockers,
+  capabilityBlockerHref,
   type CapabilityHealthScore,
   type CommerceSignal,
   type CommerceRemediationTask,
@@ -32,6 +33,7 @@ export type OwnerIntelligenceBundle = {
   capabilityHealth?: CapabilityHealthScore;
   capabilityBlockers: number;
   commerceCapabilityBlockers: CommerceCapabilityBlocker[];
+  platformReadinessBlockers: CommerceCapabilityBlocker[];
   livSuggestions: ReturnType<typeof ownerHomeLivSuggestions>;
   livPrompts: string[];
   remediationTasks: CommerceRemediationTask[];
@@ -121,6 +123,14 @@ export async function getOwnerIntelligenceBundle(
   const commerceCapabilityBlockers = resolveCommerceCapabilityBlockers(
     caps.platformCapabilities,
   );
+  const platformReadinessBlockers = caps.platformCapabilities.flatMap((cap) =>
+    cap.readinessBlockers.map((blocker) => ({
+      capabilityId: cap.id,
+      capabilityName: cap.name,
+      blocker,
+      href: capabilityBlockerHref(cap.id, blocker),
+    })),
+  );
 
   const twinTop = twinRecs?.recommendations?.[0] ?? null;
   const { twinRisks, twinOpportunities } = twinRisksAndOpportunitiesFromObservations(twinObservations);
@@ -167,6 +177,7 @@ export async function getOwnerIntelligenceBundle(
     capabilityHealth: caps.capabilityHealth,
     capabilityBlockers,
     commerceCapabilityBlockers,
+    platformReadinessBlockers,
     livSuggestions,
     livPrompts,
     remediationTasks,

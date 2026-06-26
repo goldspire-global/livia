@@ -4,6 +4,7 @@ export * from "./identity/businesses";
 export * from "./identity/staff";
 export * from "./identity/delegations";
 export * from "./identity/host-renter-links";
+export * from "./identity/chair-hosting-enquiries";
 export * from "./identity/premises";
 export * from "./identity/premises-co-tenant-invites";
 export * from "./identity/channel-premises-routing";

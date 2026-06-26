@@ -1575,6 +1575,7 @@ export interface OwnerIntelligenceBundle {
   capabilityHealth?: CapabilityHealthScore;
   capabilityBlockers: number;
   commerceCapabilityBlockers: CommerceCapabilityBlocker[];
+  platformReadinessBlockers: CommerceCapabilityBlocker[];
   livSuggestions: OwnerIntelligenceBundleLivSuggestionsItem[];
   livPrompts: string[];
   remediationTasks: CommerceRemediationTask[];

@@ -9,6 +9,7 @@ export type OwnerIntelHomeInput = {
     signals?: Array<{ severity: string }>;
   };
   commerceCapabilityBlockers?: unknown[];
+  platformReadinessBlockers?: unknown[];
   capabilityBlockers?: number;
   twinHeadline?: string | null;
   twinTopRecommendation?: unknown;
@@ -27,12 +28,14 @@ export function ownerIntelligenceHasSurfaceContent(
   const top = intel.commerce?.topSignal;
   const tasks = intel.remediationTasks ?? [];
   const blockers = intel.commerceCapabilityBlockers ?? [];
+  const readiness = intel.platformReadinessBlockers ?? [];
   const actionable = intel.commerce?.signals?.filter((s) => s.severity !== "info") ?? [];
   const health = intel.capabilityHealth;
   return (
     top != null ||
     tasks.length > 0 ||
     blockers.length > 0 ||
+    readiness.length > 0 ||
     intel.twinHeadline != null ||
     intel.twinTopRecommendation != null ||
     (intel.livPrompts?.length ?? 0) > 0 ||
@@ -250,6 +253,12 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
       blocker: string;
       href: string;
     }>;
+    platformReadinessBlockers?: Array<{
+      capabilityId: string;
+      capabilityName: string;
+      blocker: string;
+      href: string;
+    }>;
     commerce?: {
       signals?: Array<{
         id?: string;
@@ -298,6 +307,17 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
     rows.push(row);
   };
 
+  for (const blocker of data.platformReadinessBlockers ?? []) {
+    push({
+      id: `ready-${blocker.capabilityId}-${normalizeIntelligenceTitle(blocker.blocker).slice(0, 24)}`,
+      title: blocker.capabilityName,
+      body: blocker.blocker,
+      href: blocker.href,
+      severity: "act",
+      source: "remediation",
+    });
+  }
+
   for (const blocker of data.commerceCapabilityBlockers ?? []) {
     push({
       id: `cap-${blocker.capabilityId}`,
@@ -311,7 +331,10 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
 
   const compact = buildCompactOwnerIntelligenceRows(data as never);
   if (compact.primary && compact.primary.severity !== "info") {
-    push(compact.primary);
+    const aggregatedCapability =
+      compact.primary.title === "Setup blockers on capability graph" ||
+      compact.primary.id === "capability:setup-blockers";
+    if (!aggregatedCapability) push(compact.primary);
   }
   for (const row of compact.more) {
     if (row.severity !== "info") push(row);
@@ -319,7 +342,7 @@ export function buildSettingsAttentionRows(intel: unknown): OwnerIntelligenceAct
 
   const rank = (s: OwnerIntelligenceActionRow["severity"]) =>
     s === "act" ? 0 : s === "watch" ? 1 : 2;
-  return rows.sort((a, b) => rank(a.severity) - rank(b.severity)).slice(0, 5);
+  return rows.sort((a, b) => rank(a.severity) - rank(b.severity)).slice(0, 8);
 }
 
 /** Count of act-severity items across commerce + remediation + setup blockers. */
@@ -331,7 +354,9 @@ export function ownerIntelligenceActSignalCount(
     (intel.remediationTasks?.filter((t) => t.severity === "act").length ?? 0) +
     (intel.commerce?.topSignal?.severity === "act" ? 1 : 0) +
     (intel.commerce?.signals?.filter((s) => s.severity === "act").length ?? 0);
-  const setupAct = intel.commerceCapabilityBlockers?.length ?? 0;
+  const setupAct =
+    (intel.platformReadinessBlockers?.length ?? 0) +
+    (intel.commerceCapabilityBlockers?.length ?? 0);
   const twinAct = intel.twinRisks?.length ?? 0;
   return commerceAct + setupAct + twinAct;
 }

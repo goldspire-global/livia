@@ -183,6 +183,8 @@ export * from "./owner-presence-intel";
 export * from "./public-book-layout";
 export * from "./setup-guided-flow";
 export * from "./liv-arrival-program";
+export * from "./catalog-empty-state";
+export * from "./chair-hosting-program";
 export * from "./subvertical-profiles";
 export * from "./import-formats";
 export * from "./integration-catalog";

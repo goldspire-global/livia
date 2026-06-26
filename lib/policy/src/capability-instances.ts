@@ -192,7 +192,7 @@ export function capabilityBlockerHref(capabilityId: string, blocker: string): st
     case "portfolio":
       return "/customers";
     default:
-      return "/settings";
+      return "/settings?tab=liv";
   }
 }
 

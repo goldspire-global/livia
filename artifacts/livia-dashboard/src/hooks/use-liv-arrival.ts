@@ -131,6 +131,7 @@ export function useLivArrival() {
     dismiss,
     advanceBeat,
     flow,
+    capabilityBlockers: guidedFlow?.capabilityBlockers ?? [],
     currentPhase,
     stepIndex,
     totalSteps,

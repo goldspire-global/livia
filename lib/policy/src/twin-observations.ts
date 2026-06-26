@@ -142,7 +142,7 @@ export function resolveTwinObservationDrafts(
           label: `${input.capabilityBlockerCount} blockers`,
         },
       ],
-      href: "/settings",
+      href: "/toolkit",
     });
   }
 

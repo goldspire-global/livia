@@ -162,3 +162,11 @@ export function operatingPulsePanelCopy(bucket: OperatingAttentionBucket): {
       };
   }
 }
+
+/** First pulse column on Today — calendar load, not inbox automation. */
+export function operatingPulseTodayBookingsCopy(): { label: string; description: string } {
+  return {
+    label: "Today's bookings",
+    description: "On your calendar for today.",
+  };
+}

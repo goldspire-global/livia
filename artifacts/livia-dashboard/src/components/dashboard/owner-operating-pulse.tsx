@@ -1,12 +1,43 @@
 import { Link } from "wouter";
-import { Sparkles, UserRound, Users } from "lucide-react";
+import { Calendar, UserRound, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   operatingPulsePanelCopy,
+  operatingPulseTodayBookingsCopy,
   type OperatingAttentionBucket,
   type OperatingPulseView,
 } from "@workspace/policy";
+
+function TodayBookingsStat({
+  count,
+  sub,
+  active,
+}: {
+  count: number;
+  sub?: string;
+  active?: boolean;
+}) {
+  const copy = operatingPulseTodayBookingsCopy();
+  return (
+    <Link
+      href="/bookings"
+      className={cn(
+        "rounded-lg border px-3 py-2 min-w-0 flex-1 block hover:border-primary/50 transition-colors",
+        active ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card/50",
+      )}
+    >
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {copy.label}
+      </div>
+      <p className="text-2xl font-semibold tabular-nums mt-0.5">{count}</p>
+      <p className="text-[11px] text-muted-foreground leading-snug mt-1">
+        {sub ?? copy.description}
+      </p>
+    </Link>
+  );
+}
 
 function PulseStat({
   bucket,
@@ -21,7 +52,7 @@ function PulseStat({
 }) {
   const copy = operatingPulsePanelCopy(bucket);
   const Icon =
-    bucket === "needs_you" ? UserRound : bucket === "guest_action" ? Users : Sparkles;
+    bucket === "needs_you" ? UserRound : bucket === "guest_action" ? Users : Calendar;
   const body = (
     <>
       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -62,11 +93,15 @@ export function OwnerOperatingPulse({
   loading,
   className,
   showPrimaryAction = true,
+  todayBookings = 0,
+  todayBookingsSub,
 }: {
   pulse?: OperatingPulseView | null;
   loading?: boolean;
   className?: string;
   showPrimaryAction?: boolean;
+  todayBookings?: number;
+  todayBookingsSub?: string;
 }) {
   if (loading) {
     return (
@@ -80,7 +115,6 @@ export function OwnerOperatingPulse({
 
   const guestCount = pulse.guestAction;
   const needsCount = pulse.needsYou;
-  const livCount = Math.max(0, pulse.livHandling);
 
   return (
     <section
@@ -99,7 +133,11 @@ export function OwnerOperatingPulse({
         ) : null}
       </div>
       <div className="p-3 flex flex-col sm:flex-row gap-2">
-        <PulseStat bucket="liv_handling" count={livCount} active={needsCount === 0} />
+        <TodayBookingsStat
+          count={todayBookings}
+          sub={todayBookingsSub}
+          active={needsCount === 0 && guestCount === 0}
+        />
         <PulseStat
           bucket="guest_action"
           count={guestCount}

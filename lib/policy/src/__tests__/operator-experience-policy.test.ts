@@ -41,7 +41,7 @@ const quietSolo = resolveSoloOwnerHomeFallback(solo, {
   todayBookings: 0,
   weekBookings: 0,
 });
-assert.equal(quietSolo?.href, "/my-livia");
+assert.equal(quietSolo?.href, "/settings?tab=liv");
 
 const busySolo = resolveSoloOwnerHomeFallback(solo, {
   pendingCount: 1,

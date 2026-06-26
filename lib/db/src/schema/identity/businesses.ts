@@ -134,6 +134,19 @@ export const businessesTable = pgTable(
       }>()
       .notNull()
       .default({ enabled: false, title: "Take home", postSessionSuggest: true }),
+    /** Chair/booth rental advertising on public book — see chair-hosting-program. */
+    chairHosting: jsonb("chair_hosting")
+      .$type<{
+        enabled?: boolean;
+        headline?: string;
+        body?: string;
+        weeklyRateMinor?: number;
+        chairsAvailable?: number;
+        amenities?: string[];
+        contactEmail?: string | null;
+      }>()
+      .notNull()
+      .default({ enabled: false }),
     /** Verified custom domain for public book (Phase 3). */
     customBookDomain: text("custom_book_domain"),
     customBookDomainVerified: boolean("custom_book_domain_verified").notNull().default(false),

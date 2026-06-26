@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
+import { ChairHostingListingPanel } from "@/components/host/chair-hosting-listing-panel";
+import { ChairHostingEnquiriesPanel } from "@/components/host/chair-hosting-enquiries-panel";
 import { Armchair, Check, Link2 } from "lucide-react";
 
 type HostDashboard = {
@@ -133,8 +135,11 @@ export default function HostPage() {
       <PersonaRitualHeader
         variant="page"
         title="Host floor"
-        subtitle="Chair occupancy and rent — renter client lists stay private to each stylist."
+        subtitle="Chair occupancy, rent, and renter enquiries — client lists stay private."
       />
+
+      <ChairHostingListingPanel businessId={bid} currency={business?.currency ?? "EUR"} />
+      <ChairHostingEnquiriesPanel businessId={bid} />
 
       {loading && !data ? (
         <Skeleton className="h-48" />

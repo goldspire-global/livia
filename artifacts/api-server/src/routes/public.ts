@@ -209,6 +209,7 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
   ]);
 
   const retailSettings = parseBeautyRetailStoreSettings(biz.retailStore);
+  const { publicChairHostingPayload } = await import("../services/chair-hosting.service");
   const { isPublicRetailVertical } = await import("@workspace/policy");
   const { tenantHasEntitlementForBusiness } = await import("../services/billing.service");
   const retailEntitled = await tenantHasEntitlementForBusiness(biz.id, "retail_pack");
@@ -294,6 +295,7 @@ async function getPublicBusinessProfile(req: Request, res: Response): Promise<vo
         : undefined,
     designShowcase:
       biz.vertical === "body-art" && designShowcase.length > 0 ? designShowcase : undefined,
+    chairHosting: publicChairHostingPayload(biz),
   });
 }
 
@@ -594,6 +596,29 @@ router.post("/public/b/:slug/classes/:sessionId/enroll", async (req, res): Promi
     logRouteError(req, e, "public class enroll");
     sendError(res, req, 500, safeClientMessage(e));
   }
+});
+
+router.post("/public/b/:slug/chair-hosting/enquire", async (req, res): Promise<void> => {
+  if (!(await enforcePublicBookingRateLimit(req, res))) return;
+  const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+  const { contactName, contactEmail, contactPhone, specialty, message } = req.body ?? {};
+  if (!contactName || !contactEmail) {
+    sendError(res, req, 400, "contactName and contactEmail required");
+    return;
+  }
+  const { submitChairHostingEnquiry } = await import("../services/chair-hosting.service");
+  const result = await submitChairHostingEnquiry(slug, {
+    contactName: String(contactName),
+    contactEmail: String(contactEmail),
+    contactPhone: contactPhone ? String(contactPhone) : undefined,
+    specialty: specialty ? String(specialty) : undefined,
+    message: message ? String(message) : undefined,
+  });
+  if (!result) {
+    sendError(res, req, 404, "Chair hosting not available");
+    return;
+  }
+  res.status(201).json(result);
 });
 
 router.post("/public/b/:slug/waitlist/join", async (req, res): Promise<void> => {

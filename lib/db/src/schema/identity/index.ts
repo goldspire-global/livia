@@ -3,3 +3,4 @@ export * from "./businesses";
 export * from "./staff";
 export * from "./delegations";
 export * from "./host-renter-links";
+export * from "./chair-hosting-enquiries";

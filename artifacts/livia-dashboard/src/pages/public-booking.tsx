@@ -70,6 +70,7 @@ import {
 } from "@/components/public/public-surface-chrome";
 import { PublicBookLoading } from "@/components/public/public-book-loading";
 import { PublicBookStorefront } from "@/components/public-booking/public-book-storefront";
+import { PublicChairHostingStrip } from "@/components/public-booking/public-chair-hosting-strip";
 import { PublicBookLivBar } from "@/components/public-booking/public-book-liv-bar";
 import { PublicBookPolicyFooter } from "@/components/public-booking/public-book-policy-footer";
 import { PublicBookingStickySummary } from "@/components/public-booking/public-booking-sticky-summary";
@@ -176,6 +177,14 @@ interface PublicBusiness {
     title: string;
     note?: string | null;
   }>;
+  chairHosting?: {
+    headline: string;
+    body: string;
+    weeklyRateMinor: number;
+    chairsAvailable: number;
+    amenities: string[];
+    currency: string;
+  };
   services: PublicService[];
   staff: PublicStaff[];
   countryPack?: {
@@ -992,6 +1001,11 @@ export default function PublicBookingPage() {
               showMessage={aiOn && !beautyPublic}
             />
             <div ref={heroSentinelRef} className="h-px w-full" aria-hidden />
+            {b.chairHosting && slug ? (
+              <div className="mt-4 mb-2">
+                <PublicChairHostingStrip slug={slug} listing={b.chairHosting} />
+              </div>
+            ) : null}
             {packBookNext && packageCreditBook ? (
               <div
                 className="mt-4 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm"

@@ -5199,6 +5199,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CommerceCapabilityBlocker"
+        platformReadinessBlockers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommerceCapabilityBlocker"
         livSuggestions:
           type: array
           items:
@@ -5250,7 +5254,7 @@ components:
           items:
             type: object
             additionalProperties: true
-      required: [businessId, generatedAt, commerce, capabilityBlockers, commerceCapabilityBlockers, livSuggestions, livPrompts, remediationTasks, ops, twinObservations, twinRisks, twinOpportunities]
+      required: [businessId, generatedAt, commerce, capabilityBlockers, commerceCapabilityBlockers, platformReadinessBlockers, livSuggestions, livPrompts, remediationTasks, ops, twinObservations, twinRisks, twinOpportunities]
 
     SetupGuidedFlowPhase:
       type: object

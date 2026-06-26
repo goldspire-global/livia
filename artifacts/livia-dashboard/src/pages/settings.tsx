@@ -73,7 +73,9 @@ import { PersonaRitualHeader } from "@/components/ritual/persona-ritual-header";
 import { PageFrame } from "@/components/ui/page-frame";
 import { SettingsDisclosure } from "@/components/ui/settings-disclosure";
 import { verticalPackUi } from "@/lib/vertical-pack-ui";
-import { showBookingResourcesSettings } from "@workspace/policy";
+import { showBookingResourcesSettings, chairHostingEligibleVertical } from "@workspace/policy";
+import { ChairHostingListingPanel } from "@/components/host/chair-hosting-listing-panel";
+import { ChairHostingEnquiriesPanel } from "@/components/host/chair-hosting-enquiries-panel";
 import { OwnershipTransferPanel } from "@/components/lifecycle/ownership-transfer-panel";
 import { GuestPoliciesPanel } from "@/components/settings/guest-policies-panel";
 import { AccountSettingsPanel } from "@/components/settings/account-settings-panel";
@@ -377,6 +379,22 @@ export default function SettingsPage() {
                   businessName={b?.name as string | undefined}
                   compact
                 />
+                {chairHostingEligibleVertical(businessVertical) &&
+                (persona === "owner" || persona === "org_admin") ? (
+                  <SettingsDisclosure
+                    title="Chair rental advertising"
+                    description="Show availability on your public book page and collect stylist enquiries."
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-4">
+                      <ChairHostingListingPanel
+                        businessId={bid}
+                        currency={(b?.currency as string) ?? "EUR"}
+                      />
+                      <ChairHostingEnquiriesPanel businessId={bid} />
+                    </div>
+                  </SettingsDisclosure>
+                ) : null}
               </>
             ) : null}
 
