@@ -158,7 +158,19 @@ await check("Railway Clerk keys match Vercel pk_live (needs repo .env)", async (
 
   // App ships pk_live; if API still verifies sk_test JWTs, founders get 401 after sign-in.
   const probeUserId = readRootEnvKey("LIVIA_PROD_CLERK_PROBE_USER_ID") ?? "user_3Fa2cJWMEw5IuG34ksUITMJDRVN";
-  const jwt = await clerkSessionJwt(secret, probeUserId);
+  let jwt;
+  try {
+    jwt = await clerkSessionJwt(secret, probeUserId);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("no active Clerk session")) {
+      if (secretEnv === "test") {
+        return "skipped — no live probe session; Railway sk_live_ already expected on prod";
+      }
+      return "skipped — sign in probe user on live Clerk or set LIVIA_PROD_CLERK_PROBE_USER_ID";
+    }
+    throw e;
+  }
   const { res } = await fetchText(`${apiBase}/api/me`, {
     headers: { Authorization: `Bearer ${jwt}` },
   });

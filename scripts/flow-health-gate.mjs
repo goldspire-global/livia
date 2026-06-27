@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const runE2e = process.argv.includes("--e2e");
-const apiBase = process.env.E2E_API_BASE ?? "http://127.0.0.1:3001";
+const apiBase = process.env.E2E_API_BASE ?? "http://127.0.0.1:3000";
 
 function run(label, cmd, args, { allowFail = false } = {}) {
   const t0 = Date.now();
@@ -45,6 +45,12 @@ const steps = [];
 steps.push(run("Typecheck", "pnpm", ["run", "typecheck"]));
 steps.push(run("Vertical registry", "pnpm", ["vertical:check"]));
 steps.push(run("API unit tests", "pnpm", ["--filter", "@workspace/api-server", "run", "test"]));
+steps.push(
+  run("Persona UAT probe (production)", "node", ["scripts/persona-uat-probe.mjs"], {
+    allowFail: false,
+  }),
+);
+steps.push(run("Production smoke", "node", ["scripts/prod-smoke.mjs"], { allowFail: false }));
 
 const apiUp = probeApi();
 console.log(apiUp ? `\n✓ API reachable at ${apiBase}` : `\n⚠ API not reachable at ${apiBase} — skipping live E2E`);

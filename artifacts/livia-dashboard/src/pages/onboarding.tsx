@@ -206,7 +206,10 @@ export default function OnboardingPage() {
 
   if (showResumeSpinner) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
+      <div
+        data-testid="onboarding-page"
+        className="flex min-h-[100dvh] items-center justify-center"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -219,7 +222,7 @@ export default function OnboardingPage() {
   if (needsStartPath) {
     return (
       <OnboardingExperienceShell vertical={themeVertical} country="IE">
-        <div data-testid="onboarding-page" className="contents">
+        <div data-testid="onboarding-page" className="flex flex-1 flex-col w-full min-h-0">
           <OnboardingStartPathStep
             onContinue={(next) => {
               writeOnboardingMigrationIntent(next);
@@ -343,7 +346,7 @@ export default function OnboardingPage() {
 
   return (
     <OnboardingExperienceShell vertical={themeVertical} country="IE">
-      <div data-testid="onboarding-page" className="contents">
+      <div data-testid="onboarding-page" className="flex flex-1 flex-col w-full min-h-0">
       {portalExperience ? (
         wizard
       ) : (

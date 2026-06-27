@@ -164,6 +164,9 @@ jobs:
       - name: Playwright API Gate smoke
         run: pnpm --filter @workspace/e2e run test:api:ci
 
+      - name: Playwright founder onboarding resume
+        run: pnpm --filter @workspace/e2e exec playwright test tests/founder-onboarding-resume.spec.ts --project=dashboard --workers=1
+
   staging-smoke:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'

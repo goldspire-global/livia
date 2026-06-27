@@ -41,15 +41,35 @@ export async function provisionFreshSignupFounder(
       skipPasswordChecks: true,
     });
   } else {
-    const created = await clerk.users.createUser({
-      emailAddress: [email],
-      firstName: "E2E",
-      lastName: "Founder",
-      password,
-      skipPasswordChecks: true,
-      skipPasswordRequirement: true,
-    });
-    userId = created.id;
+    try {
+      const created = await clerk.users.createUser({
+        emailAddress: [email],
+        firstName: "E2E",
+        lastName: "Founder",
+        password,
+        skipPasswordChecks: true,
+        skipPasswordRequirement: true,
+      });
+      userId = created.id;
+    } catch (err: unknown) {
+      const clerkErr = err as { errors?: Array<{ code?: string }> };
+      if (clerkErr.errors?.some((e) => e.code === "user_quota_exceeded")) {
+        const fallback = await clerk.users.getUserList({
+          query: "sacred-e2e-",
+          limit: 1,
+          orderBy: "-created_at",
+        });
+        const reuse = fallback.data[0];
+        if (!reuse) throw err;
+        userId = reuse.id;
+        await clerk.users.updateUser(userId, {
+          password,
+          skipPasswordChecks: true,
+        });
+      } else {
+        throw err;
+      }
+    }
   }
 
   await getOrCreateUser(userId, email, "E2E Founder");

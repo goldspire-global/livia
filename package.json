@@ -69,6 +69,8 @@
     "env:production-checklist": "node scripts/print-production-env.mjs",
     "railway:build-prod-env": "node scripts/build-railway-production-env.mjs --write",
     "prod:smoke": "node scripts/prod-smoke.mjs",
+    "persona:uat": "node scripts/persona-uat-probe.mjs",
+    "inngest:prod:verify": "node scripts/inngest-prod-verify.mjs",
     "smoke:staging": "node scripts/prod-smoke.mjs --app https://app.staging.livia-hq.com --api https://api.staging.livia-hq.com",
     "staging:test-guide": "node -e \"console.log('See docs/operations/STAGING-TEST-R3.md')\"",
     "staging:readiness": "node scripts/staging-readiness.mjs --strict",

@@ -93,6 +93,20 @@ export async function publishDomainEvent<K extends EventName>(
       .catch((obsErr) => {
         logger.warn({ obsErr, name, businessId }, "liv observatory failed");
       });
+    void import("../services/liv-learning-triggers.service")
+      .then(({ maybeScheduleLearningPassFromEvent }) =>
+        maybeScheduleLearningPassFromEvent(name, payload),
+      )
+      .catch((learnErr) => {
+        logger.warn({ learnErr, name, businessId }, "liv learning trigger failed");
+      });
+    void import("../services/liv-briefing-refresh-triggers.service")
+      .then(({ maybeScheduleBriefingRefreshFromEvent }) =>
+        maybeScheduleBriefingRefreshFromEvent(name, payload),
+      )
+      .catch((briefErr) => {
+        logger.warn({ briefErr, name, businessId }, "liv briefing refresh trigger failed");
+      });
     return true;
   } catch (err) {
     await db.delete(domainEventDedupTable).where(eq(domainEventDedupTable.dedupeKey, dedupeKey));

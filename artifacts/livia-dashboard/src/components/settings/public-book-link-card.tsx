@@ -47,7 +47,7 @@ export function PublicBookLinkCard({
     return (
       <div
         className="flex items-center gap-2 rounded-lg border border-border/80 bg-muted/30 px-3 py-2.5"
-        data-testid="public-book-link-card"
+        data-testid="settings-booking-link-strip"
       >
         <Globe className="h-4 w-4 shrink-0 text-primary" aria-hidden />
         <span
@@ -79,7 +79,10 @@ export function PublicBookLinkCard({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border/50 bg-background/50 p-4" data-testid="public-book-link-card">
+    <div
+      className="space-y-3 rounded-xl border border-border/50 bg-background/50 p-4"
+      data-testid="public-book-link-card"
+    >
       <p className="text-xs text-muted-foreground">{linkLabel}</p>
       <div className="flex gap-2">
         <Input readOnly value={absolute} className="text-xs font-mono" data-testid="text-booking-url" />

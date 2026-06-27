@@ -42,6 +42,7 @@ artifacts/**/.env
 
 # Playwright UX audit captures (regenerate locally; do not commit)
 e2e/visual-captures/
+artifacts/pls/
 
 # Local design reference screenshots (not product source)
 .inspiration-samples/

@@ -27,7 +27,11 @@ import { policiesFromBusiness } from "./policies.service";
 import { getCachedTenantRuntime } from "../lib/tenant-runtime-pool";
 import { resolveLivToolsForBusiness } from "./liv-tool-catalog.service";
 import { getActivePromptOverrides } from "./prompt-store.service";
-import { livConversationalFallbackCopy, resolveLivRuntimeCopy } from "@workspace/policy";
+import {
+  livConversationalFallbackCopy,
+  mergePublicLivChatOpening,
+  resolveLivRuntimeCopy,
+} from "@workspace/policy";
 import { resolveLivOutboundForBusiness } from "./liv-outbound.service";
 const MODEL = "claude-sonnet-4-6";
 const MAX_TOOL_HOPS = 6;
@@ -176,9 +180,14 @@ export async function handlePublicChat(args: {
     throw new Error("AI_DISABLED");
   }
 
+  const isFirstTurn = !args.conversationId;
+
   const cached = await getCachedTenantRuntime(business.id);
   const businessRow = cached.business;
   const policies = policiesFromBusiness(businessRow);
+  const disclosureLine = policies.aiDisclosure.chatFirstMessage(business.name);
+  const withFirstTurnDisclosure = (reply: string) =>
+    isFirstTurn ? mergePublicLivChatOpening(disclosureLine, reply) : reply;
   const promptOverrides = await getActivePromptOverrides(business.id);
   const channelType = args.channelType ?? "WEB";
 
@@ -206,7 +215,7 @@ export async function handlePublicChat(args: {
     await appendMessage({
       conversationId: conversation.id,
       role: "ASSISTANT",
-      content: policies.aiDisclosure.chatFirstMessage(business.name),
+      content: disclosureLine,
     });
   } else if (args.customerName || args.customerEmail || args.customerPhone) {
     await updateConversationContact(conversation.id, {
@@ -231,7 +240,7 @@ export async function handlePublicChat(args: {
         : resolveLivRuntimeCopy("conversation_handed_off");
     return {
       conversationId: conversation.id,
-      reply,
+      reply: withFirstTurnDisclosure(reply),
       status: conversation.status,
     };
   }
@@ -247,7 +256,7 @@ export async function handlePublicChat(args: {
     }
     return {
       conversationId: conversation.id,
-      reply,
+      reply: withFirstTurnDisclosure(reply),
       status: conversation.status,
     };
   }
@@ -444,7 +453,7 @@ export async function handlePublicChat(args: {
 
   return {
     conversationId: conversation.id,
-    reply: finalText,
+    reply: withFirstTurnDisclosure(finalText),
     bookingId: lastBookingId,
     status: conversation.status,
   };

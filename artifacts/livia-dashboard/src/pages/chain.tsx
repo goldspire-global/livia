@@ -30,7 +30,7 @@ function PulseBadge({ status }: { status: "watch" | "act" }) {
 }
 
 export default function ChainPage() {
-  const { businesses, setBusinessById } = useBusiness();
+  const { businesses, setBusinessById, isLoading: businessesLoading } = useBusiness();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [rollup, setRollup] = useState<ChainRollup | null>(null);
@@ -75,6 +75,14 @@ export default function ChainPage() {
       cancelled = true;
     };
   }, []);
+
+  if (businessesLoading && businesses.length < 2) {
+    return (
+      <PageFrame width="lg">
+        <FounderChainLoading />
+      </PageFrame>
+    );
+  }
 
   if (businesses.length < 2) {
     return (

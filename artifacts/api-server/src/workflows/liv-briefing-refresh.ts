@@ -6,23 +6,8 @@ import {
   generateMorningBriefingForBusiness,
   type MorningBriefingContent,
 } from "../services/morning-briefing.service";
+import { LIV_BRIEFING_REFRESH_REQUESTED } from "../services/liv-briefing-refresh-triggers.service";
 import { logger } from "../lib/logger";
-
-const REFRESH_EVENTS = [
-  "booking.created",
-  "booking.confirmed",
-  "booking.cancelled",
-  "booking.no-show",
-  "payment.failed",
-  "commerce.signal.detected",
-  "twin.observation.generated",
-  "twin.insight.generated",
-  "twin.risk.detected",
-  "twin.opportunity.detected",
-  "liv.learning.correction.recorded",
-  "liv.learning.override.recorded",
-  "liv.learning.hypothesis.proposed",
-] as const;
 
 /**
  * When the day’s operational picture changes, refresh today’s morning briefing
@@ -37,9 +22,9 @@ export const livBriefingRefresh = inngest.createFunction(
       key: "event.data.businessId",
     },
   },
-  REFRESH_EVENTS.map((event) => ({ event })),
+  { event: LIV_BRIEFING_REFRESH_REQUESTED },
   async ({ event, step }) => {
-    const data = event.data as { businessId: string; bookingId?: string };
+    const data = event.data as { businessId: string; bookingId?: string; sourceEvent?: string };
 
     const refreshed = await step.run("refresh-today-briefing", async () => {
       const [biz] = await db

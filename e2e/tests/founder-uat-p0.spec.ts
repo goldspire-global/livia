@@ -90,7 +90,7 @@ test.describe("Founder UAT P0", () => {
       if (!(await demoCanSignIn(request, BLOOM))) {
         test.skip(true, "Clerk sign-in unavailable");
       }
-      await signInBusiness(page, BLOOM);
+      await signInBusiness(page, BLOOM, { resetSession: true });
       await dismissPlatformTour(page);
     });
 
@@ -138,7 +138,7 @@ test.describe("Founder UAT P0", () => {
       if (!(await demoCanSignIn(request, LUXE))) {
         test.skip(true, "Clerk sign-in unavailable");
       }
-      await signInBusiness(page, LUXE);
+      await signInBusiness(page, LUXE, { resetSession: true });
       await dismissPlatformTour(page);
     });
 
@@ -235,6 +235,9 @@ test.describe("Org admin (multi-shop)", () => {
   test("chain portfolio — commerce + shop cards", async ({ page }) => {
     await page.goto("/chain", { waitUntil: "domcontentloaded" });
     await assertHealthyPage(page, "/chain");
+    await expect(
+      page.getByTestId("founder-chain-page").or(page.getByTestId("founder-chain-loading")),
+    ).toBeVisible({ timeout: 25_000 });
     await expect(page.getByTestId("founder-chain-page")).toBeVisible({ timeout: 25_000 });
     const commerce = page.getByTestId("chain-commerce-panel");
     const shopCard = page.locator('[data-testid^="founder-shop-card-"]').first();

@@ -2,7 +2,7 @@
  * Returning founder with incomplete onboarding resumes at profile — not create-business.
  */
 import { test, expect } from "@playwright/test";
-import { clerkTicketSignIn, apiBase } from "../helpers/demo-auth";
+import { clerkTicketSignIn, apiBase, ensurePlatformLegalAccepted } from "../helpers/demo-auth";
 import { seedOnboardingFreshSession } from "../helpers/onboarding-session";
 import { provisionFreshSignupFounder } from "../helpers/fresh-founder";
 
@@ -16,6 +16,7 @@ test.describe("founder onboarding resume", () => {
       landingPath: "/onboarding",
       fallbackEmail: founder.email,
     });
+    await ensurePlatformLegalAccepted(page);
 
     const createRes = await page.request.post(`${apiBase}/api/businesses`, {
       data: {
@@ -69,6 +70,7 @@ test.describe("founder onboarding resume", () => {
       landingPath: "/onboarding",
       fallbackEmail: founder.email,
     });
+    await ensurePlatformLegalAccepted(page);
 
     const createRes = await page.request.post(`${apiBase}/api/businesses`, {
       data: {
