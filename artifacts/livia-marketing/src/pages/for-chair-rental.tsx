@@ -9,10 +9,11 @@ import { planMarketingCard } from "@/lib/pricing-catalog";
 const hostCard = planMarketingCard("chair-host");
 
 const HOST_POINTS = [
-  "Your landlord dashboard — chairs, rent cycles, and reminders",
-  `Per-renter billing (${hostCard.priceLabel.replace("/mo", "")}/mo base) on the Host plan`,
-  "Aggregate occupancy — no downstream customer PII on your host view",
-  "Renters use Solo/Studio tiers with their own Liv inbox and booking page",
+  "Start on Studio — run your floor and bookings like any shop",
+  "Advertise a spare chair on your public book page (Settings)",
+  "Upgrade to the Host plan when you link independent renters",
+  `${hostCard.priceLabel.replace("/mo", "")}/mo base + per-renter — landlord dashboard without renter guest lists`,
+  "Each renter runs Solo/Studio with their own Liv inbox and booking page",
 ];
 
 export default function ForChairRentalPage() {
@@ -26,12 +27,12 @@ export default function ForChairRentalPage() {
               For <em>hosts</em>
             </>
           }
-          subtitle="Collect rent. See occupancy. No renter customer lists on your dashboard."
+          subtitle="Most hosts run a studio first. Advertise chairs, then upgrade to the Host plan when renters are linked — their guests stay theirs."
         />
 
         <section className="mt-10">
-          <p className="cst-section-label">Landlord view</p>
-          <h2 className="text-lg font-medium mb-4">What hosts get</h2>
+          <p className="cst-section-label">How it works</p>
+          <h2 className="text-lg font-medium mb-4">Studio first, Host when you link renters</h2>
           <ConstellationPainList items={HOST_POINTS} />
         </section>
 
@@ -47,7 +48,7 @@ export default function ForChairRentalPage() {
           vertical.
         </p>
 
-        <MarketingGetStartedCta title="Start as a host" />
+        <MarketingGetStartedCta title="Start on Studio" />
       </ConstellationInnerPage>
     </MarketingLayout>
   );

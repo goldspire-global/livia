@@ -9,11 +9,6 @@ export type OnboardingTierOption = {
 /** Alphabetical by label — onboarding org-shape / plan picker (web + mobile). */
 export const ONBOARDING_TIER_OPTIONS: OnboardingTierOption[] = [
   {
-    value: "chair-host",
-    label: "Chair-Rental Host",
-    description: "You rent chairs to independent practitioners with scoped guest data.",
-  },
-  {
     value: "franchise",
     label: "Franchise",
     description: "Franchise network with HQ rollup and location-level owners.",
@@ -45,6 +40,23 @@ export const ONBOARDING_TIER_OPTIONS: OnboardingTierOption[] = [
   },
 ];
 
+/**
+ * Self-serve signup tiers — excludes chair-host (Host is a billing upgrade after you link renters).
+ * Full BusinessTier enum still includes chair-host for billing, demo, and API.
+ */
+export const ONBOARDING_SELF_SERVE_TIER_IDS = [
+  "solo",
+  "studio",
+  "chain",
+  "mid-chain",
+  "franchise",
+  "white-label",
+] as const;
+
+export function onboardingCatalogTierIds(): string[] {
+  return [...ONBOARDING_SELF_SERVE_TIER_IDS];
+}
+
 /** Field label for tier picker — org shape and plan, not headcount. */
 export function onboardingTierFieldLabel(): string {
   return "How you're set up";
@@ -52,7 +64,7 @@ export function onboardingTierFieldLabel(): string {
 
 /** Helper under the tier picker. */
 export function onboardingTierFieldDescription(): string {
-  return "Solo, team, multi-location, chair rental, franchise — sets your plan and features.";
+  return "Solo, team, or multi-location — sets your plan. Chair hosting is enabled later in Settings.";
 }
 
 function titleCaseTierSlug(slug: string): string {

@@ -8,10 +8,10 @@ import {
 import { getVerticalStarterPackServicesForProfile } from "../vertical-starter-packs";
 
 const chairHost = getSubverticalProfile("hair.chair_rental")!;
-assert.equal(suggestedTierFromSubvertical(chairHost), "chair-host");
+assert.equal(suggestedTierFromSubvertical(chairHost), "studio");
 assert.equal(
   resolveOnboardingTierFromSubvertical(chairHost, "solo", false),
-  "chair-host",
+  "studio",
 );
 assert.equal(resolveOnboardingTierFromSubvertical(chairHost, "chain", true), "chain");
 

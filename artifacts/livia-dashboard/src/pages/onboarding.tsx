@@ -12,7 +12,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Sparkles } from "lucide-react";
 import { OnboardingWizard, type OnboardingStatePayload } from "@/components/onboarding/onboarding-wizard";
 import { isDemoLoginEnabled } from "@/lib/persona";
-import { pickOnboardingResumeBusiness } from "@workspace/policy";
+import { pickOnboardingResumeBusiness, pickPrimarySessionBusiness, isOnboardingAppUnlocked } from "@workspace/policy";
+import {
+  clearOnboardingFormDraft,
+} from "@/lib/onboarding-form-draft";
 import { OnboardingExperienceShell } from "@/components/onboarding/onboarding-experience-shell";
 import { OnboardingWelcomePanel } from "@/components/onboarding-welcome-panel";
 import { OnboardingStartPathStep } from "@/components/onboarding/onboarding-start-path-step";
@@ -41,7 +44,7 @@ export default function OnboardingPage() {
   const [location, navigate] = useLocation();
   const { user } = useUser();
   const demoAccount = isDemoAccountEmail(user?.primaryEmailAddress?.emailAddress);
-  const { businesses, setBusiness, setBusinessById, isLoading: businessesLoading } = useBusiness();
+  const { businesses, business, setBusiness, setBusinessById, isLoading: businessesLoading } = useBusiness();
   const parentBusinessId =
     intent.secondShop && businesses.length > 0 ? businesses[0]!.id : undefined;
   const { toast } = useToast();
@@ -139,18 +142,40 @@ export default function OnboardingPage() {
       setResumeHydrated(true);
       return;
     }
-    if (businessesLoading) return;
+    const clerkUserId = user?.id;
+    if (!clerkUserId || businessesLoading) return;
 
-    const clerkUserId = user?.id ?? "";
     const email = user?.primaryEmailAddress?.emailAddress ?? null;
-    const latest = pickOnboardingResumeBusiness(
-      businesses as Parameters<typeof pickOnboardingResumeBusiness>[0],
+    type ResumeBiz = Parameters<typeof pickOnboardingResumeBusiness>[0][number];
+    let latest = pickOnboardingResumeBusiness(
+      businesses as ResumeBiz[],
       clerkUserId,
       email,
     );
+    if (!latest && businesses.length > 0) {
+      const primary = pickPrimarySessionBusiness(
+        businesses as ResumeBiz[],
+        clerkUserId,
+        email,
+      );
+      if (
+        primary &&
+        !isOnboardingAppUnlocked(primary.onboardingState ?? null, primary.vertical)
+      ) {
+        latest = primary;
+      }
+    }
+    if (!latest && business?.id && (business as { ownerId?: string }).ownerId === clerkUserId) {
+      const b = business as ResumeBiz;
+      if (!isOnboardingAppUnlocked(b.onboardingState ?? null, b.vertical)) {
+        latest = b;
+      }
+    }
     if (latest) {
+      clearOnboardingFormDraft("create-business");
       setBusinessId(latest.id);
       setBusinessSlug(latest.slug);
+      setBusinessById(latest.id);
       const v = latest.vertical;
       if (v) setPreviewVertical(v);
       const raw = latest.onboardingState;
@@ -172,9 +197,11 @@ export default function OnboardingPage() {
   }, [
     intent.secondShop,
     businesses,
+    business,
     businessesLoading,
     user?.id,
     user?.primaryEmailAddress?.emailAddress,
+    setBusinessById,
   ]);
 
   const loadDemoData = async () => {
@@ -197,7 +224,7 @@ export default function OnboardingPage() {
   };
 
   const showResumeSpinner =
-    !intent.fresh && !intent.secondShop && (!resumeHydrated || businessesLoading);
+    !intent.fresh && !intent.secondShop && (!resumeHydrated || businessesLoading || !user?.id);
 
   if (showResumeSpinner) {
     return (

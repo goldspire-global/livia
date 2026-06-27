@@ -102,7 +102,8 @@ export function isMultiSegmentProfile(profile: SubverticalProfile): boolean {
 export function suggestedTierFromSubvertical(profile: SubverticalProfile): BusinessTier | null {
   switch (profile.defaultOrgShape) {
     case "chair_rental":
-      return "chair-host";
+      // Host plan is a later upgrade — most hosts also run a floor team.
+      return "studio";
     case "multi_site":
       return "chain";
     default:
@@ -122,7 +123,7 @@ export function resolveOnboardingTierFromSubvertical(
 
 export function onboardingHintForSubvertical(profile: SubverticalProfile): string | null {
   if (profile.defaultOrgShape === "chair_rental") {
-    return "Chair-rental host — renter dashboards, PII firewall, and /host. This switches to Host.";
+    return "You also rent chairs? Start on Studio — advertise in Settings, upgrade to Host when you link renters.";
   }
   if (isMultiSegmentProfile(profile)) {
     return "Multi-service under one roof — starter menu spans main categories; trim or add services anytime.";

@@ -35,9 +35,10 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Partner API (alpha)",
   ],
   "chair-host": [
-    "Your chair-rental rent collection",
-    "Landlord dashboard without renter PII",
+    "Upgrade from Studio when you link renters",
+    "Landlord dashboard — rent and occupancy, not renter guest lists",
     "Per-renter seat pricing",
+    "Advertise chairs on Studio before upgrading (Settings)",
   ],
 };
 

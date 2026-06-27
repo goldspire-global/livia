@@ -76,7 +76,7 @@ export const CHAIR_HOSTING_COPY = {
   publicThanks: "Thanks — the studio will be in touch shortly.",
   hostPanelTitle: "Advertise chair rental",
   hostPanelBody:
-    "Show an availability strip on your public booking page. Enquiries land in Host floor.",
+    "Show availability on your public booking page. Enquiries land here. Link renters on Host floor after upgrading to the Host plan in Billing.",
   enquiriesTitle: "Chair enquiries",
   emptyEnquiries: "No enquiries yet — turn on advertising to attract renters.",
 } as const;

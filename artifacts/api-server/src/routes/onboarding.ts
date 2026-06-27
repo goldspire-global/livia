@@ -4,6 +4,7 @@ import {
   getSubverticalProfile,
   listJurisdictionCatalog,
   listVerticalCatalog,
+  onboardingCatalogTierIds,
   resolveOnboardingDefaults,
   businessTierSchema,
   businessVerticalSchema,
@@ -18,7 +19,7 @@ router.get("/onboarding/catalog", requireAuth, (_req, res) => {
   res.json({
     jurisdictions: listJurisdictionCatalog(),
     verticals: listVerticalCatalog(),
-    tiers: businessTierSchema.options,
+    tiers: onboardingCatalogTierIds(),
   });
 });
 

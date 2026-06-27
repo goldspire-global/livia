@@ -159,8 +159,8 @@ function BusinessDataLoader({
   const onLegalAcceptance = location === "/legal-acceptance";
   const { data: businesses, isLoading, isError, isFetching, refetch } = useGetMyBusinesses({
     query: {
-      staleTime: onOnboarding || onLegalAcceptance ? 60_000 : 0,
-      refetchOnMount: onOnboarding || onLegalAcceptance ? false : "always",
+      staleTime: onOnboarding ? 0 : onLegalAcceptance ? 60_000 : 0,
+      refetchOnMount: onOnboarding ? "always" : onLegalAcceptance ? false : "always",
       refetchOnWindowFocus: !(onOnboarding || onLegalAcceptance),
       retry: onOnboarding || onLegalAcceptance ? 2 : 1,
     } as never,

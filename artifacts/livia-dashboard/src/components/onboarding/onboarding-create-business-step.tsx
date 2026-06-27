@@ -319,11 +319,15 @@ export function OnboardingCreateBusinessStep({
       }),
     })
       .then((biz) => {
+        const resumed = (biz as { onboardingState?: { completedActs?: string[] } }).onboardingState
+          ?.completedActs?.includes("a1_create_business");
         toast({
-          title: "Shop created",
-          description: starterPack
-            ? `${starterOffer.label} applied — finish setup steps next.`
-            : "Keep going — add your menu and hours in the next steps.",
+          title: resumed ? "Continuing your shop" : "Shop created",
+          description: resumed
+            ? "Pick up where you left off."
+            : starterPack
+              ? `${starterOffer.label} applied — finish setup steps next.`
+              : "Keep going — add your menu and hours in the next steps.",
         });
         clearOnboardingFormDraft(CREATE_BUSINESS_DRAFT_KEY);
         onCreated(biz.id, biz.slug, { migrationIntent });
