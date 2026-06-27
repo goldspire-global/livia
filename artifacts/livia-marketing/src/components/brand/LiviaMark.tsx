@@ -9,8 +9,6 @@ interface LiviaMarkProps {
   gradient?: boolean;
   /** Override the colour of the L glyph and ring. Defaults to currentColor. */
   fill?: string;
-  /** Brighter italic v for small hero/constellation placements (mobile-safe). */
-  legibility?: "default" | "hero";
 }
 
 const champagneStops = (
@@ -23,13 +21,11 @@ const champagneStops = (
   </>
 );
 
-export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" }: LiviaMarkProps) {
+export function LiviaMark({ className = "h-8 w-8", fill }: LiviaMarkProps) {
   const id = useId().replace(/:/g, "");
   const champagne = `livia-${id}-champagne`;
   const glow = `livia-${id}-glow`;
-  const hero = legibility === "hero";
-  const glyphFill = fill ?? (hero ? "#f6f3ec" : "currentColor");
-  const stroke = glyphFill;
+  const stroke = fill ?? "currentColor";
   return (
     <svg
       viewBox="0 0 40 40"
@@ -68,7 +64,7 @@ export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" 
         fontFamily="'Cormorant Garamond', Georgia, serif"
         fontSize="20"
         fontWeight="400"
-        fill={glyphFill}
+        fill={fill ?? "currentColor"}
         letterSpacing="-0.03em"
       >
         L
@@ -77,10 +73,10 @@ export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" 
         x="22"
         y="26.5"
         fontFamily="'Cormorant Garamond', Georgia, serif"
-        fontSize={hero ? "21" : "20"}
-        fontWeight={hero ? "500" : "400"}
+        fontSize="20"
+        fontWeight="400"
         fontStyle="italic"
-        fill={hero ? "#f6f3ec" : `url(#${champagne})`}
+        fill={`url(#${champagne})`}
       >
         v
       </text>
@@ -152,4 +148,3 @@ export function LiviaWordmark({
     </span>
   );
 }
-
