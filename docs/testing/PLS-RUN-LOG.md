@@ -107,4 +107,26 @@ Append one section per PLS wave. Screenshots live in `artifacts/pls/<date>/` (gi
 
 ---
 
+### PLS run — 2026-06-27 (Wave 3)
+
+**Environment:** local demo world  
+**Gates:** Wave 2 green · content audit strict
+
+| Pack | Variant | Steps | Pass | Fail | Notes |
+|------|---------|-------|------|------|-------|
+| F gateway | happy | 16 | 16 | 0 | G1 launcher + G2/G3 for 5 wedges |
+| F gateway | unhappy | 2 | 2 | 0 | Invalid wedge + back to G1 |
+| F marketing | happy | 2 | 2 | 0 | Beauty vertical + get-started handoff |
+| E chain | happy + edge | 4 | 4 | 0 | HQ portfolio, add location, single-shop `/chain` |
+| B session | unhappy | 4 | 4 | 0 | Expired session on protected routes + sign-in redirect |
+| B billing | happy | 1 | 1 | 0 | Addon catalog on billing tab |
+
+**Captures:** `artifacts/pls/wave3-2026-06-27/manifest.json` — **27 steps, 0 contentHits**.
+
+**Next wave (W4):**
+- Internal ops auto-triage UX · migration import honest limits · workflow failure matrix (Inngest off, webhooks).
+- Mobile Maestro when device available.
+
+---
+
 *(Wave 0 prep 2026-06-27.)*

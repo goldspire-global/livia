@@ -82,6 +82,18 @@ Captures live under `e2e/visual-captures/` (gitignored). Re-run: `pnpm e2e:visua
 
 ---
 
+## 2026-06-27 — PLS Wave 3 (gateway + chain + session)
+
+| Surface | Route | Finding | Fix | Status |
+|---------|-------|---------|-----|--------|
+| *(none)* | — | All 27 captures passed content audit | — | **Clean** |
+
+**Captures:** G1–G3 for beauty/wellness/hair/medspa/events, marketing handoff, chain HQ + single-shop edge, session-expiry sign-in gates, billing addon catalog.
+
+**Next:** W4 internal ops + workflow unhappy paths.
+
+---
+
 ## 2026-06-15 — Gateway P2 (G1–G3 + sign-in)
 
 | Surface | Change |
