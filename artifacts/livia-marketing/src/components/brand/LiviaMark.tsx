@@ -26,9 +26,8 @@ const champagneStops = (
 const heroChampagneStops = (
   <>
     <stop offset="0%" stopColor="#fff9f0" />
-    <stop offset="40%" stopColor="#f6f3ec" />
-    <stop offset="68%" stopColor="#e8d4b0" />
-    <stop offset="100%" stopColor="#d9c39a" />
+    <stop offset="50%" stopColor="#f6f3ec" />
+    <stop offset="100%" stopColor="#e8d4b0" />
   </>
 );
 
@@ -36,9 +35,9 @@ export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" 
   const id = useId().replace(/:/g, "");
   const champagne = `livia-${id}-champagne`;
   const glow = `livia-${id}-glow`;
-  const vGlow = `livia-${id}-v-glow`;
   const hero = legibility === "hero";
-  const stroke = fill ?? "currentColor";
+  const glyphFill = fill ?? (hero ? "#f6f3ec" : "currentColor");
+  const stroke = glyphFill;
   return (
     <svg
       viewBox="0 0 40 40"
@@ -55,18 +54,12 @@ export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" 
           y2="40"
           gradientUnits="userSpaceOnUse"
         >
-          {hero ? heroChampagneStops : champagneStops}
+          {champagneStops}
         </linearGradient>
         <radialGradient id={glow} cx="0.3" cy="0.3" r="0.7">
           <stop offset="0%" stopColor="#d9c39a" stopOpacity="0.18" />
           <stop offset="65%" stopColor="#d9c39a" stopOpacity="0" />
         </radialGradient>
-        {hero ? (
-          <filter id={vGlow} x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="0" stdDeviation="0.55" floodColor="#f6f3ec" floodOpacity="0.65" />
-            <feDropShadow dx="0" dy="0" stdDeviation="1.1" floodColor="#d9c39a" floodOpacity="0.45" />
-          </filter>
-        ) : null}
       </defs>
       <circle
         cx="20"
@@ -83,20 +76,19 @@ export function LiviaMark({ className = "h-8 w-8", fill, legibility = "default" 
         fontFamily="'Cormorant Garamond', Georgia, serif"
         fontSize="20"
         fontWeight="400"
-        fill={fill ?? "currentColor"}
+        fill={glyphFill}
         letterSpacing="-0.03em"
       >
         L
       </text>
       <text
-        x={hero ? "21.5" : "22"}
+        x="22"
         y="26.5"
         fontFamily="'Cormorant Garamond', Georgia, serif"
-        fontSize={hero ? "21.5" : "20"}
+        fontSize={hero ? "21" : "20"}
         fontWeight={hero ? "500" : "400"}
         fontStyle="italic"
-        fill={`url(#${champagne})`}
-        filter={hero ? `url(#${vGlow})` : undefined}
+        fill={hero ? "#f6f3ec" : `url(#${champagne})`}
       >
         v
       </text>
