@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,31 +22,28 @@ import { OnboardingStartPathStep } from "@/components/onboarding/onboarding-star
 import { marketingBookDemoUrl } from "@/lib/demo-routes";
 import { isOnboardingPortalExperienceEnabled } from "@/lib/onboarding-portal-enabled";
 import {
-  clearOnboardingMigrationIntent,
+  clearOnboardingFreshSession,
+  clearOnboardingSessionIntent,
+  bootstrapOnboardingSessionIntent,
   onboardingPathAfterTrackPick,
   readOnboardingMigrationIntent,
+  readOnboardingSessionIntent,
   writeOnboardingMigrationIntent,
+  writeOnboardingFreshSession,
+  type OnboardingSessionIntent,
 } from "@/lib/onboarding-migration-intent";
 import type { MigrationIntent } from "@workspace/policy";
 
-function readOnboardingIntent(): { secondShop?: boolean; fresh?: boolean; pathPick?: boolean } {
-  if (typeof window === "undefined") return {};
-  const params = new URLSearchParams(window.location.search);
-  return {
-    secondShop: params.get("intent") === "second-shop",
-    fresh: params.get("fresh") === "1",
-    pathPick: params.get("path") === "1",
-  };
-}
-
 export default function OnboardingPage() {
-  const intent = readOnboardingIntent();
-  const [location, navigate] = useLocation();
+  const [sessionIntent, setSessionIntent] = useState<OnboardingSessionIntent>(() =>
+    bootstrapOnboardingSessionIntent(),
+  );
+  const [, navigate] = useLocation();
   const { user } = useUser();
   const demoAccount = isDemoAccountEmail(user?.primaryEmailAddress?.emailAddress);
   const { businesses, business, setBusiness, setBusinessById, isLoading: businessesLoading } = useBusiness();
   const parentBusinessId =
-    intent.secondShop && businesses.length > 0 ? businesses[0]!.id : undefined;
+    sessionIntent.secondShop && businesses.length > 0 ? businesses[0]!.id : undefined;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [seedLoading, setSeedLoading] = useState(false);
@@ -55,42 +52,17 @@ export default function OnboardingPage() {
   const [onboardingState, setOnboardingState] = useState<OnboardingStatePayload | null>(null);
   const [previewVertical, setPreviewVertical] = useState<string | null>(null);
   const [resumeHydrated, setResumeHydrated] = useState(false);
-  const [migrationIntent, setMigrationIntent] = useState<MigrationIntent | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("path") === "1") return null;
-    return readOnboardingMigrationIntent();
-  });
-
-  const urlMigrationIntent = useMemo(() => readOnboardingMigrationIntent(), [location]);
-
-  useEffect(() => {
-    if (intent.pathPick) return;
-    if (urlMigrationIntent && urlMigrationIntent !== migrationIntent) {
-      setMigrationIntent(urlMigrationIntent);
-    }
-  }, [intent.pathPick, urlMigrationIntent, migrationIntent]);
+  const [migrationIntent, setMigrationIntent] = useState<MigrationIntent | null>(() =>
+    readOnboardingMigrationIntent(),
+  );
 
   const needsStartPath =
-    intent.fresh && !intent.secondShop && !businessId && migrationIntent === null;
-
-  useEffect(() => {
-    if (!intent.fresh || !intent.pathPick) return;
-    clearOnboardingMigrationIntent();
-    setMigrationIntent(null);
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("path");
-      window.history.replaceState({}, "", url.pathname + url.search);
-    } catch {
-      /* ignore */
-    }
-  }, [intent.fresh, intent.pathPick]);
+    sessionIntent.fresh && !sessionIntent.secondShop && !businessId && migrationIntent === null;
 
   const portalExperience =
     isOnboardingPortalExperienceEnabled() ||
     migrationIntent === "switching" ||
-    intent.fresh;
+    sessionIntent.fresh;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -124,20 +96,24 @@ export default function OnboardingPage() {
     const qs = params.toString();
     window.history.replaceState({}, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
     void queryClient.invalidateQueries({ queryKey: ["/me/businesses"] });
+    writeOnboardingMigrationIntent("switching");
+    writeOnboardingFreshSession();
+    setMigrationIntent("switching");
+    setSessionIntent(readOnboardingSessionIntent());
   }, [toast, queryClient]);
 
   useEffect(() => {
-    if (!intent.fresh || !resumeHydrated || businessId) return;
+    if (!sessionIntent.fresh || !resumeHydrated || businessId) return;
     try {
       window.localStorage.removeItem("livia.currentBusinessId");
       window.localStorage.removeItem("livia_current_business_id");
     } catch {
       /* ignore */
     }
-  }, [intent.fresh, resumeHydrated, businessId]);
+  }, [sessionIntent.fresh, resumeHydrated, businessId]);
 
   useEffect(() => {
-    if (intent.secondShop) {
+    if (sessionIntent.secondShop) {
       setResumeHydrated(true);
       return;
     }
@@ -192,28 +168,12 @@ export default function OnboardingPage() {
           percentComplete: 8,
         });
       }
-      if (typeof window !== "undefined") {
-        try {
-          const url = new URL(window.location.href);
-          const hadFreshHandoff =
-            url.searchParams.get("fresh") === "1" ||
-            url.searchParams.has("track") ||
-            url.searchParams.has("path");
-          if (hadFreshHandoff) {
-            url.searchParams.delete("fresh");
-            url.searchParams.delete("track");
-            url.searchParams.delete("path");
-            const qs = url.searchParams.toString();
-            window.history.replaceState({}, "", qs ? `${url.pathname}?${qs}` : url.pathname);
-          }
-        } catch {
-          /* ignore */
-        }
-      }
+      clearOnboardingFreshSession();
+      setSessionIntent(readOnboardingSessionIntent());
     }
     setResumeHydrated(true);
   }, [
-    intent.secondShop,
+    sessionIntent.secondShop,
     businesses,
     business,
     businessesLoading,
@@ -242,7 +202,7 @@ export default function OnboardingPage() {
   };
 
   const showResumeSpinner =
-    !intent.secondShop && (!resumeHydrated || businessesLoading || !user?.id);
+    !sessionIntent.secondShop && (!resumeHydrated || businessesLoading || !user?.id);
 
   if (showResumeSpinner) {
     return (
@@ -265,6 +225,7 @@ export default function OnboardingPage() {
               writeOnboardingMigrationIntent(next);
               setMigrationIntent(next);
               navigate(onboardingPathAfterTrackPick(next));
+              setSessionIntent(readOnboardingSessionIntent());
             }}
           />
         </div>
@@ -370,8 +331,8 @@ export default function OnboardingPage() {
         }
       }}
       onComplete={() => {
-        clearOnboardingMigrationIntent();
-        if (intent.secondShop) {
+        clearOnboardingSessionIntent();
+        if (sessionIntent.secondShop) {
           window.location.href = "/lifecycle#chain";
           return;
         }
@@ -390,15 +351,15 @@ export default function OnboardingPage() {
           <div className="w-full max-w-2xl space-y-8">
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-serif tracking-tight">
-                {intent.secondShop ? "Add a location" : "Welcome to Livia"}
+                {sessionIntent.secondShop ? "Add a location" : "Welcome to Livia"}
               </h1>
               <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                {intent.secondShop
+                {sessionIntent.secondShop
                   ? "Chain tools activate when you own two shops."
                   : "A few minutes to open your shop — Liv handles the rest after."}
               </p>
             </div>
-            {!businessId && !intent.secondShop ? <OnboardingWelcomePanel /> : null}
+            {!businessId && !sessionIntent.secondShop ? <OnboardingWelcomePanel /> : null}
             {wizard}
           </div>
         </div>

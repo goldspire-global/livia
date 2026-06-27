@@ -3,6 +3,7 @@
  */
 import { test, expect } from "@playwright/test";
 import { clerkTicketSignIn, apiBase } from "../helpers/demo-auth";
+import { seedOnboardingFreshSession } from "../helpers/onboarding-session";
 import { provisionFreshSignupFounder } from "../helpers/fresh-founder";
 
 test.describe("founder onboarding resume", () => {
@@ -88,7 +89,8 @@ test.describe("founder onboarding resume", () => {
     });
     expect(createRes.ok(), await createRes.text()).toBeTruthy();
 
-    await page.goto("/onboarding?fresh=1&track=import", { waitUntil: "domcontentloaded" });
+    await seedOnboardingFreshSession(page, { migrationIntent: "switching" });
+    await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("onboarding-page")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByLabel("Business name")).toHaveCount(0, { timeout: 20_000 });
   });

@@ -22,6 +22,10 @@ import {
   platformLegalAcceptanceTitle,
   type OnboardingState,
 } from "@workspace/policy";
+import {
+  clearOnboardingMigrationIntent,
+  writeOnboardingFreshSession,
+} from "@/lib/onboarding-migration-intent";
 
 const TOS_URL = legalUrl("tos");
 const PRIVACY_URL = legalUrl("privacy");
@@ -74,14 +78,22 @@ export default function LegalAcceptancePage() {
             filterSessionBusinesses(businesses, email),
             clerkUserId,
           );
-          navigate(owned.length === 0 ? "/onboarding?fresh=1&path=1" : "/onboarding");
+          if (owned.length === 0) {
+            clearOnboardingMigrationIntent();
+            writeOnboardingFreshSession();
+          }
+          navigate("/onboarding");
           return;
         }
       } catch {
         destination = "/onboarding";
       }
 
-      navigate(destination === "/onboarding" ? "/onboarding?fresh=1&path=1" : destination);
+      if (destination === "/onboarding") {
+        clearOnboardingMigrationIntent();
+        writeOnboardingFreshSession();
+      }
+      navigate(destination);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Could not save acceptance";
       setError(msg);

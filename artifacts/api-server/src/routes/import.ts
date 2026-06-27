@@ -280,23 +280,12 @@ router.get("/import/oauth/callback", async (req, res): Promise<void> => {
       pullSummary = "error";
     }
 
-    const biz = await getBusinessById(parsed.businessId);
-    const switching =
-      biz?.onboardingState &&
-      typeof biz.onboardingState === "object" &&
-      (biz.onboardingState as { checklist?: { migrationIntent?: string } }).checklist
-        ?.migrationIntent === "switching";
-
     const params = new URLSearchParams({
       migration_oauth: "1",
       broker: parsed.brokerId,
       pull: pullSummary,
       imported: String(imported),
     });
-    if (switching) {
-      params.set("fresh", "1");
-      params.set("track", "import");
-    }
     res.redirect(`${dashboardBase}/onboarding?${params.toString()}`);
     return;
   }

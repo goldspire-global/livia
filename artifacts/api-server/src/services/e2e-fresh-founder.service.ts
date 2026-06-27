@@ -67,7 +67,7 @@ export async function provisionFreshSignupFounder(
     password,
     token,
     userId,
-    landingPath: "/onboarding?fresh=1&path=1",
+    landingPath: "/onboarding",
     signInStrategy: "ticket",
   };
 }
