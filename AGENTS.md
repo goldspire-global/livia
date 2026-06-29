@@ -79,3 +79,21 @@ lib/policy (vertical, onboarding, presets, guest surfaces)
 ## Cursor agent skills & rules
 
 Repeatable workflows live in **`.cursor/skills/`** (start with `livia-session-hub`). Always-on surface cascade: **`.cursor/rules/livia-surfaces-cascade.mdc`**. Policy edits: **`livia-policy-first.mdc`** when touching `lib/policy/`.
+
+## Cursor Cloud specific instructions
+
+Standard dev commands live in [`README.md`](README.md) and [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md); ports/services are listed there. The startup snapshot already has Node 22, pnpm 10.33, and a local PostgreSQL 16 installed. The update script only runs `pnpm install`. The notes below are the **non-obvious** gotchas for this environment — they are not in the standard docs.
+
+**Postgres (local, not Docker):** start the cluster each session with `sudo pg_ctlcluster 16 main start` (no systemd in the VM). A superuser role + db already exist: `DATABASE_URL=postgresql://livia:livia@localhost:5432/livia`. If missing on a fresh VM, recreate with `sudo -u postgres psql -c "CREATE ROLE livia LOGIN PASSWORD 'livia' SUPERUSER;"` then `... -c "CREATE DATABASE livia OWNER livia;"`.
+
+**`.env` files are gitignored — must exist before running anything.** Create `cp .env.example .env` and `cp artifacts/livia-dashboard/.env.example artifacts/livia-dashboard/.env`.
+
+**CRITICAL Clerk gotcha:** the placeholder keys shipped in the `.env.example` files (`CLERK_SECRET_KEY=sk_test_`, `CLERK_PUBLISHABLE_KEY=pk_test_`, dashboard `VITE_CLERK_PUBLISHABLE_KEY=pk_test_`) are **malformed**. They make the API return `500 "Publishable key not valid."` on every route and stop the dashboard React app from mounting. Replace with the valid-format CI placeholders so the API boots and guest pages render:
+- root `.env`: `CLERK_PUBLISHABLE_KEY=pk_test_b25lLXdlYi5jbGVyay5hY2NvdW50cy5kZXYk` and `CLERK_SECRET_KEY=sk_test_ci_placeholder_not_for_auth`
+- `artifacts/livia-dashboard/.env`: `VITE_CLERK_PUBLISHABLE_KEY=pk_test_b25lLXdlYi5jbGVyay5hY2NvdW50cy5kZXYk`
+
+**Clerk limitation (browser auth):** with the placeholder keys, the **API + public guest-booking endpoints work fully**, but the dashboard's in-browser UI hangs (skeleton forever): the api client `await getToken()`s a Clerk session, and Clerk's dev-browser handshake against the fake instance never completes. To exercise any browser UI (sign-in, dashboard, or the `/book/<slug>` guest page in the browser), set **real Clerk development keys** for the same instance across `CLERK_PUBLISHABLE_KEY`/`CLERK_SECRET_KEY` (root) and `VITE_CLERK_PUBLISHABLE_KEY` (dashboard). The backend booking flow can be driven directly via `POST /api/public/b/<slug>/book` without Clerk.
+
+**DB schema + seed (run once per fresh DB):** `DATABASE_URL=postgresql://livia:livia@localhost:5432/livia bash scripts/deploy-migrate.sh` then `pnpm db:seed`. Note `deploy-migrate.sh` requires `DATABASE_URL` exported in the shell even though its sub-steps load `.env`. Seed creates business `luxe-salon-spa` (public booking at `/book/luxe-salon-spa`).
+
+**Tests / gates that work offline:** `pnpm run typecheck` (the build/lint gate) and `pnpm --filter @workspace/api-server run test` (set `DATABASE_URL` for the latter). The full Playwright E2E suite (`pnpm e2e:prep` / `pnpm test:e2e`) needs real Clerk keys and is not runnable with placeholders.
