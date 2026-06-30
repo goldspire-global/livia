@@ -3,6 +3,7 @@ import { db, customersTable, servicesTable, staffTable } from "@workspace/db";
 import { createCustomer } from "./customers.service";
 import { createService } from "./services.service";
 import { createStaff } from "./staff.service";
+import { seedDefaultStaffAvailability } from "./onboarding-availability.service";
 
 export async function findCustomerByEmailOrPhone(
   businessId: string,
@@ -87,13 +88,15 @@ export async function ensureStaffMember(
   const existing = await findStaffByName(businessId, args.displayName);
   if (existing) return existing;
   const parts = args.displayName.trim().split(/\s+/);
-  return createStaff(businessId, {
+  const staff = await createStaff(businessId, {
     firstName: args.firstName ?? parts[0] ?? "Team",
     lastName: args.lastName ?? (parts.slice(1).join(" ") || undefined),
     displayName: args.displayName,
     email: args.email,
     color: "#6366f1",
   });
+  await seedDefaultStaffAvailability(businessId, staff.id);
+  return staff;
 }
 
 export function splitPersonName(full?: string | null): { firstName: string; lastName?: string } {

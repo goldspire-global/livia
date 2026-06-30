@@ -158,9 +158,9 @@ export function activationStepsFromState(
           },
           {
             id: "test-booking",
-            label: "Test booking",
+            label: "Test booking on your public page",
             done: checklist.testBooking === true,
-            href: "/bookings/new",
+            href: "/onboarding",
           },
           {
             id: "channels",

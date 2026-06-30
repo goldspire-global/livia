@@ -43,6 +43,25 @@ const awaitFirstBook = buildSetupGuidedFlow({
   sacredMetricMet: false,
 });
 assert.equal(awaitFirstBook.currentPhaseId, "first_booking");
+assert.match(awaitFirstBook.phases.find((p) => p.id === "first_booking")!.headline, /test visit/);
+
+const noHours = buildSetupGuidedFlow({
+  onboardingState: stateWithActs(
+    "a2_shop_profile",
+    "a5_hours",
+    "a6_liv",
+    "a3_service_menu",
+    "a8_public_link",
+  ),
+  slug: "bloom",
+  sacredMetricMet: false,
+  hasAvailabilityRules: false,
+});
+assert.match(
+  noHours.phases.find((p) => p.id === "first_booking")!.headline,
+  /opening hours/i,
+);
+assert.equal(noHours.phases.find((p) => p.id === "first_booking")!.href, "/onboarding");
 
 const activated = buildSetupGuidedFlow({
   onboardingState: stateWithActs(

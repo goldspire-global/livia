@@ -44,6 +44,7 @@ export async function getSetupGuidedFlowForBusiness(businessId: string) {
     vertical: business.vertical,
     slug: business.slug,
     sacredMetricMet,
+    hasAvailabilityRules: capabilities?.readinessFacts?.hasAvailabilityRules ?? false,
   });
 
   const capabilityBlockers = flattenCapabilityBlockers(

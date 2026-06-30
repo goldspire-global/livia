@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PublicBookLinkCard } from "@/components/settings/public-book-link-card";
 import { clientGuestBookHref } from "@/lib/guest-book-url";
+import { apiFetch } from "@/lib/api-fetch";
 import { MOTION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { OnboardingPresentationPick } from "./onboarding-presentation-pick";
@@ -22,12 +23,26 @@ export function OnboardingPublicLinkSplit({
 }: Props) {
   const { toast } = useToast();
   const [frameKey, setFrameKey] = useState(0);
+  const [hasHours, setHasHours] = useState<boolean | null>(null);
   const path = clientGuestBookHref(slug);
+
+  useEffect(() => {
+    if (!businessId) return;
+    void apiFetch<{ dayOfWeek: number }[]>(`/businesses/${businessId}/availability`)
+      .then((rules) => setHasHours(rules.some((r) => r.dayOfWeek != null)))
+      .catch(() => setHasHours(false));
+  }, [businessId, frameKey]);
 
   const refreshPreview = () => setFrameKey((k) => k + 1);
 
   return (
     <div className="space-y-4" data-testid="onboarding-public-link-split">
+      {hasHours === false ? (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-foreground">
+          No opening hours yet — go back to the <strong>Hours</strong> step and save when you&apos;re
+          open. Your booking page cannot show times until then.
+        </p>
+      ) : null}
       {businessId ? (
         <OnboardingPresentationPick
           businessId={businessId}

@@ -9,13 +9,12 @@ import {
 } from "@workspace/policy";
 import { customFetch } from "@workspace/api-client-react";
 
-export type AvailRule = { dayOfWeek: number; startTime: string; endTime: string };
+import type { WeekdayAvailabilityRule } from "@workspace/policy";
+import { DEFAULT_WEEKDAY_AVAILABILITY } from "@workspace/policy";
 
-export const DEFAULT_WEEKDAY_HOURS: AvailRule[] = [1, 2, 3, 4, 5].map((dayOfWeek) => ({
-  dayOfWeek,
-  startTime: "09:00",
-  endTime: "17:00",
-}));
+export type AvailRule = WeekdayAvailabilityRule;
+
+export { DEFAULT_WEEKDAY_AVAILABILITY as DEFAULT_WEEKDAY_HOURS };
 
 export function blockingActsForMobile(
   state: OnboardingState | null | undefined,

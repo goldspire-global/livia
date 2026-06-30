@@ -39,10 +39,10 @@ import {
 } from "@workspace/policy";
 import {
   completeBlockingAct,
-  DEFAULT_WEEKDAY_HOURS,
   nextBlockingAct,
   type AvailRule,
 } from "@/lib/onboarding-blocking";
+import { DEFAULT_WEEKDAY_AVAILABILITY } from "@workspace/policy";
 import { customFetch } from "@workspace/api-client-react";
 import { CrossSurfaceContinueCard } from "@/components/CrossSurfaceContinueCard";
 import { SetupGuidedFlowCard } from "@/components/SetupGuidedFlowCard";
@@ -180,7 +180,7 @@ export default function OnboardingSetupScreen() {
     setSaving(true);
     try {
       const staffId = staffList?.[0]?.id;
-      const rules = avail && avail.length > 0 ? avail : DEFAULT_WEEKDAY_HOURS;
+      const rules = avail && avail.length > 0 ? avail : DEFAULT_WEEKDAY_AVAILABILITY;
       await customFetch(`/api/businesses/${bid}/availability`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

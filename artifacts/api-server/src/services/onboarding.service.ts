@@ -8,6 +8,7 @@ import {
 import { createService } from "./services.service";
 import { createStaff, setStaffServices } from "./staff.service";
 import { getBusinessById, updateBusiness } from "./businesses.service";
+import { seedDefaultStaffAvailability } from "./onboarding-availability.service";
 
 export async function seedBusinessFromOnboardingPack(
   businessId: string,
@@ -68,6 +69,7 @@ export async function seedBusinessFromOnboardingPack(
     if (serviceIds.length > 0) {
       await setStaffServices(staff.id, serviceIds);
     }
+    await seedDefaultStaffAvailability(businessId, staff.id);
   }
 
   if (serviceIds.length > 0 && defaults.vertical) {

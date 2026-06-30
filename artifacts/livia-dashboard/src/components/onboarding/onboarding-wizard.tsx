@@ -109,7 +109,7 @@ function actHints(
     cta: "Open Communications",
   },
   a8_public_link: {
-    body: "Share your booking page and run a test booking.",
+    body: "Confirm opening hours, then complete a test booking on your public page — Liv needs both before you're live.",
     cta: "Test booking page",
   },
   a9_billing: {

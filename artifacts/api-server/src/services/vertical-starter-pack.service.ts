@@ -10,6 +10,7 @@ import {
 import { createService, listServices } from "./services.service";
 import { createStaff, setStaffServices } from "./staff.service";
 import { getBusinessById, updateBusiness } from "./businesses.service";
+import { seedDefaultStaffAvailability } from "./onboarding-availability.service";
 import { seedRetailTemplatesForBusiness } from "./beauty-retail.service";
 
 /** Opt-in onboarding seed — full vertical starter menu (+ beauty retail). */
@@ -61,6 +62,7 @@ export async function seedVerticalStarterPack(businessId: string) {
     if (serviceIds.length > 0) {
       await setStaffServices(staff.id, serviceIds);
     }
+    await seedDefaultStaffAvailability(businessId, staff.id);
   }
 
   let retailSeeded = 0;

@@ -70,6 +70,7 @@ export function buildSetupGuidedFlow(args: {
   vertical?: string | null;
   slug?: string | null;
   sacredMetricMet: boolean;
+  hasAvailabilityRules?: boolean;
 }): {
   phases: SetupGuidedFlowPhase[];
   currentPhaseId: SetupGuidedFlowPhaseId;
@@ -80,6 +81,7 @@ export function buildSetupGuidedFlow(args: {
   nextAct: OnboardingActId | null;
 } {
   const { onboardingState: state, vertical, slug, sacredMetricMet } = args;
+  const hasAvailabilityRules = args.hasAvailabilityRules ?? false;
   const publicPath = slug ? guestBookPath(slug) : null;
   const nextAct = state ? nextRecommendedAct(state) : "a2_shop_profile";
 
@@ -100,6 +102,8 @@ export function buildSetupGuidedFlow(args: {
   else if (!publishPhaseDone) currentPhaseId = "publish";
   else if (!firstBookingDone) currentPhaseId = "first_booking";
   else if (!billingPhaseDone) currentPhaseId = "billing";
+
+  const hoursReady = hasAvailabilityRules;
 
   const setupHeadline = setupDone
     ? "Shop essentials are in place."
@@ -145,11 +149,15 @@ export function buildSetupGuidedFlow(args: {
       label: "First booking",
       headline: firstBookingDone
         ? "You're activated — first booking received."
-        : "Book a test visit or share your link with a guest.",
+        : !hoursReady
+          ? "Set opening hours first — then pick a time on your booking page."
+          : "Book a test visit on your public page or share the link with a guest.",
       done: firstBookingDone,
       current: currentPhaseId === "first_booking",
-      href: publicPath ?? "/bookings/new",
-      livPrompt: "How do I get my first real booking?",
+      href: !hoursReady ? "/onboarding" : publicPath ?? "/bookings/new",
+      livPrompt: !hoursReady
+        ? "Help me set opening hours so guests can pick a time."
+        : "How do I get my first real booking?",
     },
   ];
 

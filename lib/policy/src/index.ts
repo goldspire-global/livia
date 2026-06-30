@@ -26,6 +26,7 @@ export * from "./platform-resilience-program";
 export * from "./platform-delivery-program";
 export * from "./platform-legal";
 export * from "./gateway-auth-copy";
+export * from "./default-availability";
 export * from "./clerk-password-sign-in";
 export * from "./vertical-onboarding";
 export * from "./vertical-playbooks";
