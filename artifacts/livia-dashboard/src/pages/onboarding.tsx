@@ -150,7 +150,12 @@ export default function OnboardingPage() {
       clearOnboardingFormDraft("create-business");
       setBusinessId(latest.id);
       setBusinessSlug(latest.slug);
-      setBusinessById(latest.id);
+      // Only switch the active tenant when it actually differs. Re-selecting the
+      // same business would trigger a global query invalidate and re-enter this
+      // effect on the resulting refetch (infinite loop).
+      if (latest.id !== business?.id) {
+        setBusinessById(latest.id);
+      }
       const v = latest.vertical;
       if (v) setPreviewVertical(v);
       const raw = latest.onboardingState;
